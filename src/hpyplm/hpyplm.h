@@ -45,6 +45,21 @@ template <unsigned N> struct PYPLM {
       singleton_crp.increment(0, 1.0, eng);
     }
 
+  //new method - maybe not the best way, but for now it must be ok
+  template<typename Engine>
+  WordId generate(const std::vector<WordId>& context, int dict_size, Engine& eng) {
+    std::vector<double> probs(dict_size, 0);
+    copy_context(context, lookup); //does this flip the order?
+      
+    for (WordId w=0; w< dict_size; ++w)
+      probs.at(w) = prob(w, lookup);
+
+    multinomial_distribution<double> dist(probs);
+    WordId w = dist(eng);
+
+    return w;
+  }
+
   template<typename Engine>
   void increment(WordId w, const std::vector<WordId>& context, Engine& eng) {
     const double bo = backoff.prob(w, context);

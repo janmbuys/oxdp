@@ -9,7 +9,7 @@
 #include "pyp/crp.h"
 #include "pyp/tied_parameter_resampler.h"
 
-#define kORDER 4
+#define kORDER 3  //default 4
 
 using namespace std;
 using namespace oxlm;

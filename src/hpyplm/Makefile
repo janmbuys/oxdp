@@ -2,7 +2,7 @@ LOCAL_LIBS=${HOME}/packages
 CXXFLAGS =  -std=c++0x -g -O3 -fopenmp -Wall -I${LOCAL_LIBS}/include -m64 -I/usr/include/eigen3 -I..
 LDFLAGS = -std=c++0x -g -O3 -fopenmp -L${LOCAL_LIBS}/lib64 -L${LOCAL_LIBS}/lib -lboost_program_options -lboost_serialization
 
-all: hpyplm hpyplm_train hpyplm_query # dhpyplm chpyplm
+all: hpyplm #hpyplm_train hpyplm_query # dhpyplm chpyplm
 
 hpyplm: hpyplm.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
