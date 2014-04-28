@@ -11,7 +11,7 @@
 #include "pyp/tied_parameter_resampler.h"
 
 #define kORDER 3  //default 4
-#define nPARTICLES 100
+#define nPARTICLES 10
 
 using namespace std;
 using namespace oxlm;
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
   int samples = atoi(argv[1]);
  
   //used for all the models 
-  Dict dict;
+  Dict dict("ROOT", "", true);
   MT19937 eng;
   const WordId kSOS = dict.Convert("ROOT"); 
   vector<WordId> ctx(kORDER - 1, kSOS);
@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
       ctx = vector<WordId>(s.begin()+1, s.end());
       if (sample > 0) shift_lm.decrement(w, ctx, eng);
       shift_lm.increment(w, ctx, eng);
-      ctx.push_back(w);
+      //ctx.push_back(w);
     }
     if (sample % 10 == 9) {
       cerr << " [LLH=" << shift_lm.log_likelihood() << "]" << endl;
@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
       if (sample > 0) action_lm.decrement(w, ctx, eng);
       //else cout << w << " ";
       action_lm.increment(w, ctx, eng);
-      ctx.push_back(w);
+      //ctx.push_back(w);
     }
       //cout << endl;
     if (sample % 10 == 9) {
@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
         parser.shift(0);
         
         //it seems that we can be in a terminal configuration along the way, not just once in 
-        //a valid derivation??
+        //a valid derivation?? No, as long as root stays at bottom of the stack
         do {
           //do we need some distribution to determine when to stop generating new words?
           //else just carry on until stack is empty, but this may not be ideal (jet)
@@ -177,6 +177,9 @@ int main(int argc, char** argv) {
           //cout << "word: " << w << endl;
          
           ctx = parser.word_context();
+          cout << "context: ";
+          for (auto w: ctx)
+            cout << w << " ";
           // cout << "context: ";
           //for (unsigned i = 0; i < ctx.size(); ++i) 
           //  cout << ctx[i] << " ";
@@ -198,6 +201,7 @@ int main(int argc, char** argv) {
             lp = log(distr[act]) / log(2);
             //cout << act << " ";
             a = static_cast<Action>(act);
+            cout << "(action) " << act << endl;
          } 
          
           if (a == Action::sh) {
@@ -206,10 +210,14 @@ int main(int argc, char** argv) {
               continue;
               
             ctx = parser.word_context();
+            cout << "context: ";
+            for (auto w: ctx)
+              cout << w << " ";
+            
             //sample a word
             WordId w = shift_lm.generate(ctx, vocabs.size(), eng);
             
-            //cout << "(word) " << w << endl;
+            cout << "(word) " << w << endl;
             parser.shift(w);
             wordlp = log(shift_lm.prob(w, ctx)) / log(2);
             llh -= wordlp; //at least no oov problem

@@ -19,6 +19,7 @@ namespace oxlm {
 
 typedef std::string Word;
 typedef int WordId;
+typedef int WordIndex;
 typedef std::vector<WordId> Words;
 
 class Dict {
@@ -26,16 +27,28 @@ class Dict {
 // typedef std::map<std::string, WordId> Map;
 public:
     Dict() : b0_("<bad0>"), 
-             sos_("ROOT"), 
-             eos_(""), 
-             bad0_id_(-1)
+             sos_("<s>"), 
+             eos_("</s>"), 
+             bad0_id_(-1) 
     {
         words_.reserve(1000);
         Convert(sos_);
-        //Convert(eos_);
+        Convert(eos_);
+    }
+
+    Dict(Word sos, Word eos, bool has_actions) : b0_("<bad0>"), 
+                               sos_(sos), 
+                               eos_(eos), 
+                               bad0_id_(-1)
+    {
+        words_.reserve(1000);
+        Convert(sos_);
+        if (eos!="")
+            Convert(eos_);
         std::vector<Word> action_words = {"sh", "la", "ra", "re", "la2", "ra2"};
-        for (auto a: action_words)
-            ConvertAction(a);
+        if (has_actions)
+            for (auto a: action_words)
+                ConvertAction(a);
     }
     
     inline WordId min() const {
@@ -72,7 +85,7 @@ public:
             out->push_back(Convert(line.substr(last, cur - last)));
     }
 
-    inline void ConvertWhitespaceDelimitedActionLine(const std::string& line, std::vector<WordId>* out) {
+        inline void ConvertWhitespaceDelimitedActionLine(const std::string& line, std::vector<WordId>* out) {
         size_t cur = 0;
         size_t last = 0;
         int state = 0;
@@ -182,6 +195,41 @@ inline void ReadFromFile(const std::string& filename,
         d->ConvertWhitespaceDelimitedLine(line, &src->back());
         for (WordId i = 0; i < static_cast<WordId>(src->back().size()); ++i) 
             src_vocab->insert(src->back()[i]);
+    }
+}
+
+inline void ConvertWhitespaceDelimitedDependencyLine(const std::string& line, std::vector<WordIndex>* out) {
+    size_t cur = 0;
+    size_t last = 0;
+    int state = 0;
+    out->clear();
+    while(cur < line.size()) {
+        if (line[cur++]==' ') {
+            if (state == 0) continue;
+            out->push_back(static_cast<WordIndex>(atoi(line.substr(last, cur - last - 1))));
+            state = 0;
+        } else {
+            if (state == 1) continue;
+            last = cur - 1;
+            state = 1;
+        }
+    }
+    if (state == 1)
+        out->push_back(static_cast<WordIndex>(atoi(line.substr(last, cur - last))));
+}
+
+inline void ReadFromDependencyFile(const std::string& filename,
+                         std::vector<std::vector<WordIndex>>* src) {
+    src->clear();
+    std::cerr << "Reading from " << filename << std::endl;
+    std::ifstream in(filename);
+    assert(in);
+    std::string line;
+    int lc = 0;
+    while(getline(in, line)) {
+        ++lc;
+        src->push_back(std::vector<WordId>());
+        ConvertWhitespaceDelimitedDependencyLine(line, &src->back());
     }
 }
 

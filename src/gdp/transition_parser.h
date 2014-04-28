@@ -10,10 +10,8 @@ namespace oxlm {
 
 enum class Action : WordId {sh, la, ra, re, la2, ra2};
 
-typedef int WordIndex;
 typedef std::vector<WordIndex> WxList;
 typedef std::vector<Words> WordsList;
-typedef std::vector<WxList> WxCtxList;
 typedef std::vector<Action> ActList;
 
 inline Action convert_to_action(WordId a) {
@@ -169,6 +167,10 @@ class TransitionParser {
         return sentence.size();
     }
 
+    Words get_sentence() {
+        return sentence;
+    }
+
     //shift or left arc or right arc
     ActList const action_predictions() {
         ActList prd(actions_);  //copy to be consistent with other methods
@@ -202,9 +204,19 @@ class TransitionParser {
     }
 
     Words const word_context() {
-        Words ctx(ctx_size, 0);
-        for (unsigned i = 0; (i < stack_.size()) && (i < ctx_size); ++i)
-            ctx.rbegin()[i] = sentence[stack_.rbegin()[i]];
+        //edit: for now, rather return the whole stack
+        if (stack_.size() < ctx_size) {
+            Words ctx(ctx_size, 0);
+            return ctx;        
+        }
+        
+        Words ctx(stack_.size(), 0);
+        for (unsigned i = 0; i < stack_.size(); ++i)
+            ctx[i] = sentence[stack_[i]];
+        
+        //Words ctx(ctx_size, 0);
+        //for (unsigned i = 0; (i < stack_.size()) && (i < ctx_size); ++i)
+        //    ctx.rbegin()[i] = sentence[stack_.rbegin()[i]];
         return ctx;
     }
 
@@ -258,7 +270,7 @@ class TransitionParser {
     WxList arcs_;
     std::vector<int> child_count_;
     ActList actions_;
-    WxCtxList action_contexts_;
+    std::vector<WxList> action_contexts_;
 
   private:
     Words sentence;

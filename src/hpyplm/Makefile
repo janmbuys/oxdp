@@ -2,9 +2,12 @@ LOCAL_LIBS=${HOME}/packages
 CXXFLAGS =  -std=c++0x -g -O3 -fopenmp -Wall -I${LOCAL_LIBS}/include -m64 -I/usr/include/eigen3 -I..
 LDFLAGS = -std=c++0x -g -O3 -fopenmp -L${LOCAL_LIBS}/lib64 -L${LOCAL_LIBS}/lib -lboost_program_options -lboost_serialization
 
-all: hpyplm #hpyplm_train hpyplm_query # dhpyplm chpyplm
+all: hpyplm hpyplm_generate #hpyplm_train hpyplm_query dhpyplm chpyplm
 
 hpyplm: hpyplm.o
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+hpyplm_generate: hpyplm_generate.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 #chpyplm: chpyplm.o
@@ -63,4 +66,4 @@ clean:
 	rm -f *.o
 
 clobber: clean
-	rm makefile.depend hpyplm dhpyplm chpyplm # hpyplm_train hpyplm_query hpyplm_query_observe dhpyplm_train dhpyplm_query
+	rm makefile.depend hpyplm hpyplm_generate dhpyplm chpyplm # hpyplm_train hpyplm_query hpyplm_query_observe dhpyplm_train dhpyplm_query

@@ -412,6 +412,14 @@ def process_conll_data(data_dir, file_name):
         s_file.write(' '.join(sent) + '\n')
     s_file.close()
 
+    #write dependencies to file
+    d_file = open(data_dir + file_name + '.dependencies', 'w')
+    for sent in dependencies:
+        for i in sent:
+            d_file.write(str(i) + ' ')
+        d_file.write('\n')
+    d_file.close()
+    
     word_table = dict()
     word_count = 1 #0 is placeholder for sentence init
     #compile word lookup table
@@ -460,7 +468,7 @@ def process_conll_data(data_dir, file_name):
 
 if __name__=='__main__':
     train_dir = ''  #'parsing/'
-    train_file = 'dutch_alpino_train.conll' 
+    train_file = 'dutch_alpino_dev.conll' 
     [dictionary, vocabulary, sentences, dependencies] = process_conll_data(train_dir, train_file)
     n_projective = 0
     n_projective_stuck = 0

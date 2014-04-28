@@ -49,10 +49,9 @@ template <unsigned N> struct PYPLM {
   template<typename Engine>
   WordId generate(const std::vector<WordId>& context, int dict_size, Engine& eng) {
     std::vector<double> probs(dict_size, 0);
-    copy_context(context, lookup); //does this flip the order?
-      
-    for (WordId w=0; w< dict_size; ++w)
-      probs.at(w) = prob(w, lookup);
+    for (WordId w=0; w < dict_size; ++w) {
+        probs.at(w) = prob(w, context); 
+    }
 
     multinomial_distribution<double> dist(probs);
     WordId w = dist(eng);
@@ -109,8 +108,9 @@ template <unsigned N> struct PYPLM {
   }
 
   double prob(WordId w, const std::vector<WordId>& context) const {
-    const double bo = backoff.prob(w, context);
     copy_context(context, lookup);
+    //std::cerr << w << std::endl;
+    const double bo = backoff.prob(w, context);
 
     // singletons can be scored with a default crp
     auto s_it = singletons.find(lookup);
