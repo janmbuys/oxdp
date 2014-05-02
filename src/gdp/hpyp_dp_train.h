@@ -14,11 +14,10 @@
 #include "pyp/tied_parameter_resampler.h"
 
 #define kORDER 3  //default 4
-#define nPARTICLES 10
 
 namespace oxlm {
 
-void train_raw(std::string train_file, Dict& dict, std::set<WordId>& vocabs) {
+void train_raw(std::string train_file, Dict& dict, std::set<WordId>& vocabs, std::vector<Words>& corpussh, std::vector<Words>& corpusre) {
   const WordId kSOS = dict.Convert("ROOT"); 
   std::vector<WordId> ctx(kORDER - 1, kSOS);
   std::vector<Words> corpuss;
@@ -32,9 +31,40 @@ void train_raw(std::string train_file, Dict& dict, std::set<WordId>& vocabs) {
   std::string dependencies_file = train_file + ".dependencies";
   std::cerr << "Reading corpus...\n";
   ReadFromDependencyFile(dependencies_file, &corpusd);
-  std::cerr << "E-corpus size: " << corpusd.size() << " sentences\t (" << " word types)\n";
+  std::cerr << "E-corpus size: " << corpusd.size() << " sentences\n";
 
-  //TODO apply the oracle
+  // apply the oracle
+  for (unsigned i = 0; i < corpuss.size(); ++i) {
+    ArcStandardParser parser(corpuss[i], kORDER);
+    bool has_parse = parser.sentence_oracle(corpusd[i]);
+    if (parser.is_projective_dependency(corpusd[i])) {
+        if (has_parse) {
+            //std::cout << parser.actions_str() << std::endl;
+            //add the extracted training examples
+            WordsList sh_ctxs = parser.shift_contexts();
+            for (unsigned j = 0; j < parser.sentence_length(); ++j) {
+                //corpussh.push_back(Words(1, parser.get_sentence()[j]));
+                Words ins(1, parser.get_sentence()[j]);
+                //corpussh.back()->insert(corpussh.end(), sh_ctxs[j].begin(), sh_ctxs[j].end());
+                ins.insert(ins.end(), sh_ctxs[j].begin(), sh_ctxs[j].end());
+                corpussh.push_back(ins);
+            }
+              
+            WordsList act_ctxs = parser.action_contexts();
+            for (unsigned j = 0; j < act_ctxs.size(); ++j) {
+                Words ins(1, static_cast<WordId>(parser.action_predictions()[j]));
+                ins.insert(ins.end(), act_ctxs[j].begin(), act_ctxs[j].end());
+                //for (auto a: ins)
+                //    std::cout << a << " ";
+                //std::cout << std::endl;
+                corpusre.push_back(ins);
+            }
+            
+        } else
+            std::cerr << "oracle failure" << std::endl;
+    } //else
+        //std::cerr << "non-projective parse" << std::endl;
+  }
 }
 
 void train_shift(int samples, std::string wc_train_file, MT19937& eng, Dict& dict, std::set<WordId>& vocabs, PYPLM<kORDER>& shift_lm) {
@@ -61,6 +91,24 @@ void train_shift(int samples, std::string wc_train_file, MT19937& eng, Dict& dic
   }
 }
 
+void train_shift(int samples, MT19937& eng, Dict& dict, std::vector<Words>& corpussh, PYPLM<kORDER>& shift_lm) {
+  const WordId kSOS = dict.Convert("ROOT"); 
+  std::vector<WordId> ctx(kORDER - 1, kSOS);
+
+  for (int sample=0; sample < samples; ++sample) {
+    for (const auto& s : corpussh) {
+      WordId w = s[0];
+      ctx = std::vector<WordId>(s.begin()+1, s.end());
+      if (sample > 0) shift_lm.decrement(w, ctx, eng);
+      shift_lm.increment(w, ctx, eng);
+    }
+    if (sample % 10 == 9) {
+      std::cerr << " [LLH=" << shift_lm.log_likelihood() << "]" << std::endl;
+      if (sample % 30u == 29) shift_lm.resample_hyperparameters(eng);
+    } else { std::cerr << '.' << std::flush; }
+  }
+}
+
 void train_action(int samples, std::string ac_train_file, MT19937& eng, Dict& dict, std::set<WordId>& vocabr, PYPLM<kORDER>& action_lm) {
   const WordId kSOS = dict.Convert("ROOT"); 
   std::vector<WordId> ctx(kORDER - 1, kSOS);
@@ -72,6 +120,24 @@ void train_action(int samples, std::string ac_train_file, MT19937& eng, Dict& di
 
   for (int sample=0; sample < samples; ++sample) {
     for (const auto& s : corpusr) {
+      WordId w = s[0];  //index over actions
+      ctx = std::vector<WordId>(s.begin()+1, s.end());
+      if (sample > 0) action_lm.decrement(w, ctx, eng);
+      action_lm.increment(w, ctx, eng);
+    }
+    if (sample % 10 == 9) {
+      std::cerr << " [LLH=" << action_lm.log_likelihood() << "]" << std::endl;
+      if (sample % 30u == 29) action_lm.resample_hyperparameters(eng);
+    } else { std::cerr << '.' << std::flush; }
+  }
+}
+
+void train_action(int samples, MT19937& eng, Dict& dict, std::vector<Words>& corpusre, PYPLM<kORDER>& action_lm) {
+  const WordId kSOS = dict.Convert("ROOT"); 
+  std::vector<WordId> ctx(kORDER - 1, kSOS);
+
+  for (int sample=0; sample < samples; ++sample) {
+    for (const auto& s : corpusre) {
       WordId w = s[0];  //index over actions
       ctx = std::vector<WordId>(s.begin()+1, s.end());
       if (sample > 0) action_lm.decrement(w, ctx, eng);

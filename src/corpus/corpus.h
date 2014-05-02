@@ -206,7 +206,7 @@ inline void ConvertWhitespaceDelimitedDependencyLine(const std::string& line, st
     while(cur < line.size()) {
         if (line[cur++]==' ') {
             if (state == 0) continue;
-            out->push_back(static_cast<WordIndex>(atoi(line.substr(last, cur - last - 1))));
+            out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
             state = 0;
         } else {
             if (state == 1) continue;
@@ -215,7 +215,7 @@ inline void ConvertWhitespaceDelimitedDependencyLine(const std::string& line, st
         }
     }
     if (state == 1)
-        out->push_back(static_cast<WordIndex>(atoi(line.substr(last, cur - last))));
+        out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last))));
 }
 
 inline void ReadFromDependencyFile(const std::string& filename,

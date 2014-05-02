@@ -60,9 +60,9 @@ class TransitionParser {
         buffer_.pop_back();
         stack_.push_back(i);
         actions_.push_back(Action::sh);
-        WxList ctx = context();
+        //WxList ctx = context();
         //std::cerr << "context size: " << ctx.size() << std::endl;
-        action_contexts_.push_back(ctx);
+        //std::cerr << "shift\n";
         return true;
     }
 
@@ -77,7 +77,7 @@ class TransitionParser {
         actions_.push_back(Action::sh);
         WxList ctx = context();
         //std::cerr << "context size: " << ctx.size() << std::endl;
-        action_contexts_.push_back(ctx);
+        //action_contexts_.push_back(ctx);
         return true;
     }
 
@@ -124,7 +124,7 @@ class TransitionParser {
     void const print_arcs() {
         for (auto a: arcs_)
             std::cout << a << " ";
-        std::cout << std::endl;
+        //std::cout << std::endl;
     }
 
     void const print_sentence(Dict& dict) {
@@ -257,12 +257,47 @@ class TransitionParser {
         return (buffer_.empty() && (stack_.size() == 1));
     }
 
+    unsigned directed_accuracy_count(WxList g_arcs) {
+        unsigned count = 0;
+        
+        for (unsigned j = 1; j < arcs_.size(); ++j) {
+            if (arcs_[j]==g_arcs[j])
+                ++count;
+        }
+        
+        return count;
+    }
+
+    unsigned undirected_accuracy_count(WxList g_arcs) {
+        unsigned count = 0;
+        
+        for (unsigned j = 1; j < arcs_.size(); ++j) {
+            if ((arcs_[j]==g_arcs[j]) || (arcs_[j]>=0 && g_arcs[arcs_[j]]==static_cast<int>(j)))
+                ++count;
+        }
+        
+        return count;
+    }
+
     static std::vector<int> const count_children(WxList g_arcs) {
         std::vector<int> g_child_count(g_arcs.size(), 0);
         for (unsigned j = 1; j < g_arcs.size(); ++j)
-            ++g_child_count[j];
+            ++g_child_count[g_arcs[j]];
         return g_child_count;
     } 
+
+    static bool const is_projective_dependency(WxList g_arcs) {
+        for (int i = 0; i < static_cast<int>(g_arcs.size() - 1); ++i)
+          for (int j = i + 1; j < static_cast<int>(g_arcs.size()); ++j)
+            if ((g_arcs[i]<i &&
+                  (g_arcs[j]<i && g_arcs[j]>g_arcs[i])) ||
+                ((g_arcs[i]>i && g_arcs[i]>j) &&
+                  (g_arcs[j]<i || g_arcs[j]>g_arcs[i])) ||
+                ((g_arcs[i]>i && g_arcs[i]<j) &&
+                  (g_arcs[j]>i && g_arcs[j]<g_arcs[i])))
+                return false;
+        return true;
+    }
 
   protected:
     WxList stack_;
@@ -303,7 +338,8 @@ class ArcStandardParser : public TransitionParser {
         arcs_[i] = j;
         ++child_count_[j];
         actions_.push_back(Action::la);
-        action_contexts_.push_back(context());
+        //action_contexts_.push_back(context());
+        //std::cerr << "left arc\n";
         return true;
     }
 
@@ -314,14 +350,26 @@ class ArcStandardParser : public TransitionParser {
         arcs_[j] = i;
         ++child_count_[i];
         actions_.push_back(Action::ra);
-        action_contexts_.push_back(context());
+        //action_contexts_.push_back(context());
+        //std::cerr << "right arc\n";
         return true;
     }
 
     bool sentence_oracle(WxList gold_arcs) {
+        //for (auto w: gold_arcs)
+         // std::cout << w << " ";
+        //std::cout << std::endl;
+        
         std::vector<int> gold_child_count = count_children(gold_arcs);
+        //for (auto w: gold_child_count)
+        //  std::cout << w << " ";
+        //std::cout << std::endl;
+        
         bool is_stuck = false;
+        //std::cerr << buffer_.size() << std::endl;
         while (!is_terminal_configuration() && !is_stuck) {
+            //std::cerr << buffer_.size() << std::endl;
+            action_contexts_.push_back(context());
             if (stack_depth() < 2) 
                 shift();
             else {
@@ -331,12 +379,14 @@ class ArcStandardParser : public TransitionParser {
                     left_arc();
                 else if (gold_arcs[j]==i && child_count_[j]==gold_child_count[j]) 
                     right_arc();
+                else if (!is_buffer_empty()) 
+                    shift();
                 else
-                   is_stuck = true; 
+                    is_stuck = true; 
             }
         }
-        if (!is_stuck && arcs_!=gold_arcs)
-            is_stuck = true;
+        //if (!is_stuck) //&& arcs_!=gold_arcs)
+        //    is_stuck = true;
         return !is_stuck;
     }
 };

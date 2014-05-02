@@ -21,27 +21,33 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  //int samples = atoi(argv[1]);
   MT19937 eng;
   Dict dict("ROOT", "", true); //used for all the models 
-  //const unsigned num_actions = 3; 
-  //const unsigned num_word_types = 26502; //hardcoded to save trouble
+  int samples = atoi(argv[1]);
+  const unsigned num_actions = 3; 
+  const unsigned num_word_types = 26502; //hardcoded to save trouble
 
   set<WordId> vocabs;
-  set<WordId> vocabr;
+  //set<WordId> vocabr;
+  
+  std::vector<Words> corpussh;
+  std::vector<Words> corpusre;
   
   string train_file = "dutch_alpino_train.conll";
   string wc_train_file = "dutch_alpino_train.conll.words.contexts";
   string ac_train_file = "dutch_alpino_train.conll.actions.contexts";
- 
-  train_raw(train_file, dict, vocabs);
 
-  //train a word generation (shift) model
-  //PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1);
-  //train_shift(samples, wc_train_file, eng, dict, vocabs, shift_lm);
+
+  PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1);
+  PYPLM<kORDER> action_lm(num_actions, 1, 1, 1, 1);
+  
+  //training 
+  
+  train_raw(train_file, dict, vocabs, corpussh, corpusre); //extract training examples 
+  train_shift(samples, eng, dict, corpussh, shift_lm);
+  train_action(samples, eng, dict, corpusre, action_lm);
  
-  //train a action generation (shift/reduce) model
-  //PYPLM<kORDER> action_lm(num_actions, 1, 1, 1, 1);
+  //train_shift(samples, wc_train_file, eng, dict, vocabs, shift_lm);
   //train_action(samples, ac_train_file, eng, dict, vocabr, action_lm);
  
 }
