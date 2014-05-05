@@ -38,32 +38,32 @@ void train_raw(std::string train_file, Dict& dict, std::set<WordId>& vocabs, std
     ArcStandardParser parser(corpuss[i], kORDER);
     bool has_parse = parser.sentence_oracle(corpusd[i]);
     if (parser.is_projective_dependency(corpusd[i])) {
-        if (has_parse) {
-            //std::cout << parser.actions_str() << std::endl;
-            //add the extracted training examples
-            WordsList sh_ctxs = parser.shift_contexts();
-            for (unsigned j = 0; j < parser.sentence_length(); ++j) {
-                //corpussh.push_back(Words(1, parser.get_sentence()[j]));
-                Words ins(1, parser.get_sentence()[j]);
-                //corpussh.back()->insert(corpussh.end(), sh_ctxs[j].begin(), sh_ctxs[j].end());
-                ins.insert(ins.end(), sh_ctxs[j].begin(), sh_ctxs[j].end());
-                corpussh.push_back(ins);
-            }
+      if (has_parse) {
+        //std::cout << parser.actions_str() << std::endl;
+        //add the extracted training examples
+        WordsList sh_ctxs = parser.shift_contexts();
+        for (unsigned j = 0; j < parser.sentence_length(); ++j) {
+          //corpussh.push_back(Words(1, parser.get_sentence()[j]));
+          Words ins(1, parser.get_sentence()[j]);
+          //corpussh.back()->insert(corpussh.end(), sh_ctxs[j].begin(), sh_ctxs[j].end());
+          ins.insert(ins.end(), sh_ctxs[j].begin(), sh_ctxs[j].end());
+          corpussh.push_back(ins);
+        }
               
-            WordsList act_ctxs = parser.action_contexts();
-            for (unsigned j = 0; j < act_ctxs.size(); ++j) {
-                Words ins(1, static_cast<WordId>(parser.action_predictions()[j]));
-                ins.insert(ins.end(), act_ctxs[j].begin(), act_ctxs[j].end());
-                //for (auto a: ins)
-                //    std::cout << a << " ";
-                //std::cout << std::endl;
-                corpusre.push_back(ins);
-            }
+        WordsList act_ctxs = parser.action_contexts();
+        for (unsigned j = 0; j < act_ctxs.size(); ++j) {
+          Words ins(1, static_cast<WordId>(parser.action_predictions()[j]));
+          ins.insert(ins.end(), act_ctxs[j].begin(), act_ctxs[j].end());
+          //for (auto a: ins)
+          //    std::cout << a << " ";
+          //std::cout << std::endl;
+          corpusre.push_back(ins);
+        }
             
-        } else
+      } else
             std::cerr << "oracle failure" << std::endl;
     } //else
-        //std::cerr << "non-projective parse" << std::endl;
+      //std::cerr << "non-projective parse" << std::endl;
   }
 }
 

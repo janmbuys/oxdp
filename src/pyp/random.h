@@ -7,6 +7,9 @@
 #include <vector>
 #include <ctime>
 #include <random>
+#include <cmath>
+
+#define L_MAX 1000000
 
 namespace oxlm {
 
@@ -44,6 +47,24 @@ inline unsigned sample_bernoulli(const F a, const F b, Engine& eng) {
   return static_cast<unsigned>(sample_uniform01<F>(eng) > (a / z));
 }
 
+inline double log_sum_exp(const double a, const double b) {
+  if (a <= b)
+    return a + std::log(1 + std::exp(b - a));
+  else
+    return b + std::log(1 + std::exp(a - b));
+}
+
+inline double neg_log_sum_exp(const double a, const double b) {
+  if (a >= L_MAX)
+    return b;
+  else if (b >= L_MAX)
+    return a;
+  else if (a >= b)
+    return a - std::log(1 + std::exp(a - b));
+  else
+    return b - std::log(1 + std::exp(b - a));
+}
+
 // multinomial distribution parameterized by unnormalized probabilities
 // F is the type of the probabilities
 //   MT19937 eng;
@@ -74,27 +95,30 @@ struct multinomial_distribution {
   const F sum;
 };
 
-//multinomial distribution parametarized with unnormalized log (base 2) probabilities
-template <typename F>
+//multinomial distribution parametarized with unnormalized negative log (natural base) probabilities
 struct multinomial_distribution_log {
-  multinomial_distribution_log(const std::vector<F>& v) : 
+  multinomial_distribution_log(const std::vector<double>& v) : 
         probs(v), 
-        sum(std::accumulate(probs.begin(), probs.end(), F(0))) {}
+        sum(std::accumulate(probs.begin()+1, probs.end(), probs.at(0), neg_log_sum_exp)) {}
 
   template <class Engine>
   unsigned operator()(Engine& eng) const {
     assert(!probs.empty());
     if (probs.size() == 1) return 0;
-    const F random = sum * F(sample_uniform01<double>(eng));    // random number between [0 and sum)
-
+    const double random = sum - std::log(sample_uniform01<double>(eng)); // random number between -log( [0 and sum) )
     unsigned position = 1;
-    F t = probs.at(0);
-    for (; position < probs.size() && t < random; ++position)
-      t += probs.at(position);
+    //std::cout << sum << ": [";
+    double t = probs.at(0);
+    for (; position < probs.size() && t > random; ++position) {
+      t = neg_log_sum_exp(t, probs.at(position)); // - sum)
+      //std::cout << t << " ";
+    }
+    //std::cout << "] (" << random << ") ";
+    //std::cout << " (" << random << ", " << t << ", " << std::exp(-t) <<  ") ";
     return position - 1;
   }
-  const std::vector<F>& probs;
-  const F sum;
+  const std::vector<double>& probs;
+  const double sum;
 };
 
 
