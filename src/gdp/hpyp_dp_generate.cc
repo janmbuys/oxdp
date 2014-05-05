@@ -13,6 +13,7 @@
 using namespace std;
 using namespace oxlm;
 
+//For three-way decision
 void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& action_lm, int vocab_size, MT19937& eng) {
   double llh = 0;
   bool terminate_generation = false;
@@ -43,6 +44,7 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
     } else if (terminate_shift) {
       double leftarcp = action_lm.prob(static_cast<WordId>(Action::la), ctx);
       double rightarcp = action_lm.prob(static_cast<WordId>(Action::ra), ctx);
+      cout << "(la: " << leftarcp << " ra: " << rightarcp << ") ";
 
       //sample an action
       vector<double> distr = {leftarcp, rightarcp};
@@ -54,6 +56,7 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
       double shiftp = action_lm.prob(static_cast<WordId>(Action::sh), ctx);
       double leftarcp = action_lm.prob(static_cast<WordId>(Action::la), ctx);
       double rightarcp = action_lm.prob(static_cast<WordId>(Action::ra), ctx);
+      cout << "(sh: " << shiftp << " la: " << leftarcp << " ra: " << rightarcp << ") ";
 
       //sample an action
       vector<double> distr = {shiftp, leftarcp, rightarcp};
@@ -82,10 +85,10 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
 
       //sample a word
       WordId w = shift_lm.generate(ctx, vocab_size, eng);
+      wordlp = log(shift_lm.prob(w, ctx)) / log(2);
         
       //cout << "(word) " << w << endl;
       parser.shift(w);
-      wordlp = log(shift_lm.prob(w, ctx)) / log(2);
       llh -= wordlp; //at least no oov problem
     } else {
       parser.execute_action(a);
@@ -96,6 +99,90 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
   } while (!parser.is_terminal_configuration() && !terminate_generation);
     
     //cout << endl;
+}
+
+//For binary decisions
+void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm, int vocab_size, MT19937& eng) {
+  double llh = 0;
+  bool terminate_generation = false;
+  bool terminate_shift = false;
+  parser.shift(0);
+    
+  do {
+    Action a; //placeholder action
+    Words ctx; 
+    double lp; 
+    double wordlp; 
+    
+    //cout << "word: " << w << endl; 
+    ctx = parser.word_context(); 
+    //cerr << "context: "; 
+    //for (auto w: ctx) 
+    //  cerr << w << " "; 
+    //cerr << endl; 
+    //cout << "word lp: " <<  wordlp << endl; 
+    if (parser.stack_depth()< 2) {
+      a = Action::sh;
+    } else if (parser.sentence_length() > 20) {
+        // check to upper bound sentence length
+        if (!terminate_shift)
+          cerr << " LENGTH LIMITED ";
+        terminate_shift = true;
+        a = Action::re;
+    } else {
+      double shiftp = reduce_lm.prob(static_cast<WordId>(Action::sh), ctx);
+      double reducep = reduce_lm.prob(static_cast<WordId>(Action::re), ctx);
+      cout << "(sh: " << shiftp << " re: " << reducep << ") ";
+
+      //sample an action
+      vector<double> distr = {shiftp, reducep};
+      multinomial_distribution<double> mult(distr); 
+      WordId act = mult(eng);
+      lp = log(distr[act]) / log(2);
+      llh -= lp;
+      //cout << act << " ";
+      
+      if (act==0) {
+        a = Action::sh;
+      } else {
+        a = Action::re; 
+      }
+
+      cout << "(act) " << act << " ";
+    } 
+
+    if (a == Action::sh) {
+      //cerr << vocab_size;      
+      //cerr << " context: ";
+      //for (auto w: ctx)
+      //  cerr << w << " ";
+      //cerr << endl;
+
+      ctx = parser.word_context();
+      //sample a word
+      WordId w = shift_lm.generate(ctx, vocab_size, eng);
+      //cout << "(word) " << w << endl;
+      wordlp = log(shift_lm.prob(w, ctx)) / log(2);
+      
+      parser.shift(w);
+      llh -= wordlp; //at least no oov problem
+    } else if (a == Action::re) {
+      double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), ctx);
+      double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), ctx);
+      cout << "(la: " << leftarcp << " ra: " << rightarcp << ") ";
+
+      //sample arc direction
+      vector<double> distr = {leftarcp, rightarcp};
+      multinomial_distribution<double> mult(distr); 
+      WordId act = mult(eng);
+      lp = log(distr[act]) / log(2);
+      a = static_cast<Action>(act+1);
+
+      parser.execute_action(a);
+      llh -= lp;
+      cout << "(act) " << act << " ";
+    }
+  } while (!parser.is_terminal_configuration() && !terminate_generation);
 }
 
 /*train a generative dependency parsing model using given context vectors;
@@ -114,33 +201,38 @@ int main(int argc, char** argv) {
   int samples = atoi(argv[1]);
   MT19937 eng;
   Dict dict("ROOT", "", true); //used for all the models 
-  const unsigned num_actions = 3; 
+  //const unsigned num_actions = 3; 
   const unsigned num_word_types = 26502; //hardcoded to save trouble
+  string train_file = "dutch_alpino_train.conll";
 
   set<WordId> vocabs;
-  //set<WordId> vocabr;
   std::vector<Words> corpussh;
   std::vector<Words> corpusre;
+  std::vector<Words> corpusarc;
   
-  string train_file = "dutch_alpino_train.conll";
-  //string wc_train_file = "dutch_alpino_train.conll.words.contexts";
-  //string ac_train_file = "dutch_alpino_train.conll.actions.contexts";
- 
-  PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1);
-  PYPLM<kORDER> action_lm(num_actions, 1, 1, 1, 1);
- 
-  //train
-  train_raw(train_file, dict, vocabs, corpussh, corpusre); //extract training examples 
-  train_shift(samples, eng, dict, corpussh, shift_lm);
-  train_action(samples, eng, dict, corpusre, action_lm);
+  PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1); //next word
+  //for two-way decisions
+  /*
+  PYPLM<kORDER> reduce_lm(2, 1, 1, 1, 1); //shift/reduce
+  PYPLM<kORDER> arc_lm(2, 1, 1, 1, 1); //left/right arc
 
-  //train_shift(samples, wc_train_file, eng, dict, vocabs, shift_lm);
-  //train_action(samples, ac_train_file, eng, dict, vocabr, action_lm);
+  train_raw(train_file, dict, vocabs, corpussh, corpusre, corpusarc); //extract training examples 
+  train_lm(samples, eng, dict, corpussh, shift_lm);
+  train_lm(samples, eng, dict, corpusre, reduce_lm);  
+  train_lm(samples, eng, dict, corpusarc, arc_lm);   */
+
+  //for three-way decision
+  //train
+  PYPLM<kORDER> action_lm(3, 1, 1, 1, 1);
+  train_raw(train_file, dict, vocabs, corpussh, corpusre); //extract training examples 
+  train_lm(samples, eng, dict, corpussh, shift_lm);
+  train_lm(samples, eng, dict, corpusre, action_lm);  
 
   //sample sentences from the trained model
   vector<ArcStandardParser> particles(nPARTICLES, ArcStandardParser(kORDER-1)); 
 
   for (auto& parser: particles) {
+    //generate_sentence(parser, shift_lm, reduce_lm, arc_lm, vocabs.size(), eng);  
     generate_sentence(parser, shift_lm, action_lm, vocabs.size(), eng);  
 
     parser.print_sentence(dict);

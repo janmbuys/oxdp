@@ -17,6 +17,9 @@
 using namespace std;
 using namespace oxlm;
 
+//TODO move particle_parse_sentence to a method
+//then add method using binary decisions
+
 /*train a generative dependency parsing model using given context vectors;
  * test, for now with a single sampling model 
  */

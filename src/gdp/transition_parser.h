@@ -124,7 +124,7 @@ class TransitionParser {
   void const print_arcs() {
     for (auto a: arcs_)
       std::cout << a << " ";
-      //std::cout << std::endl;
+      std::cout << std::endl;
   }
 
   void const print_sentence(Dict& dict) {

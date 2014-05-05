@@ -45,6 +45,7 @@ public:
         Convert(sos_);
         if (eos!="")
             Convert(eos_);
+        //should probably move to the outside sometime
         std::vector<Word> action_words = {"sh", "la", "ra", "re", "la2", "ra2"};
         if (has_actions)
             for (auto a: action_words)
