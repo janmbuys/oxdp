@@ -143,44 +143,6 @@ void train_lm(int samples, MT19937& eng, Dict& dict, std::vector<Words>& corpus,
   }
 }
 
-//Hopefully soon redundant
-void train_shift(int samples, MT19937& eng, Dict& dict, std::vector<Words>& corpussh, PYPLM<kORDER>& shift_lm) {
-  const WordId kSOS = dict.Convert("ROOT"); 
-  std::vector<WordId> ctx(kORDER - 1, kSOS);
-
-  for (int sample=0; sample < samples; ++sample) {
-    for (const auto& s : corpussh) {
-      WordId w = s[0];
-      ctx = std::vector<WordId>(s.begin()+1, s.end());
-      if (sample > 0) shift_lm.decrement(w, ctx, eng);
-      shift_lm.increment(w, ctx, eng);
-    }
-    if (sample % 10 == 9) {
-      std::cerr << " [LLH=" << shift_lm.log_likelihood() << "]" << std::endl;
-      if (sample % 30u == 29) shift_lm.resample_hyperparameters(eng);
-    } else { std::cerr << '.' << std::flush; }
-  }
-}
-
-void train_action(int samples, MT19937& eng, Dict& dict, std::vector<Words>& corpusre, PYPLM<kORDER>& action_lm) {
-  const WordId kSOS = dict.Convert("ROOT"); 
-  std::vector<WordId> ctx(kORDER - 1, kSOS);
-
-  for (int sample=0; sample < samples; ++sample) {
-    for (const auto& s : corpusre) {
-      WordId w = s[0];  //index over actions
-      ctx = std::vector<WordId>(s.begin()+1, s.end());
-      if (sample > 0) action_lm.decrement(w, ctx, eng);
-      action_lm.increment(w, ctx, eng);
-    }
-    if (sample % 10 == 9) {
-      std::cerr << " [LLH=" << action_lm.log_likelihood() << "]" << std::endl;
-      if (sample % 30u == 29) action_lm.resample_hyperparameters(eng);
-    } else { std::cerr << '.' << std::flush; }
-  }
-}
-
-
 //Old train_shift
 void train_shift(int samples, std::string wc_train_file, MT19937& eng, Dict& dict, std::set<WordId>& vocabs, PYPLM<kORDER>& shift_lm) {
   const WordId kSOS = dict.Convert("ROOT"); 

@@ -47,12 +47,15 @@ template <unsigned N> struct PYPLM {
 
   //new method - maybe not the best way, but for now it must be ok
   template<typename Engine>
-  WordId generate(const std::vector<WordId>& context, int dict_size, Engine& eng) {
+  WordId generate(const std::vector<WordId>& context, int dict_size, int rw_size, Engine& eng) {
     //only use for word generation, not for actions
     //can this generate reserved words by accident?
     std::vector<double> probs(dict_size, 0);
-    for (WordId w=0; w < dict_size; ++w) {
-      probs.at(w) = prob(w, context); 
+    for (WordId w = 0; w < dict_size; ++w) {
+      if (w < rw_size)
+        probs.at(w) = 0;
+      else  
+        probs.at(w) = prob(w, context); 
     }
 
     multinomial_distribution<double> dist(probs);

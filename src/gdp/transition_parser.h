@@ -39,6 +39,7 @@ class TransitionParser {
       buffer_[i] = sentence.size()-i-1; 
   }
 
+
   TransitionParser(unsigned context_size):  
     stack_(),
     buffer_(),
@@ -49,6 +50,33 @@ class TransitionParser {
     sentence(),
     ctx_size{context_size}
   {
+  }
+
+  //copy constructor
+  TransitionParser(const TransitionParser& p):  
+    stack_(p.stack_),
+    buffer_(p.buffer_),
+    arcs_(p.arcs_),
+    child_count_(p.child_count_),
+    actions_(p.actions_),
+    action_contexts_(p.action_contexts_), //though I'm not actually using this
+    sentence(p.sentence),
+    ctx_size{p.ctx_size}
+  {
+  }
+
+  //copy assignment
+  TransitionParser& operator=(const TransitionParser& p) {
+    stack_ = p.stack_;
+    buffer_ = p.buffer_;
+    arcs_ = p.arcs_;
+    child_count_ = p.child_count_;
+    actions_ = p.actions_;
+    action_contexts_ = p.action_contexts_; //though I'm not actually using this
+    //sentence = p.sentence; //should be same sentence
+    //ctx_size = p.ctx_size; //ctx_size should be the same
+    //should I return something?
+    return *this;
   }
 
   //don't yet see this necessary
@@ -211,7 +239,8 @@ class TransitionParser {
       Words ctx(ctx_size, 0);
       return ctx;        
     }
-        
+     
+    //std::cerr << stack_.size() << std::endl;
     Words ctx(stack_.size(), 0);
     for (unsigned i = 0; i < stack_.size(); ++i)
       ctx[i] = sentence[stack_[i]];
@@ -304,7 +333,6 @@ class TransitionParser {
   std::vector<int> child_count_;
   ActList actions_;
   std::vector<WxList> action_contexts_;
-
   private:
   Words sentence;
   const unsigned ctx_size;
