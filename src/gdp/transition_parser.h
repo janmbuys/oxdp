@@ -29,7 +29,9 @@ class TransitionParser {
     actions_(),
     action_contexts_(),
     sentence(1, 0),
-    ctx_size{context_size}
+    ctx_size{context_size},
+    liw{0},
+    lpw{0}
   {
     //copy of sent, position 0 is 0
     sentence.reserve(sent.size()+1);
@@ -48,7 +50,9 @@ class TransitionParser {
     actions_(),
     action_contexts_(),
     sentence(),
-    ctx_size{context_size}
+    ctx_size{context_size},
+    liw{0},
+    lpw{0}
   {
   }
 
@@ -61,7 +65,9 @@ class TransitionParser {
     actions_(p.actions_),
     action_contexts_(p.action_contexts_), //though I'm not actually using this
     sentence(p.sentence),
-    ctx_size{p.ctx_size}
+    ctx_size{p.ctx_size},
+    liw{p.liw}, //though it will not be reused
+    lpw{p.lpw}
   {
   }
 
@@ -75,6 +81,9 @@ class TransitionParser {
     action_contexts_ = p.action_contexts_; //though I'm not actually using this
     //sentence = p.sentence; //should be same sentence
     //ctx_size = p.ctx_size; //ctx_size should be the same
+    liw = p.liw; //though it will not be reused
+    lpw = p.lpw; //though it will not be reused
+
     //should I return something?
     return *this;
   }
@@ -200,6 +209,30 @@ class TransitionParser {
     return sentence;
   }
 
+  double importance_weight() {
+    return liw;
+  }
+
+  double particle_weight() {
+    return lpw;
+  }
+
+  void set_importance_weight(double w) {
+    liw = w;
+  }
+
+  void add_importance_weight(double w) {
+    liw += w;
+  }
+
+  void set_particle_weight(double w) {
+    lpw = w;
+  }
+
+  void add_particle_weight(double w) {
+    lpw += w;
+  }
+
   //shift or left arc or right arc
   ActList const action_predictions() {
     ActList prd(actions_);  //copy to be consistent with other methods
@@ -313,7 +346,7 @@ class TransitionParser {
     return g_child_count;
   } 
 
-  static bool const is_projective_dependency(WxList g_arcs) {
+ static bool const is_projective_dependency(WxList g_arcs) {
     for (int i = 0; i < static_cast<int>(g_arcs.size() - 1); ++i)
       for (int j = i + 1; j < static_cast<int>(g_arcs.size()); ++j)
         if ((g_arcs[i]<i &&
@@ -336,7 +369,10 @@ class TransitionParser {
   private:
   Words sentence;
   const unsigned ctx_size;
+  double liw; //log importance weight
+  double lpw; //log particle weight
 };
+
 
 class ArcStandardParser : public TransitionParser {
   public:
@@ -416,6 +452,14 @@ class ArcStandardParser : public TransitionParser {
   }
 };
  
+inline bool cmp_importance_weights(ArcStandardParser p1, ArcStandardParser p2) {
+  return (p1.importance_weight() < p2.importance_weight());
+}
+ 
+inline bool cmp_particle_weights(ArcStandardParser p1, ArcStandardParser p2) {
+  return (p1.particle_weight() < p2.particle_weight());
+}
+
 }
 
 #endif

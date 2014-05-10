@@ -29,8 +29,8 @@ void particle_par_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng
   cout << endl; 
 
   vector<ArcStandardParser> particles(nPARTICLES, ArcStandardParser(s, kORDER-1)); 
-  vector<double> particle_liw(nPARTICLES, 0); //importance weights
-  vector<double> particle_lp(nPARTICLES, 0); //particle weights
+  //vector<double> particle_liw(nPARTICLES, 0); //importance weights
+  //vector<double> particle_lp(nPARTICLES, 0); //particle weights
 
   for (unsigned i = 0; i < s.size() + 1; ++i) {
     for (unsigned j = 0; j < nPARTICLES; ++j) { 
@@ -53,7 +53,7 @@ void particle_par_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng
           vector<double> distr = {shiftp, reducep};
           multinomial_distribution<double> mult(distr); 
           WordId act = mult(eng);
-          particle_lp[j] -= log(distr[act]); 
+          parser.add_particle_weight(-log(distr[act])); 
           //cout << act << " ";
       
           if (act==0) {
@@ -76,27 +76,32 @@ void particle_par_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng
           //cout << "(act) " << act << " ";
 
           if (parser.execute_action(a)) 
-            particle_lp[j] -= log(distr[act]); 
+            parser.add_particle_weight(-log(distr[act])); 
         }
       }
 
       //perform shift
       Words ctx = parser.word_context();
       WordId w = parser.next_word();
-      double wordlp = log(shift_lm.prob(w, ctx)); 
-      particle_liw[j] = wordlp;  //else -=
-      particle_lp[j] -= wordlp;
+      double wordlp = -log(shift_lm.prob(w, ctx)); 
+      parser.set_importance_weight(wordlp); //else add_importance_weight
+      parser.add_particle_weight(wordlp); //else add_importance_weight
       parser.shift();
     }
     //TODO resamples particles
     if (i > 1) {
-      cout << "particle weights: ";
-      for (unsigned i = 0; i < nPARTICLES; ++i) 
-        cout << particle_liw[i] << " ";
-      cout << endl;
+      //cout << "particle weights: ";
+      //for (unsigned i = 0; i < nPARTICLES; ++i) 
+      //  cout << particles[i].importance_weight() << " ";
+      //cout << endl;
 
       // resample according to importance weight
-      multinomial_distribution_log part_mult(particle_liw);
+      
+      vector<double> importance_w(nPARTICLES, 0); //importance weights
+      for (unsigned i = 0; i < nPARTICLES; ++i)
+        importance_w[i] = particles[i].importance_weight();
+
+      multinomial_distribution_log part_mult(importance_w); 
       vector<unsigned> sample_indx;
 
       //cout << "resampled importance weights: ";
@@ -151,7 +156,7 @@ void particle_par_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng
           if (p_pos < nPARTICLES) {
             //cout << p_pos << " ";
             particles[p_pos] = particles[sample_indx[i]];       
-            particle_liw[p_pos] = particle_liw[sample_indx[i]]; //also copy weight
+            //particle_liw[p_pos] = particle_liw[sample_indx[i]]; //also copy weight
             new_indx[p_pos] = sample_indx[i];
             //cout << "(" << i << ", " << sample_indx[i] << ") ";
             ++p_pos;
@@ -167,11 +172,11 @@ void particle_par_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng
       //}
       //cout << endl;
   
-      cout << "resampled weights: ";
-      for (unsigned i = 0; i < nPARTICLES; ++i) {
-        cout << particle_liw[i] << " ";
-      }
-      cout << endl; 
+      //cout << "resampled weights: ";
+      //for (unsigned i = 0; i < nPARTICLES; ++i) {
+      //  cout << particles[i].importance_weight() << " ";
+      //}
+      //cout << endl; 
     }
   }
 
@@ -197,7 +202,8 @@ void particle_par_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng
       //cout << "(act) " << act << " ";
       //if la invalid, force right arc         
       if (parser.execute_action(a)) 
-        particle_lp[j] -= log(distr[act]); 
+        parser.add_particle_weight(-log(distr[act])); 
+            
       else if (a==Action::la) {
         parser.right_arc();
         //particle_lp[j] -= log(distr[1]); //don't assign a prob to this? 
@@ -208,6 +214,8 @@ void particle_par_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng
 
   //print parses
 
+  sort(particles.begin(), particles.end(), cmp_particle_weights);
+
   for (unsigned j = 0; j < nPARTICLES; ++j) { 
     ArcStandardParser& parser = particles[j];
     parser.print_arcs();
@@ -217,9 +225,118 @@ void particle_par_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng
 
     cout << "  Dir Accuracy: " << dir_acc;
     cout << "  UnDir Accuracy: " << undir_acc;
-    cout << "  Sample weight: " << (-particle_lp[j] / log(10)) << endl;
+    cout << "  Sample weight: " << (-parser.particle_weight() / log(10)) << endl;
   } 
 }
+
+//TODO beam parser
+void beam_parse_sentence(Words s, WxList goldd, unsigned beam_size, Dict& dict, MT19937& eng, set<WordId>& vocabs, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm) {  
+  //double llh = 0;
+  //unsigned cnt = 0; 
+  //unsigned oovs = 0;
+ 
+  cout << "gold arcs: ";
+  for (auto d: goldd)
+    cout << d << " ";
+  cout << endl; 
+
+  vector<ArcStandardParser> beam(1, ArcStandardParser(s, kORDER-1));  
+  //vector<ArcStandardParser> particles;
+
+  for (unsigned i = 0; i < s.size() + 1; ++i) {
+    double min_w = 0; // worst weight so far on beam 
+    for (unsigned j = 0; j < beam.size(); ++j) { 
+      ArcStandardParser& parser = beam[j];
+
+      //sample a sequence of possible actions leading up to the next shift
+      Words ctx = parser.word_context();
+      double shiftp = reduce_lm.prob(static_cast<WordId>(Action::sh), ctx);
+    
+      if (parser.stack_depth() >= kORDER-1) {
+        //add paths for reduce actions
+        double reducep = reduce_lm.prob(static_cast<WordId>(Action::re), ctx);
+        double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), ctx);
+        double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), ctx);
+
+        ArcStandardParser left_p = parser; //will this copy?
+        ArcStandardParser right_p = parser; 
+
+        //TODO add beam size check
+        if (left_p.execute_action(Action::la)) {
+          left_p.add_particle_weight(-reducep-leftarcp); 
+          beam.push_back(left_p);
+        }
+
+        right_p.add_particle_weight(-reducep-rightarcp); 
+        beam.push_back(right_p);
+      }
+
+      //perform shift
+      WordId w = parser.next_word();
+      double wordlp = log(shift_lm.prob(w, ctx)); 
+      parser.set_importance_weight(-wordlp); //else add_importance_weight
+      parser.add_particle_weight(-shiftp-wordlp); //else add_importance_weight
+      parser.shift();
+    }
+   
+    sort(particles.begin(), particles.end(), cmp_particle_weights);
+    
+    for (j = beam.size()- 1; j >= beam_size; --j)
+      beam.pop_back();
+  }
+
+  //cerr << "start completion" << endl;
+  
+
+  for (unsigned j = 0; j < nPARTICLES; ++j) { 
+    ArcStandardParser& parser = particles[j];
+    Action a = Action::re; //placeholder action
+  
+    //std::cerr << parser.is_buffer_empty() << " " << parser.stack_depth() << std::endl;
+    while (!parser.is_terminal_configuration()) {
+        //sample arcs to complete the parse
+      Words ctx = parser.word_context();
+      double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), ctx);
+      double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), ctx);
+      //cout << "(la: " << leftarcp << " ra: " << rightarcp << ") ";
+
+      //sample arc direction
+      vector<double> distr = {leftarcp, rightarcp};
+      multinomial_distribution<double> mult(distr); 
+      WordId act = mult(eng);
+      a = static_cast<Action>(act+1);
+    
+      //cout << "(act) " << act << " ";
+      //if la invalid, force right arc         
+      if (parser.execute_action(a)) 
+        parser.add_particle_weight(-log(distr[act])); 
+            
+      else if (a==Action::la) {
+        parser.right_arc();
+        //particle_lp[j] -= log(distr[1]); //don't assign a prob to this? 
+      }
+      //cerr << "depth: " << parser.stack_depth() << endl;
+    }
+  }
+
+  //print parses
+
+  sort(particles.begin(), particles.end(), cmp_particle_weights);
+
+  for (unsigned j = 0; j < nPARTICLES; ++j) { 
+    ArcStandardParser& parser = particles[j];
+    parser.print_arcs();
+        
+    float dir_acc = (parser.directed_accuracy_count(goldd) + 0.0)/s.size();
+    float undir_acc = (parser.undirected_accuracy_count(goldd) + 0.0)/s.size();
+
+    cout << "  Dir Accuracy: " << dir_acc;
+    cout << "  UnDir Accuracy: " << undir_acc;
+    cout << "  Sample weight: " << (-parser.particle_weight() / log(10)) << endl;
+  } 
+}
+
+
 
 //for binary action decisions
 void particle_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng, set<WordId>& vocabs, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm) {  
