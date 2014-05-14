@@ -122,12 +122,15 @@ public:
     }
 
     inline WordId Convert(const Word& word, bool frozen = false) {
-        //TODO convert to lower case
-        auto i = d_.find(word);
+        //convert to lower case - doesnt seem to make a significant difference
+        Word lword(word);
+        std::transform(lword.begin(), lword.end(), lword.begin(), tolower);
+
+        auto i = d_.find(lword);
         if (i == d_.end()) {
             if (frozen)
                 return bad0_id_;
-            words_.push_back(word);
+            words_.push_back(lword);
             d_[word] = words_.size()-1;
             return words_.size()-1;
         } else {

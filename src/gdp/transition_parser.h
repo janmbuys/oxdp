@@ -3,6 +3,7 @@
 
 #include<string>
 #include<functional>
+#include<cstdlib>
 
 #include<corpus/corpus.h>
 
@@ -56,6 +57,8 @@ class TransitionParser {
   {
   }
 
+  //is this really necessary, as I am not doing anything non-standard?
+/*
   //copy constructor
   TransitionParser(const TransitionParser& p):  
     stack_(p.stack_),
@@ -88,8 +91,11 @@ class TransitionParser {
     return *this;
   }
 
+
   //don't yet see this necessary
-  //~TransitionParser() { }
+  ~TransitionParser() { 
+    }
+*/
 
   bool shift() {
     //std::cerr << "buffer size: " << buffer_.size() << std::endl;
@@ -217,20 +223,28 @@ class TransitionParser {
     return lpw;
   }
 
+  void reset_importance_weight() {
+    liw = 0;
+  }
+
   void set_importance_weight(double w) {
-    liw = w;
+    liw = -std::log(w);
   }
 
   void add_importance_weight(double w) {
-    liw += w;
+    liw -= std::log(w);
   }
 
-  void set_particle_weight(double w) {
+  void set_log_particle_weight(double w) {
     lpw = w;
   }
 
+  void set_particle_weight(double w) {
+    lpw = -std::log(w);
+  }
+
   void add_particle_weight(double w) {
-    lpw += w;
+    lpw -= std::log(w);
   }
 
   //shift or left arc or right arc
@@ -288,6 +302,10 @@ class TransitionParser {
     return actions_;
   }
    
+  int const num_actions() {
+    return actions_.size();
+  }
+
   //number of children at sentence position i
   int const child_count(int i) {
     return child_count_[i];
@@ -299,6 +317,10 @@ class TransitionParser {
 
   int const stack_depth() {
     return stack_.size();
+  }
+
+  int const buffer_length() {
+    return buffer_.size();
   }
 
   WordIndex const stack_top() {
@@ -368,7 +390,7 @@ class TransitionParser {
   std::vector<WxList> action_contexts_;
   private:
   Words sentence;
-  const unsigned ctx_size;
+  unsigned ctx_size;  //const
   double liw; //log importance weight
   double lpw; //log particle weight
 };
@@ -382,6 +404,13 @@ class ArcStandardParser : public TransitionParser {
 
   ArcStandardParser(unsigned context_size):
     TransitionParser(context_size) {
+  }
+
+  bool left_arc_valid() {
+    if (stack_.size() < 2)
+      return false;
+    WordIndex i = stack_.rbegin()[1];
+    return (i != 0);
   }
 
   bool left_arc() {
@@ -460,6 +489,13 @@ inline bool cmp_particle_weights(ArcStandardParser p1, ArcStandardParser p2) {
   return (p1.particle_weight() < p2.particle_weight());
 }
 
+inline bool cmp_normalized_particle_weights(ArcStandardParser p1, ArcStandardParser p2) {
+  return ((p1.particle_weight() / p1.num_actions()) < (p2.particle_weight() / p2.num_actions()));
+}
+
+inline bool cmp_rnorm_particle_weights(ArcStandardParser p1, ArcStandardParser p2) {
+  return ((p1.particle_weight() / (2*p1.sentence_length() - p1.stack_depth())) < (p2.particle_weight() / (2*p2.sentence_length() - p2.stack_depth())));
+}
 }
 
 #endif

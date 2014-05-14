@@ -468,7 +468,7 @@ def process_conll_data(data_dir, file_name):
 
 if __name__=='__main__':
     train_dir = ''  #'parsing/'
-    train_file = 'dutch_alpino_dev.conll' 
+    train_file = 'english_ptb_train.conll' 
     [dictionary, vocabulary, sentences, dependencies] = process_conll_data(train_dir, train_file)
     n_projective = 0
     n_projective_stuck = 0
