@@ -25,14 +25,14 @@ void train_raw(std::string train_file, Dict& dict, std::set<WordId>& vocabs, std
   std::vector<WxList> corpusd;
 
   std::string sentence_file = train_file + ".sentences";
-  std::cerr << "Reading corpus...\n";
+  std::cerr << "Reading sentences...\n";
   ReadFromFile(sentence_file, &dict, &corpuss, &vocabs);
-  std::cerr << "E-corpus size: " << corpuss.size() << " sentences\t (" << vocabs.size() << " word types)\n";
+  std::cerr << "Corpus size: " << corpuss.size() << " sentences\t (" << vocabs.size() << " word types)\n";
   
   std::string dependencies_file = train_file + ".dependencies";
-  std::cerr << "Reading corpus...\n";
+  std::cerr << "Reading dependencies...\n";
   ReadFromDependencyFile(dependencies_file, &corpusd);
-  std::cerr << "E-corpus size: " << corpusd.size() << " sentences\n";
+  //std::cerr << "E-corpus size: " << corpusd.size() << " sentences\n";
 
   // apply the oracle
   for (unsigned i = 0; i < corpuss.size(); ++i) {
@@ -42,7 +42,7 @@ void train_raw(std::string train_file, Dict& dict, std::set<WordId>& vocabs, std
       if (has_parse) {
         //std::cout << parser.actions_str() << std::endl;
         //add the extracted training examples
-        WordsList sh_ctxs = parser.shift_contexts();
+        WordsList sh_ctxs = parser.shift_contexts();        
         for (unsigned j = 0; j < parser.sentence_length(); ++j) {
           //corpussh.push_back(Words(1, parser.get_sentence()[j]));
           Words ins(1, parser.get_sentence()[j]);
@@ -93,7 +93,17 @@ void train_raw(std::string train_file, Dict& dict, std::set<WordId>& vocabs, std
       if (has_parse) {
         //std::cout << parser.actions_str() << std::endl;
         //add the extracted training examples
+        //if (parser.num_actions() != parser.action_context_size())
+         // std::cerr << "incorrect context size\n";
+        //else {
+        //  parser.print_action_contexts(dict);
+        //  std::cout << parser.actions_str() << std::endl;
+        //}
+
         WordsList sh_ctxs = parser.shift_contexts();
+        if (sh_ctxs.size() != parser.sentence_length())
+          std::cerr << "unmatching context lengths" << std::endl;
+
         for (unsigned j = 0; j < parser.sentence_length(); ++j) {
           //corpussh.push_back(Words(1, parser.get_sentence()[j]));
           Words ins(1, parser.get_sentence()[j]);
@@ -114,7 +124,7 @@ void train_raw(std::string train_file, Dict& dict, std::set<WordId>& vocabs, std
         WordsList arc_ctxs = parser.arc_contexts();
         for (unsigned j = 0; j < arc_ctxs.size(); ++j) {
           Words ins(1, static_cast<WordId>(parser.arc_predictions()[j]));
-          ins.insert(ins.end(), re_ctxs[j].begin(), re_ctxs[j].end());
+          ins.insert(ins.end(), arc_ctxs[j].begin(), arc_ctxs[j].end());
           corpusarc.push_back(ins);
         }
             
@@ -132,14 +142,30 @@ void train_lm(int samples, MT19937& eng, Dict& dict, std::vector<Words>& corpus,
   for (int sample=0; sample < samples; ++sample) {
     for (const auto& s : corpus) {
       WordId w = s[0];
-      ctx = std::vector<WordId>(s.begin()+1, s.end());
-      if (sample > 0) lm.decrement(w, ctx, eng);
+      for (unsigned i = 0; ((i < kORDER - 1) && (i < s.size() - 1)); i++)
+        ctx[i] = s[i+1];
+      if (sample > 0) 
+        lm.decrement(w, ctx, eng);
+      //else {
+      //  std::cout << dict.Convert(ctx[0]) << " " << dict.Convert(ctx[1]) << " " << dict.Convert(w) << std::endl;
+      //}
+      //if (sample==0) {
+      //  //std::cout << ctx[0] << " " << ctx[1] << " ";
+      //  lm.increment_verbose(w, ctx, eng);
+      //} else
       lm.increment(w, ctx, eng);
     }
+
+    if (sample % 30u == 29) {
+      //std::cerr << "resampling hyperparameters" << std::endl;
+      lm.resample_hyperparameters(eng);      
+    }
+
     if (sample % 10 == 9) {
-      std::cerr << " [LLH=" << lm.log_likelihood() << "]" << std::endl;
-      if (sample % 30u == 29) lm.resample_hyperparameters(eng);
-    } else { std::cerr << '.' << std::flush; }
+      std::cerr << (sample + 1) << " iterations [LLH=" << lm.log_likelihood() << "]" << std::endl;
+    } //else { 
+      //std::cerr << '.' << std::flush; 
+    //}
   }
 }
 

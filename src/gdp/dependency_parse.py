@@ -404,7 +404,7 @@ def process_conll_data(data_dir, file_name):
     in_file.close() 
     #print conll
     word_sentences = [[line[1] for line in sent] for sent in conll]
-    dependencies = [[-1] + [int(line[6]) for line in sent] for sent in conll]
+    dependencies = [[-1] + [int(line[7]) for line in sent] for sent in conll]
    
     #write word sentences to file
     s_file = open(data_dir + file_name + '.sentences', 'w')
@@ -468,7 +468,7 @@ def process_conll_data(data_dir, file_name):
 
 if __name__=='__main__':
     train_dir = ''  #'parsing/'
-    train_file = 'english_ptb_train.conll' 
+    train_file = 'english_ptb_dev.l.conll' 
     [dictionary, vocabulary, sentences, dependencies] = process_conll_data(train_dir, train_file)
     n_projective = 0
     n_projective_stuck = 0

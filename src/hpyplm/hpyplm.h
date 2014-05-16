@@ -65,6 +65,38 @@ template <unsigned N> struct PYPLM {
   }
 
   template<typename Engine>
+  void increment_verbose(WordId w, const std::vector<WordId>& context, Engine& eng) {
+    const double bo = backoff.prob(w, context);
+    copy_context_verbose(context, lookup);
+
+    std::cout << " [";
+    for (auto& l: lookup)
+      std::cout << l << " ";
+    std::cout << "]" << std::endl;
+
+    auto it = p.find(lookup);
+    if (it == p.end()) {
+      // note the first customer of a crp but don't create a crp object
+      auto s_result = singletons.insert(make_pair(lookup, w));
+      if (s_result.second) {
+        backoff.increment(w, context, eng);
+        return;
+      }
+
+      // second customer triggers crp creation
+      it = p.insert(make_pair(lookup, oxlm::crp<unsigned>(0.8,0))).first;
+      tr.insert(&it->second);  // add to resampler
+      
+      // insert the first customer, which by definition creates a table
+      assert (it->second.num_tables() == 0);
+      it->second.increment(s_result.first->second, 1.0, eng);
+      singletons.erase(s_result.first);
+    }
+    if (it->second.increment(w, bo, eng))
+      backoff.increment(w, context, eng);
+  }
+
+  template<typename Engine>
   void increment(WordId w, const std::vector<WordId>& context, Engine& eng) {
     const double bo = backoff.prob(w, context);
     copy_context(context, lookup);
@@ -114,18 +146,29 @@ template <unsigned N> struct PYPLM {
 
   double prob(WordId w, const std::vector<WordId>& context) const {
     copy_context(context, lookup);
+    if (N==4) {
+      std::cout << "[";
+      for (auto& l: lookup)
+        std::cout << l << " ";
+      std::cout << "] ";
+    }
     //std::cerr << w << std::endl;
     const double bo = backoff.prob(w, context);
 
     // singletons can be scored with a default crp
     auto s_it = singletons.find(lookup);
-    if (s_it != singletons.end())
+    if (s_it != singletons.end()) {
       // All singleton customers eat the dish 0, so if w matches the singleton 
       // for this context score 0, otherwise score 1 which is not in the crp.
       return singleton_crp.prob(s_it->second == w ? 0 : 1, bo);
+    }
 
     auto it = p.find(lookup);
-    if (it == p.end()) return bo;
+    if (it == p.end()) {
+      if (N==4)
+        std::cout << p.size() << " ";
+      return bo;
+    }
     return it->second.prob(w, bo);
   }
 
@@ -176,6 +219,14 @@ private:
     assert (context.size() >= N-1);
     for (unsigned i = 0; i < N-1; ++i)
       result[i] = context[context.size() - 1 - i];
+  }
+
+  void copy_context_verbose(const std::vector<WordId>& context, std::vector<WordId>& result) const {
+    assert (context.size() >= N-1);
+    for (unsigned i = 0; i < N-1; ++i) {
+      std::cout << "$" << i << " " << (context.size() - 1 - i) << "$ ";
+      result[i] = context[context.size() - 1 - i];
+    }
   }
 
   double singleton_log_likelihood() const {

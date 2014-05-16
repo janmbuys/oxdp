@@ -124,7 +124,8 @@ public:
     inline WordId Convert(const Word& word, bool frozen = false) {
         //convert to lower case - doesnt seem to make a significant difference
         Word lword(word);
-        std::transform(lword.begin(), lword.end(), lword.begin(), tolower);
+        if (word!="ROOT")
+          std::transform(lword.begin(), lword.end(), lword.begin(), tolower);
 
         auto i = d_.find(lword);
         if (i == d_.end()) {

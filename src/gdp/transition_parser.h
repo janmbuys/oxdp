@@ -176,6 +176,13 @@ class TransitionParser {
     std::cout << std::endl;
   }
 
+  void const print_action_contexts(Dict& dict) {
+    for (auto a: action_contexts_) {
+      std::cout << "(" << dict.Convert(sentence.at(a[0])) << " " << dict.Convert(sentence.at(a[1])) << ") ";
+    }
+    std::cout << std::endl;
+  }
+
   //context for next word prediction
   WordsList const shift_contexts() {
     return extract_contexts([&](Action a) {return a==Action::sh;});
@@ -211,15 +218,19 @@ class TransitionParser {
     return sentence.size();
   }
 
-  Words get_sentence() {
+  unsigned const action_context_size() {
+    return action_contexts_.size();
+  }
+
+  Words const get_sentence() {
     return sentence;
   }
 
-  double importance_weight() {
+  double const importance_weight() {
     return liw;
   }
 
-  double particle_weight() {
+  double const particle_weight() {
     return lpw;
   }
 
@@ -263,10 +274,13 @@ class TransitionParser {
     for (unsigned i = 0; i < actions_.size(); ++i) {
       if (pred(actions_[i])) {
         Words cnt = Words(ctx_size);
+        //std::cout << "(" << i << ") ";
         for (unsigned j = 0; j < ctx_size; ++j) {
           WordIndex k = action_contexts_[i][j];
+          //std::cout << k << " ";
           cnt[j] = sentence[k];
         }
+        //std::cout << std::endl;
         cnts.push_back(cnt);
       }  
     }
@@ -275,8 +289,18 @@ class TransitionParser {
 
   WxList const context() {
     WxList ctx(ctx_size, 0);
-    for (unsigned i = 0; (i < stack_.size()) && (i < ctx_size); ++i)
-      ctx.rbegin()[i] = stack_.rbegin()[i];
+
+    //hardcoded --all that works
+    if (stack_.size() >= 1)
+      ctx[1] = stack_.at(stack_.size()-1);
+    if (stack_.size() >= 2)  
+      ctx[0] = stack_.at(stack_.size()-2);
+    
+    //for (unsigned i = 1; (i <= stack_.size()) && (i <= ctx_size); ++i)
+    // ctx[ctx_size-i] = stack_.at(stack_.size()-i);
+    
+    //for (unsigned i = 0; (i < stack_.size()) && (i < ctx_size); ++i)
+    //  ctx.rbegin()[i] = stack_.rbegin()[i];
     return ctx;
   }
 
@@ -302,7 +326,7 @@ class TransitionParser {
     return actions_;
   }
    
-  int const num_actions() {
+  unsigned const num_actions() {
     return actions_.size();
   }
 
@@ -454,11 +478,15 @@ class ArcStandardParser : public TransitionParser {
     //for (auto w: gold_child_count)
     //  std::cout << w << " ";
     //std::cout << std::endl;
-        
+     
+    //std::cout << "sentence oracle" << std::endl;   
     bool is_stuck = false;
     //std::cerr << buffer_.size() << std::endl;
     while (!is_terminal_configuration() && !is_stuck) {
-      //std::cerr << buffer_.size() << std::endl;
+      //std::cout << stack_.size() << " ";
+      //std::cout << "(" << context()[0] << " " << context()[1] << ") ";
+      //if (stack_.size() >= 2)
+      //  std::cout << "[" << stack_.at(stack_.size()-2) << " " << stack_.at(stack_.size()-1) << "] ";
       action_contexts_.push_back(context());
       if (stack_depth() < 2) 
         shift();
@@ -475,6 +503,8 @@ class ArcStandardParser : public TransitionParser {
           is_stuck = true; 
       }
     }
+
+    //std::cout << std::endl;
     //if (!is_stuck) //&& arcs_!=gold_arcs)
     //    is_stuck = true;
     return !is_stuck;

@@ -125,13 +125,14 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
     //cout << "word lp: " <<  wordlp << endl; 
     if (parser.stack_depth()< 2) {
       a = Action::sh;
-    } else if (parser.sentence_length() > 20) {
+    }  else if (parser.sentence_length() > 20) {
         // check to upper bound sentence length
         if (!terminate_shift)
           cerr << " LENGTH LIMITED ";
         terminate_shift = true;
         a = Action::re;
-    } else {
+    }  
+    else {
       double shiftp = reduce_lm.prob(static_cast<WordId>(Action::sh), ctx);
       double reducep = reduce_lm.prob(static_cast<WordId>(Action::re), ctx);
       cout << "(sh: " << shiftp << " re: " << reducep << ") ";
@@ -150,7 +151,7 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
         a = Action::re; 
       }
 
-      cout << "(act) " << act << " ";
+      //cout << "(act) " << act << " ";
     } 
 
     if (a == Action::sh) {
@@ -181,10 +182,9 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
       a = static_cast<Action>(act+1);
 
       //TODO do we need to enforce the la constraint here?  
-
       parser.execute_action(a);
       llh -= lp;
-      cout << "(act) " << act << " ";
+      //cout << "(act) " << act << " ";
     }
   } while (!parser.is_terminal_configuration() && !terminate_generation);
 }
@@ -206,8 +206,11 @@ int main(int argc, char** argv) {
   MT19937 eng;
   Dict dict("ROOT", "", true); //used for all the models 
   //const unsigned num_actions = 3; 
-  const unsigned num_word_types = 26502; //hardcoded to save trouble
-  string train_file = "dutch_alpino_train.conll";
+  const unsigned num_word_types = 56574; //hardcoded to save trouble
+  string train_file = "conll2007-english/english_ptb_train.conll";
+  
+  //const unsigned num_word_types =  26502; //hardcoded to save trouble
+  //string train_file = "dutch_alpino_train.conll";
 
   set<WordId> vocabs;
   std::vector<Words> corpussh;
@@ -216,31 +219,33 @@ int main(int argc, char** argv) {
   
   PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1); //next word
   //for two-way decisions
-  /*
+  
   PYPLM<kORDER> reduce_lm(2, 1, 1, 1, 1); //shift/reduce
   PYPLM<kORDER> arc_lm(2, 1, 1, 1, 1); //left/right arc
 
   train_raw(train_file, dict, vocabs, corpussh, corpusre, corpusarc); //extract training examples 
   train_lm(samples, eng, dict, corpussh, shift_lm);
   train_lm(samples, eng, dict, corpusre, reduce_lm);  
-  train_lm(samples, eng, dict, corpusarc, arc_lm);   */
+  train_lm(samples, eng, dict, corpusarc, arc_lm);   
+
 
   //for three-way decision
   //train
-  PYPLM<kORDER> action_lm(3, 1, 1, 1, 1);
-  train_raw(train_file, dict, vocabs, corpussh, corpusre); //extract training examples 
-  train_lm(samples, eng, dict, corpussh, shift_lm);
-  train_lm(samples, eng, dict, corpusre, action_lm);  
+  //PYPLM<kORDER> action_lm(3, 1, 1, 1, 1);
+  //train_raw(train_file, dict, vocabs, corpussh, corpusre); //extract training examples 
+  //train_lm(samples, eng, dict, corpussh, shift_lm);
+  //train_lm(samples, eng, dict, corpusre, action_lm);  
 
   //sample sentences from the trained model
   vector<ArcStandardParser> particles(nPARTICLES, ArcStandardParser(kORDER-1)); 
 
   for (auto& parser: particles) {
-    //generate_sentence(parser, shift_lm, reduce_lm, arc_lm, vocabs.size(), eng);  
-    generate_sentence(parser, shift_lm, action_lm, vocabs.size(), eng);  
+    //generate_sentence(parser, shift_lm, action_lm, vocabs.size(), eng);  
+    generate_sentence(parser, shift_lm, reduce_lm, arc_lm, vocabs.size(), eng);  
 
     cout << parser.sentence_length() << ": ";
     parser.print_sentence(dict);
+    cout << parser.actions_str() << endl;
     parser.print_arcs();
   }
 }

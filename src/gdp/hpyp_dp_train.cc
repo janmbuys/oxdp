@@ -24,14 +24,34 @@ int main(int argc, char** argv) {
   MT19937 eng;
   Dict dict("ROOT", "", true); //used for all the models 
   int samples = atoi(argv[1]);
-  const unsigned num_word_types = 26502; //hardcoded to save trouble
+  //const unsigned num_word_types = 26502; //hardcoded to save trouble (dutch)
+  const unsigned num_word_types = 56574; //hardcoded to save trouble (english)
 
-  string train_file = "dutch_alpino_train.conll";
+  string train_file = "conll2007-english/english_ptb_train.conll";
+  //string train_file = "dutch_alpino_train.conll";
   set<WordId> vocabs;
-  //set<WordId> vocabr;
   std::vector<Words> corpussh;
+  std::vector<Words> corpusre;
+  std::vector<Words> corpusarc;
+  
+  PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1); //next word
+  PYPLM<kORDER> reduce_lm(2, 1, 1, 1, 1); //shift/reduce
+  PYPLM<kORDER> arc_lm(2, 1, 1, 1, 1); //left/right arc
+
+  train_raw(train_file, dict, vocabs, corpussh, corpusre, corpusarc); //extract training examples 
+  //print out constructed corpora
+  for (auto& ngram: corpusarc) {
+    cout << dict.Convert(ngram[1]) << " " << dict.Convert(ngram[2]) << " " << ngram[0] << endl;    
+  }
+
+  cerr << "\nTraining word model...\n";
+   train_lm(samples, eng, dict, corpussh, shift_lm);
+  cerr << "\nTraining shift/reduce model...\n";
+  train_lm(samples, eng, dict, corpusre, reduce_lm);
+  cerr << "\nTraining arc model...\n";
+  train_lm(samples, eng, dict, corpusarc, arc_lm);    
  
-//training for 3-way decision
+  //training for 3-way decision
 /*
   const unsigned num_actions = 3; 
   std::vector<Words> corpusre;
@@ -48,24 +68,11 @@ int main(int argc, char** argv) {
   train_lm(samples, eng, dict, corpussh, shift_lm);
   train_lm(samples, eng, dict, corpusre, action_lm);    */
 
-  std::vector<Words> corpusre;
-  std::vector<Words> corpusarc;
-  
-  PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1); //next word
-  PYPLM<kORDER> reduce_lm(2, 1, 1, 1, 1); //shift/reduce
-  PYPLM<kORDER> arc_lm(2, 1, 1, 1, 1); //left/right arc
-
-  train_raw(train_file, dict, vocabs, corpussh, corpusre, corpusarc); //extract training examples 
-  train_lm(samples, eng, dict, corpussh, shift_lm);
-  train_lm(samples, eng, dict, corpusre, reduce_lm);  
-  train_lm(samples, eng, dict, corpusarc, arc_lm);  
-
 //training from context files
 
   //string wc_train_file = "dutch_alpino_train.conll.words.contexts";
   ///string ac_train_file = "dutch_alpino_train.conll.actions.contexts";
   //train_shift(samples, wc_train_file, eng, dict, vocabs, shift_lm);
   //train_action(samples, ac_train_file, eng, dict, vocabr, action_lm);
- 
 }
 
