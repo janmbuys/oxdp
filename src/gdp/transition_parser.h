@@ -37,7 +37,6 @@ class TransitionParser {
     //copy of sent, position 0 is 0
     sentence.reserve(sent.size()+1);
     sentence.insert(sentence.end(), sent.begin(), sent.end());
-
     for (int i = 0; i < (int)sentence.size(); ++i)
       buffer_[i] = sentence.size()-i-1; 
   }
@@ -57,70 +56,21 @@ class TransitionParser {
   {
   }
 
-  //is this really necessary, as I am not doing anything non-standard?
-/*
-  //copy constructor
-  TransitionParser(const TransitionParser& p):  
-    stack_(p.stack_),
-    buffer_(p.buffer_),
-    arcs_(p.arcs_),
-    child_count_(p.child_count_),
-    actions_(p.actions_),
-    action_contexts_(p.action_contexts_), //though I'm not actually using this
-    sentence(p.sentence),
-    ctx_size{p.ctx_size},
-    liw{p.liw}, //though it will not be reused
-    lpw{p.lpw}
-  {
-  }
-
-  //copy assignment
-  TransitionParser& operator=(const TransitionParser& p) {
-    stack_ = p.stack_;
-    buffer_ = p.buffer_;
-    arcs_ = p.arcs_;
-    child_count_ = p.child_count_;
-    actions_ = p.actions_;
-    action_contexts_ = p.action_contexts_; //though I'm not actually using this
-    //sentence = p.sentence; //should be same sentence
-    //ctx_size = p.ctx_size; //ctx_size should be the same
-    liw = p.liw; //though it will not be reused
-    lpw = p.lpw; //though it will not be reused
-
-    //should I return something?
-    return *this;
-  }
-
-
-  //don't yet see this necessary
-  ~TransitionParser() { 
-    }
-*/
-
   bool shift() {
-    //std::cerr << "buffer size: " << buffer_.size() << std::endl;
     WordIndex i = buffer_.back();
     buffer_.pop_back();
     stack_.push_back(i);
     actions_.push_back(Action::sh);
-    //WxList ctx = context();
-    //std::cerr << "context size: " << ctx.size() << std::endl;
-    //std::cerr << "shift\n";
     return true;
   }
 
   bool shift(WordId w) {
-    //std::cerr << "buffer size: " << buffer_.size() << std::endl;
     WordIndex i = sentence.size();
     sentence.push_back(w);
     arcs_.push_back(-1);
     child_count_.push_back(0);
-        
     stack_.push_back(i);
     actions_.push_back(Action::sh);
-    WxList ctx = context();
-    //std::cerr << "context size: " << ctx.size() << std::endl;
-    //action_contexts_.push_back(ctx);
     return true;
   }
 
@@ -141,13 +91,10 @@ class TransitionParser {
   bool execute_action(Action a) {
     switch(a) {
     case Action::sh:
-      //std::cerr << "shift" << std::endl;
       return shift();
     case Action::la:
-      //std::cerr << "left arc" << std::endl;
       return left_arc();
     case Action::ra:
-      //std::cerr << "right arc" << std::endl;
       return right_arc();
     default: 
       //other cases not implemented
@@ -274,13 +221,10 @@ class TransitionParser {
     for (unsigned i = 0; i < actions_.size(); ++i) {
       if (pred(actions_[i])) {
         Words cnt = Words(ctx_size);
-        //std::cout << "(" << i << ") ";
         for (unsigned j = 0; j < ctx_size; ++j) {
           WordIndex k = action_contexts_[i][j];
-          //std::cout << k << " ";
           cnt[j] = sentence[k];
         }
-        //std::cout << std::endl;
         cnts.push_back(cnt);
       }  
     }
@@ -298,27 +242,19 @@ class TransitionParser {
     
     //for (unsigned i = 1; (i <= stack_.size()) && (i <= ctx_size); ++i)
     // ctx[ctx_size-i] = stack_.at(stack_.size()-i);
-    
-    //for (unsigned i = 0; (i < stack_.size()) && (i < ctx_size); ++i)
-    //  ctx.rbegin()[i] = stack_.rbegin()[i];
     return ctx;
   }
 
   Words const word_context() {
-    //edit: for now, rather return the whole stack
+    //return the whole stack
     if (stack_.size() < ctx_size) {
       Words ctx(ctx_size, 0);
       return ctx;        
     }
      
-    //std::cerr << stack_.size() << std::endl;
     Words ctx(stack_.size(), 0);
     for (unsigned i = 0; i < stack_.size(); ++i)
       ctx[i] = sentence[stack_[i]];
-        
-    //Words ctx(ctx_size, 0);
-    //for (unsigned i = 0; (i < stack_.size()) && (i < ctx_size); ++i)
-    //    ctx.rbegin()[i] = sentence[stack_.rbegin()[i]];
     return ctx;
   }
 
@@ -452,8 +388,6 @@ class ArcStandardParser : public TransitionParser {
     arcs_[i] = j;
     ++child_count_[j];
     actions_.push_back(Action::la);
-    //action_contexts_.push_back(context());
-    //std::cerr << "left arc\n";
     return true;
   }
 
@@ -464,29 +398,15 @@ class ArcStandardParser : public TransitionParser {
     arcs_[j] = i;
     ++child_count_[i];
     actions_.push_back(Action::ra);
-    //action_contexts_.push_back(context());
-    //std::cerr << "right arc\n";
     return true;
   }
 
   bool sentence_oracle(WxList gold_arcs) {
-    //for (auto w: gold_arcs)
-    // std::cout << w << " ";
-    //std::cout << std::endl;
      
     std::vector<int> gold_child_count = count_children(gold_arcs);
-    //for (auto w: gold_child_count)
-    //  std::cout << w << " ";
-    //std::cout << std::endl;
      
-    //std::cout << "sentence oracle" << std::endl;   
     bool is_stuck = false;
-    //std::cerr << buffer_.size() << std::endl;
     while (!is_terminal_configuration() && !is_stuck) {
-      //std::cout << stack_.size() << " ";
-      //std::cout << "(" << context()[0] << " " << context()[1] << ") ";
-      //if (stack_.size() >= 2)
-      //  std::cout << "[" << stack_.at(stack_.size()-2) << " " << stack_.at(stack_.size()-1) << "] ";
       action_contexts_.push_back(context());
       if (stack_depth() < 2) 
         shift();
@@ -504,9 +424,8 @@ class ArcStandardParser : public TransitionParser {
       }
     }
 
-    //std::cout << std::endl;
-    //if (!is_stuck) //&& arcs_!=gold_arcs)
-    //    is_stuck = true;
+    if (!is_stuck) //&& arcs_!=gold_arcs)
+      is_stuck = true;
     return !is_stuck;
   }
 };
@@ -526,6 +445,7 @@ inline bool cmp_normalized_particle_weights(ArcStandardParser p1, ArcStandardPar
 inline bool cmp_rnorm_particle_weights(ArcStandardParser p1, ArcStandardParser p2) {
   return ((p1.particle_weight() / (2*p1.sentence_length() - p1.stack_depth())) < (p2.particle_weight() / (2*p2.sentence_length() - p2.stack_depth())));
 }
+
 }
 
 #endif

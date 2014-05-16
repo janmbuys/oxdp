@@ -105,7 +105,6 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
 //For binary decisions
 void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm, int vocab_size, MT19937& eng) {
   int rw_size = 7;
-  double llh = 0;
   bool terminate_generation = false;
   bool terminate_shift = false;
   parser.shift(0);
@@ -113,19 +112,11 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
   do {
     Action a; //placeholder action
     Words ctx; 
-    double lp; 
-    double wordlp; 
     
-    //cout << "word: " << w << endl; 
     ctx = parser.word_context(); 
-    //cerr << "context: "; 
-    //for (auto w: ctx) 
-    //  cerr << w << " "; 
-    //cerr << endl; 
-    //cout << "word lp: " <<  wordlp << endl; 
     if (parser.stack_depth()< 2) {
       a = Action::sh;
-    }  else if (parser.sentence_length() > 20) {
+    } else if (parser.sentence_length() > 100) {
         // check to upper bound sentence length
         if (!terminate_shift)
           cerr << " LENGTH LIMITED ";
@@ -141,34 +132,23 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
       vector<double> distr = {shiftp, reducep};
       multinomial_distribution<double> mult(distr); 
       WordId act = mult(eng);
-      lp = log(distr[act]); // / log(2);
-      llh -= lp;
-      //cout << act << " ";
+      parser.add_particle_weight(distr[act]);
       
       if (act==0) {
         a = Action::sh;
       } else {
         a = Action::re; 
       }
-
-      //cout << "(act) " << act << " ";
     } 
 
     if (a == Action::sh) {
-      //cerr << vocab_size;      
-      //cerr << " context: ";
-      //for (auto w: ctx)
-      //  cerr << w << " ";
-      //cerr << endl;
-
       ctx = parser.word_context();
       //sample a word
       WordId w = shift_lm.generate(ctx, vocab_size, rw_size, eng);
-      //cout << "(word) " << w << endl;
-      wordlp = log(shift_lm.prob(w, ctx)); // / log(2);
-      
+      double wordp = shift_lm.prob(w, ctx); 
+
       parser.shift(w);
-      llh -= wordlp; //at least no oov problem
+      parser.add_particle_weight(wordp);
     } else if (a == Action::re) {
       double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), ctx);
       double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), ctx);
@@ -178,13 +158,11 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
       vector<double> distr = {leftarcp, rightarcp};
       multinomial_distribution<double> mult(distr); 
       WordId act = mult(eng);
-      lp = log(distr[act]); // / log(2);
       a = static_cast<Action>(act+1);
+      parser.add_particle_weight(distr[act]);
 
-      //TODO do we need to enforce the la constraint here?  
+      //may need to enforce the la constraint here
       parser.execute_action(a);
-      llh -= lp;
-      //cout << "(act) " << act << " ";
     }
   } while (!parser.is_terminal_configuration() && !terminate_generation);
 }

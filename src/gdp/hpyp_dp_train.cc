@@ -53,26 +53,10 @@ int main(int argc, char** argv) {
  
   //training for 3-way decision
 /*
-  const unsigned num_actions = 3; 
-  std::vector<Words> corpusre;
-  
-  PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1);  
-  PYPLM<kORDER> action_lm(num_actions, 1, 1, 1, 1);
-  
-  //training 
+  PYPLM<kORDER> action_lm(3, 1, 1, 1, 1);
   
   train_raw(train_file, dict, vocabs, corpussh, corpusre); //extract training examples 
-  //train_shift(samples, eng, dict, corpussh, shift_lm);
-  //train_action(samples, eng, dict, corpusre, action_lm);    
-  
   train_lm(samples, eng, dict, corpussh, shift_lm);
   train_lm(samples, eng, dict, corpusre, action_lm);    */
-
-//training from context files
-
-  //string wc_train_file = "dutch_alpino_train.conll.words.contexts";
-  ///string ac_train_file = "dutch_alpino_train.conll.actions.contexts";
-  //train_shift(samples, wc_train_file, eng, dict, vocabs, shift_lm);
-  //train_action(samples, ac_train_file, eng, dict, vocabr, action_lm);
 }
 
