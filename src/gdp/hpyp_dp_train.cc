@@ -22,27 +22,29 @@ int main(int argc, char** argv) {
   }
 
   MT19937 eng;
-  Dict dict("ROOT", "", true); //used for all the models 
+  Dict dict("ROOT", ""); //used for all the models 
   int samples = atoi(argv[1]);
   //const unsigned num_word_types = 26502; //hardcoded to save trouble (dutch)
-  const unsigned num_word_types = 56574; //hardcoded to save trouble (english)
+  //const unsigned num_word_types = 56574; //hardcoded to save trouble (english)
 
-  string train_file = "conll2007-english/english_ptb_train.conll";
+  //string train_file = "conll2007-english/english_ptb_train.conll";
+  string train_file = "english-wsj/english_wsj_train_small.conll";
   //string train_file = "dutch_alpino_train.conll";
   set<WordId> vocabs;
   std::vector<Words> corpussh;
   std::vector<Words> corpusre;
   std::vector<Words> corpusarc;
-  
-  PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1); //next word
+
+  train_raw(train_file, dict, vocabs, corpussh, corpusre, corpusarc); //extract training examples 
+
+  PYPLM<kORDER> shift_lm(vocabs.size() + 1, 1, 1, 1, 1); //predict next word
   PYPLM<kORDER> reduce_lm(2, 1, 1, 1, 1); //shift/reduce
   PYPLM<kORDER> arc_lm(2, 1, 1, 1, 1); //left/right arc
 
-  train_raw(train_file, dict, vocabs, corpussh, corpusre, corpusarc); //extract training examples 
   //print out constructed corpora
-  for (auto& ngram: corpusarc) {
+  /* for (auto& ngram: corpusarc) {
     cout << dict.Convert(ngram[1]) << " " << dict.Convert(ngram[2]) << " " << ngram[0] << endl;    
-  }
+  } */
 
   cerr << "\nTraining word model...\n";
    train_lm(samples, eng, dict, corpussh, shift_lm);
@@ -51,6 +53,7 @@ int main(int argc, char** argv) {
   cerr << "\nTraining arc model...\n";
   train_lm(samples, eng, dict, corpusarc, arc_lm);    
  
+
   //training for 3-way decision
 /*
   PYPLM<kORDER> action_lm(3, 1, 1, 1, 1);

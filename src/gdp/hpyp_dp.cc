@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <cstdlib>
+#include <chrono>
 
 #include "transition_parser.h"
 #include "hpyp_dp_train.h"
@@ -66,7 +67,7 @@ void resample_particles(vector<ArcStandardParser>& particles, unsigned num_parti
 }
 
 //for binary action decisions, resample at each step
-ArcStandardParser particle_par_parse_sentence(Words s, WxList goldd, unsigned num_particles, bool resample, Dict& dict, MT19937& eng, set<WordId>& vocabs, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm) {  
+ArcStandardParser particle_par_parse_sentence(Words s, WxList goldd, unsigned num_particles, bool resample, Dict& dict, MT19937& eng, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm) {  
   cout << "gold arcs: ";
   for (auto d: goldd)
     cout << d << " ";
@@ -217,29 +218,73 @@ ArcStandardParser particle_par_parse_sentence(Words s, WxList goldd, unsigned nu
   return particles[0];
 }
 
+//gold parser
+ArcStandardParser gold_parse_sentence(Words s, WxList goldd, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm) {  
+//compute and score oracle parse sequence
+  ArcStandardParser gold_p(s, kORDER-1);
+
+  while (!gold_p.is_terminal_configuration()) {
+    Words ctx = gold_p.word_context();
+    double reducep = reduce_lm.prob(static_cast<WordId>(Action::re), ctx);
+    double shiftp = reduce_lm.prob(static_cast<WordId>(Action::sh), ctx);
+    
+    Action nexta = gold_p.oracle_next(goldd);
+    if (nexta==Action::sh) {
+      WordId w = gold_p.next_word();
+      double wordp = shift_lm.prob(w, ctx); 
+      gold_p.shift();
+      gold_p.add_importance_weight(wordp); 
+      gold_p.add_particle_weight(shiftp*wordp); 
+    } else {
+      double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), ctx);
+      double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), ctx);
+
+      if (gold_p.is_buffer_empty())
+        gold_p.add_importance_weight(reducep);
+      if (nexta==Action::la) {
+        gold_p.left_arc();
+        gold_p.add_particle_weight(reducep*leftarcp); 
+      } else if (nexta==Action::ra) {
+        gold_p.right_arc();
+        gold_p.add_particle_weight(reducep*rightarcp); 
+      } else {
+        cerr << "Invalid gold parse." << endl;
+      }
+    }
+  }
+
+  cout << "Gold weight: " << gold_p.particle_weight() << endl;
+  return gold_p;
+}
+
 //beam parser
-ArcStandardParser beam_parse_sentence(Words s, WxList goldd, unsigned beam_size, Dict& dict, MT19937& eng, set<WordId>& vocabs, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm) {  
-  vector<ArcStandardParser> beam(1, ArcStandardParser(s, kORDER-1));  
-  beam[0].print_sentence(dict);
+template<unsigned kORD, unsigned sORD, unsigned nORD> 
+ArcStandardParser beam_parse_sentence(Words s, Words ps, WxList goldd, unsigned beam_size, Dict& dict, MT19937& eng, PYPLM<sORD>& shift_lm, PYPLM<nORD>& reduce_lm, PYPLM<nORD>& arc_lm, PYPLM<kORD>& tag_lm) {  
+  vector<ArcStandardParser> beam(1, ArcStandardParser(s, ps, kORD-1));  
+  /* beam[0].print_sentence(dict);
+  beam[0].print_postags(dict);
   
   cout << "gold arcs: ";
   for (auto d: goldd)
     cout << d << " ";
-  cout << endl;  
-
-  for (unsigned i = 0; i < s.size() + 1; ++i) {
+  cout << endl;   */
+ 
+  for (unsigned i = 0; i < s.size(); ++i) {
     unsigned sh_bound = beam.size(); 
     for (unsigned j = 0; j < beam.size(); ++j) { 
       //sample a sequence of possible actions leading up to the next shift
-      Words ctx = beam[j].word_context();
+      Words w_ctx = beam[j].word_posx_context();
+      Words p_ctx = beam[j].word_pos_context();
+      Words r_ctx = beam[j].word_pos_context();
+      Words t_ctx = beam[j].pos_context();
       //if (j%10 == 0)
       //  cerr << j << " " << beam.size() << endl;
 
-      if (beam[j].stack_depth() >= kORDER-1) {
+      if (beam[j].stack_depth() >= kORD-1) {
         //add paths for reduce actions
-        double reducep = reduce_lm.prob(static_cast<WordId>(Action::re), ctx);
-        double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), ctx);
-        double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), ctx);
+        double reducep = reduce_lm.prob(static_cast<WordId>(Action::re), r_ctx);
+        double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), p_ctx);
+        double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), p_ctx);
        
         //add to the beam 
         beam.push_back(beam[j]);
@@ -266,12 +311,17 @@ ArcStandardParser beam_parse_sentence(Words s, WxList goldd, unsigned beam_size,
 
       //perform shift
       ArcStandardParser& shift_p = beam[j];
-      double shiftp = reduce_lm.prob(static_cast<WordId>(Action::sh), ctx);
+      double shiftp = reduce_lm.prob(static_cast<WordId>(Action::sh), r_ctx);
       WordId w = shift_p.next_word();
-      double wordlp = shift_lm.prob(w, ctx); 
+      double wordp = shift_lm.prob(w, w_ctx); 
+      WordId tag = shift_p.next_tag();
+      double tagp = tag_lm.prob(tag, t_ctx);
+
       shift_p.shift();
-      shift_p.set_importance_weight(wordlp); 
-      shift_p.add_particle_weight(shiftp*wordlp); 
+      shift_p.set_importance_weight(wordp); 
+      shift_p.add_importance_weight(tagp); 
+      shift_p.add_particle_weight(shiftp*wordp); 
+      shift_p.add_particle_weight(tagp); 
       //cerr << "p: " <<  parser.stack_depth() << " " << parser.particle_weight() << " " << parser.buffer_length() << " " << parser.sentence_length() << endl;
 
       if (j==sh_bound) {
@@ -307,10 +357,12 @@ ArcStandardParser beam_parse_sentence(Words s, WxList goldd, unsigned beam_size,
         beam[j].set_log_particle_weight(1000); 
       } else {
         //add paths for reduce actions
-        Words ctx = beam[j].word_context();
-        double reducep = reduce_lm.prob(static_cast<WordId>(Action::re), ctx);
-        double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), ctx);
-        double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), ctx);
+        //Words w_ctx = beam[j].word_posx_context();
+        Words p_ctx = beam[j].word_pos_context();
+        Words r_ctx = beam[j].word_pos_context();
+        double reducep = reduce_lm.prob(static_cast<WordId>(Action::re), r_ctx);
+        double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), p_ctx);
+        double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), p_ctx);
 
         if (beam[j].left_arc_valid()) {
           beam.push_back(beam[j]);
@@ -349,29 +401,159 @@ ArcStandardParser beam_parse_sentence(Words s, WxList goldd, unsigned beam_size,
     }
   }
 
+  /*
   //print parses
   for (unsigned i = 0; (i < 5) && (i < final_beam.size()); ++i) {
     auto& parser = final_beam[i];
-    parser.print_arcs();
-    cout << parser.actions_str() << endl;
+      parser.print_arcs();
+    //cout << parser.actions_str() << endl;
 
-    float dir_acc = (parser.directed_accuracy_count(goldd) + 0.0)/s.size();
-    float undir_acc = (parser.undirected_accuracy_count(goldd) + 0.0)/s.size();
+    float dir_acc = (parser.directed_accuracy_count(goldd) + 0.0)/(s.size()-1);
+    float undir_acc = (parser.undirected_accuracy_count(goldd) + 0.0)/(s.size()-1);
 
     cout << "  Dir Accuracy: " << dir_acc;
     cout << "  UnDir Accuracy: " << undir_acc;
-    cout << "  Sample weight: " << (parser.particle_weight()) << endl; // /log(10)
-  }  
+    cout << "  Sample weight: " << (parser.particle_weight()) << endl; // /log(10) 
+  }  */
 
   if (final_beam.size()==0) {
     cout << "no parse found" << endl;
-    return ArcStandardParser(s, kORDER-1);  
+    return ArcStandardParser(s, kORD-1);  
   } else
     return final_beam[0];
 }
 
+//beam parser
+template<unsigned kORD, unsigned sORD, unsigned nORD> 
+ArcStandardParser beam_parse_align_sentence(Words s, Words ps, WxList goldd, unsigned beam_size, Dict& dict, MT19937& eng, PYPLM<sORD>& shift_lm, PYPLM<nORD>& reduce_lm, PYPLM<nORD>& arc_lm, PYPLM<kORD>& tag_lm) {  
+  vector<ArcStandardParser> beam(1, ArcStandardParser(s, ps, kORD-1));  
+  beam[0].print_sentence(dict);
+  beam[0].print_postags(dict);
+  
+  cout << "gold arcs: ";
+  for (auto d: goldd)
+    cout << d << " ";
+  cout << endl;  
+ 
+  //all beam items will terminate after same number of steps
+  for (unsigned i = 0; i < 2*(s.size()-1); ++i) {
+    unsigned b_size = beam.size(); 
+    for (unsigned j = 0; j < b_size; ++j) { 
+    //cout << i << " " << beam[j].stack_depth() << " " << beam[j].buffer_length() << endl;
+      //sample a sequence of possible actions leading up to the next shift
+      Words p_ctx = beam[j].word_pos_context();
+      Words r_ctx = beam[j].word_pos_context();
+      Words t_ctx = beam[j].pos_context();
+
+      if (beam[j].stack_depth() < 2) {
+        //have to shift
+        ArcStandardParser& shift_p = beam[j];
+        Words w_ctx = beam[j].word_posx_context();
+        double shiftp = reduce_lm.prob(static_cast<WordId>(Action::sh), r_ctx);
+        WordId w = shift_p.next_word();
+        double wordp = shift_lm.prob(w, w_ctx); 
+        WordId tag = shift_p.next_tag();
+        double tagp = tag_lm.prob(tag, t_ctx);
+
+        shift_p.shift();
+        shift_p.set_importance_weight(wordp); 
+        shift_p.add_importance_weight(tagp); 
+        shift_p.add_particle_weight(shiftp*wordp); 
+        shift_p.add_particle_weight(tagp); 
+      } else {
+        //add paths for reduce actions
+        double reducep = reduce_lm.prob(static_cast<WordId>(Action::re), r_ctx);
+        double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), p_ctx);
+        double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), p_ctx);
+       
+        //add to the beam: replace current position with right arc
+        if (beam[j].is_buffer_empty()) {
+          if (beam[j].left_arc_valid()) {
+            beam.push_back(beam[j]);
+            ArcStandardParser& right_p = beam[j]; 
+            ArcStandardParser& left_p = beam.back(); 
+
+            left_p.left_arc();
+            left_p.add_particle_weight(reducep*leftarcp);
+            left_p.set_importance_weight(reducep); 
+            right_p.right_arc();
+            right_p.add_particle_weight(reducep*rightarcp); 
+            right_p.set_importance_weight(reducep); 
+          } else {
+            ArcStandardParser& right_p = beam[j]; 
+            right_p.right_arc();
+            right_p.add_particle_weight(reducep*rightarcp); 
+            right_p.set_importance_weight(reducep*rightarcp); 
+          }
+        } else {
+          beam.push_back(beam[j]);
+          if (beam[j].left_arc_valid()) {
+            beam.push_back(beam[j]);
+            ArcStandardParser& right_p = beam.rbegin()[1]; 
+            ArcStandardParser& left_p = beam.back(); 
+
+            left_p.left_arc();
+            left_p.add_particle_weight(reducep*leftarcp);
+            left_p.set_importance_weight(reducep); 
+            right_p.right_arc();
+            right_p.add_particle_weight(reducep*rightarcp); 
+            right_p.set_importance_weight(reducep); 
+          } else {
+            ArcStandardParser& right_p = beam.back(); 
+            right_p.right_arc();
+            right_p.add_particle_weight(reducep*rightarcp); 
+            right_p.set_importance_weight(reducep*rightarcp); 
+          }
+          //cout << " + " << beam.size();
+
+          ArcStandardParser& shift_p = beam[j];
+          double shiftp = reduce_lm.prob(static_cast<WordId>(Action::sh), r_ctx);
+          WordId w = shift_p.next_word();
+          Words w_ctx = beam[j].word_posx_context();
+          double wordp = shift_lm.prob(w, w_ctx); 
+          WordId tag = shift_p.next_tag();
+          double tagp = tag_lm.prob(tag, t_ctx);
+
+          shift_p.shift();
+          shift_p.set_importance_weight(wordp); 
+          shift_p.add_importance_weight(tagp); 
+          shift_p.add_particle_weight(shiftp*wordp); 
+          shift_p.add_particle_weight(tagp); 
+        }
+      }
+    }
+    //cout << endl;
+
+    //otherwise compare normalized weights 
+    sort(beam.begin(), beam.end(), cmp_particle_weights);
+    //remove items with worst scores
+    for (unsigned j = beam.size()- 1; j >= beam_size; --j)
+      beam.pop_back();
+  } 
+
+  //print parses
+  for (unsigned i = 0; (i < 5) && (i < beam.size()); ++i) {
+    auto& parser = beam[i];
+    parser.print_arcs();
+    //cout << parser.actions_str() << endl;
+
+    float dir_acc = (parser.directed_accuracy_count(goldd) + 0.0)/(s.size()-1);
+    float undir_acc = (parser.undirected_accuracy_count(goldd) + 0.0)/(s.size()-1);
+
+    cout << "  Dir Accuracy: " << dir_acc;
+    cout << "  UnDir Accuracy: " << undir_acc;
+    cout << "  Sample weight: " << (parser.particle_weight()) << endl; // /log(10) 
+  }  
+
+  if (beam.size()==0) {
+    cout << "no parse found" << endl;
+    return ArcStandardParser(s, kORD-1);  
+  } else
+    return beam[0];
+}
+
 //for greedy binary action decisions
-ArcStandardParser greedy_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng, set<WordId>& vocabs, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm) {  
+ArcStandardParser greedy_parse_sentence(Words s, WxList goldd, Dict& dict, MT19937& eng, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm) {  
   //read in dev sentence; sample actions: for each action, execute and compute next word probability for shift
   cout << "gold arcs: ";
   for (auto d: goldd)
@@ -440,88 +622,6 @@ ArcStandardParser greedy_parse_sentence(Words s, WxList goldd, Dict& dict, MT199
   return parser;
 }
 
-//for three-way action decisions
-void particle_parse_sentence(Words s, WxList goldd, unsigned num_particles, bool resample, Dict& dict, MT19937& eng, set<WordId>& vocabs, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& action_lm) {  
-  //read in dev sentence; sample actions: for each action, execute and compute next word probability for shift
-  cout << "gold arcs: ";
-  for (auto d: goldd)
-    cout << d << " ";
-  cout << endl; 
-
-  vector<ArcStandardParser> particles(num_particles, ArcStandardParser(s, kORDER-1)); 
-
-  //For now, construct the particles serially
-  for (auto& parser: particles) {
-
-    while (!parser.is_buffer_empty()) {
-      Action a = Action::re; //placeholder action
-      WordId w = parser.next_word();
-      Words ctx;
-         
-      //sample action while action<>shift
-      while (a != Action::sh) {
-        ctx = parser.word_context();
-        double wordp = shift_lm.prob(w, ctx); // log(2);
-
-        if ((parser.stack_depth()< kORDER-1) && !parser.is_buffer_empty()) {
-          a = Action::sh;
-          parser.shift();
-          parser.add_importance_weight(wordp);
-          parser.add_particle_weight(wordp);
-        } else {
-          double shiftp = action_lm.prob(static_cast<WordId>(Action::sh), ctx);
-          double leftarcp = action_lm.prob(static_cast<WordId>(Action::la), ctx);
-          double rightarcp = action_lm.prob(static_cast<WordId>(Action::ra), ctx);
-
-          vector<double> distr = {shiftp, leftarcp, rightarcp};
-          multinomial_distribution<double> mult(distr); 
-          WordId act = mult(eng);
-          a = static_cast<Action>(act);
-          if (!parser.execute_action(a)) {
-            a = Action::re;
-          } else {
-            parser.add_particle_weight(distr[act]);
-          }
-        }
-      } 
-    }
-    //cout << "shift completed" << endl;
-
-    //actions to empty the stack
-    while (!parser.is_terminal_configuration()) {
-      Words ctx = parser.word_context();
-          
-      if (parser.stack_depth() < 2) {
-        cout << "parse failed" << endl;  
-      } else {
-        double leftarcp = action_lm.prob(static_cast<WordId>(Action::la), ctx);
-        double rightarcp = action_lm.prob(static_cast<WordId>(Action::ra), ctx);
-
-        vector<double> distr = {leftarcp, rightarcp};
-        multinomial_distribution<double> mult(distr); 
-        WordId act = mult(eng);
-        Action a = static_cast<Action>(act+1);
-        parser.execute_action(a);
-        parser.add_importance_weight(leftarcp+rightarcp);
-        parser.add_particle_weight(distr[act]);
-      }
-    }
-        
-    float dir_acc = (parser.directed_accuracy_count(goldd) + 0.0)/s.size();
-    float undir_acc = (parser.undirected_accuracy_count(goldd) + 0.0)/s.size();
-
-    parser.print_arcs();
-    cout << "  Dir Accuracy: " << dir_acc;
-    cout << "  UnDir Accuracy: " << undir_acc;
-    cout << "  Importance weight: " << parser.importance_weight();
-    cout << "  Sample weight: " << parser.particle_weight() << endl;
-
-  } //end of particles loop
-
-  if (resample)
-    resample_particles(particles, num_particles, eng);
-}
-
 /*train a generative dependency parsing model using given context vectors;
  * test, for now with a single sampling model 
  */
@@ -534,82 +634,114 @@ int main(int argc, char** argv) {
   }
 
   int samples = atoi(argv[1]);
-/*
-  string train_file = "conll2007-english/english_ptb_train.conll";
-  string test_file = "conll2007-english/english_ptb_dev.l.conll.sentences";
-  string test_dependencies_file = "conll2007-english/english_ptb_dev.l.conll.dependencies"; */
 
+  string train_file = "english-wsj/english_wsj_train.conll";
+  string test_file = "english-wsj/english_wsj_dev.conll";
+  string out_file = "wsj_dev.system.conll";
+  //string test_dependencies_file = "conll2007-english/english_ptb_dev.l.conll.dependencies";
+/*
   string train_file = "dutch-conll/dutch_alpino_train.conll";
   string test_file = "dutch-conll/dutch_alpino_dev.conll.sentences";
-  string test_dependencies_file = "dutch-conll/dutch_alpino_dev.conll.dependencies";
+  string test_dependencies_file = "dutch-conll/dutch_alpino_dev.conll.dependencies"; */
 
   //used for all the models 
-  Dict dict("ROOT", "", true);
+  Dict dict("ROOT", "");
   MT19937 eng;
-  const WordId kSOS = dict.Convert("ROOT"); 
-  vector<WordId> ctx(kORDER - 1, kSOS);
 
-  const unsigned num_word_types = 26502; 
-  //const unsigned num_word_types = 56574; //hardcoded to save trouble TODO change this
-
-  set<WordId> vocabs;
   std::vector<Words> corpussh;
   std::vector<Words> corpusre;
-  
-
-  PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1);
-  //PYPLM<kORDER> reduce_lm(3, 1, 1, 1, 1);
-  
   std::vector<Words> corpusarc;
-  PYPLM<kORDER> reduce_lm(2, 1, 1, 1, 1);
-  PYPLM<kORDER> arc_lm(2, 1, 1, 1, 1);
- 
-  //train 
-  train_raw(train_file, dict, vocabs, corpussh, corpusre, corpusarc); //extract training examples 
+  std::vector<Words> corpustag;
   
+  cerr << "\nStarting training\n";
+  auto tr_start = chrono::steady_clock::now();
+  //train 
+  train_raw(train_file, dict, 2, corpussh, corpusre, corpusarc, corpustag); //extract training examples 
+
+  PYPLM<6> shift_lm(dict.size()+1, 1, 1, 1, 1);
+  PYPLM<5> reduce_lm(2, 1, 1, 1, 1); 
+  PYPLM<5> arc_lm(2, 1, 1, 1, 1);
+  PYPLM<3> tag_lm(dict.pos_size(), 1, 1, 1, 1);
+
+  //samples = 50;  //assume for now
   cerr << "\nTraining word model...\n";
-   train_lm(samples, eng, dict, corpussh, shift_lm);
+  train_lm(4*samples, eng, dict, corpussh, shift_lm);
   cerr << "\nTraining shift/reduce model...\n";
   train_lm(samples, eng, dict, corpusre, reduce_lm);
   cerr << "\nTraining arc model...\n";
-  train_lm(3*samples, eng, dict, corpusarc, arc_lm); //seems to converge slower
-    
-/*  train_raw(train_file, dict, vocabs, corpussh, corpusre); //extract training examples 
-  train_lm(samples, eng, dict, corpussh, shift_lm);
-  train_lm(samples, eng, dict, corpusre, reduce_lm);  */
+  train_lm(6*samples, eng, dict, corpusarc, arc_lm); //seems to converge slower
+  cerr << "\nTraining pos tag model...\n";
+  train_lm(samples, eng, dict, corpustag, tag_lm); 
 
-  set<WordId> tv;
+  auto tr_dur = chrono::steady_clock::now() - tr_start;
+  cerr << "Training done...time " << chrono::duration_cast<chrono::seconds>(tr_dur).count() << "s\n";
+
   vector<Words> test;
+  vector<Words> testpos;
   vector<WxList> testd;
 
   std::cerr << "Reading test corpus...\n";
-  ReadFromFile(test_file, &dict, &test, &tv);  
-  std::cerr << "Test corpus size: " << test.size() << " sentences\t (" << tv.size() << " word types)\n";
-  ReadFromDependencyFile(test_dependencies_file, &testd);
+  ReadFromConllFile(test_file, &dict, &test, &testpos, &testd, true);
+  std::cerr << "Test corpus size: " << test.size() << " sentences\n";
 
-// lm.print(cerr);
-  unsigned beam_size = 16;
-  //unsigned num_particles = 100;
-  int total_length = 0;
-  int directed_count = 0;
-  int undirected_count = 0;
+  vector<unsigned> beam_sizes{4, 8, 16, 32, 64, 128};
+  //vector<unsigned> beam_sizes{4};
+  //unsigned beam_size = 8;
 
+  for (unsigned beam_size: beam_sizes) {
 
-  cerr << "\nParsing test sentences...\n";
-  for (unsigned j = 0; j < test.size(); ++j) {
-    //particle_parse_sentence(test[j], testd[j], dict, eng, vocabs, shift_lm, reduce_lm);
-    if (test[j].size() <= 100) {
-      ArcStandardParser b_parser = greedy_parse_sentence(test[j], testd[j], dict, eng, vocabs, shift_lm, reduce_lm, arc_lm);
-      //ArcStandardParser b_parser = particle_par_parse_sentence(test[j], testd[j], beam_size, false, dict, eng, vocabs, shift_lm, reduce_lm, arc_lm);
-      //ArcStandardParser b_parser = beam_parse_sentence(test[j], testd[j], beam_size, dict, eng, vocabs, shift_lm, reduce_lm, arc_lm);
-      total_length += (testd[j].size() - 1);
-      directed_count += b_parser.directed_accuracy_count(testd[j]);
-      undirected_count += b_parser.undirected_accuracy_count(testd[j]);
+    AccuracyCounts acc_counts;
+    AccuracyCounts acc_counts1;
+    cerr << "\nParsing test sentences... (beam size " << beam_size <<  ")\n";
+    auto pr_start = chrono::steady_clock::now();
+    ofstream outs;
+    outs.open(out_file);
+
+    for (unsigned j = 0; j < test.size(); ++j) {
+      //if ((test[j].size() <= 10) && is_projective_dependency(testd[j])) {
+
+        //ArcStandardParser g_parser = gold_parse_sentence(test[j], testd[j], shift_lm, reduce_lm, arc_lm);
+
+        //ArcStandardParser b_parser = greedy_parse_sentence(test[j], testd[j], dict, eng, shift_lm, reduce_lm, arc_lm);
+        //ArcStandardParser b_parser = particle_par_parse_sentence(test[j], testd[j], beam_size, true, dict, eng, shift_lm, reduce_lm, arc_lm);
+        ArcStandardParser b_parser = beam_parse_sentence(test[j], testpos[j], testd[j], beam_size, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
+        ArcStandardParser bl_parser = beam_parse_align_sentence(test[j], testpos[j], testd[j], beam_size, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
+        b_parser.count_accuracy(acc_counts, testd[j]);
+        bl_parser.count_accuracy(acc_counts1, testd[j]);
+
+        //write output to conll-format file
+        for (unsigned i = 1; i < test[j].size(); ++i) 
+          outs << i << "\t" << dict.Convert(test[j][i]) << "\t_\t_\t" << dict.ConvertPOS(testpos[j][i]) << "\t_\t" << b_parser.arcs()[i] << "\tROOT\t_\t_\n";
+
+        outs << "\n";
+        cerr << ".";
+    //}
     }
-  }
 
-  cerr << "Directed Accuracy:" << (directed_count + 0.0)/total_length << endl;
-  cerr << "Undirected Accuracy:" << (undirected_count + 0.0)/total_length << endl;
+    outs.close();
+    auto pr_dur = chrono::steady_clock::now() - pr_start;
+    cerr << "\nParsing done...time " << chrono::duration_cast<chrono::seconds>(pr_dur).count() << "s\n";
+ 
+    cerr << "Word-aligned beam search" << endl; 
+    cerr << "Directed Accuracy: " << acc_counts.directed_accuracy() << endl;
+    cerr << "Undirected error rate: " << (1 - acc_counts.undirected_accuracy()) << endl;
+    cerr << "Final reduce error rate: " << acc_counts.final_reduce_error_rate() << endl;
+    cerr << "Completely correct: " << acc_counts.complete_accuracy() << endl;
+    cerr << "Root correct: " << acc_counts.root_accuracy() << endl;
+    cerr << "ArcDirection Precision: " << acc_counts.arc_dir_precision() << endl;
+    cerr << "Shift recall: " << acc_counts.shift_recall() << endl;
+    cerr << "Reduce recall: " << acc_counts.reduce_recall() << endl;
+
+    cerr << "\nAction-aligned beam search" << endl; 
+    cerr << "Directed Accuracy: " << acc_counts1.directed_accuracy() << endl;
+    cerr << "Undirected error rate: " << (1 - acc_counts1.undirected_accuracy()) << endl;
+    cerr << "Final reduce error rate: " << acc_counts1.final_reduce_error_rate() << endl;
+    cerr << "Completely correct: " << acc_counts1.complete_accuracy() << endl;
+    cerr << "Root correct: " << acc_counts1.root_accuracy() << endl;
+    cerr << "ArcDirection Precision: " << acc_counts1.arc_dir_precision() << endl;
+    cerr << "Shift recall: " << acc_counts1.shift_recall() << endl;
+    cerr << "Reduce recall: " << acc_counts1.reduce_recall() << endl;
+  }
 
   return 0;
 }

@@ -8,14 +8,14 @@
 #include "pyp/random.h"
 
 #define kORDER 3  //default 4
-#define nPARTICLES 100
+#define nPARTICLES 200
 
 using namespace std;
 using namespace oxlm;
 
 //For three-way decision
 void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& action_lm, int vocab_size, MT19937& eng) {
-  int rw_size = 7;
+  //int rw_size = 7;
   double llh = 0;
   bool terminate_generation = false;
   bool terminate_shift = false;
@@ -85,7 +85,7 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
       //cerr << endl;
 
       //sample a word
-      WordId w = shift_lm.generate(ctx, vocab_size, rw_size, eng);
+      WordId w = shift_lm.generate(ctx, vocab_size, eng);
       wordlp = log(shift_lm.prob(w, ctx)); // / log(2);
         
       //cout << "(word) " << w << endl;
@@ -104,7 +104,7 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
 
 //For binary decisions
 void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM<kORDER>& reduce_lm, PYPLM<kORDER>& arc_lm, int vocab_size, MT19937& eng) {
-  int rw_size = 7;
+  //int rw_size = 7;
   bool terminate_generation = false;
   bool terminate_shift = false;
   parser.shift(0);
@@ -119,14 +119,14 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
     } else if (parser.sentence_length() > 100) {
         // check to upper bound sentence length
         if (!terminate_shift)
-          cerr << " LENGTH LIMITED ";
+          cout << " LENGTH LIMITED ";
         terminate_shift = true;
         a = Action::re;
     }  
     else {
       double shiftp = reduce_lm.prob(static_cast<WordId>(Action::sh), ctx);
       double reducep = reduce_lm.prob(static_cast<WordId>(Action::re), ctx);
-      cout << "(sh: " << shiftp << " re: " << reducep << ") ";
+      //cout << "(sh: " << shiftp << " re: " << reducep << ") ";
 
       //sample an action
       vector<double> distr = {shiftp, reducep};
@@ -144,7 +144,7 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
     if (a == Action::sh) {
       ctx = parser.word_context();
       //sample a word
-      WordId w = shift_lm.generate(ctx, vocab_size, rw_size, eng);
+      WordId w = shift_lm.generate(ctx, vocab_size, eng);
       double wordp = shift_lm.prob(w, ctx); 
 
       parser.shift(w);
@@ -152,7 +152,7 @@ void generate_sentence(ArcStandardParser& parser, PYPLM<kORDER>& shift_lm, PYPLM
     } else if (a == Action::re) {
       double leftarcp = arc_lm.prob(static_cast<WordId>(Action::la), ctx);
       double rightarcp = arc_lm.prob(static_cast<WordId>(Action::ra), ctx);
-      cout << "(la: " << leftarcp << " ra: " << rightarcp << ") ";
+      //cout << "(la: " << leftarcp << " ra: " << rightarcp << ") ";
 
       //sample arc direction
       vector<double> distr = {leftarcp, rightarcp};
@@ -182,9 +182,9 @@ int main(int argc, char** argv) {
 
   int samples = atoi(argv[1]);
   MT19937 eng;
-  Dict dict("ROOT", "", true); //used for all the models 
+  Dict dict("ROOT", ""); //used for all the models 
   //const unsigned num_actions = 3; 
-  const unsigned num_word_types = 56574; //hardcoded to save trouble
+  //const unsigned num_word_types = 56574; //hardcoded to save trouble
   string train_file = "conll2007-english/english_ptb_train.conll";
   
   //const unsigned num_word_types =  26502; //hardcoded to save trouble
@@ -194,14 +194,16 @@ int main(int argc, char** argv) {
   std::vector<Words> corpussh;
   std::vector<Words> corpusre;
   std::vector<Words> corpusarc;
-  
-  PYPLM<kORDER> shift_lm(num_word_types, 1, 1, 1, 1); //next word
+  std::vector<int> length_dist;
+
+  train_raw(train_file, dict, vocabs, corpussh, corpusre, corpusarc); //extract training examples 
+
+  PYPLM<kORDER> shift_lm(vocabs.size()+1, 1, 1, 1, 1); //next word
   //for two-way decisions
   
   PYPLM<kORDER> reduce_lm(2, 1, 1, 1, 1); //shift/reduce
   PYPLM<kORDER> arc_lm(2, 1, 1, 1, 1); //left/right arc
 
-  train_raw(train_file, dict, vocabs, corpussh, corpusre, corpusarc); //extract training examples 
   train_lm(samples, eng, dict, corpussh, shift_lm);
   train_lm(samples, eng, dict, corpusre, reduce_lm);  
   train_lm(samples, eng, dict, corpusarc, arc_lm);   
@@ -221,10 +223,17 @@ int main(int argc, char** argv) {
     //generate_sentence(parser, shift_lm, action_lm, vocabs.size(), eng);  
     generate_sentence(parser, shift_lm, reduce_lm, arc_lm, vocabs.size(), eng);  
 
-    cout << parser.sentence_length() << ": ";
+    cout << parser.sentence_length() << " ";
     parser.print_sentence(dict);
-    cout << parser.actions_str() << endl;
-    parser.print_arcs();
+    length_dist.push_back(parser.sentence_length());
+    //cout << parser.actions_str() << endl;
+    //parser.print_arcs();
   }
+
+  sort(length_dist.begin(), length_dist.end());
+  for (auto l: length_dist)
+    cout << l << " ";
+  cout << endl;
+
 }
 

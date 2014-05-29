@@ -36,20 +36,21 @@ public:
         Convert(eos_);
     }
 
-    Dict(Word sos, Word eos, bool has_actions) : b0_("<bad0>"), 
+    Dict(Word sos, Word eos) : b0_("<bad0>"), 
                                sos_(sos), 
                                eos_(eos), 
                                bad0_id_(-1)
     {
         words_.reserve(1000);
         Convert(sos_);
+        ConvertPOS(sos_);
         if (eos!="")
             Convert(eos_);
         //should probably move to the outside sometime
-        std::vector<Word> action_words = {"sh", "la", "ra", "re", "la2", "ra2"};
-        if (has_actions)
-            for (auto a: action_words)
-                ConvertAction(a);
+        //std::vector<Word> action_words = {"sh", "la", "ra", "re", "la2", "ra2"};
+        //if (has_actions)
+        //    for (auto a: action_words)
+        //        ConvertAction(a);
     }
     
     inline WordId min() const {
@@ -60,6 +61,9 @@ public:
     }
     inline size_t size() const {
         return words_.size();
+    }
+    inline size_t pos_size() const {
+        return pos_.size();
     }
 
     static bool is_ws(char x) {
@@ -86,7 +90,36 @@ public:
             out->push_back(Convert(line.substr(last, cur - last)));
     }
 
-        inline void ConvertWhitespaceDelimitedActionLine(const std::string& line, std::vector<WordId>* out) {
+    inline void ConvertWhitespaceDelimitedConllLine(const std::string& line, std::vector<WordId>* sent_out, std::vector<WordId>* pos_out, std::vector<WordIndex>* dep_out, bool frozen) {
+        size_t cur = 0;
+        size_t last = 0;
+        int state = 0;
+        int col_num = 0;
+        
+        while(cur < line.size()) {
+            //std::cerr << "cur " << cur << std::endl;
+            if (is_ws(line[cur++])) {
+                if (state == 0) continue;
+                if (col_num == 1)
+                  sent_out->push_back(Convert(line.substr(last, cur - last - 1), frozen));
+                else if (col_num == 4)
+                  pos_out->push_back(ConvertPOS(line.substr(last, cur - last - 1), frozen));
+                else if (col_num == 6)
+                  dep_out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
+                ++col_num;
+                state = 0;
+            } else {
+                if (state == 1) continue;
+                last = cur - 1;
+                state = 1;
+            }
+        }
+
+        if ((state == 1) && (col_num == 1)) //use only if we need last column
+            sent_out->push_back(Convert(line.substr(last, cur - last), frozen));
+    }
+
+    inline void ConvertWhitespaceDelimitedActionLine(const std::string& line, std::vector<WordId>* out) {
         size_t cur = 0;
         size_t last = 0;
         int state = 0;
@@ -122,18 +155,43 @@ public:
     }
 
     inline WordId Convert(const Word& word, bool frozen = false) {
-        //convert to lower case - doesnt seem to make a significant difference
+        if (word == "ROOT") {
+          words_.push_back(word);
+          d_[word] = 0;
+          return 0;
+        }
+
+        //convert to lower case 
         Word lword(word);
-        if (word!="ROOT")
-          std::transform(lword.begin(), lword.end(), lword.begin(), tolower);
+        std::transform(lword.begin(), lword.end(), lword.begin(), tolower);
 
         auto i = d_.find(lword);
         if (i == d_.end()) {
             if (frozen)
                 return bad0_id_;
+            //if already a singleton, add to main dictionary, else add as singleton
+            auto i = sd_.find(lword);
+            if (i == sd_.end()) {
+                sd_[lword] = -1;
+                return bad0_id_;
+            } 
+
             words_.push_back(lword);
-            d_[word] = words_.size()-1;
+            d_[lword] = words_.size()-1;
             return words_.size()-1;
+        } else {
+            return i->second;
+        }
+    }
+
+    inline WordId ConvertPOS(const Word& tag, bool frozen = false) {
+        auto i = pd_.find(tag);
+        if (i == pd_.end()) {
+            if (frozen)
+                return bad0_id_;
+            pos_.push_back(tag);
+            pd_[tag] = pos_.size()-1;
+            return pos_.size()-1;
         } else {
             return i->second;
         }
@@ -165,6 +223,11 @@ public:
         return words_[id];
     }
 
+    inline const Word& ConvertPOS(const WordId id) const {
+        if (!valid(id)) return b0_;
+        return pos_[id];
+    }
+
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive & ar, const unsigned int version) {
@@ -178,9 +241,12 @@ public:
 private:
     Word b0_, sos_, eos_;
     WordId bad0_id_;
-    std::vector<Word> a_words_;
     std::vector<Word> words_;
     std::map<std::string, WordId> d_;
+    std::map<std::string, WordId> sd_;
+    std::vector<Word> pos_;
+    std::map<std::string, WordId> pd_;
+    std::vector<Word> a_words_;
     std::map<std::string, WordId> ad_;
 };
 
@@ -201,6 +267,51 @@ inline void ReadFromFile(const std::string& filename,
         for (WordId i = 0; i < static_cast<WordId>(src->back().size()); ++i) 
             src_vocab->insert(src->back()[i]);
     }
+}
+
+inline void ReadFromConllFile(const std::string& filename,
+                         Dict* d,
+                         std::vector<std::vector<WordId> >* sents,
+                         std::vector<std::vector<WordId> >* ptags,
+                         std::vector<std::vector<WordIndex> >* deps,
+                         bool frozen) {
+    sents->clear();
+    ptags->clear();
+    deps->clear();
+    std::cerr << "Reading from " << filename << std::endl;
+    std::ifstream in(filename);
+    assert(in);
+    std::string line;
+    int lc = 0;
+    int state = 1; //have to add new vector
+
+    while(getline(in, line)) {
+        ++lc;
+
+        //std::cerr << "line " << lc << std::endl;
+        if (line=="") { 
+            //add to vocab
+            //for (WordId i = 0; i < static_cast<WordId>(sents->back().size()); ++i) 
+            //    sent_vocab->insert(sents->back()[i]);
+            state = 1;
+            //std::cerr << "new line " << lc << std::endl;
+        } else {
+            if (state==1) {
+                sents->push_back(std::vector<WordId>());
+                sents->back().push_back(0); //add ROOT
+                ptags->push_back(std::vector<WordId>());
+                ptags->back().push_back(0);
+                deps->push_back(std::vector<WordIndex>());
+                deps->back().push_back(-1);
+                state = 0;
+            }
+
+            d->ConvertWhitespaceDelimitedConllLine(line, &sents->back(), &ptags->back(), &deps->back(), frozen);        
+            //sent_vocab->insert(sents->back().back()); //add word to vocab
+        }
+    } 
+
+    //std::cerr << "done reading conll" << std::endl;
 }
 
 inline void ConvertWhitespaceDelimitedDependencyLine(const std::string& line, std::vector<WordIndex>* out) {

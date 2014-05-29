@@ -47,14 +47,10 @@ template <unsigned N> struct PYPLM {
 
   //new method - maybe not the best way, but for now it must be ok
   template<typename Engine>
-  WordId generate(const std::vector<WordId>& context, int dict_size, int rw_size, Engine& eng) {
+  WordId generate(const std::vector<WordId>& context, int dict_size, Engine& eng) {
     //only use for word generation, not for actions
-    //can this generate reserved words by accident?
     std::vector<double> probs(dict_size, 0);
-    for (WordId w = 0; w < dict_size; ++w) {
-      if (w < rw_size)
-        probs.at(w) = 0;
-      else  
+    for (WordId w = -1; w < dict_size; ++w) { //for now, assume we can generate unk
         probs.at(w) = prob(w, context); 
     }
 
@@ -146,12 +142,12 @@ template <unsigned N> struct PYPLM {
 
   double prob(WordId w, const std::vector<WordId>& context) const {
     copy_context(context, lookup);
-    if (N==4) {
+    /* if (N==4) {
       std::cout << "[";
       for (auto& l: lookup)
         std::cout << l << " ";
       std::cout << "] ";
-    }
+    } */
     //std::cerr << w << std::endl;
     const double bo = backoff.prob(w, context);
 
@@ -165,8 +161,8 @@ template <unsigned N> struct PYPLM {
 
     auto it = p.find(lookup);
     if (it == p.end()) {
-      if (N==4)
-        std::cout << p.size() << " ";
+      /*if (N==4)
+        std::cout << p.size() << " "; */
       return bo;
     }
     return it->second.prob(w, bo);
