@@ -100,9 +100,9 @@ public:
             //std::cerr << "cur " << cur << std::endl;
             if (is_ws(line[cur++])) {
                 if (state == 0) continue;
-                if (col_num == 1)
+                if (col_num == 1) //1 - word
                   sent_out->push_back(Convert(line.substr(last, cur - last - 1), frozen));
-                else if (col_num == 4)
+                else if (col_num == 4) //4 - postag (3 - course postag)
                   pos_out->push_back(ConvertPOS(line.substr(last, cur - last - 1), frozen));
                 else if (col_num == 6)
                   dep_out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
@@ -170,6 +170,7 @@ public:
             if (frozen)
                 return bad0_id_;
             //if already a singleton, add to main dictionary, else add as singleton
+            //TODO - temporaraly don't use singletons when training on pos tags
             auto i = sd_.find(lword);
             if (i == sd_.end()) {
                 sd_[lword] = -1;

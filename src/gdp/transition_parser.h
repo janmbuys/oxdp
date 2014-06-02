@@ -238,10 +238,11 @@ class TransitionParser {
     return seq_str; 
   }
 
+  
   void const print_arcs() {
     for (auto a: arcs_)
       std::cout << a << " ";
-      std::cout << std::endl;
+    //std::cout << std::endl;
   }
 
   void const print_sentence(Dict& dict) {
@@ -796,6 +797,14 @@ inline bool cmp_importance_weights(ArcStandardParser p1, ArcStandardParser p2) {
  
 inline bool cmp_particle_weights(ArcStandardParser p1, ArcStandardParser p2) {
   return (p1.particle_weight() < p2.particle_weight());
+}
+
+inline bool cmp_particle_ptr_weights(const std::unique_ptr<ArcStandardParser>& p1, const std::unique_ptr<ArcStandardParser>& p2) {
+  return (p1->particle_weight() < p2->particle_weight());
+}
+
+inline bool cmp_particle_importance_weights(ArcStandardParser p1, ArcStandardParser p2) {
+  return ((p1.particle_weight() + p1.importance_weight()) < (p2.particle_weight() + p2.importance_weight()));
 }
 
 inline bool cmp_normalized_particle_weights(ArcStandardParser p1, ArcStandardParser p2) {
