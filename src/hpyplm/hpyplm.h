@@ -44,22 +44,7 @@ template <unsigned N> struct PYPLM {
       tr.insert(&singleton_crp);  // add to resampler
       singleton_crp.increment(0, 1.0, eng);
     }
-
-  //new method - maybe not the best way, but for now it must be ok
-  template<typename Engine>
-  WordId generate(const std::vector<WordId>& context, int dict_size, Engine& eng) {
-    //only use for word generation, not for actions
-    std::vector<double> probs(dict_size, 0);
-    for (WordId w = -1; w < dict_size; ++w) { //for now, assume we can generate unk
-        probs.at(w) = prob(w, context); 
-    }
-
-    multinomial_distribution<double> dist(probs);
-    WordId w = dist(eng);
-
-    return w;
-  }
-
+ 
   template<typename Engine>
   void increment_verbose(WordId w, const std::vector<WordId>& context, Engine& eng) {
     const double bo = backoff.prob(w, context);
