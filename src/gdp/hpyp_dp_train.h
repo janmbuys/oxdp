@@ -29,13 +29,13 @@ inline void constructTrainExamples(const std::vector<Words>& corpus_sents, const
     kAction a = kAction::sh;
     while (!parser.is_terminal_configuration() && (a != kAction::re)) {
       a = parser.oracleNext(gold_deps);  
-      Words re_ctx = parser.tag_context();
+      Words re_ctx = parser.reduce_context();
       Words re_tuple(1, static_cast<WordId>(kAction::re));
       re_tuple.insert(re_tuple.end(), re_ctx.begin(), re_ctx.end());
 
       if (a == kAction::sh) {
         //word prediction
-        Words sh_ctx = parser.word_tag_next_context();
+        Words sh_ctx = parser.shift_context();
         Words sh_tuple(1, parser.next_word());
         sh_tuple.insert(sh_tuple.end(), sh_ctx.begin(), sh_ctx.end());
         examples_sh->push_back(sh_tuple);
@@ -52,7 +52,7 @@ inline void constructTrainExamples(const std::vector<Words>& corpus_sents, const
         
         parser.shift();
       } else if (a == kAction::la) {
-        Words arc_ctx = parser.tag_context();
+        Words arc_ctx = parser.arc_context();
         Words arc_tuple(1, static_cast<WordId>(kAction::la)); 
         arc_tuple.insert(arc_tuple.end(), arc_ctx.begin(), arc_ctx.end());
         examples_arc->push_back(arc_tuple);
@@ -60,7 +60,7 @@ inline void constructTrainExamples(const std::vector<Words>& corpus_sents, const
         
         parser.leftArc();
       } else if (a == kAction::ra) {
-        Words arc_ctx = parser.tag_context();
+        Words arc_ctx = parser.arc_context();
         Words arc_tuple(1, static_cast<WordId>(kAction::ra)); 
         arc_tuple.insert(arc_tuple.end(), arc_ctx.begin(), arc_ctx.end());
         examples_arc->push_back(arc_tuple);

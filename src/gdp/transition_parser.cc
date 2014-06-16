@@ -69,6 +69,7 @@ bool TransitionParser::shift(WordId w) {
   return true;
 }
 
+//only use when generating 
 bool TransitionParser::buffer_tag(WordId t) {
   buffer_.push_back(tags_.size());
   tags_.push_back(t);

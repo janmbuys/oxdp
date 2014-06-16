@@ -105,7 +105,8 @@ class TransitionParser {
     sentence_(),
     tags_(),
     liw_{0},
-    lpw_{0}
+    lpw_{0},
+    num_particles_{1}
   {
   }
 
@@ -117,7 +118,8 @@ class TransitionParser {
     sentence_(sent),
     tags_(),
     liw_{0},
-    lpw_{0}
+    lpw_{0},
+    num_particles_{1}
   {
     //sentence already includes root (0)
     for (int i = 0; i < (int)sentence_.size(); ++i)
@@ -132,7 +134,8 @@ class TransitionParser {
     sentence_(sent),
     tags_(tags),
     liw_{0},
-    lpw_{0}
+    lpw_{0},
+    num_particles_{1}
   {
     //sentence already includes root (0)
     for (int i = 0; i < (int)sentence_.size(); ++i)
@@ -197,7 +200,11 @@ class TransitionParser {
   void add_particle_weight(double w) {
     lpw_ -= std::log(w);
   }
- 
+
+  void set_num_particles(int n) {
+    num_particles_ = n;
+  }
+
   std::string actions_str() const {
     const std::vector<std::string> action_names {"sh", "la", "ra", "re", "la2", "ra2"};
     std::string seq_str = "";
@@ -248,7 +255,11 @@ class TransitionParser {
     return lpw_;
   }
 
- ActList actions() const {
+  int num_particles() const {
+    return num_particles();
+  }
+
+  ActList actions() const {
     return actions_;
   }
    
@@ -315,21 +326,23 @@ class TransitionParser {
     return count;
   }
 
-  //****functions for context vectors: each function defined for a specific context length
-
-  Words word_context() const {
-    Words ctx(2, 0);
-    
-    if (stack_.size() >= 1) { 
-      ctx[1] = sentence_.at(stack_.at(stack_.size()-1));
-    }
-    if (stack_.size() >= 2) {
-      ctx[0] = sentence_.at(stack_.at(stack_.size()-2));
-    }
-
-    return ctx;
+  //**functions that call the context vector functions for a given configuration
+  //(ideally would assert length of order)
+  Words shift_context() const {
+    return word_tag_next_context();
   }
 
+  Words reduce_context() const {
+    return tag_context();
+  }
+
+  Words arc_context() const {
+    return tag_context();
+  }
+
+  //****functions for context vectors: each function defined for a specific context length
+
+  //overloaded in direct use, but this shouldn't be a problem
   Words tag_context() const {
     Words ctx(2, 0);
     
@@ -343,6 +356,19 @@ class TransitionParser {
     return ctx;
   }
 
+  Words word_context() const {
+    Words ctx(2, 0);
+    
+    if (stack_.size() >= 1) { 
+      ctx[1] = sentence_.at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[0] = sentence_.at(stack_.at(stack_.size()-2));
+    }
+
+    return ctx;
+  }
+  
   Words word_tag_context() const {
     Words ctx(4, 0);
     
@@ -402,6 +428,7 @@ class TransitionParser {
   Words tags_;
   double liw_; //log importance weight
   double lpw_; //log particle weight
+  int num_particles_;
 };
 
 

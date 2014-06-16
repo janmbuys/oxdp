@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
   auto tr_dur = std::chrono::steady_clock::now() - tr_start;
   std::cerr << "Training done...time " << std::chrono::duration_cast<std::chrono::seconds>(tr_dur).count() << "s\n";
 
-  /* Generating */
+  /* Generating 
   //sample sentences from the trained model
   const int kNumGenerations = 100;
   std::vector<ArcStandardParser> particles(kNumGenerations, ArcStandardParser()); 
@@ -93,9 +93,10 @@ int main(int argc, char** argv) {
 
   //sort(length_dist.begin(), length_dist.end());
   //for (auto l: length_dist)
-  //  cout << l << " ";
+  //  cout << l << " ";   
+*/ 
 
-  /*Testing  
+  /*Testing */ 
 
   //std::string test_file = "dutch-alpino/dutch_alpino_dev.conll";
   //std::string out_file = "alpino_dev.system.conll";
@@ -124,20 +125,17 @@ int main(int argc, char** argv) {
     outs.open(out_file);
 
     for (unsigned j = 0; j < test_sents.size(); ++j) {
-      //if ((test[j].size() <= 10) && is_projective_dependency(testd[j])) {
+      ArcList gold_arcs(test_deps[j].size());
+      gold_arcs.set_arcs(test_deps[j]);
+      //if ((test_sents[j].size() <= 10) && gold_arcs.is_projective_dependency()) {
 
-        //ArcStandardParser g_parser = gold_parse_sentence(test[j], testd[j], shift_lm, reduce_lm, arc_lm);
-        //ArcStandardParser b_parser = greedy_parse_sentence(test[j], testd[j], dict, eng, shift_lm, reduce_lm, arc_lm);
-        //ArcStandardParser b_parser = particle_par_parse_sentence(test[j], testd[j], beam_size, true, dict, eng, shift_lm, reduce_lm, arc_lm);
-        ArcList gold_arcs(test_deps[j].size());
-        gold_arcs.set_arcs(test_deps[j]);
-        ArcStandardParser b_parser = beamParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
-        acc_counts.countAccuracy(b_parser, gold_arcs);
-        //bl_parser.count_accuracy(acc_counts1, testd[j]);
+        ArcStandardParser parser = particleParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, false, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
+        //ArcStandardParser parser = beamParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
+        acc_counts.countAccuracy(parser, gold_arcs);
 
         //write output to conll-format file
         for (unsigned i = 1; i < test_sents[j].size(); ++i) 
-          outs << i << "\t" << dict.lookup(test_sents[j][i]) << "\t_\t_\t" << dict.lookupTag(test_tags[j][i]) << "\t_\t" << b_parser.arcs().at(i) << "\tROOT\t_\t_\n";
+          outs << i << "\t" << dict.lookup(test_sents[j][i]) << "\t_\t_\t" << dict.lookupTag(test_tags[j][i]) << "\t_\t" << parser.arcs().at(i) << "\tROOT\t_\t_\n";
 
         outs << "\n";
         //std::cerr << ".";
@@ -157,7 +155,7 @@ int main(int argc, char** argv) {
     std::cerr << "ArcDirection Precision: " << acc_counts.arc_dir_precision() << std::endl;
     std::cerr << "Shift recall: " << acc_counts.shift_recall() << std::endl;
     std::cerr << "Reduce recall: " << acc_counts.reduce_recall() << std::endl;   
-  }  */
+  } 
 
   return 0;
 }
