@@ -256,7 +256,15 @@ class TransitionParser {
   }
 
   int num_particles() const {
-    return num_particles();
+    return num_particles_;
+  }
+
+  double weighted_importance_weight() const {
+    return (liw_ - std::log(num_particles_));
+  }
+
+  double weighted_particle_weight() const {
+    return (lpw_- std::log(num_particles_));
   }
 
   ActList actions() const {
@@ -583,19 +591,33 @@ inline bool cmp_particle_weights(ArcStandardParser& p1, ArcStandardParser& p2) {
 }
 
 inline bool cmp_particle_ptr_weights(const std::unique_ptr<ArcStandardParser>& p1, const std::unique_ptr<ArcStandardParser>& p2) {
-  return (p1->particle_weight() < p2->particle_weight());
+  //null should be the biggest
+  if (p1 == nullptr)
+    return false;
+  else if (p2 == nullptr)
+    return true;
+  else
+    return (p1->particle_weight() < p2->particle_weight());
 }
 
-inline bool cmp_particle_importance_weights(ArcStandardParser& p1, ArcStandardParser& p2) {
-  return ((p1.particle_weight() + p1.importance_weight()) < (p2.particle_weight() + p2.importance_weight()));
+inline bool cmp_weighted_particle_ptr_weights(const std::unique_ptr<ArcStandardParser>& p1, const std::unique_ptr<ArcStandardParser>& p2) {
+  //null or no particles should be the biggest
+  if ((p1 == nullptr) || (p1->num_particles() == 0))
+    return false;
+  else if ((p2 == nullptr) || (p2->num_particles() == 0))
+    return true;
+  else
+    return (p1->weighted_particle_weight() < p2->weighted_particle_weight());
 }
 
-inline bool cmp_normalized_particle_weights(ArcStandardParser& p1, ArcStandardParser& p2) {
-  return ((p1.particle_weight() / p1.num_actions()) < (p2.particle_weight() / p2.num_actions()));
-}
-
-inline bool cmp_rnorm_particle_weights(ArcStandardParser& p1, ArcStandardParser& p2) {
-  return ((p1.particle_weight() / (2*p1.sentence_length() - p1.stack_depth())) < (p2.particle_weight() / (2*p2.sentence_length() - p2.stack_depth())));
+inline bool cmp_weighted_importance_ptr_weights(const std::unique_ptr<ArcStandardParser>& p1, const std::unique_ptr<ArcStandardParser>& p2) {
+  //null or no particles should be the biggest
+  if ((p1 == nullptr) || (p1->num_particles() == 0))
+    return false;
+  else if ((p2 == nullptr) || (p2->num_particles() == 0))
+    return true;
+  else
+    return (p1->weighted_importance_weight() < p2->weighted_importance_weight());
 }
 
 inline kAction convert_to_action(WordId a) {

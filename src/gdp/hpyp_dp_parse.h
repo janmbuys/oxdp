@@ -22,54 +22,33 @@ namespace oxlm {
 typedef std::unique_ptr<ArcStandardParser> ParserPtr;
 typedef std::vector<std::unique_ptr<ArcStandardParser>> ParserList;
 
-void resampleParticles(ParserList* particles, unsigned num_particles, MT19937& eng) {
-//TODO 
-/*  std::vector<double> importance_w(num_particles, 0); //importance weights
-  for (unsigned i = 0; i < num_particles; ++i)
-    importance_w[i] = particles[i]->importance_weight();
+void resampleParticles(ParserList* beam_stack, unsigned num_particles, MT19937& eng) {
+  std::vector<double> importance_w(beam_stack->size(), 0); //importance weights
+  for (unsigned i = 0; i < importance_w.size(); ++i) {
+    if (beam_stack->at(i)->num_particles()==0)
+      importance_w[i] = 100000; //set to very low prob threshold
+    else
+      importance_w[i] = beam_stack->at(i)->weighted_importance_weight();
+  }
 
   //resample according to importance weight
   multinomial_distribution_log part_mult(importance_w); 
-  std::vector<unsigned> sample_indx;
-  for (unsigned i = 0; i < num_particles; ++i) {
+  std::vector<int> sample_counts(beam_stack->size(), 0);
+  for (unsigned i = 0; i < num_particles;) {
     unsigned pi = part_mult(eng);
-    sample_indx.push_back(pi);
-  }
-  std::sort(sample_indx.begin(), sample_indx.end());
-
-  std::vector<bool> occur_indx; //-1 if not in sample, else its position 
-  unsigned s_ind = 0; //index in sample_indx
-  for (unsigned i = 0; i < num_particles; ++i) { //over original particles
-    //std::cout << s_ind << " ";
-    if ((s_ind >= num_particles) || (i < sample_indx[s_ind]))
-      occur_indx.push_back(false);
-    else if (i == sample_indx[s_ind]) {
-      occur_indx.push_back(true); 
-      while ((s_ind < num_particles - 1) && (sample_indx[s_ind]==sample_indx[s_ind+1])) ++s_ind;
-      ++s_ind;
+    //disallow resampling to 0 count particles
+    if (beam_stack->at(pi)->num_particles() > 0) {
+      ++sample_counts[pi];
+      ++i;
     } else {
-      cerr << "contradiction (" << i << ") " << std::endl;     
+      std::cerr << "bad sample\n";
     }
   }
 
-  std::vector<int> new_indx(num_particles, -1); //just for the record
-  for (unsigned i = 0; i < num_particles; ++i) {
-    new_indx[i] = i;
+  for (unsigned i = 0; i < beam_stack->size(); ++i) {
+    beam_stack->at(i)->set_num_particles(sample_counts[i]);
+    beam_stack->at(i)->reset_importance_weight();
   }
-  
-  unsigned p_pos = 0; //over the particles that may be replaced
-  for (unsigned i = 1; i < num_particles; ++i) { //over sorted indexes
-    if (sample_indx[i]==sample_indx[i-1]) {
-      while ((p_pos < num_particles) && (occur_indx[p_pos])) ++p_pos; //not supposed to go out of index 
-      //actual (copy) reassignment
-      if (p_pos < num_particles) {
-        particles[p_pos] = particles[sample_indx[i]]; //key line: copy particle      
-        new_indx[p_pos] = sample_indx[i];
-        ++p_pos;
-      } else
-        std::cout << "invalid index ";
-    } 
-  }  */
 }
 
 
@@ -207,19 +186,20 @@ ArcStandardParser particleParseSentence(Words sent, Words tags, ArcList gold_dep
   for (unsigned i = 1; i < sent.size(); ++i) {
     unsigned sh_bound = beam_stack.size(); 
     for (unsigned j = 0; j < beam_stack.size(); ++j) { 
-      if (beam_stack[j]==nullptr)
+      if (beam_stack[j]->num_particles()==0)
         continue;
-        
+       
       //sample a sequence of possible actions leading up to the next shift
       Words r_ctx = beam_stack[j]->reduce_context();
       Words a_ctx = beam_stack[j]->arc_context();
-      
+
+      int num_samples = beam_stack[j]->num_particles();
+
       double reducep = reduce_lm.prob(static_cast<WordId>(kAction::re), r_ctx);
       double shiftp = reduce_lm.prob(static_cast<WordId>(kAction::sh), r_ctx);
       double reduceleftarcp = reducep*arc_lm.prob(static_cast<WordId>(kAction::la), a_ctx);
       double reducerightarcp = reducep*arc_lm.prob(static_cast<WordId>(kAction::ra), a_ctx);
 
-      int num_samples = beam_stack[j]->num_particles();
       std::vector<int> sample_counts = {0, 0, 0}; //shift, reduceleftarc, reducerightarc
 
       if (beam_stack[j]->stack_depth() < 2) {
@@ -252,10 +232,6 @@ ArcStandardParser particleParseSentence(Words sent, Words tags, ArcList gold_dep
         beam_stack.rbegin()[1]->add_particle_weight(reducerightarcp); 
         beam_stack.rbegin()[1]->set_num_particles(sample_counts[2]); 
 
-        /* if (k == sent.size()) {  
-            beam_stack[i-1].back()->add_importance_weight(reducep); 
-            beam_stack[i-1].rbegin()[1]->add_importance_weight(reducep); 
-          } */
       } else if (sample_counts[2] > 0) {
         beam_stack.push_back(std::make_unique<ArcStandardParser>(*beam_stack[j]));
         beam_stack.back()->rightArc();
@@ -269,9 +245,9 @@ ArcStandardParser particleParseSentence(Words sent, Words tags, ArcList gold_dep
       }
 
       //perform shift if > 0 samples
-      if (sample_counts[0] == 0) {
-        beam_stack[j] = nullptr;
-      } else {
+      if (sample_counts[0] == 0)
+        beam_stack[j]->set_num_particles(0);
+      else {
         Words t_ctx = beam_stack[j]->tag_context();
         Words w_ctx = beam_stack[j]->shift_context();
         double wordp = shift_lm.prob(beam_stack[j]->next_word(), w_ctx); 
@@ -290,9 +266,20 @@ ArcStandardParser particleParseSentence(Words sent, Words tags, ArcList gold_dep
         sh_bound = beam_stack.size();
       }
     }
-   
-    if (resample)
+ 
+    if (resample) {
+      //sort and remove 
+      std::sort(beam_stack.begin(), beam_stack.end(), cmp_weighted_importance_ptr_weights); 
+      for (int j = beam_stack.size()- 1; ((j >= 0) && (beam_stack[j]->num_particles() == 0)); --j)
+        beam_stack.pop_back();
+      //std::cout << "Beam size: " << beam_stack.size();
       resampleParticles(&beam_stack, num_particles, eng);
+      //int active_particle_count = 0;
+      //for (int j = 0; j < beam_stack.size(); ++j)
+      //  if (beam_stack[j]->num_particles() > 0)
+      //   ++active_particle_count;
+      //std::cout << " -> " << active_particle_count << " without null \n";
+    }
   }
      
   ///completion
@@ -300,18 +287,11 @@ ArcStandardParser particleParseSentence(Words sent, Words tags, ArcList gold_dep
   bool has_more_states = true;
 
   while (has_more_states) {
-    bool has_more_states = false;
+    has_more_states = false;
     unsigned cur_beam_size = beam_stack.size();
 
     for (unsigned j = 0; j < cur_beam_size; ++j) { 
-      //std::cerr << beam_stack[j].stack_depth() << " " << "(" << beam_stack[j].particle_weight() << ")";
-      if (beam_stack[j]==nullptr) {
-        continue;
-      } else if (beam_stack[j]->is_terminal_configuration()) {
-        //try to move to final beam
-        final_beam.push_back(nullptr);
-        final_beam.back() = beam_stack[j]; 
-      } else {
+      if ((beam_stack[j]->num_particles() > 0) && !beam_stack[j]->is_terminal_configuration()) {
         //add paths for reduce actions
         has_more_states = true; 
         Words r_ctx = beam_stack[j]->reduce_context();
@@ -327,7 +307,6 @@ ArcStandardParser particleParseSentence(Words sent, Words tags, ArcList gold_dep
           //only allow right arc
           sample_counts[1] = num_samples;
         } else {
-
           std::vector<double> distr = {reduceleftarcp, reducerightarcp};
           multinomial_distribution<double> mult(distr); 
           for (int k = 0; k < num_samples; k++) {
@@ -364,34 +343,45 @@ ArcStandardParser particleParseSentence(Words sent, Words tags, ArcList gold_dep
       }
     }
 
-    if (resample)
+    if (resample) {
+      //sort and remove 
+      std::sort(beam_stack.begin(), beam_stack.end(), cmp_weighted_importance_ptr_weights); 
+      for (int j = beam_stack.size()- 1; ((j >= 0) && (beam_stack[j]->num_particles() == 0)); --j)
+        beam_stack.pop_back();
+      //std::cout << "Beam size: " << beam_stack.size();
       resampleParticles(&beam_stack, num_particles, eng);
+      //int active_particle_count = 0;
+      //for (int j = 0; j < beam_stack.size(); ++j)
+      //  if (beam_stack[j]->num_particles() > 0)
+      //    ++active_particle_count;
+      //std::cout << " -> " << active_particle_count << " without null \n";
+    }
   }
 
-  //resample final beam ?
-  //if (resample)
-  //  resampleParticles(&final_beam, num_particles, eng);
-
   //alternatively, sort according to particle weight 
-  std::sort(final_beam.begin(), final_beam.end(), cmp_particle_ptr_weights); //handle pointers
+  //std::sort(final_beam.begin(), final_beam.end(), cmp_particle_ptr_weights); //handle pointers
+ 
+  std::sort(beam_stack.begin(), beam_stack.end(), cmp_weighted_importance_ptr_weights); 
+  for (int j = beam_stack.size()- 1; ((j >= 0) && (beam_stack[j]->num_particles() == 0)); --j)
+    beam_stack.pop_back();
+  std::cout << "Final beam size: " << beam_stack.size();
 
-  //print parses
-  for (unsigned i = 0; (i < 5) && (i < final_beam.size()); ++i) {
-    final_beam[i]->print_arcs();
+  //just take 1 sample
+  resampleParticles(&beam_stack, 1, eng);
+  for (unsigned i = 0; i < beam_stack.size(); ++i) {
+    if (beam_stack[i]->num_particles() == 1) {
+      beam_stack[i]->print_arcs();
+      float dir_acc = (beam_stack[i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
+      std::cout << "  Dir Accuracy: " << dir_acc;
+      std::cout << "  Sample weight: " << (beam_stack[i]->particle_weight()) << std::endl;
 
-    float dir_acc = (final_beam[i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
-    std::cout << "  Dir Accuracy: " << dir_acc;
-    std::cout << "  Sample weight: " << (final_beam[i]->particle_weight()) << std::endl;
-  }  
+      return ArcStandardParser(*beam_stack[i]); 
+    }
+  }
 
-  if (final_beam.size()==0) {
-    std::cout << "no parse found" << std::endl;
-    return ArcStandardParser(sent, tags);  
-  } else
-    return ArcStandardParser(*final_beam[0]); 
+  std::cout << "no parse found" << std::endl;
+  return ArcStandardParser(sent, tags);  
 }
-
-
 
 //generate a sentence
 template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kArcOrder, unsigned kTagOrder>
@@ -483,7 +473,6 @@ ArcStandardParser generateSentence(Dict& dict, MT19937& eng, PYPLM<kShiftOrder>&
 
 /*
 //gold parser
-//TODO update
 template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kArcOrder, unsigned kTagOrder>
 ArcStandardParser goldParseSentence(Words sent, Words tag, ArcList gold_dep, PYPLM<kShiftOrder>& shift_lm, PYPLM<kReduceOrder>& reduce_lm, PYPLM<kArcOrder>& arc_lm, PYPLM<kTagOrder>& tag_lm) {
   //compute and score oracle parse sequence
@@ -521,432 +510,8 @@ ArcStandardParser goldParseSentence(Words sent, Words tag, ArcList gold_dep, PYP
 
   std::cout << "Gold weight: " << gold_p.particle_weight() << std::endl;
   return gold_p;
-}   
+} */   
 
-//old resampler
-void resampleParticles(ParserList* particles, unsigned num_particles, MT19937& eng) {
- std::vector<double> importance_w(num_particles, 0); //importance weights
-  for (unsigned i = 0; i < num_particles; ++i)
-    importance_w[i] = particles[i]->importance_weight();
-
-  //resample according to importance weight
-  multinomial_distribution_log part_mult(importance_w); 
-  std::vector<unsigned> sample_indx;
-  for (unsigned i = 0; i < num_particles; ++i) {
-    unsigned pi = part_mult(eng);
-    sample_indx.push_back(pi);
-  }
-  std::sort(sample_indx.begin(), sample_indx.end());
-
-  std::vector<bool> occur_indx; //-1 if not in sample, else its position 
-  unsigned s_ind = 0; //index in sample_indx
-  for (unsigned i = 0; i < num_particles; ++i) { //over original particles
-    //std::cout << s_ind << " ";
-    if ((s_ind >= num_particles) || (i < sample_indx[s_ind]))
-      occur_indx.push_back(false);
-    else if (i == sample_indx[s_ind]) {
-      occur_indx.push_back(true); 
-      while ((s_ind < num_particles - 1) && (sample_indx[s_ind]==sample_indx[s_ind+1])) ++s_ind;
-      ++s_ind;
-    } else {
-      cerr << "contradiction (" << i << ") " << std::endl;     
-    }
-  }
-
-  std::vector<int> new_indx(num_particles, -1); //just for the record
-  for (unsigned i = 0; i < num_particles; ++i) {
-    new_indx[i] = i;
-  }
-  
-  unsigned p_pos = 0; //over the particles that may be replaced
-  for (unsigned i = 1; i < num_particles; ++i) { //over sorted indexes
-    if (sample_indx[i]==sample_indx[i-1]) {
-      while ((p_pos < num_particles) && (occur_indx[p_pos])) ++p_pos; //not supposed to go out of index 
-      //actual (copy) reassignment
-      if (p_pos < num_particles) {
-        particles[p_pos] = particles[sample_indx[i]]; //key line: copy particle      
-        new_indx[p_pos] = sample_indx[i];
-        ++p_pos;
-      } else
-        std::cout << "invalid index ";
-    } 
-  }  
-}
-
-//old beam parser (per word shifted)
-template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kArcOrder, unsigned kTagOrder>
-ArcStandardParser beamShiftParseSentence(Words sent, Words tag, ArcList gold_dep, unsigned beam_size, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>& shift_lm, PYPLM<kReduceOrder>& reduce_lm, PYPLM<kArcOrder>& arc_lm, PYPLM<kTagOrder>& tag_lm) {
-  std::vector<ArcStandardParser> beam(1, ArcStandardParser(s, ps));  
-  beam[0].print_sentence(dict);
-  beam[0].print_postags(dict);
-  
-  std::cout << "gold arcs: ";
-  for (auto d: goldd)
-    std::cout << d << " ";
-  std::cout << std::endl; 
- 
-  for (unsigned i = 0; i < s.size(); ++i) {
-    unsigned sh_bound = beam.size(); 
-    for (unsigned j = 0; j < beam.size(); ++j) { 
-      //sample a sequence of possible actions leading up to the next shift
-      Words w_ctx = beam[j].word_tag_next_context();
-      Words p_ctx = beam[j].word_tag_context();
-      Words r_ctx = beam[j].word_tag_context();
-      Words t_ctx = beam[j].pos_context();
-      //if (j%10 == 0)
-      //  cerr << j << " " << beam.size() << std::endl;
-
-      if (beam[j].stack_depth() >= 2) {
-        //add paths for reduce actions
-        double reducep = reduce_lm.prob(static_cast<WordId>(kAction::re), r_ctx);
-        double leftarcp = arc_lm.prob(static_cast<WordId>(kAction::la), p_ctx);
-        double rightarcp = arc_lm.prob(static_cast<WordId>(kAction::ra), p_ctx);
-       
-        //add to the beam 
-        beam.push_back(beam[j]);
-        if (beam[j].left_arc_valid()) {
-          beam.push_back(beam[j]);
-          ArcStandardParser& right_p = beam.rbegin()[1]; 
-          ArcStandardParser& left_p = beam.back(); 
-
-          left_p.leftArc();
-          left_p.add_particle_weight(reducep*leftarcp);
-          left_p.set_importance_weight(reducep); 
-          right_p.rightArc();
-          right_p.add_particle_weight(reducep*rightarcp); 
-          right_p.set_importance_weight(reducep); 
-
-        } else {
-          ArcStandardParser& right_p = beam.back(); 
-
-          right_p.right_arc();
-          right_p.add_particle_weight(reducep*rightarcp); 
-          right_p.set_importance_weight(reducep*rightarcp); 
-        }
-      }
-
-      //perform shift
-      ArcStandardParser& shift_p = beam[j];
-      double shiftp = reduce_lm.prob(static_cast<WordId>(kAction::sh), r_ctx);
-      WordId w = shift_p.next_word();
-      double wordp = shift_lm.prob(w, w_ctx); 
-      WordId tag = shift_p.next_tag();
-      double tagp = tag_lm.prob(tag, t_ctx);
-
-      shift_p.shift();
-      shift_p.set_importance_weight(wordp); 
-      shift_p.add_importance_weight(tagp); 
-      shift_p.add_particle_weight(shiftp*wordp); 
-      shift_p.add_particle_weight(tagp); 
-      //cerr << "p: " <<  parser.stack_depth() << " " << parser.particle_weight() << " " << parser.buffer_length() << " " << parser.sentence_length() << std::endl;
-
-      if (j==sh_bound) {
-        if (beam.size() > (beam_size + sh_bound)) {
-          //cap unprocessed items for each local number of operations at beam size
-          std::sort(beam.begin() + (beam_size + sh_bound), beam.end(), cmp_particle_weights);
-          for (unsigned j = beam.size()- 1; j >= (beam_size + sh_bound); --j)
-            beam.pop_back();
-        }
-
-        sh_bound = beam.size();
-      }
-    }
-   
-    //otherwise compare normalized weights 
-    std::sort(beam.begin(), beam.end(), cmp_particle_weights);
-    //remove items with worst scores
-    for (unsigned j = beam.size()- 1; j >= beam_size; --j)
-      beam.pop_back();
-  }
-
-  //cerr << "start completion" << std::endl;
-  std::vector<ArcStandardParser> final_beam;  
-
-  while (beam.size() > 0) {
-    unsigned cur_beam_size = beam.size();
-
-    for (unsigned j = 0; j < cur_beam_size; ++j) { 
-      //cerr << beam[j].stack_depth() << " " << "(" << beam[j].particle_weight() << ")";
-      if (beam[j].is_terminal_configuration()) {
-        //has a complete parse
-        final_beam.push_back(beam[j]);
-        beam[j].set_log_particle_weight(1000); 
-      } else {
-        //add paths for reduce actions
-        //Words w_ctx = beam[j].word_tag_next_context();
-        Words p_ctx = beam[j].word_tag_context();
-        Words r_ctx = beam[j].word_tag_context();
-        double reducep = reduce_lm.prob(static_cast<WordId>(kAction::re), r_ctx);
-        double leftarcp = arc_lm.prob(static_cast<WordId>(kAction::la), p_ctx);
-        double rightarcp = arc_lm.prob(static_cast<WordId>(kAction::ra), p_ctx);
-
-        if (beam[j].left_arc_valid()) {
-          beam.push_back(beam[j]);
-          ArcStandardParser& right_p = beam[j];
-          ArcStandardParser& left_p = beam.back(); 
-
-          left_p.leftArc();
-          left_p.add_particle_weight(reducep*leftarcp);
-          left_p.set_importance_weight(reducep); 
-          right_p.rightArc();
-          right_p.add_particle_weight(reducep*rightarcp); 
-          right_p.set_importance_weight(reducep); 
-        } else {
-          ArcStandardParser& right_p = beam[j];
-
-          right_p.rightArc();
-          right_p.add_particle_weight(reducep*rightarcp); 
-          right_p.set_importance_weight(reducep*rightarcp); 
-        }
-      }  
-    }
-    //cerr << std::endl;
-
-    //can also compare normalized weights 
-    std::sort(beam.begin(), beam.end(), cmp_particle_weights);
-    //remove items with worst scores
-    for (int j = beam.size()- 1; ((j >= static_cast<int>(beam_size)) || ((j >= 0) && (beam[j].particle_weight() >= 1000))); --j) {
-      beam.pop_back();
-    }
-
-    if ((final_beam.size() > 2*beam_size) || (beam.size()==0)) {
-      std::sort(final_beam.begin(), final_beam.end(), cmp_particle_weights);
-      //remove items with worst scores
-      for (int j = final_beam.size()- 1; (j >= static_cast<int>(beam_size)); --j)
-        final_beam.pop_back();
-    }
-  }
-
-  
-  //print parses
-  for (unsigned i = 0; (i < 5) && (i < final_beam.size()); ++i) {
-    auto& parser = final_beam[i];
-      parser.print_arcs();
-    //std::cout << parser.actions_str() << std::endl;
-
-    float dir_acc = (parser.directed_accuracy_count(goldd) + 0.0)/(s.size()-1);
-    float undir_acc = (parser.undirected_accuracy_count(goldd) + 0.0)/(s.size()-1);
-
-    std::cout << "  Dir Accuracy: " << dir_acc;
-    std::cout << "  UnDir Accuracy: " << undir_acc;
-    std::cout << "  Sample weight: " << (parser.particle_weight()) << std::endl; // /log(10) 
-  }  
-
-  if (final_beam.size()==0) {
-    std::cout << "no parse found" << std::endl;
-    return ArcStandardParser(s);  
-  } else
-    return final_beam[0];
-}
-
-//bad beam parser (per action)
-template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kArcOrder, unsigned kTagOrder>
-ArcStandardParser beam_action_parse_sentence(Words sent, Words tag, ArcList gold_dep, unsigned beam_size, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>& shift_lm, PYPLM<kReduceOrder>& reduce_lm, PYPLM<kArcOrder>& arc_lm, PYPLM<kTagOrder>& tag_lm) {
-  std::vector<ArcStandardParser> beam(1, ArcStandardParser(s, ps));  
-  beam[0].print_sentence(dict);
-  beam[0].print_tags(dict);
-  
-  std::cout << "gold arcs: ";
-  for (auto d: goldd.arcs())
-    std::cout << d << " ";
-  std::cout << std::endl;  
- 
-  //all beam items will terminate after same number of steps
-  for (unsigned i = 0; i < 2*(s.size()-1); ++i) {
-    unsigned b_size = beam.size(); 
-    for (unsigned j = 0; j < b_size; ++j) { 
-    //std::cout << i << " " << beam[j].stack_depth() << " " << beam[j].buffer_length() << std::endl;
-      //sample a sequence of possible actions leading up to the next shift
-      Words p_ctx = beam[j].word_tag_context();
-      Words r_ctx = beam[j].word_tag_context();
-      Words t_ctx = beam[j].tag_context();
-
-      if (beam[j].stack_depth() < 2) {
-        //have to shift
-        ArcStandardParser& shift_p = beam[j];
-        Words w_ctx = beam[j].word_tag_next_context();
-        WordId w = shift_p.next_word();
-        double wordp = shift_lm.prob(w, w_ctx); 
-        WordId tag = shift_p.next_tag();
-        double tagp = tag_lm.prob(tag, t_ctx);
-
-        shift_p.shift();
-        shift_p.add_importance_weight(wordp); 
-        shift_p.add_importance_weight(tagp); 
-        //shift_p.add_particle_weight(wordp); 
-        //shift_p.add_particle_weight(tagp); 
-      } else {
-        //add paths for reduce actions
-        double reducep = reduce_lm.prob(static_cast<WordId>(kAction::re), r_ctx);
-        double leftarcp = arc_lm.prob(static_cast<WordId>(kAction::la), p_ctx);
-        double rightarcp = arc_lm.prob(static_cast<WordId>(kAction::ra), p_ctx);
-       
-        //add to the beam: replace current position with right arc
-        if (beam[j].is_buffer_empty()) {
-          if (beam[j].left_arc_valid()) {
-            beam.push_back(beam[j]);
-            ArcStandardParser& right_p = beam[j]; 
-            ArcStandardParser& left_p = beam.back(); 
-
-            left_p.leftArc();
-            left_p.add_importance_weight(reducep); 
-            //left_p.add_particle_weight(reducep);
-            left_p.add_particle_weight(leftarcp);
-            right_p.rightArc();
-            right_p.add_importance_weight(reducep); 
-            //right_p.add_particle_weight(reducep); 
-            right_p.add_particle_weight(rightarcp); 
-          } else {
-            ArcStandardParser& right_p = beam[j]; 
-            right_p.rightArc();
-            right_p.add_importance_weight(reducep*rightarcp); 
-            //right_p.add_particle_weight(reducep*rightarcp); 
-          }
-        } else {
-          beam.push_back(beam[j]);
-          if (beam[j].left_arc_valid()) {
-            beam.push_back(beam[j]);
-            ArcStandardParser& right_p = beam.rbegin()[1]; 
-            ArcStandardParser& left_p = beam.back(); 
-
-            left_p.leftArc();
-            left_p.set_importance_weight(reducep); 
-            //left_p.add_particle_weight(reducep);
-            left_p.add_particle_weight(leftarcp);
-            right_p.rightArc();
-            right_p.set_importance_weight(reducep); 
-            //right_p.add_particle_weight(reducep); 
-            right_p.add_particle_weight(rightarcp); 
-          } else {
-            ArcStandardParser& right_p = beam.back(); 
-            right_p.rightArc();
-            right_p.set_importance_weight(reducep*rightarcp); 
-            //right_p.add_particle_weight(reducep*rightarcp); 
-          }
-          //std::cout << " + " << beam.size();
-
-          ArcStandardParser& shift_p = beam[j];
-          double shiftp = reduce_lm.prob(static_cast<WordId>(kAction::sh), r_ctx);
-          WordId w = shift_p.next_word();
-          Words w_ctx = beam[j].word_tag_next_context();
-          double wordp = shift_lm.prob(w, w_ctx); 
-          WordId tag = shift_p.next_tag();
-          double tagp = tag_lm.prob(tag, t_ctx);
-
-          shift_p.shift();
-          shift_p.set_importance_weight(wordp); 
-          shift_p.add_importance_weight(tagp); 
-          //shift_p.add_particle_weight(wordp); 
-          //shift_p.add_particle_weight(tagp); 
-          shift_p.add_particle_weight(shiftp); 
-        }
-      }
-    }
-    //std::cout << std::endl;
-
-    //otherwise compare normalized weights 
-    std::sort(beam.begin(), beam.end(), cmp_particle_weights);
-    //remove items with worst scores
-    for (unsigned j = beam.size()- 1; j >= beam_size; --j)
-      beam.pop_back();
-  } 
-  
-  //now sort according to total probability
-  std::sort(beam.begin(), beam.end(), cmp_particle_importance_weights);
-
-  //print parses
-  for (unsigned i = 0; (i < 5) && (i < beam.size()); ++i) {
-    auto& parser = beam[i];
-    parser.print_arcs();
-    //std::cout << parser.arcs_str();
-    //std::cout << parser.actions_str() << std::endl;
-
-    float dir_acc = (parser.directed_accuracy_count(goldd) + 0.0)/(s.size()-1);
-    float undir_acc = (parser.undirected_accuracy_count(goldd) + 0.0)/(s.size()-1);
-
-    std::cout << "  Dir Accuracy: " << dir_acc;
-    //std::cout << "  UnDir Accuracy: " << undir_acc;
-    std::cout << "  Sample weight: " << (parser.particle_weight()) << std::endl; // /log(10) 
-  }  
-
-  if (beam.size()==0) {
-    std::cout << "no parse found" << std::endl;
-    return ArcStandardParser(s);  
-  } else
-    return beam[0];
-}
-
-//for greedy binary action decisions
-template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kArcOrder, unsigned kTagOrder>
-ArcStandardParser greedyParseSentence(Words sent, Words tag, ArcList gold_dep, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>& shift_lm, PYPLM<kReduceOrder>& reduce_lm, PYPLM<kArcOrder>& arc_lm, PYPLM<kTagOrder>& tag_lm) {
-  //read in dev sentence; sample actions: for each action, execute and compute next word probability for shift
-  std::cout << "gold arcs: ";
-  for (auto d: goldd.arcs())
-    std::cout << d << " ";
-  std::cout << std::endl; 
-
-  ArcStandardParser parser(s); 
-
-  do {
-    kAction a = kAction::re; //placeholder action
-    Words ctx = parser.word_context();
-    double shiftp = reduce_lm.prob(static_cast<WordId>(kAction::sh), ctx);
-    double reducep = reduce_lm.prob(static_cast<WordId>(kAction::re), ctx);
-    std::cout << "(sh " << shiftp << ", re " << reducep << ") ";
-
-    if ((parser.stack_depth()< 2) && !parser.is_buffer_empty()) 
-      a = kAction::sh;
-    else if (parser.is_buffer_empty()) {
-      a = kAction::re;
-      parser.add_importance_weight(reducep);
-    } else {
-      //shift or reduce
-      if (shiftp >= reducep) {
-        a = kAction::sh;
-        parser.add_particle_weight(shiftp);
-      } else {
-        a = kAction::re; 
-        parser.add_particle_weight(reducep);
-      }
-    }
-    
-    if (a == kAction::sh) {
-      WordId w = parser.next_word();
-      double wordp = shift_lm.prob(w, ctx); 
-      parser.shift();
-      parser.add_particle_weight(wordp);
-
-    } else if (a == kAction::re) {
-      double leftarcp = arc_lm.prob(static_cast<WordId>(kAction::la), ctx);
-      double rightarcp = arc_lm.prob(static_cast<WordId>(kAction::ra), ctx);
-      std::cout << "(la " << leftarcp << ", ra " << rightarcp << ") ";
-    
-      if ((leftarcp > rightarcp) && parser.leftArc()) {
-        parser.add_particle_weight(leftarcp);
-      } else {
-        if (leftarcp > rightarcp) 
-          parser.add_importance_weight(rightarcp);
-        parser.rightArc();
-        parser.add_particle_weight(rightarcp);
-      }
-    }
-  } while (!parser.is_terminal_configuration());
-
-  std::cout << std::endl;
-  parser.print_arcs();
-  std::cout << parser.actions_str() << std::endl;
-
-  float dir_acc = (parser.directed_accuracy_count(goldd) + 0.0)/s.size();
-  float undir_acc = (parser.undirected_accuracy_count(goldd) + 0.0)/s.size();
-
-  std::cout << "  Dir Accuracy: " << dir_acc;
-  std::cout << "  UnDir Accuracy: " << undir_acc;
-  std::cout << "  Importance weight: " << parser.importance_weight();
-  std::cout << "  Sample weight: " << parser.particle_weight() << std::endl;
-
-  return parser;
-}
-   */
 }
 
 #endif

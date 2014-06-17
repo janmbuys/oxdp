@@ -26,8 +26,8 @@ int main(int argc, char** argv) {
 
   int num_samples = atoi(argv[1]);
   //num_samples = 50;  
-  //std::string train_file = "english-wsj-nowords/english_wsj_train.conll";
-  std::string train_file = "english-wsj/english_wsj_train.conll";
+  std::string train_file = "english-wsj-nowords/english_wsj_train.conll";
+  //std::string train_file = "english-wsj/english_wsj_train.conll";
   //std::string train_file = "dutch-alpino/dutch_alpino_train.conll";
 
   Dict dict("ROOT", "");
@@ -101,8 +101,8 @@ int main(int argc, char** argv) {
   //std::string test_file = "dutch-alpino/dutch_alpino_dev.conll";
   //std::string out_file = "alpino_dev.system.conll";
   
-  //std::string test_file = "english-wsj-nowords/english_wsj_dev.conll";
-  std::string test_file = "english-wsj/english_wsj_dev.conll";
+  std::string test_file = "english-wsj-nowords/english_wsj_dev.conll";
+  //std::string test_file = "english-wsj/english_wsj_dev.conll";
   std::string out_file = "wsj_dev.system.conll";
   
   std::vector<Words> test_sents;
@@ -112,24 +112,26 @@ int main(int argc, char** argv) {
   std::cerr << "Reading test corpus...\n";
   dict.readFromConllFile(test_file, &test_sents, &test_tags, &test_deps, true);
   std::cerr << "Corpus size: " << test_sents.size() << " sentences\n";
-
-  std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32};
+   
+  std::vector<unsigned> beam_sizes{1, 10, 50, 100, 200, 500};
+  //std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32, 64};
   //unsigned beam_size = 8;
-
+     
   for (unsigned beam_size: beam_sizes) {
-
+      
     AccuracyCounts acc_counts;
     std::cerr << "\nParsing test sentences... (beam size " << beam_size <<  ")\n";
     auto pr_start = std::chrono::steady_clock::now();
     std::ofstream outs;
     outs.open(out_file);
 
+
     for (unsigned j = 0; j < test_sents.size(); ++j) {
       ArcList gold_arcs(test_deps[j].size());
       gold_arcs.set_arcs(test_deps[j]);
       //if ((test_sents[j].size() <= 10) && gold_arcs.is_projective_dependency()) {
 
-        ArcStandardParser parser = particleParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, false, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
+        ArcStandardParser parser = particleParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, true, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
         //ArcStandardParser parser = beamParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
         acc_counts.countAccuracy(parser, gold_arcs);
 
@@ -138,7 +140,7 @@ int main(int argc, char** argv) {
           outs << i << "\t" << dict.lookup(test_sents[j][i]) << "\t_\t_\t" << dict.lookupTag(test_tags[j][i]) << "\t_\t" << parser.arcs().at(i) << "\tROOT\t_\t_\n";
 
         outs << "\n";
-        //std::cerr << ".";
+        //std::cerr << ". ";
     //}
     }
 
