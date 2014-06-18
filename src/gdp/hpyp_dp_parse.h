@@ -1,5 +1,5 @@
-#ifndef _HPYP_DP_PARSE_H_
-#define _HPYP_DP_PARSE_H_
+#ifndef _GDP_HPYP_DP_PARSE_H_
+#define _GDP_HPYP_DP_PARSE_H_
 
 #include <cstdlib>
 
@@ -22,7 +22,7 @@ namespace oxlm {
 typedef std::unique_ptr<ArcStandardParser> ParserPtr;
 typedef std::vector<std::unique_ptr<ArcStandardParser>> ParserList;
 
-void resampleParticles(ParserList* beam_stack, unsigned num_particles, MT19937& eng) {
+inline void resampleParticles(ParserList* beam_stack, unsigned num_particles, MT19937& eng) {
   std::vector<double> importance_w(beam_stack->size(), 0); //importance weights
   for (unsigned i = 0; i < importance_w.size(); ++i) {
     if (beam_stack->at(i)->num_particles()==0)
@@ -130,11 +130,11 @@ ArcStandardParser beamParseSentence(Words sent, Words tags, ArcList gold_dep, un
           Words r_ctx = beam_chart[i][j]->reduce_context();
           Words t_ctx = beam_chart[i][j]->tag_context();
           
-          WordId w = beam_chart[i][j]->next_word();
-          WordId tag = beam_chart[i][j]->next_tag();
           double shiftp = reduce_lm.prob(static_cast<WordId>(kAction::sh), r_ctx);
-          double wordp = shift_lm.prob(w, w_ctx); 
-          double tagp = tag_lm.prob(tag, t_ctx);
+          //temp - don't query the shift model 
+          //double wordp = 1;
+          double wordp = shift_lm.prob(beam_chart[i][j]->next_word(), w_ctx); 
+          double tagp = tag_lm.prob(beam_chart[i][j]->next_tag(), t_ctx);
 
           beam_chart[i][j]->shift();
           beam_chart[i][j]->add_importance_weight(wordp); 
@@ -171,10 +171,10 @@ ArcStandardParser particleParseSentence(Words sent, Words tags, ArcList gold_dep
   //Follow approach similar to per-word beam-search, but also keep track of number of particles that is equal to given state
   //perform sampling and resampling to update these counts, and remove 0 count states
     
-  std::cout << "gold arcs: ";
+  /* std::cout << "gold arcs: ";
   for (auto d: gold_dep.arcs())
     std::cout << d << " ";
-  std::cout << std::endl; 
+  std::cout << std::endl; */
 
   ParserList beam_stack; 
   beam_stack.push_back(std::make_unique<ArcStandardParser>(sent, tags)); 
@@ -250,7 +250,8 @@ ArcStandardParser particleParseSentence(Words sent, Words tags, ArcList gold_dep
       else {
         Words t_ctx = beam_stack[j]->tag_context();
         Words w_ctx = beam_stack[j]->shift_context();
-        double wordp = shift_lm.prob(beam_stack[j]->next_word(), w_ctx); 
+        //TODO for now, don't query the shift lm
+        double wordp = 1; //shift_lm.prob(beam_stack[j]->next_word(), w_ctx); 
         double tagp = tag_lm.prob(beam_stack[j]->next_tag(), t_ctx);
 
         beam_stack[j]->shift();
@@ -364,16 +365,16 @@ ArcStandardParser particleParseSentence(Words sent, Words tags, ArcList gold_dep
   std::sort(beam_stack.begin(), beam_stack.end(), cmp_weighted_importance_ptr_weights); 
   for (int j = beam_stack.size()- 1; ((j >= 0) && (beam_stack[j]->num_particles() == 0)); --j)
     beam_stack.pop_back();
-  std::cout << "Final beam size: " << beam_stack.size();
+  //std::cout << "Final beam size: " << beam_stack.size();
 
   //just take 1 sample
   resampleParticles(&beam_stack, 1, eng);
   for (unsigned i = 0; i < beam_stack.size(); ++i) {
     if (beam_stack[i]->num_particles() == 1) {
-      beam_stack[i]->print_arcs();
-      float dir_acc = (beam_stack[i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
-      std::cout << "  Dir Accuracy: " << dir_acc;
-      std::cout << "  Sample weight: " << (beam_stack[i]->particle_weight()) << std::endl;
+      //beam_stack[i]->print_arcs();
+      //float dir_acc = (beam_stack[i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
+      //std::cout << "  Dir Accuracy: " << dir_acc;
+      //std::cout << "  Sample weight: " << (beam_stack[i]->particle_weight()) << std::endl;
 
       return ArcStandardParser(*beam_stack[i]); 
     }

@@ -2,7 +2,6 @@
 
 namespace oxlm {
 
-//TODO
 void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const ArcList& gold_arcs) {
   //resimulate the computation of the proposed action sequence to compute accuracy
   ArcStandardParser simul(prop_parse.sentence(), prop_parse.tags());
@@ -36,7 +35,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const Ar
     
     simul.execute_action(a);
   }
-
+         
   inc_num_sentences();
   if (gold_arcs==prop_parse.arcs())
     inc_complete_sentences();

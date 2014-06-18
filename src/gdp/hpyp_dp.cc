@@ -7,8 +7,8 @@
 #include "corpus/corpus.h"
 #include "transition_parser.h"
 #include "pyp/random.h"
-#include "hpyp_dp_train.h"
 #include "hpyp_dp_parse.h"
+#include "hpyp_dp_train.h"
 
 using namespace oxlm;
 
@@ -26,8 +26,8 @@ int main(int argc, char** argv) {
 
   int num_samples = atoi(argv[1]);
   //num_samples = 50;  
-  std::string train_file = "english-wsj-nowords/english_wsj_train.conll";
-  //std::string train_file = "english-wsj/english_wsj_train.conll";
+  //std::string train_file = "english-wsj-nowords/english_wsj_train.conll";
+  std::string train_file = "english-wsj/english_wsj_train.conll";
   //std::string train_file = "dutch-alpino/dutch_alpino_train.conll";
 
   Dict dict("ROOT", "");
@@ -42,11 +42,11 @@ int main(int argc, char** argv) {
   std::cerr << "Corpus size: " << corpus_sents.size() << " sentences\t (" << dict.size() << " word types, " << dict.tag_size() << " tags)\n";
 
   //define pyp models with their orders
-  const unsigned kShOrder = 6;
-  const unsigned kReOrder = 3;
-  const unsigned kArcOrder = 3;
-  const unsigned kTagOrder = 3;
-  
+  const unsigned kShOrder = 4;
+  const unsigned kReOrder = 5;
+  const unsigned kArcOrder = 5;
+  const unsigned kTagOrder = 4;
+    
   PYPLM<kShOrder> shift_lm(dict.size()+1, 1, 1, 1, 1);
   PYPLM<kReOrder> reduce_lm(2, 1, 1, 1, 1); 
   PYPLM<kArcOrder> arc_lm(2, 1, 1, 1, 1);
@@ -55,6 +55,14 @@ int main(int argc, char** argv) {
   std::cerr << "\nStarting training\n";
   auto tr_start = std::chrono::steady_clock::now();
 
+  //TODO initialize tag_lm with a sequential trigram model
+  //std::vector<Words> init_examples_tag;
+  
+  //trainPYPModel(num_samples, eng, init_examples_tag, &tag_lm); 
+    
+  //trainUnsupervised(corpus_sents, corpus_tags, corpus_deps, num_samples, dict, eng, &shift_lm, &reduce_lm, &arc_lm, &tag_lm);
+
+  //Supervised training
   std::vector<Words> examples_sh;
   std::vector<Words> examples_re;
   std::vector<Words> examples_arc;
@@ -70,6 +78,7 @@ int main(int argc, char** argv) {
   trainPYPModel(num_samples, eng, examples_arc, &arc_lm); //6*samples seems to converge slower
   std::cerr << "\nTraining pos tag model...\n";
   trainPYPModel(num_samples, eng, examples_tag, &tag_lm); 
+
 
   auto tr_dur = std::chrono::steady_clock::now() - tr_start;
   std::cerr << "Training done...time " << std::chrono::duration_cast<std::chrono::seconds>(tr_dur).count() << "s\n";
@@ -101,8 +110,8 @@ int main(int argc, char** argv) {
   //std::string test_file = "dutch-alpino/dutch_alpino_dev.conll";
   //std::string out_file = "alpino_dev.system.conll";
   
-  std::string test_file = "english-wsj-nowords/english_wsj_dev.conll";
-  //std::string test_file = "english-wsj/english_wsj_dev.conll";
+  std::string test_file = "english-wsj/english_wsj_dev.conll";
+  //std::string test_file = "english-wsj-no-words/english_wsj_dev.conll";
   std::string out_file = "wsj_dev.system.conll";
   
   std::vector<Words> test_sents;
@@ -113,8 +122,8 @@ int main(int argc, char** argv) {
   dict.readFromConllFile(test_file, &test_sents, &test_tags, &test_deps, true);
   std::cerr << "Corpus size: " << test_sents.size() << " sentences\n";
    
-  std::vector<unsigned> beam_sizes{1, 10, 50, 100, 200, 500};
-  //std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32, 64};
+  //std::vector<unsigned> beam_sizes{1, 10, 50, 100, 200, 500};
+  std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32, 64, 128};
   //unsigned beam_size = 8;
      
   for (unsigned beam_size: beam_sizes) {
@@ -131,8 +140,8 @@ int main(int argc, char** argv) {
       gold_arcs.set_arcs(test_deps[j]);
       //if ((test_sents[j].size() <= 10) && gold_arcs.is_projective_dependency()) {
 
-        ArcStandardParser parser = particleParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, true, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
-        //ArcStandardParser parser = beamParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
+        //ArcStandardParser parser = particleParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, true, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
+        ArcStandardParser parser = beamParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
         acc_counts.countAccuracy(parser, gold_arcs);
 
         //write output to conll-format file
