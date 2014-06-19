@@ -131,9 +131,9 @@ ArcStandardParser beamParseSentence(Words sent, Words tags, ArcList gold_dep, un
           Words t_ctx = beam_chart[i][j]->tag_context();
           
           double shiftp = reduce_lm.prob(static_cast<WordId>(kAction::sh), r_ctx);
-          //temp - don't query the shift model 
-          //double wordp = 1;
-          double wordp = shift_lm.prob(beam_chart[i][j]->next_word(), w_ctx); 
+          //TODO temp - don't query the shift model 
+          double wordp = 1;
+          //double wordp = shift_lm.prob(beam_chart[i][j]->next_word(), w_ctx); 
           double tagp = tag_lm.prob(beam_chart[i][j]->next_tag(), t_ctx);
 
           beam_chart[i][j]->shift();

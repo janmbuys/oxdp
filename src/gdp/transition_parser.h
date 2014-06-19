@@ -341,11 +341,11 @@ class TransitionParser {
   }
 
   Words reduce_context() const {
-    return word_tag_context();
+    return tag_less_context();
   }
 
   Words arc_context() const {
-    return word_tag_context();
+    return tag_less_context();
   }
 
   //****functions for context vectors: each function defined for a specific context length
@@ -403,6 +403,31 @@ class TransitionParser {
       ctx[0] = tags_.at(stack_.at(stack_.size()-4));
     } */ 
 
+    /* Words ctx(3, 0);
+    
+    if (stack_.size() >= 1) { 
+      ctx[2] = tags_.at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[1] = tags_.at(stack_.at(stack_.size()-2));
+    }
+    if (stack_.size() >= 3) {
+      ctx[0] = tags_.at(stack_.at(stack_.size()-3));
+    } */
+
+    Words ctx(2, 0);
+    
+    if (stack_.size() >= 1) { 
+      ctx[1] = tags_.at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[0] = tags_.at(stack_.at(stack_.size()-2));
+    } 
+
+    return ctx;
+  }
+
+  Words tag_less_context() const {
     Words ctx(3, 0);
     
     if (stack_.size() >= 1) { 
@@ -423,19 +448,6 @@ class TransitionParser {
     if (stack_.size() >= 2) {
       ctx[0] = tags_.at(stack_.at(stack_.size()-2));
     } */
-
-    return ctx;
-  }
-
-  Words tag_less_context() const {
-    Words ctx(2, 0);
-    
-    if (stack_.size() >= 1) { 
-      ctx[1] = tags_.at(stack_.at(stack_.size()-1));
-    }
-    if (stack_.size() >= 2) {
-      ctx[0] = tags_.at(stack_.at(stack_.size()-2));
-    } 
 
     return ctx;
   }

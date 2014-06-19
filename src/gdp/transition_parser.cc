@@ -35,7 +35,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const Ar
     
     simul.execute_action(a);
   }
-         
+    
   inc_num_sentences();
   if (gold_arcs==prop_parse.arcs())
     inc_complete_sentences();

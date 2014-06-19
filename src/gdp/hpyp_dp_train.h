@@ -49,7 +49,7 @@ void updatePYPModel(int num_samples, MT19937& eng, const std::vector<Words>& old
       lm->increment(w, ctx, eng);
     }
 
-    if (sample % 30u == 29) 
+    if (sample % 30 == 29) 
       lm->resample_hyperparameters(eng);      
     if (sample % 10 == 9) {
       std::cerr << (sample + 1) << " iterations [LLH=" << lm->log_likelihood() << "]" << std::endl;
@@ -74,7 +74,8 @@ void trainPYPModel(int num_samples, MT19937& eng, const std::vector<Words>& exam
 
     if (sample % 30u == 29) 
       lm->resample_hyperparameters(eng);      
-    if ((sample==0) || (sample % 10 == 9)) {
+    //if ((sample==0) || (sample % 10 == 9)) 
+    if (sample % 10 == 9) {
       std::cerr << (sample + 1) << " iterations [LLH=" << lm->log_likelihood() << "]" << std::endl;
     }  
   }
@@ -82,7 +83,7 @@ void trainPYPModel(int num_samples, MT19937& eng, const std::vector<Words>& exam
 
 template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kArcOrder, unsigned kTagOrder>
 void trainUnsupervised(const std::vector<Words>& sents, const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kArcOrder>* arc_lm, PYPLM<kTagOrder>* tag_lm) {
-  unsigned num_particles = 100;
+  unsigned num_particles = 1000;
   bool resample = false;
 
   //keep an example list for each sentence
@@ -91,8 +92,23 @@ void trainUnsupervised(const std::vector<Words>& sents, const std::vector<Words>
   std::vector<WordsList> examples_list_re(sents.size(), WordsList());
   std::vector<WordsList> examples_list_arc(sents.size(), WordsList());
 
+  //initialize tag_lm with a sequential trigram model
+  /* std::vector<WordId> ctx(kTagOrder - 1, 0);
+  for (unsigned j = 0; j < sents.size(); ++j) {
+    ctx.resize(kTagOrder - 1);
+    for (unsigned i = 0; i < sents[j].size(); ++i) {
+      WordId tag = sents[j][i];
+      Words tag_tuple(1, tag);
+      tag_tuple.insert(tag_tuple.end(), ctx.begin() + (ctx.size() - (kTagOrder - 1)), ctx.end());
+      examples_list_tag[j].push_back(tag_tuple);
+      ctx.push_back(tag);
+    }
+
+    trainPYPModel(1, eng, examples_list_tag[j], tag_lm); 
+  } */
+    
   //repeat for number of samples: for each sentence, get training examples and update model
-  for (int i = 0; i < num_iterations; ++i) {
+  for (int iter = 0; iter < num_iterations; ++iter) {
     //?? how online should this be? update models after each sentence, or only after all sentences?
     //after each sentece makes sens
 
@@ -122,25 +138,29 @@ void trainUnsupervised(const std::vector<Words>& sents, const std::vector<Words>
       examples_list_re[j] = new_examples_re;      
       updatePYPModel(1, eng, examples_list_arc[j], new_examples_arc, arc_lm);
       examples_list_arc[j] = new_examples_arc;      
-      std::cerr << ".";
     }
 
-    std::cerr << "\n";
-    if (num_iterations % 30 == 29) {
+    std::cerr << ".";
+    if (iter % 10 == 9) { //if (i % 30 == 29) 
+      std::cerr << (iter + 1) << " iterations\n";
       //shift_lm->resample_hyperparameters(eng);      
-      reduce_lm->resample_hyperparameters(eng);      
-      arc_lm->resample_hyperparameters(eng);      
       tag_lm->resample_hyperparameters(eng);      
+      std::cerr << "\n  [Tag LLH=" << tag_lm->log_likelihood() << "]\n";    
+      reduce_lm->resample_hyperparameters(eng);      
+      std::cerr << "\n  [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n";
+      arc_lm->resample_hyperparameters(eng);      
+      std::cerr << "\n [Arc LLH=" << arc_lm->log_likelihood() << "]\n";
     }
-    if ((num_iterations==0) || (num_iterations % 10 == 9)) {
-      std::cerr << (num_iterations + 1) << " iterations";
+    if ((iter == 0)) {
+      std::cerr << (iter + 1) << " iterations\n";
       //std::cerr << " [Shift LLH=" << shift_lm->log_likelihood() << "]"; 
-      std::cerr << " [Tag LLH=" << tag_lm->log_likelihood() << "]";    
-      std::cerr << " [Reduce LLH=" << reduce_lm->log_likelihood() << "]";
-      std::cerr << " [Arc LLH=" << arc_lm->log_likelihood() << "]";
-      std::cerr << std::endl;
+      std::cerr << " [Tag LLH=" << tag_lm->log_likelihood() << "]\n";    
+      std::cerr << " [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n";
+      std::cerr << " [Arc LLH=" << arc_lm->log_likelihood() << "]\n";
     }
   }
+
+  //std::cerr << "\n";
 }
 
 }

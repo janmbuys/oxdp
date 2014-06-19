@@ -26,8 +26,8 @@ int main(int argc, char** argv) {
 
   int num_samples = atoi(argv[1]);
   //num_samples = 50;  
-  //std::string train_file = "english-wsj-nowords/english_wsj_train.conll";
-  std::string train_file = "english-wsj/english_wsj_train.conll";
+  std::string train_file = "english-wsj-nowords-nopunc10/english_wsj_train.conll";
+  //std::string train_file = "english-wsj/english_wsj_train.conll";
   //std::string train_file = "dutch-alpino/dutch_alpino_train.conll";
 
   Dict dict("ROOT", "");
@@ -43,9 +43,9 @@ int main(int argc, char** argv) {
 
   //define pyp models with their orders
   const unsigned kShOrder = 4;
-  const unsigned kReOrder = 5;
-  const unsigned kArcOrder = 5;
-  const unsigned kTagOrder = 4;
+  const unsigned kReOrder = 4;
+  const unsigned kArcOrder = 4;
+  const unsigned kTagOrder = 3;
     
   PYPLM<kShOrder> shift_lm(dict.size()+1, 1, 1, 1, 1);
   PYPLM<kReOrder> reduce_lm(2, 1, 1, 1, 1); 
@@ -54,15 +54,10 @@ int main(int argc, char** argv) {
 
   std::cerr << "\nStarting training\n";
   auto tr_start = std::chrono::steady_clock::now();
+     
+  trainUnsupervised(corpus_sents, corpus_tags, corpus_deps, num_samples, dict, eng, &shift_lm, &reduce_lm, &arc_lm, &tag_lm);
 
-  //TODO initialize tag_lm with a sequential trigram model
-  //std::vector<Words> init_examples_tag;
-  
-  //trainPYPModel(num_samples, eng, init_examples_tag, &tag_lm); 
-    
-  //trainUnsupervised(corpus_sents, corpus_tags, corpus_deps, num_samples, dict, eng, &shift_lm, &reduce_lm, &arc_lm, &tag_lm);
-
-  //Supervised training
+  /* Supervised training
   std::vector<Words> examples_sh;
   std::vector<Words> examples_re;
   std::vector<Words> examples_arc;
@@ -71,17 +66,17 @@ int main(int argc, char** argv) {
   constructTrainExamples(corpus_sents, corpus_tags, corpus_deps, &examples_sh, &examples_re, &examples_arc, &examples_tag);
 
   std::cerr << "\nTraining word model...\n";
-  trainPYPModel(num_samples, eng, examples_sh, &shift_lm);  //4*samples
+  trainPYPModel(num_samples, eng, examples_sh, &shift_lm);  
   std::cerr << "\nTraining shift/reduce model...\n";
-  trainPYPModel(num_samples, eng, examples_re, &reduce_lm);
+  trainPYPModel(1, eng, examples_re, &reduce_lm); //num_samples
   std::cerr << "\nTraining arc model...\n";
-  trainPYPModel(num_samples, eng, examples_arc, &arc_lm); //6*samples seems to converge slower
+  trainPYPModel(num_samples, eng, examples_arc, &arc_lm); 
   std::cerr << "\nTraining pos tag model...\n";
-  trainPYPModel(num_samples, eng, examples_tag, &tag_lm); 
-
+  trainPYPModel(1, eng, examples_tag, &tag_lm); //num_samples
+*/
 
   auto tr_dur = std::chrono::steady_clock::now() - tr_start;
-  std::cerr << "Training done...time " << std::chrono::duration_cast<std::chrono::seconds>(tr_dur).count() << "s\n";
+  std::cerr << "Training done...time " << std::chrono::duration_cast<std::chrono::seconds>(tr_dur).count() << "s\n";  
 
   /* Generating 
   //sample sentences from the trained model
@@ -110,8 +105,8 @@ int main(int argc, char** argv) {
   //std::string test_file = "dutch-alpino/dutch_alpino_dev.conll";
   //std::string out_file = "alpino_dev.system.conll";
   
-  std::string test_file = "english-wsj/english_wsj_dev.conll";
-  //std::string test_file = "english-wsj-no-words/english_wsj_dev.conll";
+  //std::string test_file = "english-wsj/english_wsj_dev.conll";
+  std::string test_file = "english-wsj-nowords-nopunc10/english_wsj_dev.conll";
   std::string out_file = "wsj_dev.system.conll";
   
   std::vector<Words> test_sents;
@@ -123,7 +118,7 @@ int main(int argc, char** argv) {
   std::cerr << "Corpus size: " << test_sents.size() << " sentences\n";
    
   //std::vector<unsigned> beam_sizes{1, 10, 50, 100, 200, 500};
-  std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32, 64, 128};
+  std::vector<unsigned> beam_sizes{1, 10, 100, 1000};
   //unsigned beam_size = 8;
      
   for (unsigned beam_size: beam_sizes) {
@@ -133,7 +128,6 @@ int main(int argc, char** argv) {
     auto pr_start = std::chrono::steady_clock::now();
     std::ofstream outs;
     outs.open(out_file);
-
 
     for (unsigned j = 0; j < test_sents.size(); ++j) {
       ArcList gold_arcs(test_deps[j].size());
@@ -155,7 +149,11 @@ int main(int argc, char** argv) {
 
     outs.close();
     auto pr_dur = std::chrono::steady_clock::now() - pr_start;
-    std::cerr << "\nParsing done...time " << std::chrono::duration_cast<std::chrono::seconds>(pr_dur).count() << "s\n";
+    int milli_sec_dur = std::chrono::duration_cast<std::chrono::milliseconds>(pr_dur).count();
+    double sents_per_sec = (static_cast<int>(test_sents.size()) * 1000.0 / milli_sec_dur);
+    std::cerr << "\nParsing done...time " << static_cast<int>(milli_sec_dur / 1000.0)
+   //     std::chrono::duration_cast<std::chrono::seconds>(pr_dur).count() 
+        << "s (" << static_cast<int>(sents_per_sec) << " sentences per second)\n";
  
     std::cerr << "Word-aligned beam search\n"; 
     std::cerr << "Directed Accuracy: " << acc_counts.directed_accuracy() << std::endl;
