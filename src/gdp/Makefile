@@ -1,6 +1,6 @@
 LOCAL_LIBS=${HOME}/packages
-CXXFLAGS =  -std=c++0x -g -O3 -Wall -I.. -m64 # -fopenmp -I${LOCAL_LIBS}/include -I/usr/include/eigen3 
-LDFLAGS = -std=c++0x -g -O3 # -fopenmp -L${LOCAL_LIBS}/lib64 -L${LOCAL_LIBS}/lib -lboost_program_options -lboost_serialization
+CXXFLAGS =  -std=c++11 -g -O3 -Wall -I.. -m64 # -fopenmp -I${LOCAL_LIBS}/include -I/usr/include/eigen3 
+LDFLAGS = -std=c++11 -g -O3 # -fopenmp -L${LOCAL_LIBS}/lib64 -L${LOCAL_LIBS}/lib -lboost_program_options -lboost_serialization
 
 all: hpyp_dp
 

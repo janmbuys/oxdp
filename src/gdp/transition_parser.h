@@ -341,14 +341,60 @@ class TransitionParser {
   }
 
   Words reduce_context() const {
-    return tag_less_context();
+    return tag_augmented_context();
   }
 
   Words arc_context() const {
-    return tag_less_context();
+    return tag_augmented_context();
   }
 
   //****functions for context vectors: each function defined for a specific context length
+
+  Words tag_augmented_plus_context() const {
+    Words ctx(6, 0);
+    //add word distance feature
+
+    if (stack_.size() >= 1) { 
+      ctx[3] = tags_.at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[2] = tags_.at(stack_.at(stack_.size()-2));
+      WordIndex i = stack_.rbegin()[1];
+      WordIndex j = stack_.rbegin()[0];
+      ctx[4] = j - i;
+    }
+    if (stack_.size() >= 3) {
+      ctx[1] = tags_.at(stack_.at(stack_.size()-3));
+    }
+    if (stack_.size() >= 4) {
+      ctx[0] = tags_.at(stack_.at(stack_.size()-4));
+    }
+    
+    ctx[5] = static_cast<int>(stack_.size());
+    return ctx;
+  }
+
+  Words tag_augmented_context() const {
+    Words ctx(5, 0);
+    //add word distance feature
+
+    if (stack_.size() >= 1) { 
+      ctx[3] = tags_.at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[2] = tags_.at(stack_.at(stack_.size()-2));
+      WordIndex i = stack_.rbegin()[1];
+      WordIndex j = stack_.rbegin()[0];
+      ctx[4] = j - i;
+    }
+    if (stack_.size() >= 3) {
+      ctx[1] = tags_.at(stack_.at(stack_.size()-3));
+    }
+    if (stack_.size() >= 4) {
+      ctx[0] = tags_.at(stack_.at(stack_.size()-4));
+    }
+    return ctx;
+  }
 
   Words tag_more_context() const {
     /*Words ctx(5, 0);
@@ -403,7 +449,7 @@ class TransitionParser {
       ctx[0] = tags_.at(stack_.at(stack_.size()-4));
     } */ 
 
-    /* Words ctx(3, 0);
+    Words ctx(3, 0);
     
     if (stack_.size() >= 1) { 
       ctx[2] = tags_.at(stack_.at(stack_.size()-1));
@@ -413,16 +459,16 @@ class TransitionParser {
     }
     if (stack_.size() >= 3) {
       ctx[0] = tags_.at(stack_.at(stack_.size()-3));
-    } */
+    } 
 
-    Words ctx(2, 0);
+    /* Words ctx(2, 0);
     
     if (stack_.size() >= 1) { 
       ctx[1] = tags_.at(stack_.at(stack_.size()-1));
     }
     if (stack_.size() >= 2) {
       ctx[0] = tags_.at(stack_.at(stack_.size()-2));
-    } 
+    } */
 
     return ctx;
   }

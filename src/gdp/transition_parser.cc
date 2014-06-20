@@ -105,7 +105,7 @@ bool ArcStandardParser::rightArc() {
   //can maybe formulate in terms of loss of each action
 kAction ArcStandardParser::oracleDynamicNext(const ArcList& gold_arcs) const { //, ArcList prop_arcs) {
   kAction a = kAction::re;
-    
+            
   //assume not in terminal configuration 
   if (stack_depth() < 2)
     a = kAction::sh; 

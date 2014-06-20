@@ -26,7 +26,8 @@ int main(int argc, char** argv) {
 
   int num_samples = atoi(argv[1]);
   //num_samples = 50;  
-  std::string train_file = "english-wsj-nowords-nopunc10/english_wsj_train.conll";
+  std::string train_file = "english-wsj-nowords/english_wsj_train.conll";
+  //std::string train_file = "english-wsj-nowords-nopunc10/english_wsj_train.conll";
   //std::string train_file = "english-wsj/english_wsj_train.conll";
   //std::string train_file = "dutch-alpino/dutch_alpino_train.conll";
 
@@ -43,19 +44,19 @@ int main(int argc, char** argv) {
 
   //define pyp models with their orders
   const unsigned kShOrder = 4;
-  const unsigned kReOrder = 4;
-  const unsigned kArcOrder = 4;
-  const unsigned kTagOrder = 3;
+  const unsigned kReOrder = 6;
+  const unsigned kArcOrder = 6;
+  const unsigned kTagOrder = 4;
     
   PYPLM<kShOrder> shift_lm(dict.size()+1, 1, 1, 1, 1);
   PYPLM<kReOrder> reduce_lm(2, 1, 1, 1, 1); 
   PYPLM<kArcOrder> arc_lm(2, 1, 1, 1, 1);
   PYPLM<kTagOrder> tag_lm(dict.tag_size(), 1, 1, 1, 1);
-
+    
   std::cerr << "\nStarting training\n";
   auto tr_start = std::chrono::steady_clock::now();
-     
-  trainUnsupervised(corpus_sents, corpus_tags, corpus_deps, num_samples, dict, eng, &shift_lm, &reduce_lm, &arc_lm, &tag_lm);
+         
+  trainSupervised(corpus_sents, corpus_tags, corpus_deps, num_samples, dict, eng, &shift_lm, &reduce_lm, &arc_lm, &tag_lm);
 
   /* Supervised training
   std::vector<Words> examples_sh;
@@ -106,7 +107,8 @@ int main(int argc, char** argv) {
   //std::string out_file = "alpino_dev.system.conll";
   
   //std::string test_file = "english-wsj/english_wsj_dev.conll";
-  std::string test_file = "english-wsj-nowords-nopunc10/english_wsj_dev.conll";
+  std::string test_file = "english-wsj-nowords/english_wsj_dev.conll";
+  //std::string test_file = "english-wsj-nowords-nopunc10/english_wsj_dev.conll";
   std::string out_file = "wsj_dev.system.conll";
   
   std::vector<Words> test_sents;
@@ -117,8 +119,8 @@ int main(int argc, char** argv) {
   dict.readFromConllFile(test_file, &test_sents, &test_tags, &test_deps, true);
   std::cerr << "Corpus size: " << test_sents.size() << " sentences\n";
    
-  //std::vector<unsigned> beam_sizes{1, 10, 50, 100, 200, 500};
-  std::vector<unsigned> beam_sizes{1, 10, 100, 1000};
+  //std::vector<unsigned> beam_sizes{1, 10, 100, 500};
+  std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32};
   //unsigned beam_size = 8;
      
   for (unsigned beam_size: beam_sizes) {
