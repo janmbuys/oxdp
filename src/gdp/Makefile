@@ -4,25 +4,23 @@ LDFLAGS = -std=c++11 -g -O3 # -fopenmp -L${LOCAL_LIBS}/lib64 -L${LOCAL_LIBS}/lib
 
 all: hpyp_dp
 
-hpyp_dp: ../corpus/corpus.o transition_parser.o hpyp_dp_train.o hpyp_dp.o
-	$(CXX) -o hpyp_dp $^ $(LDFLAGS)
+hpyp_dp: ../corpus/corpus.o transition_parser.o hpyp_dp.o
+	$(CXX) ${LDFLAGS} ../corpus/corpus.o transition_parser.o hpyp_dp.o -o hpyp_dp 
 
-corpus: ../corpus/corpus.o
+transition_parser: transition_parser.o transition_parser.h
 
-transition_parser: transition_parser.o
-
-hpyp_dp_train: hpyp_dp_train.o
+corpus: ../corpus/corpus.o ../corpus/corpus.h
 
 %.o: %.cc
 	${CXX} $(CXXFLAGS) -c $< -o $@
 
-%.o: %.c
-	${CC} $(CFLAGS) -c $< -o $@
+# %.o: %.c
+#	${CC} $(CFLAGS) -c $< -o $@
 
 ## stuff below here is optional
 
 clean:
-	rm -f *.o
+	rm -f *.o ../corpus/*.o
 
 clobber: clean
 	rm hpyp_dp 

@@ -145,36 +145,37 @@ class TransitionParser {
   bool shift();
 
   bool shift(WordId w);
-  
-  bool buffer_tag(WordId t);
 
-  /* 
-  //not currently used
-  void reduce() {
+  //only use when generating 
+  bool buffer_tag(WordId t) {
+    buffer_.push_back(tags_.size());
+    tags_.push_back(t);
+    return true;
+  }
+
+  //virtual bool leftArc() = 0;
+  //virtual bool rightArc() = 0;
+  //virtual kAction oracleNext(const ArcList& gold_arcs) const = 0;
+  //virtual bool execute_action(kAction a) = 0;
+ 
+  void pop_buffer() {
+    buffer_.pop_back();
+  }
+
+  void pop_stack() {
     stack_.pop_back();
-    actions_.push_back(kAction:re);
-  } */
+  }
 
-  virtual bool leftArc() = 0;
+  void push_stack(WordIndex i) {
+    stack_.push_back(i);
+  }
 
-  virtual bool rightArc() = 0;
+  void append_action(kAction a) {
+    actions_.push_back(a);
+  }
 
-  //not compulsory any more
-  //virtual bool SentenceOracle(WxList gold_arcs) = 0;
-
-  bool execute_action(kAction a) {
-    switch(a) {
-    case kAction::sh:
-      return shift();
-    case kAction::la:
-      return leftArc();
-    case kAction::ra:
-      return rightArc();
-    default: 
-      //other cases not implemented
-      std::cerr << "action not implemented" << std::endl;
-      return false;
-    }
+  void set_arc(WordIndex i, WordIndex j) {
+    arcs_.set_arc(i, j);
   }
 
   void reset_importance_weight() {
@@ -288,12 +289,20 @@ class TransitionParser {
     return stack_.size();
   }
 
+  bool is_stack_empty() const {
+    return stack_.empty();
+  }
+
   int buffer_length() const {
     return buffer_.size();
   }
 
   WordIndex stack_top() const {
     return stack_.back();
+  }
+
+  WordIndex stack_top_second() const {
+    return stack_.rbegin()[1];
   }
 
   WordId next_word() const {
@@ -614,19 +623,17 @@ class TransitionParser {
     return ctx;
   }
 
-  protected:
+  private:
   WxList stack_;
   WxList buffer_;
   ArcList arcs_;
   ActList actions_;
-  private:
   Words sentence_;
   Words tags_;
   double liw_; //log importance weight
   double lpw_; //log particle weight
   int num_particles_;
 };
-
 
 class ArcStandardParser : public TransitionParser {
   public:
@@ -648,15 +655,83 @@ class ArcStandardParser : public TransitionParser {
   bool rightArc();
   
   bool left_arc_valid() const {
-    if (stack_.size() < 2)
+    if (stack_depth() < 2)
       return false;
-    WordIndex i = stack_.rbegin()[1];
+    WordIndex i = stack_top_second();
     return (i != 0);
+  }
+
+  bool execute_action(kAction a) {
+    switch(a) {
+    case kAction::sh:
+      return shift();
+    case kAction::la:
+      return leftArc();
+    case kAction::ra:
+      return rightArc();
+    default: 
+      std::cerr << "action not implemented" << std::endl;
+      return false;
+    }
   }
 
   kAction oracleNext(const ArcList& gold_arcs) const;
   
   kAction oracleDynamicNext(const ArcList& gold_arcs) const;
+  
+};
+
+class ArcEagerParser : public TransitionParser {
+  public:
+
+  ArcEagerParser():
+    TransitionParser() {
+  }
+
+  ArcEagerParser(Words sent):
+    TransitionParser(sent) {
+  }
+
+  ArcEagerParser(Words sent, Words ptags):
+    TransitionParser(sent, ptags) {
+  }
+
+  bool leftArc();
+
+  bool rightArc();
+  
+  bool reduce();
+
+  bool left_arc_valid() const {
+    //stack_size 1 -> stack top is root
+    if (stack_depth() < 2)
+      return false;    
+    WordIndex i = stack_top();
+    return (!has_parent(i));
+  }
+
+  bool reduce_valid() const {
+    WordIndex i = stack_top();
+    return has_parent(i);
+  }
+
+  bool execute_action(kAction a) {
+    switch(a) {
+    case kAction::sh:
+      return shift();
+    case kAction::la:
+      return leftArc();
+    case kAction::ra:
+      return rightArc();
+    case kAction::re:
+      return reduce();
+    default: 
+      std::cerr << "action not implemented" << std::endl;
+      return false;
+    }
+  }
+
+  kAction oracleNext(const ArcList& gold_arcs) const;
   
 };
 
@@ -724,6 +799,8 @@ public:
    
   void countAccuracy(const ArcStandardParser& prop_parse, const ArcList& gold_arcs); 
 
+  void countAccuracy(const ArcEagerParser& prop_parse, const ArcList& gold_arcs); 
+
   double directed_accuracy() const {
     return (directed_count_ + 0.0)/total_length_;
   }
@@ -770,15 +847,8 @@ private:
     int num_sentences_;
 };
 
-inline bool cmp_importance_weights(ArcStandardParser& p1, ArcStandardParser& p2) {
-  return (p1.importance_weight() < p2.importance_weight());
-}
- 
-inline bool cmp_particle_weights(ArcStandardParser& p1, ArcStandardParser& p2) {
-  return (p1.particle_weight() < p2.particle_weight());
-}
-
-inline bool cmp_particle_ptr_weights(const std::unique_ptr<ArcStandardParser>& p1, const std::unique_ptr<ArcStandardParser>& p2) {
+inline bool cmp_particle_ptr_weights_as(const std::unique_ptr<ArcStandardParser>& p1, 
+                                     const std::unique_ptr<ArcStandardParser>& p2) {
   //null should be the biggest
   if (p1 == nullptr)
     return false;
@@ -788,7 +858,19 @@ inline bool cmp_particle_ptr_weights(const std::unique_ptr<ArcStandardParser>& p
     return (p1->particle_weight() < p2->particle_weight());
 }
 
-inline bool cmp_weighted_particle_ptr_weights(const std::unique_ptr<ArcStandardParser>& p1, const std::unique_ptr<ArcStandardParser>& p2) {
+inline bool cmp_importance_ptr_weights_as(const std::unique_ptr<ArcStandardParser>& p1, 
+                                     const std::unique_ptr<ArcStandardParser>& p2) {
+  //null should be the biggest
+  if (p1 == nullptr)
+    return false;
+  else if (p2 == nullptr)
+    return true;
+  else
+    return (p1->importance_weight() < p2->importance_weight());
+}
+
+inline bool cmp_weighted_particle_ptr_weights_as(const std::unique_ptr<ArcStandardParser>& p1, 
+                                              const std::unique_ptr<ArcStandardParser>& p2) {
   //null or no particles should be the biggest
   if ((p1 == nullptr) || (p1->num_particles() == 0))
     return false;
@@ -798,7 +880,53 @@ inline bool cmp_weighted_particle_ptr_weights(const std::unique_ptr<ArcStandardP
     return (p1->weighted_particle_weight() < p2->weighted_particle_weight());
 }
 
-inline bool cmp_weighted_importance_ptr_weights(const std::unique_ptr<ArcStandardParser>& p1, const std::unique_ptr<ArcStandardParser>& p2) {
+inline bool cmp_weighted_importance_ptr_weights_as(const std::unique_ptr<ArcStandardParser>& p1, 
+                                                const std::unique_ptr<ArcStandardParser>& p2) {
+  //null or no particles should be the biggest
+  if ((p1 == nullptr) || (p1->num_particles() == 0))
+    return false;
+  else if ((p2 == nullptr) || (p2->num_particles() == 0))
+    return true;
+  else
+    return (p1->weighted_importance_weight() < p2->weighted_importance_weight());
+}
+
+
+inline bool cmp_particle_ptr_weights_ae(const std::unique_ptr<ArcEagerParser>& p1, 
+                                     const std::unique_ptr<ArcEagerParser>& p2) {
+  //null should be the biggest
+  if (p1 == nullptr)
+    return false;
+  else if (p2 == nullptr)
+    return true;
+  else
+    return (p1->particle_weight() < p2->particle_weight());
+}
+
+inline bool cmp_importance_ptr_weights_ae(const std::unique_ptr<ArcEagerParser>& p1, 
+                                     const std::unique_ptr<ArcEagerParser>& p2) {
+  //null should be the biggest
+  if (p1 == nullptr)
+    return false;
+  else if (p2 == nullptr)
+    return true;
+  else
+    return (p1->importance_weight() < p2->importance_weight());
+}
+
+inline bool cmp_weighted_particle_ptr_weights_ae(const std::unique_ptr<ArcEagerParser>& p1, 
+                                              const std::unique_ptr<ArcEagerParser>& p2) {
+  //null or no particles should be the biggest
+  if ((p1 == nullptr) || (p1->num_particles() == 0))
+    return false;
+  else if ((p2 == nullptr) || (p2->num_particles() == 0))
+    return true;
+  else
+    return (p1->weighted_particle_weight() < p2->weighted_particle_weight());
+}
+
+inline bool cmp_weighted_importance_ptr_weights_ae(const std::unique_ptr<ArcEagerParser>& p1, 
+                                                const std::unique_ptr<ArcEagerParser>& p2) {
   //null or no particles should be the biggest
   if ((p1 == nullptr) || (p1->num_particles() == 0))
     return false;

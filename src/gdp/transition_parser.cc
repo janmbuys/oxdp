@@ -35,6 +35,40 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const Ar
     
     simul.execute_action(a);
   }
+
+  inc_num_sentences();
+  if (gold_arcs==prop_parse.arcs())
+    inc_complete_sentences();
+  for (unsigned i = 1; i < gold_arcs.size(); ++i)
+    if (prop_parse.arcs().has_arc(i, 0) && gold_arcs.has_arc(i, 0)) 
+      inc_root_count();
+
+  add_total_length(gold_arcs.size() - 1);
+  add_directed_count(prop_parse.directed_accuracy_count(gold_arcs));
+  add_undirected_count(prop_parse.undirected_accuracy_count(gold_arcs));
+}
+
+void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcList& gold_arcs) {
+  //resimulate the computation of the proposed action sequence to compute accuracy
+  ArcEagerParser simul(prop_parse.sentence(), prop_parse.tags());
+    
+  for (auto& a: prop_parse.actions()) {
+    kAction next = simul.oracleNext(gold_arcs);
+    
+    //include more sophisticated statistics later
+    //count when shifted/reduced when it should have shifted/reduced
+    if (next==kAction::sh || next==kAction::ra) {
+      inc_shift_gold();
+      if (a==kAction::sh || a==kAction::ra)
+        inc_shift_count();
+    } else if (next==kAction::la || next==kAction::re) {
+      inc_reduce_gold();
+      if (a==kAction::la || a==kAction::re) 
+        inc_reduce_count();
+    } 
+    
+    simul.execute_action(a);
+  }
     
   inc_num_sentences();
   if (gold_arcs==prop_parse.arcs())
@@ -48,12 +82,11 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const Ar
   add_undirected_count(prop_parse.undirected_accuracy_count(gold_arcs));
 }
 
-
 bool TransitionParser::shift() {
-  WordIndex i = buffer_.back();
-  buffer_.pop_back();
-  stack_.push_back(i);
-  actions_.push_back(kAction::sh);
+  WordIndex i = buffer_next();
+  pop_buffer();
+  push_stack(i);
+  append_action(kAction::sh);
   return true;
 }
 
@@ -61,48 +94,59 @@ bool TransitionParser::shift(WordId w) {
   WordIndex i = sentence_.size();
   sentence_.push_back(w);
   arcs_.push_back();
-  if (buffer_.size() > 0) 
-    buffer_.pop_back();  
-  stack_.push_back(i);
-  actions_.push_back(kAction::sh);
-  return true;
-}
-
-//only use when generating 
-bool TransitionParser::buffer_tag(WordId t) {
-  buffer_.push_back(tags_.size());
-  tags_.push_back(t);
+  if (!is_buffer_empty()) 
+    pop_buffer();
+  push_stack(i);
+  append_action(kAction::sh);
   return true;
 }
 
 bool ArcStandardParser::leftArc() {
-  WordIndex j = stack_.back();
-  stack_.pop_back();
-  WordIndex i = stack_.back();
-  //check to ensure 0 is root
-  if (i==0) {
-    stack_.push_back(j);
+  if (!left_arc_valid())
     return false;
-  }
-
-  stack_.pop_back();
-  stack_.push_back(j);
-  arcs_.set_arc(i, j);
-  actions_.push_back(kAction::la);
+    
+  WordIndex j = stack_top();
+  pop_stack();
+  WordIndex i = stack_top();
+  pop_stack();
+  push_stack(j);
+  set_arc(i, j);
+  append_action(kAction::la);
   return true;
 }
 
 bool ArcStandardParser::rightArc() {
-  WordIndex j = stack_.back();
-  stack_.pop_back();
-  WordIndex i = stack_.back();
-  arcs_.set_arc(j, i);
-  actions_.push_back(kAction::ra);
+  WordIndex j = stack_top();
+  pop_stack();
+  WordIndex i = stack_top();
+  set_arc(j, i);
+  append_action(kAction::ra);
   return true;
 }
+ 
+//predict the next action according to the oracle
+kAction ArcStandardParser::oracleNext(const ArcList& gold_arcs) const {
+  kAction a = kAction::re;
 
-  //predict the next action according to the oracle, modified for evaluation and error analysis
-  //can maybe formulate in terms of loss of each action
+  //assume not in terminal configuration 
+  if (stack_depth() < 2)
+    a = kAction::sh; 
+  else {
+    WordIndex i = stack_top_second();
+    WordIndex j = stack_top();
+    if (gold_arcs.has_arc(i, j) && child_count_at(i)==gold_arcs.child_count_at(i)) 
+      a = kAction::la;
+    else if (gold_arcs.has_arc(j, i) && child_count_at(j)==gold_arcs.child_count_at(j)) 
+      a = kAction::ra;
+    else if (!is_buffer_empty()) 
+      a = kAction::sh;
+  }
+    
+  return a;
+}
+
+//predict the next action according to the oracle, modified for evaluation and error analysis
+//can maybe formulate in terms of loss of each action
 kAction ArcStandardParser::oracleDynamicNext(const ArcList& gold_arcs) const { //, ArcList prop_arcs) {
   kAction a = kAction::re;
             
@@ -110,8 +154,8 @@ kAction ArcStandardParser::oracleDynamicNext(const ArcList& gold_arcs) const { /
   if (stack_depth() < 2)
     a = kAction::sh; 
   else {
-    WordIndex i = stack_.rbegin()[1];
-    WordIndex j = stack_.rbegin()[0];
+    WordIndex i = stack_top_second();
+    WordIndex j = stack_top();
     if (gold_arcs.has_arc(i, j) && (child_count_at(i) >= gold_arcs.child_count_at(i))) {
       a = kAction::la; 
       //if (prop_arcs.has_arc(i, j)) 
@@ -128,22 +172,65 @@ kAction ArcStandardParser::oracleDynamicNext(const ArcList& gold_arcs) const { /
   return a;
 }
 
-//predict the next action according to the oracle
-kAction ArcStandardParser::oracleNext(const ArcList& gold_arcs) const {
-  kAction a = kAction::re;
 
-  //assume not in terminal configuration 
-  if (stack_depth() < 2)
-    a = kAction::sh; 
-  else {
-    WordIndex i = stack_.rbegin()[1];
-    WordIndex j = stack_.rbegin()[0];
-    if (gold_arcs.has_arc(i, j) && child_count_at(i)==gold_arcs.child_count_at(i)) 
-      a = kAction::la;
-    else if (gold_arcs.has_arc(j, i) && child_count_at(j)==gold_arcs.child_count_at(j)) 
-      a = kAction::ra;
-    else if (!is_buffer_empty()) 
-      a = kAction::sh;
+bool ArcEagerParser::reduce() {
+  if (!reduce_valid())
+    return false;
+  pop_stack();
+  append_action(kAction::re);
+  return true;
+} 
+
+bool ArcEagerParser::leftArc() {
+  if (!left_arc_valid())
+    return false;
+    
+  //add left arc and reduce
+  WordIndex i = stack_top();
+  WordIndex j = buffer_next();
+  set_arc(i, j);
+  pop_stack();
+  append_action(kAction::la);
+  return true;
+}
+
+bool ArcEagerParser::rightArc() {
+  //add right arc and shift
+  WordIndex i = stack_top();
+  WordIndex j = buffer_next();
+  set_arc(j, i);
+  pop_buffer();
+  push_stack(j);
+  append_action(kAction::ra);
+  return true;
+}
+
+//predict the next action according to the oracle
+kAction ArcEagerParser::oracleNext(const ArcList& gold_arcs) const {
+  kAction a = kAction::sh;
+
+  //maybe change so that we can assume stack_depth > 0 
+  if (is_stack_empty())
+    return a;
+
+  WordIndex i = stack_top();
+  //if la or ra is valid
+  if (!is_buffer_empty()) {    
+    WordIndex j = buffer_next();
+    if (gold_arcs.has_arc(i, j)) {
+      //add left arc eagerly
+      a = kAction::la; 
+    } else if (gold_arcs.has_arc(j, i)) {
+      //add right arc eagerly
+      a = kAction::ra; 
+    } 
+  }
+
+  //test if we may reduce, else shift
+  if (has_parent(i) && (child_count_at(i) >= gold_arcs.child_count_at(i))) {
+      //reduce if it has a parent and all its children
+      //stronger, prefer when we want to achieve no spurious ambiguity
+      a = kAction::re;
   }
     
   return a;
