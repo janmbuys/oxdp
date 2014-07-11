@@ -64,18 +64,17 @@ ArcEagerParser beamParseSentenceEager(Words sent, Words tags, ArcList gold_dep, 
   beam_chart.push_back(AeParserList());
   beam_chart[0].push_back(std::make_unique<ArcEagerParser>(sent, tags)); 
   //beam_chart[0][0]->print_sentence(dict);
-  //beam_chart[0][0]->print_tags(dict);
+  beam_chart[0][0]->print_tags(dict);
   
   //std::cout << "gold arcs: ";
-  for (auto d: gold_dep.arcs())
-    std::cout << d << " ";
-  std::cout << std::endl;   
+  gold_dep.print_arcs();
 
   //shift ROOT symbol (probability 1)
   beam_chart[0][0]->shift(); 
 
   //add reduce actions, then shift word k (expect for last iteration) 
-  for (unsigned k = 1; k <= sent.size(); ++k) {
+  for (unsigned k = 1; k < sent.size(); ++k) {
+    //std::cout << "sent position " << k << std::endl;
     //there are k beam lists. perform reduces down to list 1
     for (unsigned i = k - 1; i > 0; --i) { 
       //prune if size exceeds beam_size
@@ -86,33 +85,35 @@ ArcEagerParser beamParseSentenceEager(Words sent, Words tags, ArcList gold_dep, 
           beam_chart[i].pop_back();
       }
 
+      //std::cout << "reduce list size: " << beam_chart[i].size() << std::endl;
       //consider reduce and left arc actions
       //for every item in the list, add valid reduce actions to list i - 1 
       for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
         Words r_ctx = beam_chart[i][j]->reduce_context();
         double leftarcreducep = reduce_lm.prob(static_cast<WordId>(kAction::la), r_ctx);
         double reducep = reduce_lm.prob(static_cast<WordId>(kAction::re), r_ctx);
+        //std::cout << "(la: " << leftarcreducep << ", re: " << reducep << ") ";
         //double reducetotalp = leftarcreducep + reducep;
        
+        //actually also need importance weight if either is invalid
         //left arc invalid also after last shift
-        if (beam_chart[i][j]->left_arc_valid() && (k < sent.size())) { 
+        if (beam_chart[i][j]->left_arc_valid()) { 
           beam_chart[i-1].push_back(std::make_unique<ArcEagerParser>(*beam_chart[i][j]));
           beam_chart[i-1].back()->leftArc();
           beam_chart[i-1].back()->add_particle_weight(leftarcreducep);
         } 
         
-        if (beam_chart[i][j]->reduce_valid()) {
+        if (beam_chart[i][j]->reduce_valid()) {          
           beam_chart[i-1].push_back(std::make_unique<ArcEagerParser>(*beam_chart[i][j]));
           beam_chart[i-1].back()->reduce();
           beam_chart[i-1].back()->add_particle_weight(reducep); 
           
-          if (k == sent.size()) 
-            beam_chart[i-1].back()->add_importance_weight(reducep); 
         }
       }
+      //std::cout << std::endl;
     }
 
-    if ((beam_chart[0].size() > beam_size) || (k == sent.size())) {
+    if (beam_chart[0].size() > beam_size) {
         std::sort(beam_chart[0].begin(), beam_chart[0].end(), cmp_particle_ptr_weights_ae); //handle pointers
         //remove items with worst scores
         for (unsigned j = beam_chart[0].size(); j > beam_size; --j)
@@ -120,53 +121,92 @@ ArcEagerParser beamParseSentenceEager(Words sent, Words tags, ArcList gold_dep, 
     }
 
     //perform shifts: shift or right arc
-    if (k < sent.size()) {
-      for (unsigned i = 0; (i < k); ++i) { 
-        unsigned list_size = beam_chart[i].size();
-        for (unsigned j = 0; j < list_size; ++j) {
-          Words w_ctx = beam_chart[i][j]->shift_context();
-          Words t_ctx = beam_chart[i][j]->tag_context();
-          Words r_ctx = beam_chart[i][j]->reduce_context();
+    for (unsigned i = 0; (i < k); ++i) { 
+      unsigned list_size = beam_chart[i].size();
+      //std::cout << "shift list size: " << list_size << std::endl;
+      for (unsigned j = 0; j < list_size; ++j) {
+        Words w_ctx = beam_chart[i][j]->shift_context();
+        Words r_ctx = beam_chart[i][j]->reduce_context();
           
-          double shiftp = reduce_lm.prob(static_cast<WordId>(kAction::sh), r_ctx);
-          double rightarcshiftp = reduce_lm.prob(static_cast<WordId>(kAction::ra), r_ctx);
-          //double shifttotalp = shiftp + rightarcshiftp;
+        double wordp = 1;
+        double tagp = 1;
+        double shiftp = reduce_lm.prob(static_cast<WordId>(kAction::sh), r_ctx);
+        double rightarcshiftp = reduce_lm.prob(static_cast<WordId>(kAction::ra), r_ctx);
+        //double shifttotalp = shiftp + rightarcshiftp;
+        //std::cout << "(sh: " << shiftp << ", ra: " << rightarcshiftp << ") ";
 
-          //TODO modify to be specific to shift or ra 
-          double wordp = 1;
-          if (with_words)
-            wordp = shift_lm.prob(beam_chart[i][j]->next_word(), w_ctx); 
-          double tagp = tag_lm.prob(beam_chart[i][j]->next_tag(), t_ctx);
-
-          //assume ra is valid
-          beam_chart[i].push_back(std::make_unique<ArcEagerParser>(*beam_chart[i][j]));
-          beam_chart[i].back()->rightArc();
-          beam_chart[i].back()->add_particle_weight(rightarcshiftp);
+        //assume ra is valid
+        //TODO update word generation
+        if (with_words)
+          wordp = shift_lm.prob(beam_chart[i][j]->next_word(), w_ctx); 
+        Words t_ctx = beam_chart[i][j]->tag_context(kAction::ra);
+        tagp = tag_lm.prob(beam_chart[i][j]->next_tag(), t_ctx);
           
-          beam_chart[i].back()->add_importance_weight(wordp); 
-          beam_chart[i].back()->add_importance_weight(tagp); 
-          beam_chart[i].back()->add_particle_weight(wordp); 
-          beam_chart[i].back()->add_particle_weight(tagp); 
-
-          //shift is valid
-          beam_chart[i][j]->shift();
-          beam_chart[i][j]->add_particle_weight(shiftp); 
+        beam_chart[i].push_back(std::make_unique<ArcEagerParser>(*beam_chart[i][j]));
+        beam_chart[i].back()->rightArc();
+        beam_chart[i].back()->add_particle_weight(rightarcshiftp);
           
-          beam_chart[i][j]->add_importance_weight(wordp); 
-          beam_chart[i][j]->add_importance_weight(tagp); 
-          beam_chart[i][j]->add_particle_weight(wordp); 
-          beam_chart[i][j]->add_particle_weight(tagp); 
-        }
+        beam_chart[i].back()->add_importance_weight(wordp); 
+        beam_chart[i].back()->add_importance_weight(tagp); 
+        beam_chart[i].back()->add_particle_weight(wordp); 
+        beam_chart[i].back()->add_particle_weight(tagp); 
+
+        //shift is valid
+        if (with_words)
+          wordp = shift_lm.prob(beam_chart[i][j]->next_word(), w_ctx); 
+        tagp = tag_lm.prob(beam_chart[i][j]->next_tag(), beam_chart[i][j]->tag_context(kAction::sh));
+          
+        beam_chart[i][j]->shift();
+        beam_chart[i][j]->add_particle_weight(shiftp); 
+          
+        beam_chart[i][j]->add_importance_weight(wordp); 
+        beam_chart[i][j]->add_importance_weight(tagp); 
+        beam_chart[i][j]->add_particle_weight(wordp); 
+        beam_chart[i][j]->add_particle_weight(tagp); 
       }
-      //insert new beam_chart[0] to increment indexes
-      beam_chart.insert(beam_chart.begin(), AeParserList());
-    }   
+    }
+    //insert new beam_chart[0] to increment indexes
+    beam_chart.insert(beam_chart.begin(), AeParserList());
+       
+    //std::cout << std::endl;
   }
-  
+ 
+  //completion: reduce after last shift
+  //std::cout << "completion" << std::endl;
+  for (unsigned i = sent.size() - 1; i > 0; --i) {
+    //prune if size exceeds beam_size
+    if (beam_chart[i].size() > beam_size) {
+      std::sort(beam_chart[i].begin(), beam_chart[i].end(), cmp_reduce_particle_ptr_weights_ae); //handle pointers
+      //remove items with worst scores, and those that cannot reduce
+      for (unsigned j = beam_chart[i].size() - 1; ((j >= beam_size) || ((j > 0) && !beam_chart[i][j]->reduce_valid())); --j)
+        beam_chart[i].pop_back();
+    }
+
+    //std::cout << i <<  " reduce list size: " << beam_chart[i].size() << std::endl;
+    //consider reduce and left arc actions
+    //for every item in the list, add valid reduce actions to list i - 1 
+    for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
+      Words r_ctx = beam_chart[i][j]->reduce_context();
+      double reducep = reduce_lm.prob(static_cast<WordId>(kAction::re), r_ctx);
+                
+      if (beam_chart[i][j]->reduce_valid()) {          
+        beam_chart[i-1].push_back(std::make_unique<ArcEagerParser>(*beam_chart[i][j]));
+        beam_chart[i-1].back()->reduce();
+        beam_chart[i-1].back()->add_particle_weight(reducep); 
+        beam_chart[i-1].back()->add_importance_weight(reducep); 
+        //std::cout << j << " re valid ";
+      }
+    }
+    //std::cout << std::endl;
+  }
+
+  std::sort(beam_chart[0].begin(), beam_chart[0].end(), cmp_particle_ptr_weights_ae); //handle pointers
+
   //print parses
   unsigned n = 0; 
   for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
     beam_chart[n][i]->print_arcs();
+    std::cout << beam_chart[n][i]->actions_str() << "\n";
 
     float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
     std::cout << "  Dir Accuracy: " << dir_acc;
@@ -218,6 +258,7 @@ ArcStandardParser beamParseSentence(Words sent, Words tags, ArcList gold_dep, un
         Words r_ctx = beam_chart[i][j]->reduce_context();
         double reduceleftarcp = reduce_lm.prob(static_cast<WordId>(kAction::la), r_ctx);
         double reducerightarcp = reduce_lm.prob(static_cast<WordId>(kAction::ra), r_ctx);
+        //std::cout << "(la: " << reduceleftarcp << ", ra: " << reducerightarcp << ")" << " ";
         double reducep = reduceleftarcp + reducerightarcp;
        
         //TODO have option to make la/ra choice deterministic
@@ -275,13 +316,15 @@ ArcStandardParser beamParseSentence(Words sent, Words tags, ArcList gold_dep, un
       }
       //insert new beam_chart[0] to increment indexes
       beam_chart.insert(beam_chart.begin(), AsParserList());
-    }   
+    } 
+    //std::cout << std::endl; 
   }
   
   //print parses
   unsigned n = 0; 
   for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
     beam_chart[n][i]->print_arcs();
+    std::cout << beam_chart[n][i]->actions_str() << "\n";
 
     float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
     std::cout << "  Dir Accuracy: " << dir_acc;

@@ -5,7 +5,7 @@ namespace oxlm {
 void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const ArcList& gold_arcs) {
   //resimulate the computation of the proposed action sequence to compute accuracy
   ArcStandardParser simul(prop_parse.sentence(), prop_parse.tags());
-    
+        
   for (auto& a: prop_parse.actions()) {
     kAction next = simul.oracleDynamicNext(gold_arcs);
     //count when shifted/reduced when it should have shifted/reduced
@@ -69,7 +69,7 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcLi
     
     simul.execute_action(a);
   }
-    
+            
   inc_num_sentences();
   if (gold_arcs==prop_parse.arcs())
     inc_complete_sentences();
@@ -82,7 +82,7 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcLi
   add_undirected_count(prop_parse.undirected_accuracy_count(gold_arcs));
 }
 
-bool TransitionParser::shift() {
+bool ArcStandardParser::shift() {
   WordIndex i = buffer_next();
   pop_buffer();
   push_stack(i);
@@ -90,10 +90,10 @@ bool TransitionParser::shift() {
   return true;
 }
 
-bool TransitionParser::shift(WordId w) {
-  WordIndex i = sentence_.size();
-  sentence_.push_back(w);
-  arcs_.push_back();
+bool ArcStandardParser::shift(WordId w) {
+  WordIndex i = sentence_length();
+  push_word(w);
+  push_arc();
   if (!is_buffer_empty()) 
     pop_buffer();
   push_stack(i);
@@ -172,6 +172,15 @@ kAction ArcStandardParser::oracleDynamicNext(const ArcList& gold_arcs) const { /
   return a;
 }
 
+bool ArcEagerParser::shift() {
+  WordIndex i = buffer_next();
+  pop_buffer();
+  buffer_left_most_child_ = -1;
+  buffer_left_child_ = -1;
+  push_stack(i);
+  append_action(kAction::sh);
+  return true;
+}
 
 bool ArcEagerParser::reduce() {
   if (!reduce_valid())
@@ -191,6 +200,10 @@ bool ArcEagerParser::leftArc() {
   set_arc(i, j);
   pop_stack();
   append_action(kAction::la);
+  //take (first) left-most and closest left-child
+  if ((buffer_left_child_ > -1) && (buffer_left_most_child_ == -1))
+    buffer_left_most_child_ = buffer_left_child_;
+  buffer_left_child_ = i;
   return true;
 }
 
@@ -200,6 +213,8 @@ bool ArcEagerParser::rightArc() {
   WordIndex j = buffer_next();
   set_arc(j, i);
   pop_buffer();
+  buffer_left_most_child_ = -1;
+  buffer_left_child_ = -1;
   push_stack(j);
   append_action(kAction::ra);
   return true;

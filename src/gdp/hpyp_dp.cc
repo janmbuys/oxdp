@@ -36,32 +36,33 @@ int main(int argc, char** argv) {
   std::vector<Words> corpus_sents;
   std::vector<Words> corpus_tags;
   std::vector<WxList> corpus_deps;
-
+  
   std::cerr << "Reading training corpus...\n";
   dict.readFromConllFile(train_file, &corpus_sents, &corpus_tags, &corpus_deps, false);
   std::cerr << "Corpus size: " << corpus_sents.size() << " sentences\t (" << dict.size() << " word types, " << dict.tag_size() << " tags)\n";
 
   //define pyp models with their orders
   const unsigned kShOrder = 4;
-  const unsigned kReOrder = 6;
-  const unsigned kArcOrder = 6;
-  const unsigned kTagOrder = 4;
-      
+  const unsigned kArcOrder = 4;
+  const unsigned kReOrder = 4;
+  const unsigned kTagOrder = 6;
+             
   PYPLM<kShOrder> shift_lm(dict.size()+1, 1, 1, 1, 1);
   PYPLM<kReOrder> reduce_lm(4, 1, 1, 1, 1); 
   PYPLM<kArcOrder> arc_lm(2, 1, 1, 1, 1);
   PYPLM<kTagOrder> tag_lm(dict.tag_size(), 1, 1, 1, 1);
-    
+      
   std::cerr << "\nStarting training\n";
   auto tr_start = std::chrono::steady_clock::now();
       
   bool supervised = true;
   bool with_words = false; 
   bool static_oracle = true;
+  bool arceager = true;
   bool init = true;  
-        
+            
   if (supervised)
-    trainSupervisedParser(corpus_sents, corpus_tags, corpus_deps, num_samples, with_words, static_oracle, dict, eng, &shift_lm, &reduce_lm, &tag_lm);
+    trainSupervisedParser(corpus_sents, corpus_tags, corpus_deps, num_samples, with_words, arceager, static_oracle, dict, eng, &shift_lm, &reduce_lm, &tag_lm);
     //trainSupervisedParser(corpus_sents, corpus_tags, corpus_deps, num_samples, with_words, static_oracle, dict, eng, &shift_lm, &reduce_lm, &arc_lm, &tag_lm);
   else 
     trainUnsupervisedParser(corpus_tags, corpus_deps, num_samples, init, dict, eng, &shift_lm, &reduce_lm, &arc_lm, &tag_lm);
@@ -83,12 +84,15 @@ int main(int argc, char** argv) {
   std::vector<Words> test_tags;
   std::vector<WxList> test_deps;
 
+
   std::cerr << "Reading test corpus...\n";
   dict.readFromConllFile(test_file, &test_sents, &test_tags, &test_deps, true);
   std::cerr << "Corpus size: " << test_sents.size() << " sentences\n";
    
   //std::vector<unsigned> beam_sizes{1, 10, 100, 500};
-  std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32};
+  std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32, 64, 128};
+  //std::vector<unsigned> beam_sizes{4, 16, 64};
+  //std::vector<unsigned> beam_sizes{256};
   //unsigned beam_size = 8;
        
   for (unsigned beam_size: beam_sizes) {
@@ -98,15 +102,25 @@ int main(int argc, char** argv) {
     auto pr_start = std::chrono::steady_clock::now();
     std::ofstream outs;
     outs.open(out_file);
-
+            
     for (unsigned j = 0; j < test_sents.size(); ++j) {
       ArcList gold_arcs(test_deps[j].size());
       gold_arcs.set_arcs(test_deps[j]);
       //if (gold_arcs.is_projective_dependency())
 
+      //auto parser;
+      if (arceager) {
         ArcEagerParser parser = beamParseSentenceEager(test_sents[j], test_tags[j], gold_arcs, beam_size, with_words, dict, eng, shift_lm, reduce_lm, tag_lm);
+        acc_counts.countAccuracy(parser, gold_arcs);
+
+        //write output to conll-format file
+        for (unsigned i = 1; i < test_sents[j].size(); ++i) 
+          outs << i << "\t" << dict.lookup(test_sents[j][i]) << "\t_\t_\t" << dict.lookupTag(test_tags[j][i]) << "\t_\t" << parser.arcs().at(i) << "\tROOT\t_\t_\n";
+
+        outs << "\n";
+      } else {
+        ArcStandardParser parser = beamParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, with_words, dict, eng, shift_lm, reduce_lm, tag_lm);
         //ArcStandardParser parser = beamParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, with_words, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
-        //ArcStandardParser parser = beamParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, with_words, dict, eng, shift_lm, reduce_lm, tag_lm);
         //ArcStandardParser parser = particleParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, resample, with_words, dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);
         acc_counts.countAccuracy(parser, gold_arcs);
 
@@ -115,6 +129,7 @@ int main(int argc, char** argv) {
           outs << i << "\t" << dict.lookup(test_sents[j][i]) << "\t_\t_\t" << dict.lookupTag(test_tags[j][i]) << "\t_\t" << parser.arcs().at(i) << "\tROOT\t_\t_\n";
 
         outs << "\n";
+      }
     }
 
     outs.close();

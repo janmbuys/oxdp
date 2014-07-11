@@ -27,7 +27,41 @@ inline void extractParseTrainExamples(const ArcEagerParser& prop_parser, std::ve
     re_tuple.insert(re_tuple.end(), re_ctx.begin(), re_ctx.end());
     
     if (a == kAction::sh || a == kAction::ra) {
-      //TODO later include ra or not as feature
+      //TODO later include ra or not as feature for sh
+      //word prediction
+      if (!(examples_sh == nullptr)) {
+        Words sh_ctx = parser.shift_context();
+        Words sh_tuple(1, parser.next_word());
+        sh_tuple.insert(sh_tuple.end(), sh_ctx.begin(), sh_ctx.end());
+        examples_sh->push_back(sh_tuple);
+      }  
+
+      //tag prediction
+      Words tag_ctx = parser.tag_context(a);
+      Words tag_tuple(1, parser.next_tag());
+      tag_tuple.insert(tag_tuple.end(), tag_ctx.begin(), tag_ctx.end());
+      examples_tag->push_back(tag_tuple);
+    }
+
+    //action decision
+    re_tuple[0] = static_cast<WordId>(a);
+    examples_re->push_back(re_tuple);  
+    parser.execute_action(a);
+     
+  }
+}
+
+//given a parse, extract its training examples (add to given vectors)
+//for three-way decisions
+inline void extractParseTrainExamples(const ArcStandardParser& prop_parser, std::vector<Words>* examples_sh, std::vector<Words>* examples_re, std::vector<Words>* examples_tag) {
+  ArcStandardParser parser(prop_parser.sentence(), prop_parser.tags());
+ 
+  for (kAction& a: prop_parser.actions()) {
+    Words re_ctx = parser.reduce_context();
+    Words re_tuple(1, static_cast<WordId>(kAction::re));
+    re_tuple.insert(re_tuple.end(), re_ctx.begin(), re_ctx.end());
+    
+    if (a == kAction::sh) {
       //word prediction
       if (!(examples_sh == nullptr)) {
         Words sh_ctx = parser.shift_context();
@@ -47,53 +81,6 @@ inline void extractParseTrainExamples(const ArcEagerParser& prop_parser, std::ve
     re_tuple[0] = static_cast<WordId>(a);
     examples_re->push_back(re_tuple);  
     parser.execute_action(a);
-     
-  }
-}
-
-
-
-//given a parse, extract its training examples (add to given vectors)
-//for three-way decisions
-inline void extractParseTrainExamples(const ArcStandardParser& prop_parser, std::vector<Words>* examples_sh, std::vector<Words>* examples_re, std::vector<Words>* examples_tag) {
-  ArcStandardParser parser(prop_parser.sentence(), prop_parser.tags());
- 
-  for(kAction& a: prop_parser.actions()) {
-    Words re_ctx = parser.reduce_context();
-    Words re_tuple(1, static_cast<WordId>(kAction::re));
-    re_tuple.insert(re_tuple.end(), re_ctx.begin(), re_ctx.end());
-    
-    if (a == kAction::sh) {
-      //word prediction
-      if (!(examples_sh == nullptr)) {
-        Words sh_ctx = parser.shift_context();
-        Words sh_tuple(1, parser.next_word());
-        sh_tuple.insert(sh_tuple.end(), sh_ctx.begin(), sh_ctx.end());
-        examples_sh->push_back(sh_tuple);
-      }  
-
-      //tag prediction
-      Words tag_ctx = parser.tag_context();
-      Words tag_tuple(1, parser.next_tag());
-      tag_tuple.insert(tag_tuple.end(), tag_ctx.begin(), tag_ctx.end());
-      examples_tag->push_back(tag_tuple);
-
-      //shift decision
-      re_tuple[0] = static_cast<WordId>(kAction::sh);
-      examples_re->push_back(re_tuple);  
-              
-      parser.shift();
-    } else if (a == kAction::la) {
-      re_tuple[0] = static_cast<WordId>(kAction::la);
-      examples_re->push_back(re_tuple);  
-        
-      parser.leftArc();
-    } else if (a == kAction::ra) {
-      re_tuple[0] = static_cast<WordId>(kAction::ra);
-      examples_re->push_back(re_tuple);  
-        
-      parser.rightArc();
-    } 
   }
 }
 
@@ -166,7 +153,7 @@ void updatePYPModel(bool insert, MT19937& eng, const std::vector<Words>& example
 
 //for three-way decisions
 template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kTagOrder>
-void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool with_words, bool static_oracle, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
+void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool with_words, bool arceager, bool static_oracle, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
 
   //keep an example list for each sentence
   std::vector<WordsList> examples_list_sh(sents.size(), WordsList());
@@ -191,13 +178,16 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
 
       if (static_oracle) {
         if (iter == 0) {
-          //TODO testing arc eager - move later
-          ArcEagerParser sample_parse = staticEagerGoldParseSentence(sents[j], tags[j], gold_dep);
-          //ArcStandardParser sample_parse = staticGoldParseSentence(sents[j], tags[j], gold_dep);
-          sample_parse.print_arcs();
-          std::cout << "\n" << sample_parse.actions_str() << "\n";
+          if (arceager) {
+            ArcEagerParser sample_parse = staticEagerGoldParseSentence(sents[j], tags[j], gold_dep);
+            extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
+          } else { 
+            ArcStandardParser sample_parse = staticGoldParseSentence(sents[j], tags[j], gold_dep);
+            extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
 
-          extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
+          }
+          //sample_parse.print_arcs();
+          //std::cout << "\n" << sample_parse.actions_str() << "\n";
         }
       } else {
         unsigned num_particles = 100;
