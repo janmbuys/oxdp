@@ -2,10 +2,12 @@
 
 namespace oxlm {
 
-void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const ArcList& gold_arcs) {
-  //resimulate the computation of the proposed action sequence to compute accuracy
+//void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const ArcList& gold_arcs) {
+void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const ArcStandardParser& gold_parse) {
+  //resimulate the computation of the proposed action sequence to compute accuracy  
   ArcStandardParser simul(prop_parse.sentence(), prop_parse.tags());
-        
+  ArcList gold_arcs = gold_parse.arcs();      
+
   for (auto& a: prop_parse.actions()) {
     kAction next = simul.oracleDynamicNext(gold_arcs);
     //count when shifted/reduced when it should have shifted/reduced
@@ -43,14 +45,22 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const Ar
     if (prop_parse.arcs().has_arc(i, 0) && gold_arcs.has_arc(i, 0)) 
       inc_root_count();
 
+  add_likelihood(prop_parse.particle_weight());
+  add_gold_likelihood(gold_parse.particle_weight());
+  add_num_actions(prop_parse.num_actions());
+  if (gold_parse.particle_weight() < prop_parse.particle_weight())
+    inc_gold_more_likely_count();
+
   add_total_length(gold_arcs.size() - 1);
   add_directed_count(prop_parse.directed_accuracy_count(gold_arcs));
   add_undirected_count(prop_parse.undirected_accuracy_count(gold_arcs));
 }
 
-void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcList& gold_arcs) {
+//void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcList& gold_arcs) {
+void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcEagerParser& gold_parse) {
   //resimulate the computation of the proposed action sequence to compute accuracy
   ArcEagerParser simul(prop_parse.sentence(), prop_parse.tags());
+  ArcList gold_arcs = gold_parse.arcs();      
     
   for (auto& a: prop_parse.actions()) {
     kAction next = simul.oracleNext(gold_arcs);
@@ -76,6 +86,12 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcLi
   for (unsigned i = 1; i < gold_arcs.size(); ++i)
     if (prop_parse.arcs().has_arc(i, 0) && gold_arcs.has_arc(i, 0)) 
       inc_root_count();
+
+  add_likelihood(prop_parse.particle_weight());
+  add_gold_likelihood(gold_parse.particle_weight());
+  add_num_actions(prop_parse.num_actions());
+  if (gold_parse.particle_weight() < prop_parse.particle_weight())
+    inc_gold_more_likely_count();
 
   add_total_length(gold_arcs.size() - 1);
   add_directed_count(prop_parse.directed_accuracy_count(gold_arcs));

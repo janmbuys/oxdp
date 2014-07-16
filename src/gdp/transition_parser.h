@@ -20,13 +20,17 @@ class ArcList {
 public:
   ArcList(): 
     arcs_(),
-    child_count_()
+    child_count_(),
+    leftmost_child_(),
+    rightmost_child_()
   {
   }
 
   ArcList(unsigned n): 
     arcs_(n, -1),
-    child_count_(n, 0)
+    child_count_(n, 0),
+    leftmost_child_(n, -1),
+    rightmost_child_(n, -1)
   { 
   }
 
@@ -40,6 +44,15 @@ public:
     arcs_[i] = j;
     if (j >= 0)
       ++child_count_[j];
+    if (i < j) {
+      //i left child of j
+      if ((leftmost_child_[j] == -1) || (leftmost_child_[j] > i))  
+        leftmost_child_[j] = i;
+    } else {
+      //i right child of j
+      if ((rightmost_child_[j] == -1) || (rightmost_child_[j] < i))
+        rightmost_child_[j] = i;
+    }
   }
 
   void set_arcs(const WxList& arcs) {
@@ -60,6 +73,14 @@ public:
 
   WordIndex at(WordIndex i) const {
     return arcs_[i];
+  }
+
+  WordIndex leftmost_child(WordIndex i) const {
+    return leftmost_child_[i];
+  }
+
+  WordIndex rightmost_child(WordIndex i) const {
+    return rightmost_child_[i];
   }
 
   bool has_parent(WordIndex i) const {
@@ -102,6 +123,8 @@ public:
 private:
   WxList arcs_;
   std::vector<int> child_count_;
+  WxList leftmost_child_;
+  WxList rightmost_child_;
 };
 
 class TransitionParser {
@@ -290,6 +313,10 @@ class TransitionParser {
     return actions_;
   }
    
+  kAction last_action() const {
+    return actions_.back();
+  }
+
   unsigned num_actions() const {
     return actions_.size();
   }
@@ -524,6 +551,130 @@ class TransitionParser {
     }
     if (stack_.size() >= 3) {
       ctx[0] = tags_.at(stack_.at(stack_.size()-3));
+    }
+
+    return ctx;
+  }
+
+  Words tag_children_distance_context() const {
+    Words ctx(9, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = arcs_.rightmost_child(stack_.at(stack_.size()-1));
+      WordIndex l1 = arcs_.leftmost_child(stack_.at(stack_.size()-1));
+      
+      ctx[8] = tags_.at(stack_.at(stack_.size()-1));
+      if (l1 > 0)
+        ctx[4] = tags_.at(l1); //
+      if (r1 > 0)
+        ctx[6] = tags_.at(r1);
+    }
+    if (stack_.size() >= 2) {
+      WordIndex r2 = arcs_.rightmost_child(stack_.at(stack_.size()-2));
+      WordIndex l2 = arcs_.leftmost_child(stack_.at(stack_.size()-2));
+
+      ctx[7] = tags_.at(stack_.at(stack_.size()-2));
+      if (l2 >= 0)
+        ctx[3] = tags_.at(l2);
+      if (r2 >= 0)
+        ctx[5] = tags_.at(r2); //
+
+      WordIndex i = stack_.rbegin()[1];
+      WordIndex j = stack_.rbegin()[0];
+      ctx[0] = j - i;
+    }
+    if (stack_.size() >= 3) {
+      ctx[2] = tags_.at(stack_.at(stack_.size()-3));
+    }
+    if (stack_.size() >= 4) {
+      ctx[1] = tags_.at(stack_.at(stack_.size()-4));
+    }
+    return ctx;
+  }
+
+  Words tag_children_context() const {
+    Words ctx(8, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = arcs_.rightmost_child(stack_.at(stack_.size()-1));
+      WordIndex l1 = arcs_.leftmost_child(stack_.at(stack_.size()-1));
+      
+      ctx[7] = tags_.at(stack_.at(stack_.size()-1));
+      if (l1 > 0)
+        ctx[3] = tags_.at(l1); //
+      if (r1 > 0)
+        ctx[5] = tags_.at(r1);
+    }
+    if (stack_.size() >= 2) {
+      WordIndex r2 = arcs_.rightmost_child(stack_.at(stack_.size()-2));
+      WordIndex l2 = arcs_.leftmost_child(stack_.at(stack_.size()-2));
+
+      ctx[6] = tags_.at(stack_.at(stack_.size()-2));
+      if (l2 >= 0)
+        ctx[2] = tags_.at(l2);
+      if (r2 >= 0)
+        ctx[4] = tags_.at(r2); //
+    }
+    if (stack_.size() >= 3) {
+      ctx[1] = tags_.at(stack_.at(stack_.size()-3));
+    }
+    if (stack_.size() >= 4) {
+      ctx[0] = tags_.at(stack_.at(stack_.size()-4));
+    }
+    return ctx;
+  }
+
+  Words tag_less_children_context() const {
+    Words ctx(6, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = arcs_.rightmost_child(stack_.at(stack_.size()-1));
+      //WordIndex l1 = arcs_.leftmost_child(stack_.at(stack_.size()-1));
+      
+      ctx[5] = tags_.at(stack_.at(stack_.size()-1));
+      //if (l1 > 0)
+      //  ctx[1] = tags_.at(l1); //
+      if (r1 > 0)
+        ctx[3] = tags_.at(r1);
+    }
+    if (stack_.size() >= 2) {
+      WordIndex r2 = arcs_.rightmost_child(stack_.at(stack_.size()-2));
+      //WordIndex l2 = arcs_.leftmost_child(stack_.at(stack_.size()-2));
+
+      ctx[4] = tags_.at(stack_.at(stack_.size()-2));
+      //if (l2 >= 0)
+      //  ctx[0] = tags_.at(l2);
+      if (r2 >= 0)
+        ctx[2] = tags_.at(r2); //
+    }
+    if (stack_.size() >= 3) {
+      ctx[1] = tags_.at(stack_.at(stack_.size()-3));
+    }
+    if (stack_.size() >= 4) {
+      ctx[0] = tags_.at(stack_.at(stack_.size()-4));
+    }
+
+    return ctx;
+  }
+
+  Words tag_some_children_context() const {
+    Words ctx(4, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = arcs_.rightmost_child(stack_.at(stack_.size()-1));
+      //WordIndex l1 = arcs_.leftmost_child(stack_.at(stack_.size()-1));
+      
+      ctx[3] = tags_.at(stack_.at(stack_.size()-1));
+      if (r1 > 0)
+        ctx[1] = tags_.at(r1);  //[0]
+      //if (l1 > 0)
+      //  ctx[1] = tags_.at(l1);
+    }
+    if (stack_.size() >= 2) {
+      WordIndex r2 = arcs_.rightmost_child(stack_.at(stack_.size()-2));
+      //WordIndex l2 = arcs_.leftmost_child(stack_.at(stack_.size()-2));
+
+      ctx[2] = tags_.at(stack_.at(stack_.size()-2));
+      if (r2 >= 0)
+        ctx[0] = tags_.at(r2);
+      //if (l2 >= 0)
+      //  ctx[0] = tags_.at(l2);  //[1]
     }
 
     return ctx;
@@ -786,7 +937,9 @@ class ArcStandardParser : public TransitionParser {
   }
 
   Words reduce_context() const {
-    return tag_more_distance_context();
+    return tag_children_context();
+    //return tag_children_context();
+    //return tag_less_context();
   }
 
   Words arc_context() const {
@@ -794,13 +947,18 @@ class ArcStandardParser : public TransitionParser {
   }
 
   Words tag_context() const {
-    return tag_raw_context();
+    return tag_children_context();
+    //return tag_less_children_context();
+    //return tag_more_context();
   }
 
   kAction oracleNext(const ArcList& gold_arcs) const;
   
   kAction oracleDynamicNext(const ArcList& gold_arcs) const;
   
+  private:
+  WxList bufffer_left_children;
+  WxList bufffer_right_children;
 };
 
 class ArcEagerParser : public TransitionParser {
@@ -912,6 +1070,8 @@ class AccuracyCounts {
 
 public:
   AccuracyCounts(): 
+    likelihood_{0},
+    gold_likelihood_{0},
     reduce_count_{0},
     reduce_gold_{0},
     shift_count_{0},
@@ -921,6 +1081,8 @@ public:
     directed_count_{0},
     undirected_count_{0}, 
     root_count_{0},
+    gold_more_likely_count_{0},
+    num_actions_{0},
     complete_sentences_{0},
     num_sentences_{0}
   {
@@ -950,6 +1112,10 @@ public:
     ++complete_sentences_;
   }
 
+  void inc_gold_more_likely_count() {
+    ++gold_more_likely_count_;
+  }
+
   void inc_root_count() {
     ++root_count_;
   }
@@ -958,8 +1124,20 @@ public:
     ++num_sentences_;
   }
 
+  void add_likelihood(double l) {
+    likelihood_ += l;
+  }
+
+  void add_gold_likelihood(double l) {
+    gold_likelihood_ += l;
+  }
+
   void add_total_length(int l) {
     total_length_ += l; 
+  }
+
+  void add_num_actions(int l) {
+    num_actions_ += l; 
   }
 
   void add_directed_count(int l) {
@@ -970,9 +1148,11 @@ public:
     undirected_count_ += l; 
   }
    
-  void countAccuracy(const ArcStandardParser& prop_parse, const ArcList& gold_arcs); 
+  void countAccuracy(const ArcStandardParser& prop_parse, const ArcStandardParser& gold_parse); 
+  //void countAccuracy(const ArcStandardParser& prop_parse, const ArcList& gold_arcs); 
 
-  void countAccuracy(const ArcEagerParser& prop_parse, const ArcList& gold_arcs); 
+  void countAccuracy(const ArcEagerParser& prop_parse, const ArcEagerParser& gold_parse); 
+  //void countAccuracy(const ArcEagerParser& prop_parse, const ArcList& gold_arcs); 
 
   double directed_accuracy() const {
     return (directed_count_ + 0.0)/total_length_;
@@ -990,6 +1170,10 @@ public:
     return (root_count_ + 0.0)/num_sentences_;
   }
 
+  double gold_more_likely() const {
+    return (gold_more_likely_count_ + 0.0)/num_sentences_;
+  }
+
   double arc_dir_precision() const {
     return (directed_count_ + 0.0)/undirected_count_;
   }
@@ -1002,11 +1186,37 @@ public:
     return (shift_count_ + 0.0)/shift_gold_;
   }
 
+  double likelihood() const {
+    return likelihood_;
+  }
+
+  double gold_likelihood() const {
+    return gold_likelihood_;
+  }
+
   double final_reduce_error_rate() const {
     return (final_reduce_error_count_ + 0.0)/total_length_;
   }
 
+  double cross_entropy() const {
+    return likelihood_/(std::log(2)*num_actions_);
+  }
+
+  double gold_cross_entropy() const {
+    return gold_likelihood_/(std::log(2)*num_actions_);
+  }
+
+  double perplexity() const {
+    return std::pow(2, cross_entropy());
+  }
+
+  double gold_perplexity() const {
+    return std::pow(2, gold_cross_entropy());
+  }
+
 private:
+    double likelihood_;  
+    double gold_likelihood_;  
     int reduce_count_; 
     int reduce_gold_;
     int shift_count_;
@@ -1016,6 +1226,8 @@ private:
     int directed_count_;
     int undirected_count_;
     int root_count_;
+    int gold_more_likely_count_;
+    int num_actions_;
     int complete_sentences_;
     int num_sentences_;
 };

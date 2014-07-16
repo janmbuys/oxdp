@@ -80,6 +80,7 @@ inline void extractParseTrainExamples(const ArcStandardParser& prop_parser, std:
     //action decision
     re_tuple[0] = static_cast<WordId>(a);
     examples_re->push_back(re_tuple);  
+    std::cout << static_cast<WordId>(a) << std::endl;
     parser.execute_action(a);
   }
 }
@@ -162,6 +163,7 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
     
   //repeat for number of samples: for each sentence, get training examples and update model
   for (int iter = 0; iter < num_iterations; ++iter) {
+     std::cout << "Training iter " << iter << std::endl;
 
     for (unsigned j = 0; j < sents.size(); ++j) {
       //remove old sample from model
@@ -183,20 +185,24 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
             extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
           } else { 
             ArcStandardParser sample_parse = staticGoldParseSentence(sents[j], tags[j], gold_dep);
+            sample_parse.print_arcs();
             extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
 
           }
-          //sample_parse.print_arcs();
           //std::cout << "\n" << sample_parse.actions_str() << "\n";
         }
       } else {
         unsigned num_particles = 100;
         bool resample = false;
-
-        ArcStandardParser sample_parse = particleGoldParseSentence(sents[j], tags[j], gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
-
-        extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
-        //technically need a MH acceptance test
+        
+        if (arceager) {
+          ArcEagerParser sample_parse = particleEagerGoldParseSentence(sents[j], tags[j], gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+          extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
+        } else {  
+          ArcStandardParser sample_parse = particleGoldParseSentence(sents[j], tags[j], gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+          extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
+          //technically need a MH acceptance test
+        }
       } 
 
       //update with new sample
@@ -345,8 +351,8 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
       ArcList gold_dep(tags[j].size());
       gold_dep.set_arcs(gold_deps[j]); 
     
-      //smaple new parse (derivation) 
-      ArcStandardParser sample_parse = particleParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, dict, eng, *shift_lm, *reduce_lm, *arc_lm, *tag_lm);
+      //sample new parse (derivation) 
+      ArcStandardParser sample_parse = particleParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *arc_lm, *tag_lm);
       //technically need a MH acceptance test
       
       extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_arc[j], &examples_list_tag[j]);

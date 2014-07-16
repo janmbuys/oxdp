@@ -31,7 +31,6 @@ void Dict::convertWhitespaceDelimitedConllLine(const std::string& line, std::vec
   int state = 0;
   int col_num = 0;
    
-  //TODO enable to exclude punctuation  
   while(cur < line.size()) {
     if (is_ws(line[cur++])) {
       if (state == 0) 
@@ -114,9 +113,9 @@ WordId Dict::convert(const Word& word, bool frozen) {
     return 0;
   }
 
-  //convert to lower case 
   Word lword(word);
-  std::transform(lword.begin(), lword.end(), lword.begin(), tolower);
+  //convert to lower case 
+  //std::transform(lword.begin(), lword.end(), lword.begin(), tolower);
 
   auto i = d_.find(lword);
   if (i == d_.end()) {
