@@ -80,7 +80,7 @@ inline void extractParseTrainExamples(const ArcStandardParser& prop_parser, std:
     //action decision
     re_tuple[0] = static_cast<WordId>(a);
     examples_re->push_back(re_tuple);  
-    std::cout << static_cast<WordId>(a) << std::endl;
+    //std::cout << static_cast<WordId>(a) << std::endl;
     parser.execute_action(a);
   }
 }
@@ -185,7 +185,7 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
             extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
           } else { 
             ArcStandardParser sample_parse = staticGoldParseSentence(sents[j], tags[j], gold_dep);
-            sample_parse.print_arcs();
+            //sample_parse.print_arcs();
             extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
 
           }
@@ -223,12 +223,12 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
       std::cerr << (iter + 1) << " iterations\n";
       if (with_words) {
         shift_lm->resample_hyperparameters(eng);      
-        std::cerr << "\n  [Shift LLH=" << shift_lm->log_likelihood() << "]\n";    
+        std::cerr << "  [Shift LLH=" << shift_lm->log_likelihood() << "]\n\n";    
       }
       tag_lm->resample_hyperparameters(eng);      
-      std::cerr << "\n  [Tag LLH=" << tag_lm->log_likelihood() << "]\n";    
+      std::cerr << "  [Tag LLH=" << tag_lm->log_likelihood() << "]\n\n";    
       reduce_lm->resample_hyperparameters(eng);      
-      std::cerr << "\n  [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n";
+      std::cerr << "  [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n\n";
     }
   }
 }
@@ -296,18 +296,100 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
       std::cerr << (iter + 1) << " iterations\n";
       if (with_words) {
         shift_lm->resample_hyperparameters(eng);      
-        std::cerr << "\n  [Shift LLH=" << shift_lm->log_likelihood() << "]\n";    
+        std::cerr << "  [Shift LLH=" << shift_lm->log_likelihood() << "]\n\n";    
       }
       tag_lm->resample_hyperparameters(eng);      
-      std::cerr << "\n  [Tag LLH=" << tag_lm->log_likelihood() << "]\n";    
+      std::cerr << "  [Tag LLH=" << tag_lm->log_likelihood() << "]\n\n";    
       reduce_lm->resample_hyperparameters(eng);      
-      std::cerr << "\n  [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n";
+      std::cerr << "  [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n\n";
       arc_lm->resample_hyperparameters(eng);      
-      std::cerr << "\n [Arc LLH=" << arc_lm->log_likelihood() << "]\n";
+      std::cerr << "  [Arc LLH=" << arc_lm->log_likelihood() << "]\n\n";
     }
   }
 }
 
+//for ternary decisions, arcstandard
+template<unsigned kShiftOrder, unsigned kReduceOrder,  unsigned kTagOrder>
+void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool init, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
+  unsigned num_particles = 1000;
+  bool resample = false;
+
+  //keep an example list for each sentence
+  std::vector<WordsList> examples_list_tag(tags.size(), WordsList());
+  std::vector<WordsList> examples_list_re(tags.size(), WordsList());
+ 
+  if (init) {
+    //initialize tag_lm with a sequential trigram model
+    std::vector<WordId> ctx(kTagOrder - 1, 0);
+    for (unsigned j = 0; j < tags.size(); ++j) {
+      ctx.resize(kTagOrder - 1);
+      for (unsigned i = 0; i < tags[j].size(); ++i) {
+        WordId tag = tags[j][i];
+        Words tag_tuple(1, tag);
+        tag_tuple.insert(tag_tuple.end(), ctx.begin() + (ctx.size() - (kTagOrder - 1)), ctx.end());
+        examples_list_tag[j].push_back(tag_tuple);
+        ctx.push_back(tag);
+      }
+      updatePYPModel(true, eng, examples_list_tag[j], tag_lm); 
+    }
+  } 
+
+  //TODO try different initializations
+  
+  //repeat for number of samples: for each sentence, get training examples and update model
+  for (int iter = 0; iter < num_iterations; ++iter) {
+
+    for (unsigned j = 0; j < tags.size(); ++j) {
+      //remove old sample from model
+      if (iter > 0) {
+        updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
+        updatePYPModel(false, eng, examples_list_re[j], reduce_lm);
+      } else if (init) {
+        updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
+      }
+
+      //only for evaluation
+      ArcList gold_dep(tags[j].size());
+      gold_dep.set_arcs(gold_deps[j]); 
+    
+      //sample new parse (derivation) 
+      ArcStandardParser sample_parse;
+      if (init)
+        sample_parse = particleInitParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *tag_lm);
+      else
+        sample_parse = particleParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+      //technically need a MH acceptance test
+      
+      extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_tag[j]);
+
+      //update with new sample
+      updatePYPModel(true, eng, examples_list_tag[j], tag_lm);
+      updatePYPModel(true, eng, examples_list_re[j], reduce_lm);
+    }
+
+    std::cerr << ".";
+    if ((iter == 0)) {
+      std::cerr << (iter + 1) << " iterations\n";
+      std::cerr << " [Tag LLH=" << tag_lm->log_likelihood() << "]\n";    
+      std::cerr << " [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n";
+    } else if (iter % 10 == 9) { //if (i % 30 == 29) 
+      std::cerr << (iter + 1) << " iterations\n";
+      tag_lm->resample_hyperparameters(eng);      
+      std::cerr << "  [Tag LLH=" << tag_lm->log_likelihood() << "]\n\n";    
+      reduce_lm->resample_hyperparameters(eng);      
+      std::cerr << "  [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n\n";
+      
+      //evaluate
+      std::string test_file = "english-wsj-nowords-nopunc/english_wsj_dev.conll";
+      evaluate(test_file, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+  
+      test_file = "english-wsj-nowords-nopunc10/english_wsj_dev.conll";
+      evaluate(test_file, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+    }
+  }
+}
+
+//for binary decisions
 template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kArcOrder, unsigned kTagOrder>
 void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool init, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kArcOrder>* arc_lm, PYPLM<kTagOrder>* tag_lm) {
   unsigned num_particles = 1000;
@@ -372,11 +454,11 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
     } else if (iter % 10 == 9) { //if (i % 30 == 29) 
       std::cerr << (iter + 1) << " iterations\n";
       tag_lm->resample_hyperparameters(eng);      
-      std::cerr << "\n  [Tag LLH=" << tag_lm->log_likelihood() << "]\n";    
+      std::cerr << "  [Tag LLH=" << tag_lm->log_likelihood() << "]\n\n";    
       reduce_lm->resample_hyperparameters(eng);      
-      std::cerr << "\n  [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n";
+      std::cerr << "  [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n\n";
       arc_lm->resample_hyperparameters(eng);      
-      std::cerr << "\n [Arc LLH=" << arc_lm->log_likelihood() << "]\n";
+      std::cerr << "  [Arc LLH=" << arc_lm->log_likelihood() << "]\n\n";
     }
   }
 }

@@ -46,6 +46,8 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const Ar
       inc_root_count();
 
   add_likelihood(prop_parse.particle_weight());
+  add_importance_likelihood(prop_parse.importance_weight());
+  add_beam_likelihood(prop_parse.beam_particle_weight());
   add_gold_likelihood(gold_parse.particle_weight());
   add_num_actions(prop_parse.num_actions());
   if (gold_parse.particle_weight() < prop_parse.particle_weight())
@@ -88,6 +90,7 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcEa
       inc_root_count();
 
   add_likelihood(prop_parse.particle_weight());
+  add_beam_likelihood(prop_parse.beam_particle_weight());
   add_gold_likelihood(gold_parse.particle_weight());
   add_num_actions(prop_parse.num_actions());
   if (gold_parse.particle_weight() < prop_parse.particle_weight())
@@ -191,8 +194,8 @@ kAction ArcStandardParser::oracleDynamicNext(const ArcList& gold_arcs) const { /
 bool ArcEagerParser::shift() {
   WordIndex i = buffer_next();
   pop_buffer();
-  buffer_left_most_child_ = -1;
-  buffer_left_child_ = -1;
+  //buffer_left_most_child_ = -1;
+  //buffer_left_child_ = -1;
   push_stack(i);
   append_action(kAction::sh);
   return true;
@@ -217,9 +220,9 @@ bool ArcEagerParser::leftArc() {
   pop_stack();
   append_action(kAction::la);
   //take (first) left-most and closest left-child
-  if ((buffer_left_child_ > -1) && (buffer_left_most_child_ == -1))
-    buffer_left_most_child_ = buffer_left_child_;
-  buffer_left_child_ = i;
+  //if ((buffer_left_child_ > -1) && (buffer_left_most_child_ == -1))
+  //  buffer_left_most_child_ = buffer_left_child_;
+  //buffer_left_child_ = i;
   return true;
 }
 
@@ -229,8 +232,8 @@ bool ArcEagerParser::rightArc() {
   WordIndex j = buffer_next();
   set_arc(j, i);
   pop_buffer();
-  buffer_left_most_child_ = -1;
-  buffer_left_child_ = -1;
+  //buffer_left_most_child_ = -1;
+  //buffer_left_child_ = -1;
   push_stack(j);
   append_action(kAction::ra);
   return true;

@@ -90,8 +90,9 @@ void Dict::readFromConllFile(const std::string& filename, std::vector<std::vecto
       state = 1;
     } else {
       if (state==1) {
+        //add start of sentence symbol
         sents->push_back(std::vector<WordId>());
-        sents->back().push_back(0); //add ROOT
+        sents->back().push_back(0); 
         tags->push_back(std::vector<WordId>());
         tags->back().push_back(0);
         deps->push_back(std::vector<WordIndex>());
@@ -105,13 +106,16 @@ void Dict::readFromConllFile(const std::string& filename, std::vector<std::vecto
 }
 
 WordId Dict::convert(const Word& word, bool frozen) {
-  if (word == "ROOT") {
-    if (words_.size()==0 && !frozen) {
-      words_.push_back(word);
-      d_[word] = 0;
-    }
+  
+  //TODO make sure this works  
+  //if (word == "ROOT") {
+  if (words_.size()==0 && !frozen) {
+    words_.push_back(word);
+    d_[word] = 0;
     return 0;
   }
+    //return 0;
+  //}
 
   Word lword(word);
   //convert to lower case 
