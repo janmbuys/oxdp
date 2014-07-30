@@ -20,7 +20,7 @@ corpus: ../corpus/corpus.o ../corpus/corpus.h
 ## stuff below here is optional
 
 clean:
-	rm -f *.o ../corpus/*.o
+	rm -f *.o ../corpus/*.o 
 
 clobber: clean
 	rm hpyp_dp 

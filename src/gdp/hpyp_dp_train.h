@@ -160,12 +160,14 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
   std::vector<WordsList> examples_list_sh(sents.size(), WordsList());
   std::vector<WordsList> examples_list_tag(sents.size(), WordsList());
   std::vector<WordsList> examples_list_re(sents.size(), WordsList());
-    
+  
   //repeat for number of samples: for each sentence, get training examples and update model
   for (int iter = 0; iter < num_iterations; ++iter) {
-     std::cout << "Training iter " << iter << std::endl;
+     //std::cout << "Training iter " << iter << std::endl;
 
     for (unsigned j = 0; j < sents.size(); ++j) {
+      //TODO change back: limit sentence length
+      //if (tags[j].size() <= 11) {
       //remove old sample from model
       if (iter > 0) {
         if (with_words)
@@ -210,6 +212,7 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
         updatePYPModel(true, eng, examples_list_sh[j], shift_lm);
       updatePYPModel(true, eng, examples_list_tag[j], tag_lm);
       updatePYPModel(true, eng, examples_list_re[j], reduce_lm);
+    //}
     }
 
     std::cerr << ".";
@@ -230,6 +233,7 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
       reduce_lm->resample_hyperparameters(eng);      
       std::cerr << "  [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n\n";
     }
+  
   }
 }
 
@@ -308,16 +312,21 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
   }
 }
 
-//for ternary decisions, arcstandard
+//for ternary decisions
 template<unsigned kShiftOrder, unsigned kReduceOrder,  unsigned kTagOrder>
-void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool init, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
+void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool init, bool arceager, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
   unsigned num_particles = 1000;
   bool resample = false;
+  unsigned max_sent_length = 10;
 
   //keep an example list for each sentence
   std::vector<WordsList> examples_list_tag(tags.size(), WordsList());
   std::vector<WordsList> examples_list_re(tags.size(), WordsList());
  
+  std::string log_file = "arceager.scores.out";
+  std::ofstream outl;
+  outl.open(log_file); 
+
   if (init) {
     //initialize tag_lm with a sequential trigram model
     std::vector<WordId> ctx(kTagOrder - 1, 0);
@@ -340,31 +349,51 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
   for (int iter = 0; iter < num_iterations; ++iter) {
 
     for (unsigned j = 0; j < tags.size(); ++j) {
-      //remove old sample from model
-      if (iter > 0) {
+      if (tags[j].size() <= (max_sent_length+1)) {
+      //if (tags[j].size() <= std::min(iter/2 + 3, 11)) {
+
+      //if (((iter < 20) && (tags[j].size() <= 11)) || 
+      //    ((iter >= 20) && (iter < 40) && (tags[j].size()) <= 21)) {
+        
+        //remove old sample from model (if there is any)
         updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
         updatePYPModel(false, eng, examples_list_re[j], reduce_lm);
-      } else if (init) {
-        updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
-      }
+        
+        //if (iter > 0) {
+        //} else if (init) {
+        //  updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
+        //}
 
-      //only for evaluation
-      ArcList gold_dep(tags[j].size());
-      gold_dep.set_arcs(gold_deps[j]); 
+        //only for evaluation
+        ArcList gold_dep(tags[j].size());
+        gold_dep.set_arcs(gold_deps[j]); 
     
-      //sample new parse (derivation) 
-      ArcStandardParser sample_parse;
-      if (init)
-        sample_parse = particleInitParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *tag_lm);
-      else
-        sample_parse = particleParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
-      //technically need a MH acceptance test
-      
-      extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_tag[j]);
+        //sample new parse (derivation) 
+        if (arceager) {
+          ArcEagerParser sample_parse;
+          if ((iter==0) && init)
+            sample_parse = particleInitEagerParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *tag_lm);
+          else
+            sample_parse = particleEagerParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+          //technically need a MH acceptance test
+         
+          extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_tag[j]);
+        } else {
+          ArcStandardParser sample_parse;
+          if ((iter==0) && init)
+            sample_parse = particleInitParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *tag_lm);
+          else
+            sample_parse = particleParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+          //technically need a MH acceptance test
+         
+          extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_tag[j]);
+ 
+        }
 
-      //update with new sample
-      updatePYPModel(true, eng, examples_list_tag[j], tag_lm);
-      updatePYPModel(true, eng, examples_list_re[j], reduce_lm);
+        //update with new sample
+        updatePYPModel(true, eng, examples_list_tag[j], tag_lm);
+        updatePYPModel(true, eng, examples_list_re[j], reduce_lm);
+      }
     }
 
     std::cerr << ".";
@@ -380,13 +409,24 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
       std::cerr << "  [Reduce LLH=" << reduce_lm->log_likelihood() << "]\n\n";
       
       //evaluate
-      std::string test_file = "english-wsj-nowords-nopunc/english_wsj_dev.conll";
-      evaluate(test_file, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+      std::string test_file;
+      double acc;
   
-      test_file = "english-wsj-nowords-nopunc10/english_wsj_dev.conll";
-      evaluate(test_file, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+      test_file = "english-wsj-conll07-nowords-nopunc10/english_wsj_dev.conll";
+      acc = evaluate(test_file, arceager, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+      outl << acc << " ";
+
+      test_file = "english-wsj-conll07-nowords-nopunc20/english_wsj_dev.conll";
+      acc = evaluate(test_file, arceager, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+      outl << acc << " ";
+
+      test_file = "english-wsj-conll07-nowords-nopunc/english_wsj_dev.conll";
+      acc = evaluate(test_file, arceager, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+      outl << acc << std::endl;
     }
   }
+
+  outl.close();
 }
 
 //for binary decisions
@@ -420,29 +460,33 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
   for (int iter = 0; iter < num_iterations; ++iter) {
 
     for (unsigned j = 0; j < tags.size(); ++j) {
-      //remove old sample from model
-      if (iter > 0) {
-        updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
-        updatePYPModel(false, eng, examples_list_re[j], reduce_lm);
-        updatePYPModel(false, eng, examples_list_arc[j], arc_lm);
-      } else if (init) {
-        updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
-      }
+      if (((iter < 20) && (tags[j].size() <= 11)) || 
+          ((iter >= 20) && (iter < 40) && (tags[j].size()) <= 21)) {
 
-      //only for evaluation
-      ArcList gold_dep(tags[j].size());
-      gold_dep.set_arcs(gold_deps[j]); 
+        //remove old sample from model
+        if (iter > 0) {
+          updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
+          updatePYPModel(false, eng, examples_list_re[j], reduce_lm);
+          updatePYPModel(false, eng, examples_list_arc[j], arc_lm);
+        } else if (init) {
+          updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
+        }
+
+        //only for evaluation
+        ArcList gold_dep(tags[j].size());
+        gold_dep.set_arcs(gold_deps[j]); 
     
-      //sample new parse (derivation) 
-      ArcStandardParser sample_parse = particleParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *arc_lm, *tag_lm);
-      //technically need a MH acceptance test
+        //sample new parse (derivation) 
+        ArcStandardParser sample_parse = particleParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *arc_lm, *tag_lm);
+        //technically need a MH acceptance test
       
-      extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_arc[j], &examples_list_tag[j]);
+        extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_arc[j], &examples_list_tag[j]);
 
-      //update with new sample
-      updatePYPModel(true, eng, examples_list_tag[j], tag_lm);
-      updatePYPModel(true, eng, examples_list_re[j], reduce_lm);
-      updatePYPModel(true, eng, examples_list_arc[j], arc_lm);
+        //update with new sample
+        updatePYPModel(true, eng, examples_list_tag[j], tag_lm);
+        updatePYPModel(true, eng, examples_list_re[j], reduce_lm);
+        updatePYPModel(true, eng, examples_list_arc[j], arc_lm);
+      }
     }
 
     std::cerr << ".";

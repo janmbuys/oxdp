@@ -107,15 +107,13 @@ void Dict::readFromConllFile(const std::string& filename, std::vector<std::vecto
 
 WordId Dict::convert(const Word& word, bool frozen) {
   
-  //TODO make sure this works  
-  //if (word == "ROOT") {
   if (words_.size()==0 && !frozen) {
     words_.push_back(word);
     d_[word] = 0;
     return 0;
+  } else if (word == sos_) {
+    return 0;
   }
-    //return 0;
-  //}
 
   Word lword(word);
   //convert to lower case 

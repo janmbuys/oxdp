@@ -29,7 +29,9 @@ int main(int argc, char** argv) {
   //std::string train_file = "english-wsj-partlex/english_wsj_train.conll";
   //std::string train_file = "english-wsj/english_wsj_train.conll";
   //std::string train_file = "english-wsj-nowords/english_wsj_train.conll";
-  std::string train_file = "english-wsj-nowords-nopunc10/english_wsj_train.conll";
+  std::string train_file = "english-wsj-conll07-nowords/english_wsj_train.conll";
+  //std::string train_file = "english-wsj-conll07-nowords-nopunc/english_wsj_train.conll";
+  //std::string train_file = "english-wsj-nowords-nopunc/english_wsj_train.conll";
   //std::string train_file = "dutch-alpino/dutch_alpino_train.conll";
 
   Dict dict("ROOT", "");
@@ -44,10 +46,10 @@ int main(int argc, char** argv) {
   std::cerr << "Corpus size: " << corpus_sents.size() << " sentences\t (" << dict.size() << " word types, " << dict.tag_size() << " tags)\n";
 
   //define pyp models with their orders
-  const unsigned kShOrder = 8; //5, 6 
+  const unsigned kShOrder = 6; //5 
   const unsigned kArcOrder = 4;
-  const unsigned kReOrder = 6; //8
-  const unsigned kTagOrder = 5; //9, 8
+  const unsigned kReOrder = 9; //6, 11
+  const unsigned kTagOrder = 9; //5, 6, 9
   
   //remember to update vocab sizes!  
   PYPLM<kShOrder> shift_lm(dict.size()+1, 1, 1, 1, 1);
@@ -57,8 +59,8 @@ int main(int argc, char** argv) {
   
   std::cerr << "\nStarting training\n";
   auto tr_start = std::chrono::steady_clock::now();
-                    
-  bool supervised = false;
+           
+  bool supervised = true;
   bool with_words = false; 
   bool static_oracle = true;
   bool arceager = false;
@@ -67,46 +69,73 @@ int main(int argc, char** argv) {
   if (supervised)
     trainSupervisedParser(corpus_sents, corpus_tags, corpus_deps, num_samples, with_words, arceager, static_oracle, dict, eng, &shift_lm, &reduce_lm, &tag_lm);
   else 
-    trainUnsupervisedParser(corpus_tags, corpus_deps, num_samples, init, dict, eng, &shift_lm, &reduce_lm, &tag_lm);
+    trainUnsupervisedParser(corpus_tags, corpus_deps, num_samples, init, arceager, dict, eng, &shift_lm, &reduce_lm, &tag_lm);
     
   auto tr_dur = std::chrono::steady_clock::now() - tr_start;
   std::cerr << "Training done...time " << std::chrono::duration_cast<std::chrono::seconds>(tr_dur).count() << "s\n";  
-    
-  /*Testing */
+ 
+  /*Testing 
 
+  std::string test_file;
   //std::string test_file = "dutch-alpino/dutch_alpino_dev.conll";
   //std::string test_file = "english-wsj-partlex/english_wsj_dev.conll";
   //std::string test_file = "english-wsj/english_wsj_dev.conll";
   //std::string test_file = "english-wsj-nowords/english_wsj_dev.conll";
   
-  std::string test_file = "english-wsj-nowords-nopunc/english_wsj_dev.conll";
-  evaluate(test_file, arceager, with_words, dict, eng, shift_lm, reduce_lm, tag_lm);
-  
-  test_file = "english-wsj-nowords-nopunc10/english_wsj_dev.conll";
+  //test_file = "english-wsj-nowords-nopunc10/english_wsj_dev.conll";
+  test_file = "english-wsj-conll07-nowords-nopunc10/english_wsj_dev.conll";
   evaluate(test_file, arceager, with_words, dict, eng, shift_lm, reduce_lm, tag_lm); 
  
+  test_file = "english-wsj-conll07-nowords-nopunc20/english_wsj_dev.conll";
+  evaluate(test_file, arceager, with_words, dict, eng, shift_lm, reduce_lm, tag_lm); 
+ 
+  //std::string test_file = "english-wsj-conll07-nowords/english_wsj_dev.conll";
+  test_file = "english-wsj-conll07-nowords-nopunc/english_wsj_dev.conll";
+  evaluate(test_file, arceager, with_words, dict, eng, shift_lm, reduce_lm, tag_lm); */
+  
+  std::string test_file = "english-wsj-conll07-nowords/english_wsj_dev.conll";
+  evaluate(test_file, arceager, with_words, dict, eng, shift_lm, reduce_lm, tag_lm); 
+  
   /* Generating 
   //sample sentences from the trained model
   const int kNumGenerations = 100;
-  std::vector<ArcStandardParser> particles(kNumGenerations, ArcStandardParser()); 
+  std::vector<unsigned> length_dist;
 
-  for (auto& parser: particles) {
-    parser = generateSentence(dict, eng, shift_lm, reduce_lm, arc_lm, tag_lm);  
+  if (arceager) {
+    std::vector<ArcEagerParser> particles(kNumGenerations, ArcEagerParser()); 
 
-    std::cout << parser.sentence_length() << " ";
-    parser.print_sentence(dict);
-    parser.print_tags(dict);
-    //length_dist.push_back(parser.sentence_length());
-    //cout << parser.actions_str() << endl;
-    parser.print_arcs();
-    std::cout << std::endl;   
+    for (auto& parser: particles) {
+      parser = generateEagerSentence(dict, eng, shift_lm, reduce_lm, tag_lm);  
+
+      std::cout << parser.sentence_length() << " ";
+      parser.print_sentence(dict);
+      parser.print_tags(dict);
+      length_dist.push_back(parser.sentence_length());
+      //cout << parser.actions_str() << endl;
+      parser.print_arcs();
+      std::cout << std::endl;   
+    }
+  } else {
+    std::vector<ArcStandardParser> particles(kNumGenerations, ArcStandardParser()); 
+
+    for (auto& parser: particles) {
+      parser = generateSentence(dict, eng, shift_lm, reduce_lm, tag_lm);  
+
+      std::cout << parser.sentence_length() << " ";
+      parser.print_sentence(dict);
+      parser.print_tags(dict);
+      length_dist.push_back(parser.sentence_length());
+      //cout << parser.actions_str() << endl;
+      parser.print_arcs();
+      std::cout << std::endl;   
+    }
   }
 
-  //sort(length_dist.begin(), length_dist.end());
-  //for (auto l: length_dist)
-  //  cout << l << " ";   
-  */ 
-
+  std::cout << "Length distribution:\n";
+  std::sort(length_dist.begin(), length_dist.end());
+  for (auto l: length_dist)
+    std::cout << l << " ";  */ 
+   
   return 0;
 }
 

@@ -41,7 +41,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const Ar
   inc_num_sentences();
   if (gold_arcs==prop_parse.arcs())
     inc_complete_sentences();
-  for (unsigned i = 1; i < gold_arcs.size(); ++i)
+  for (WordIndex i = 1; i < gold_arcs.size(); ++i)
     if (prop_parse.arcs().has_arc(i, 0) && gold_arcs.has_arc(i, 0)) 
       inc_root_count();
 
@@ -85,11 +85,12 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcEa
   inc_num_sentences();
   if (gold_arcs==prop_parse.arcs())
     inc_complete_sentences();
-  for (unsigned i = 1; i < gold_arcs.size(); ++i)
+  for (WordIndex i = 1; i < gold_arcs.size(); ++i)
     if (prop_parse.arcs().has_arc(i, 0) && gold_arcs.has_arc(i, 0)) 
       inc_root_count();
 
   add_likelihood(prop_parse.particle_weight());
+  add_importance_likelihood(prop_parse.importance_weight());
   add_beam_likelihood(prop_parse.beam_particle_weight());
   add_gold_likelihood(gold_parse.particle_weight());
   add_num_actions(prop_parse.num_actions());
@@ -194,8 +195,17 @@ kAction ArcStandardParser::oracleDynamicNext(const ArcList& gold_arcs) const { /
 bool ArcEagerParser::shift() {
   WordIndex i = buffer_next();
   pop_buffer();
-  //buffer_left_most_child_ = -1;
-  //buffer_left_child_ = -1;
+  push_stack(i);
+  append_action(kAction::sh);
+  return true;
+}
+
+bool ArcEagerParser::shift(WordId w) {
+  WordIndex i = sentence_length();
+  push_word(w);
+  push_arc();
+  if (!is_buffer_empty()) 
+    pop_buffer();
   push_stack(i);
   append_action(kAction::sh);
   return true;
@@ -232,8 +242,21 @@ bool ArcEagerParser::rightArc() {
   WordIndex j = buffer_next();
   set_arc(j, i);
   pop_buffer();
-  //buffer_left_most_child_ = -1;
-  //buffer_left_child_ = -1;
+  push_stack(j);
+  append_action(kAction::ra);
+  return true;
+}
+
+bool ArcEagerParser::rightArc(WordId w) {
+  //add right arc and shift
+  WordIndex i = stack_top();
+  WordIndex j = sentence_length();
+  push_word(w);
+  push_arc();
+  
+  set_arc(j, i);
+  if (!is_buffer_empty()) 
+    pop_buffer();
   push_stack(j);
   append_action(kAction::ra);
   return true;
