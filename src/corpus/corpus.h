@@ -47,10 +47,32 @@ public:
     words_.reserve(1000);
     convert(sos_, false);
     convertTag(sos_, false);
-    if (eos!="")
+    if (eos!="") {
       convert(eos_, false);
+      convertTag(eos_, false);
+    }
   }
-    
+  
+  //alternative initializer for parsing
+  Dict(bool sos, bool eos): 
+    b0_("<bad0>"), 
+    sos_(""), 
+    eos_(""), 
+    bad0_id_(-1)
+  {
+    words_.reserve(1000);
+    if (sos) {
+      sos_ = "ROOT";
+      convert(sos_, false);
+      convertTag(sos_, false);
+    }
+    if (eos) {
+      eos_ = "STOP";
+      convert(eos_, false);
+      convertTag(eos_, false);
+    }
+  } 
+
   void convertWhitespaceDelimitedLine(const std::string& line, std::vector<WordId>* out, bool frozen);
 
   void convertWhitespaceDelimitedConllLine(const std::string& line, std::vector<WordId>* sent_out, std::vector<WordId>* tag_out, std::vector<WordIndex>* dep_out, bool frozen);

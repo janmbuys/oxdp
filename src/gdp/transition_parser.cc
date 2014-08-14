@@ -267,7 +267,8 @@ kAction ArcEagerParser::oracleNext(const ArcList& gold_arcs) const {
   kAction a = kAction::sh;
 
   //maybe change so that we can assume stack_depth > 0 
-  if (is_stack_empty())
+  //force generation of stop asap in training examples
+  if (is_stack_empty()) //|| (buffer_next() < static_cast<int>(sentence_length())) && (tag_at(buffer_next())==1)))
     return a;
 
   WordIndex i = stack_top();
@@ -280,16 +281,21 @@ kAction ArcEagerParser::oracleNext(const ArcList& gold_arcs) const {
     } else if (gold_arcs.has_arc(j, i)) {
       //add right arc eagerly
       a = kAction::ra; 
-    } 
-  }
-
-  //test if we may reduce, else shift
-  if (has_parent(i) && (child_count_at(i) >= gold_arcs.child_count_at(i))) {
+    } else if (reduce_valid()) {  
       //reduce if it has a parent and all its children
-      //stronger, prefer when we want to achieve no spurious ambiguity
-      a = kAction::re;
-  }
-    
+      if (child_count_at(i) >= gold_arcs.child_count_at(i)) 
+        a = kAction::re;
+  
+      //test if we should, else shift
+      /*for (WordIndex k = i - 1; ((k >= 0) && (a==kAction::sh)); --k) {
+        //std::cout << k << " ";
+        //if we need to reduce i to be able to add the arc
+        if (gold_arcs.has_arc(k, j) || gold_arcs.has_arc(j, k)) 
+          a = kAction::re;
+      } */
+    }
+  } 
+
   return a;
 }
 

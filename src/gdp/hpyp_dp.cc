@@ -6,6 +6,7 @@
 #include "hpyplm/hpyplm.h"
 #include "corpus/corpus.h"
 #include "transition_parser.h"
+#include "eisner_parser.h"
 #include "pyp/random.h"
 #include "hpyp_dp_parse.h"
 #include "hpyp_dp_train.h"
@@ -29,14 +30,25 @@ int main(int argc, char** argv) {
   //std::string train_file = "english-wsj-partlex/english_wsj_train.conll";
   //std::string train_file = "english-wsj/english_wsj_train.conll";
   //std::string train_file = "english-wsj-nowords/english_wsj_train.conll";
-  std::string train_file = "english-wsj-conll07-nowords/english_wsj_train.conll";
+  std::string train_file = "english-wsj-conll07/english_wsj_train.conll";
+  //std::string train_file = "english-wsj-conll07-nowords/english_wsj_train.conll";
   //std::string train_file = "english-wsj-conll07-nowords-nopunc/english_wsj_train.conll";
   //std::string train_file = "english-wsj-nowords-nopunc/english_wsj_train.conll";
   //std::string train_file = "dutch-alpino/dutch_alpino_train.conll";
 
-  Dict dict("ROOT", "");
   MT19937 eng;
   
+  bool supervised = true;
+  bool semisupervised = false;
+  bool with_words = false; 
+  bool static_oracle = true;
+  bool arceager = false;
+  //bool eisner = true;
+  bool init = false;  
+
+  //Dict dict("ROOT", "");
+  Dict dict(true, arceager);
+
   std::vector<Words> corpus_sents;
   std::vector<Words> corpus_tags;
   std::vector<WxList> corpus_deps;
@@ -47,26 +59,27 @@ int main(int argc, char** argv) {
 
   //define pyp models with their orders
   const unsigned kShOrder = 6; //5 
-  const unsigned kArcOrder = 4;
-  const unsigned kReOrder = 9; //6, 11
-  const unsigned kTagOrder = 9; //5, 6, 9
+  //const unsigned kArcOrder = 4;
+  const unsigned kReOrder = 9; //7, 8, 9, 6, 11
+  const unsigned kTagOrder = 9; //5, 9, 5, 6, 9
   
-  //remember to update vocab sizes!  
+  unsigned num_transitions = 3;
+  if (arceager)
+    num_transitions = 4;
+
   PYPLM<kShOrder> shift_lm(dict.size()+1, 1, 1, 1, 1);
-  PYPLM<kReOrder> reduce_lm(3, 1, 1, 1, 1); 
-  PYPLM<kArcOrder> arc_lm(2, 1, 1, 1, 1);
+  //PYPLM<kArcOrder> arc_lm(2, 1, 1, 1, 1);
   PYPLM<kTagOrder> tag_lm(dict.tag_size(), 1, 1, 1, 1);
+  PYPLM<kReOrder> reduce_lm(num_transitions, 1, 1, 1, 1); 
   
   std::cerr << "\nStarting training\n";
   auto tr_start = std::chrono::steady_clock::now();
-           
-  bool supervised = true;
-  bool with_words = false; 
-  bool static_oracle = true;
-  bool arceager = false;
-  bool init = true;  
+      
+  //TODO train and test for eisner model
 
-  if (supervised)
+   if (semisupervised)
+    trainSemisupervisedParser(corpus_sents, corpus_tags, corpus_deps, num_samples, with_words, arceager, static_oracle, dict, eng, &shift_lm, &reduce_lm, &tag_lm);
+  else if (supervised)
     trainSupervisedParser(corpus_sents, corpus_tags, corpus_deps, num_samples, with_words, arceager, static_oracle, dict, eng, &shift_lm, &reduce_lm, &tag_lm);
   else 
     trainUnsupervisedParser(corpus_tags, corpus_deps, num_samples, init, arceager, dict, eng, &shift_lm, &reduce_lm, &tag_lm);
@@ -93,48 +106,59 @@ int main(int argc, char** argv) {
   test_file = "english-wsj-conll07-nowords-nopunc/english_wsj_dev.conll";
   evaluate(test_file, arceager, with_words, dict, eng, shift_lm, reduce_lm, tag_lm); */
   
-  std::string test_file = "english-wsj-conll07-nowords/english_wsj_dev.conll";
+  std::string test_file = "english-wsj-conll07/english_wsj_dev.conll";
   evaluate(test_file, arceager, with_words, dict, eng, shift_lm, reduce_lm, tag_lm); 
   
   /* Generating 
   //sample sentences from the trained model
   const int kNumGenerations = 100;
+  unsigned sentence_limit = 100;
   std::vector<unsigned> length_dist;
 
   if (arceager) {
     std::vector<ArcEagerParser> particles(kNumGenerations, ArcEagerParser()); 
 
     for (auto& parser: particles) {
-      parser = generateEagerSentence(dict, eng, shift_lm, reduce_lm, tag_lm);  
+      parser = generateEagerSentence(dict, eng, sentence_limit, shift_lm, reduce_lm, tag_lm);  
 
-      std::cout << parser.sentence_length() << " ";
-      parser.print_sentence(dict);
-      parser.print_tags(dict);
-      length_dist.push_back(parser.sentence_length());
-      //cout << parser.actions_str() << endl;
-      parser.print_arcs();
-      std::cout << std::endl;   
+      if (parser.sentence_length() < sentence_limit) {
+        std::cout << parser.sentence_length() << " ";
+        parser.print_sentence(dict);
+        parser.print_tags(dict);
+        length_dist.push_back(parser.sentence_length());
+        //cout << parser.actions_str() << endl;
+        parser.print_arcs();
+        std::cout << "\n\n";   
+      }
     }
   } else {
     std::vector<ArcStandardParser> particles(kNumGenerations, ArcStandardParser()); 
 
     for (auto& parser: particles) {
-      parser = generateSentence(dict, eng, shift_lm, reduce_lm, tag_lm);  
+      parser = generateSentence(dict, eng, sentence_limit, shift_lm, reduce_lm, tag_lm);  
+      
+      if (!parser.is_complete_parse()) {
+        std::cout << "INCOMPLETE\n";
+        continue;
+      }
 
-      std::cout << parser.sentence_length() << " ";
-      parser.print_sentence(dict);
-      parser.print_tags(dict);
+      if (parser.sentence_length() < sentence_limit) {
+        std::cout << parser.sentence_length() << " ";
+        parser.print_sentence(dict);
+        parser.print_tags(dict);
+        //cout << parser.actions_str() << endl;
+        parser.print_arcs();
+        std::cout << "\n\n";   
+      }
+      
       length_dist.push_back(parser.sentence_length());
-      //cout << parser.actions_str() << endl;
-      parser.print_arcs();
-      std::cout << std::endl;   
     }
   }
 
   std::cout << "Length distribution:\n";
   std::sort(length_dist.begin(), length_dist.end());
   for (auto l: length_dist)
-    std::cout << l << " ";  */ 
+    std::cout << l << " ";  // */
    
   return 0;
 }

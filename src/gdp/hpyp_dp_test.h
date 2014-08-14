@@ -27,7 +27,7 @@ double evaluate(std::string test_file, bool arceager, bool with_words, Dict& dic
   //std::string out_file = "wsj_dev.system.conll.out";
   //std::vector<unsigned> beam_sizes{1};
   //std::vector<unsigned> beam_sizes{2};
-  std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32};
+  std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32, 64};
   double acc = 0.0;
 
   for (unsigned beam_size: beam_sizes) {

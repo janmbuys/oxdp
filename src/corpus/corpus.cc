@@ -88,6 +88,13 @@ void Dict::readFromConllFile(const std::string& filename, std::vector<std::vecto
 
     if (line=="") { 
       state = 1;
+      //add end of sentence symbol (==1)
+      if (eos_!="") {
+        sents->back().push_back(1); 
+        tags->back().push_back(1);
+        deps->back().push_back(-1);
+      }
+
     } else {
       if (state==1) {
         //add start of sentence symbol
@@ -100,19 +107,26 @@ void Dict::readFromConllFile(const std::string& filename, std::vector<std::vecto
         state = 0;
       }
 
-      convertWhitespaceDelimitedConllLine(line, &sents->back(), &tags->back(), &deps->back(), frozen);        
+      convertWhitespaceDelimitedConllLine(line, &sents->back(), &tags->back(), &deps->back(), frozen); 
     }
   } 
 }
 
 WordId Dict::convert(const Word& word, bool frozen) {
   
+  //special treatment for sos_ (root)
   if (words_.size()==0 && !frozen) {
     words_.push_back(word);
     d_[word] = 0;
     return 0;
   } else if (word == sos_) {
     return 0;
+  } else if (word == eos_ && !frozen) {
+    words_.push_back(word);
+    d_[word] = 1;
+    return 1;
+  } else if (word == eos_) {
+    return 1;
   }
 
   Word lword(word);
