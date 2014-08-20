@@ -4,12 +4,14 @@ LDFLAGS = -std=c++11 -g -O3 # -fopenmp -L${LOCAL_LIBS}/lib64 -L${LOCAL_LIBS}/lib
 
 all: hpyp_dp
 
-hpyp_dp: ../corpus/corpus.o transition_parser.o hpyp_dp.o
-	$(CXX) ${LDFLAGS} ../corpus/corpus.o transition_parser.o hpyp_dp.o -o hpyp_dp 
+hpyp_dp: transition_parser.o hpyp_dp.o
+	$(CXX) ${LDFLAGS} transition_parser.o hpyp_dp.o -o hpyp_dp 
+#hpyp_dp: ../corpus/corpus.o transition_parser.o hpyp_dp.o
+#	$(CXX) ${LDFLAGS} ../corpus/corpus.o transition_parser.o hpyp_dp.o -o hpyp_dp 
 
 transition_parser: transition_parser.o transition_parser.h
 
-corpus: ../corpus/corpus.o ../corpus/corpus.h
+#corpus: ../corpus/corpus.o ../corpus/corpus.h
 
 %.o: %.cc
 	${CXX} $(CXXFLAGS) -c $< -o $@

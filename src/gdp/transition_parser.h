@@ -5,170 +5,16 @@
 #include<functional>
 #include<cstdlib>
 
-#include<corpus/corpus.h>
-#include<pyp/random.h>
+#include "corpus/corpus.h"
+#include "pyp/random.h"
+#include "arc_list.h"
+#include "eisner_parser.h"
 
 namespace oxlm {
 
 enum class kAction : WordId {sh, la, ra, re, la2, ra2};
 
-typedef std::vector<WordIndex> WxList;
-typedef std::vector<Words> WordsList;
 typedef std::vector<kAction> ActList;
-
-class ArcList {
-
-public:
-  ArcList(): 
-    arcs_(),
-    child_count_(),
-    leftmost_child_(),
-    rightmost_child_(),
-    left_child_(),
-    right_child_()
-  {
-  }
-
-  ArcList(unsigned n): 
-    arcs_(n, -1),
-    child_count_(n, 0),
-    leftmost_child_(n, -1),
-    rightmost_child_(n, -1),
-    left_child_(n, -1),  //last left child added
-    right_child_(n, -1)  //first right child added
-  { 
-  }
-
-  void push_back() {
-    arcs_.push_back(-1);
-    child_count_.push_back(0);
-    leftmost_child_.push_back(-1);
-    rightmost_child_.push_back(-1);
-    left_child_.push_back(-1); 
-    right_child_.push_back(-1); 
-  }
-
-  void set_arc(WordIndex i, WordIndex j) {
-    //node i has parent j
-    arcs_[i] = j;
-    //TODO change back
-    
-    if ((j >= 0) && (j < size())) {
-      ++child_count_[j];
-    } else {
-      return;
-    }
-
-    /* if (j >= size())
-      std::cerr << "add c ";
-    else if (j >= 0)
-    else
-      std::cerr << "not in range"; */
-
-    if (i < j) {
-      //i left child of j
-      if ((leftmost_child_[j] == -1) || (leftmost_child_[j] > i))  
-        leftmost_child_[j] = i;
-      else if ((left_child_[j] == -1) || (left_child_[j] > i))
-        left_child_[j] = i;
-    } else {
-      //i right child of j
-      if ((rightmost_child_[j] == -1) || (rightmost_child_[j] < i))
-        rightmost_child_[j] = i;
-      else if ((right_child_[j] == -1) || (right_child_[j] < i))
-        right_child_[j] = i;
-    } 
-  }
-
-  void set_arcs(const WxList& arcs) {
-    for (int i = 0; i < size(); ++i) {
-      set_arc(i, arcs[i]);
-    }
-  }
-
-  void print_arcs() const {
-    for (auto d: arcs_)
-      std::cout << d << " ";
-    std::cout << std::endl;   
-  }
-
-  WxList arcs() const {
-    return arcs_;
-  }
-
-  WordIndex at(WordIndex i) const {
-    return arcs_[i];
-  }
-
-  WordIndex leftmost_child(WordIndex i) const {
-    if (i >= size()) 
-      return -1;
-    return leftmost_child_[i];
-  }
-
-  WordIndex rightmost_child(WordIndex i) const {
-    if (i >= size()) 
-      return -1;
-    return rightmost_child_[i];
-  }
-
-  WordIndex left_child(WordIndex i) const {
-    if (i >= size()) 
-      return -1;
-    return left_child_[i];
-  }
-
-  WordIndex right_child(WordIndex i) const {
-    if (i >= size()) 
-      return -1;
-    return right_child_[i];
-  }
-  
-  bool has_parent(WordIndex i) const {
-    return (arcs_[i] >= 0);
-  }
-  
-  bool has_child(WordIndex i) const {
-    return (child_count_[i] > 0);
-  }
-
-  int child_count_at(WordIndex i) const {
-    return child_count_[i];
-  }
-
-  int size() const {
-    return static_cast<int>(arcs_.size());
-  }
-
-  bool has_arc(WordIndex i, WordIndex j) const {
-    return (arcs_[i] == j);
-  }
-
-  bool is_projective_dependency() const {
-    for (int i = 0; i < (size() - 1); ++i)
-      for (int j = i + 1; (j < size()); ++j)
-        if ((arcs_[i]<i &&
-              (arcs_[j]<i && arcs_[j]>arcs_[i])) ||
-            ((arcs_[i]>i && arcs_[i]>j) &&
-              (arcs_[j]<i || arcs_[j]>arcs_[i])) ||
-            ((arcs_[i]>i && arcs_[i]<j) &&
-              (arcs_[j]>i && arcs_[j]<arcs_[i])))
-          return false;
-    return true;
-  }
-
-  bool operator==(const ArcList& a) const {
-    return (arcs_==a.arcs());
-  }
-
-private:
-  WxList arcs_;
-  std::vector<int> child_count_;
-  WxList leftmost_child_;
-  WxList rightmost_child_;
-  WxList left_child_;
-  WxList right_child_;
-};
 
 class TransitionParser {
   public:
@@ -335,7 +181,7 @@ class TransitionParser {
 
   void print_tags(Dict& dict) const {
     for (auto a: tags_)
-      std::cout << dict.lookupTag(a) << " ";
+      std::cout << dict.lookup_tag(a) << " ";
     std::cout << std::endl;
   }
 
@@ -1522,9 +1368,9 @@ class ArcStandardParser : public TransitionParser {
   }
 
   Words reduce_context() const {
-    //return word_tag_children_context(); //best full context, lexicalized (order 10)
+    return word_tag_children_context(); //best full context, lexicalized (order 10)
     //return word_tag_some_children_distance_context(); //best smaller context, lexicalized (order 8)
-    return tag_children_context(); //best full context (order 9)
+    //return tag_children_context(); //best full context (order 9)
     //return tag_some_children_distance_context(); //best smaller context (order 6)
   }
 
@@ -1748,10 +1594,10 @@ public:
   }
    
   void countAccuracy(const ArcStandardParser& prop_parse, const ArcStandardParser& gold_parse); 
-  //void countAccuracy(const ArcStandardParser& prop_parse, const ArcList& gold_arcs); 
 
   void countAccuracy(const ArcEagerParser& prop_parse, const ArcEagerParser& gold_parse); 
-  //void countAccuracy(const ArcEagerParser& prop_parse, const ArcList& gold_arcs); 
+
+  void countAccuracy(const EisnerParser& prop_parse, const EisnerParser& gold_parse); 
 
   double directed_accuracy() const {
     return (directed_count_ + 0.0)/total_length_;

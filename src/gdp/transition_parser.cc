@@ -2,7 +2,26 @@
 
 namespace oxlm {
 
-//void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const ArcList& gold_arcs) {
+void AccuracyCounts::countAccuracy(const EisnerParser& prop_parse, const EisnerParser& gold_parse) {
+  ArcList gold_arcs = gold_parse.arcs();      
+
+  inc_num_sentences();
+  if (gold_arcs==prop_parse.arcs())
+    inc_complete_sentences();
+  for (WordIndex i = 1; i < gold_arcs.size(); ++i)
+    if (prop_parse.arcs().has_arc(i, 0) && gold_arcs.has_arc(i, 0)) 
+      inc_root_count();
+
+  add_likelihood(prop_parse.weight());
+  add_gold_likelihood(gold_parse.weight());
+  if (gold_parse.weight() < prop_parse.weight())
+    inc_gold_more_likely_count();
+
+  add_total_length(gold_arcs.size() - 1);
+  add_directed_count(prop_parse.directed_accuracy_count(gold_arcs));
+  add_undirected_count(prop_parse.undirected_accuracy_count(gold_arcs));
+}
+
 void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const ArcStandardParser& gold_parse) {
   //resimulate the computation of the proposed action sequence to compute accuracy  
   ArcStandardParser simul(prop_parse.sentence(), prop_parse.tags());
@@ -58,7 +77,6 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const Ar
   add_undirected_count(prop_parse.undirected_accuracy_count(gold_arcs));
 }
 
-//void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcList& gold_arcs) {
 void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcEagerParser& gold_parse) {
   //resimulate the computation of the proposed action sequence to compute accuracy
   ArcEagerParser simul(prop_parse.sentence(), prop_parse.tags());

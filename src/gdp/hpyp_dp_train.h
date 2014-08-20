@@ -8,6 +8,7 @@
 
 #include "hpyp_dp_parse.h"
 #include "transition_parser.h"
+#include "eisner_parser.h"
 #include "hpyplm/hpyplm.h"
 #include "corpus/corpus.h"
 #include "pyp/random.h"
@@ -49,6 +50,68 @@ inline void extractParseTrainExamples(const ArcEagerParser& prop_parser, std::ve
     parser.execute_action(a);
      
   }
+}
+
+//for Eisner parser
+inline void extractParseTrainExamples(const EisnerParser& parser, std::vector<Words>* examples_sh, std::vector<Words>* examples_tag) {
+  //we should actually extract training examples in the same order as generation,
+  //but this shouldn't matter too much in practice
+  for (WordIndex i = 1; i < static_cast<int>(parser.sentence_length()); ++i) {
+    //training example head j to i
+    WordIndex j = parser.head_at(i);
+    if (j == -1)
+      continue;
+    WordIndex prev_child = 0;
+    if (i < j)
+      prev_child = parser.prev_left_child(i, j);
+    else if (j < i)
+      prev_child = parser.prev_right_child(i, j);
+
+    Words tag_ctx = parser.tag_context(i, j, prev_child);
+    Words tag_tuple(1, parser.tag_at(i));
+    tag_tuple.insert(tag_tuple.end(), tag_ctx.begin(), tag_ctx.end());
+    examples_tag->push_back(tag_tuple);
+
+    if (!(examples_sh == nullptr)) {
+      Words sh_ctx = parser.shift_context(i, j, prev_child);
+      Words sh_tuple(1, parser.sentence_at(i));
+      sh_tuple.insert(sh_tuple.end(), sh_ctx.begin(), sh_ctx.end());
+      examples_sh->push_back(sh_tuple);
+    }
+  } 
+
+  for (WordIndex j = 0; j < static_cast<int>(parser.sentence_length()); ++j) {
+    //training examples: no further left children
+    WordIndex prev_child = parser.leftmost_child(j);
+ 
+    Words tag_ctx = parser.tag_context(-1, j, prev_child);
+    Words tag_tuple(1, 1);
+    tag_tuple.insert(tag_tuple.end(), tag_ctx.begin(), tag_ctx.end());
+    examples_tag->push_back(tag_tuple);
+
+    if (!(examples_sh == nullptr)) {
+      Words sh_ctx = parser.shift_context(-1, j, prev_child);
+      Words sh_tuple(1, 1);
+      sh_tuple.insert(sh_tuple.end(), sh_ctx.begin(), sh_ctx.end());
+      examples_sh->push_back(sh_tuple);
+    }
+
+    //training examples: no further right children
+    prev_child = parser.rightmost_child(j);
+ 
+    tag_ctx = parser.tag_context(parser.sentence_length(), j, prev_child);
+    tag_tuple = {1};
+    tag_tuple.insert(tag_tuple.end(), tag_ctx.begin(), tag_ctx.end());
+    examples_tag->push_back(tag_tuple);
+
+    if (!(examples_sh == nullptr)) {
+      Words sh_ctx = parser.shift_context(parser.sentence_length(), j, prev_child);
+      Words sh_tuple(1, 1);
+      sh_tuple.insert(sh_tuple.end(), sh_ctx.begin(), sh_ctx.end());
+      examples_sh->push_back(sh_tuple);
+    }  
+  } 
+  
 }
 
 //given a parse, extract its training examples (add to given vectors)
@@ -149,6 +212,59 @@ void updatePYPModel(bool insert, MT19937& eng, const std::vector<Words>& example
       lm->increment(w, ctx, eng);
     else
       lm->decrement(w, ctx, eng);
+  }
+}
+
+//for Eisner parsing
+template<unsigned kShiftOrder, unsigned kTagOrder>
+void trainSupervisedEisnerParser(const std::vector<Words>& sents, const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool with_words, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kTagOrder>* tag_lm) {
+
+  //keep an example list for each sentence
+  std::vector<WordsList> examples_list_sh(sents.size(), WordsList());
+  std::vector<WordsList> examples_list_tag(sents.size(), WordsList());
+  
+  //repeat for number of samples: for each sentence, get training examples and update model
+  for (int iter = 0; iter < num_iterations; ++iter) {
+     //std::cout << "Training iter " << iter << std::endl;
+
+    for (unsigned j = 0; j < sents.size(); ++j) {
+      //if (tags[j].size() <= 11) {
+      //remove old sample from model
+      if (iter > 0) {
+        updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
+        if (with_words)
+          updatePYPModel(false, eng, examples_list_sh[j], shift_lm);
+      }
+
+      if (iter == 0) {
+        EisnerParser sample_parse(sents[j], tags[j], gold_deps[j]);
+        extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_tag[j]);
+        //for (auto ex: examples_list_tag[j])
+        //  std::cout << dict.lookupTag(ex[0]) << " " << dict.lookupTag(ex[1]) << std::endl;
+      } 
+
+      //update with new sample
+      if (with_words)
+        updatePYPModel(true, eng, examples_list_sh[j], shift_lm);
+      updatePYPModel(true, eng, examples_list_tag[j], tag_lm);
+    //}
+    }
+
+    std::cerr << ".";
+    if ((iter == 0)) {
+      std::cerr << (iter + 1) << " iterations\n";
+      if (with_words)
+        std::cerr << " [Shift LLH=" << shift_lm->log_likelihood() << "]\n"; 
+      std::cerr << " [Tag LLH=" << tag_lm->log_likelihood() << "]\n";    
+    } else if (iter % 10 == 9) { //if (i % 30 == 29) 
+      std::cerr << (iter + 1) << " iterations\n";
+      if (with_words) {
+        shift_lm->resample_hyperparameters(eng);      
+        std::cerr << "  [Shift LLH=" << shift_lm->log_likelihood() << "]\n\n";    
+      }
+      tag_lm->resample_hyperparameters(eng);      
+      std::cerr << "  [Tag LLH=" << tag_lm->log_likelihood() << "]\n\n";    
+    }
   }
 }
 

@@ -5,7 +5,8 @@
 #include<array>
 #include<cstdlib>
 
-#include<corpus/corpus.h>
+#include "corpus/corpus.h"
+#include "arc_list.h"
 
 namespace oxlm {
 
@@ -33,7 +34,7 @@ class EisnerParser {
    
   EisnerParser(Words tags):
     chart_(tags.size(), std::vector<EChartItem>(tags.size(), EChartItem())),
-    split_chart_(tags.size(), std::vector<ESplitChartItem>(tags.size(), ESplitChartItem())),
+    split_chart_(tags.size(), std::vector<ESplitChartItem>(tags.size(), ESplitChartItem{-1, -1, -1, -1})),
     arcs_(tags.size()),
     sentence_(tags.size(), 0),
     tags_(tags),
@@ -45,7 +46,7 @@ class EisnerParser {
    
   EisnerParser(Words sent, Words tags):
     chart_(sent.size(), std::vector<EChartItem>(sent.size(), EChartItem())),
-    split_chart_(sent.size(), std::vector<ESplitChartItem>(sent.size(), ESplitChartItem())),
+    split_chart_(sent.size(), std::vector<ESplitChartItem>(sent.size(), ESplitChartItem{-1, -1, -1, -1})),
     arcs_(sent.size()),
     sentence_(sent),
     tags_(tags),
@@ -53,6 +54,18 @@ class EisnerParser {
     is_generating_{false}
   {
 
+  }
+
+  EisnerParser(Words sent, Words tags, WxList deps):
+    chart_(sent.size(), std::vector<EChartItem>(sent.size(), EChartItem())),
+    split_chart_(sent.size(), std::vector<ESplitChartItem>(sent.size(), ESplitChartItem{-1, -1, -1, -1})),
+    arcs_(sent.size()),
+    sentence_(sent),
+    tags_(tags),
+    lw_{0},
+    is_generating_{false}
+  {
+    arcs_.set_arcs(deps);
   }
 
   void push_arc() {
@@ -72,16 +85,17 @@ class EisnerParser {
     lw_ = 0;
   }
 
-  void set_weight(double w) {
-    lw_ = -std::log(w);
+  void set_arc_children() {
+    arcs_.set_children();
   }
 
-  void set_log_weight(double w) {
+  //assume weights are already neg log probabilities
+  void set_weight(double w) {
     lw_ = w;
   }
 
   void add_weight(double w) {
-    lw_ -= std::log(w);
+    lw_ += w;
   }
 
   void set_left_incomplete_weight(WordIndex i, WordIndex j, double w) {
@@ -117,6 +131,9 @@ class EisnerParser {
   }
 
   void recover_parse_tree(WordIndex s, WordIndex t, bool complete, bool left_arc) {
+    if (s >= t)
+      return;
+    //std::cout << "(" <<  s << " " << t << " " << complete << " " << left_arc <<  ") ";
     if (!complete) {
       WordIndex r;
 
@@ -124,10 +141,20 @@ class EisnerParser {
         //left arc
         set_arc(s, t);
         r = left_incomplete_split(s, t);
+
+        /*double left_weight = -std::log(tag_lm.prob(s, parser.tag_context(s, t)));
+        if (with_words_) 
+          left_weight -= std::log(shift_lm.prob(s, parser.shift_context(s, t)));
+        add_weight(left_weight); */
       } else {
         //right arc
         set_arc(t, s);
         r = right_incomplete_split(s, t);
+
+        /* double right_weight = -std::log(tag_lm.prob(t, parser.tag_context(t, s)));
+        if (with_words_)
+          right_weight -= std::log(shift_lm.prob(t, parser.shift_context(t, s)));
+        add_weight(right_weight); */
       }
 
       recover_parse_tree(s, r, true, false);
@@ -148,8 +175,19 @@ class EisnerParser {
   void print_arcs() const {
     for (auto a: arcs_.arcs())
       std::cout << a << " ";
-    //std::cout << std::endl;
+    std::cout << std::endl;
   }
+
+  void print_chart() const {
+    for (unsigned i = 0; i < sentence_length(); ++i) {
+      for (unsigned j = 0; j < sentence_length(); ++j) {
+        std::cout << "(" << chart_[i][j][0] << ", " << chart_[i][j][1] << ", " <<
+chart_[i][j][2] << ", " <<  chart_[i][j][3] << ") "; 
+      }
+      std::cout << std::endl;
+    }
+  }
+
 
   void print_sentence(Dict& dict) const {
     for (auto a: sentence_)
@@ -159,7 +197,7 @@ class EisnerParser {
 
   void print_tags(Dict& dict) const {
     for (auto a: tags_)
-      std::cout << dict.lookupTag(a) << " ";
+      std::cout << dict.lookup_tag(a) << " ";
     std::cout << std::endl;
   }
 
@@ -179,6 +217,10 @@ class EisnerParser {
     return tags_.at(i);
   }
 
+  WordId sentence_at(WordIndex i) const {
+    return sentence_.at(i);
+  }
+
   ArcList arcs() const {
     return arcs_;
   }
@@ -196,12 +238,32 @@ class EisnerParser {
     return arcs_.child_count_at(i);
   }
 
+  WordIndex head_at(int i) const {
+    return arcs_.at(i);
+  }
+
   bool root_has_child() const {
     return (arcs_.child_count_at(0) > 0);
   }
 
   bool has_parent(int i) const {
     return arcs_.has_parent(i);
+  }
+  
+  WordIndex prev_left_child(WordIndex i, WordIndex j) const {
+    return arcs_.prev_left_child(i, j);
+  }
+
+  WordIndex prev_right_child(WordIndex i, WordIndex j) const {
+    return arcs_.prev_right_child(i, j);
+  }
+
+  WordIndex leftmost_child(WordIndex i) const {
+    return arcs_.leftmost_child(i);
+  }
+
+  WordIndex rightmost_child(WordIndex i) const {
+    return arcs_.rightmost_child(i);
   }
 
   bool is_complete_parse() const {
@@ -268,8 +330,86 @@ class EisnerParser {
   //context functions
   //modifier i, head j
   //will add non-arc-factored context later
-  //TODO
+ 
+  Words shift_context(WordIndex i, WordIndex j, WordIndex k) const {
+    Words ctx(5, 0);
+    if (i >= 0 && i < static_cast<int>(tags_.size()))
+      ctx[4] = tags_.at(i);
+    else
+      ctx[4] = 1; //stop word
+    ctx[3] = tags_.at(j);
+    if (k > 0)
+      ctx[2] = tags_.at(k);
+    ctx[1] = sentence_.at(j);
+    if (k > 0)
+      ctx[0] = sentence_.at(k);
+
+    return ctx;
+  }
   
+  Words shift_context(WordIndex i, WordIndex j) const {
+    Words ctx(3, 0);
+    ctx[2] = tags_.at(i);
+    ctx[1] = tags_.at(j);
+    ctx[0] = sentence_.at(j);
+
+    return ctx;
+  }
+
+  Words tag_context(WordIndex i, WordIndex j, WordIndex k) const {
+    //similar to Eisner generative
+    Words ctx(6, 0);
+    ctx[4] = tags_.at(j);
+    if (j > i) //if left arc
+      ctx[5] = 1;
+    //previous child k
+    if (((k > i) && (k < j)) || ((k > j) && (k < i)))
+      ctx[3] = tags_.at(k);
+    ctx[2] = std::min(10, std::abs(i - j));
+
+    if (j > (i+1)) {
+      ctx[1] = tags_.at(j-1); 
+      if (j > (i+2))
+        ctx[0] = tags_.at(i+1); 
+    } else if (i > (j+1)) {
+      ctx[1] = tags_.at(j+1); 
+      if (i > (j+2))
+        ctx[0] = tags_.at(i-1); 
+    } 
+
+    return ctx;
+  }
+
+  Words tag_context(WordIndex i, WordIndex j) const {
+    //for now, try to replicate Adhi's conditioning context
+    Words ctx(7, 0);
+    ctx[6] = tags_.at(j);
+    if (j > i) //if left arc
+      ctx[5] = 1;
+    ctx[4] = std::min(10, std::abs(i - j));
+    if (j > (i+1)) {
+      ctx[2] = tags_.at(j-1); 
+      ctx[1] = tags_.at(i+1); 
+    } else if (i > (j+1)) {
+      ctx[0] = tags_.at(i-1); 
+      ctx[3] = tags_.at(j+1); 
+    }
+
+    if (i < j) {
+      if (j+1 < static_cast<int>(sentence_length()))
+        ctx[3] = tags_.at(j+1);
+      if (i-1 >= 0)
+        ctx[0] = tags_.at(i-1);
+    } else {
+      if (j-1 >= 0)
+        ctx[2] = tags_.at(j-1);
+      if (i+1 < static_cast<int>(sentence_length()))
+        ctx[1] = tags_.at(i+1);
+    } 
+
+    return ctx;
+  } 
+
   private: 
   EChart chart_;
   ESplitChart split_chart_;

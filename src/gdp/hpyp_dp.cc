@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
   //std::string train_file = "english-wsj-partlex/english_wsj_train.conll";
   //std::string train_file = "english-wsj/english_wsj_train.conll";
   //std::string train_file = "english-wsj-nowords/english_wsj_train.conll";
-  std::string train_file = "english-wsj-conll07/english_wsj_train.conll";
+  std::string train_file = "english-wsj/english_wsj_train.conll";
   //std::string train_file = "english-wsj-conll07-nowords/english_wsj_train.conll";
   //std::string train_file = "english-wsj-conll07-nowords-nopunc/english_wsj_train.conll";
   //std::string train_file = "english-wsj-nowords-nopunc/english_wsj_train.conll";
@@ -40,34 +40,39 @@ int main(int argc, char** argv) {
   
   bool supervised = true;
   bool semisupervised = false;
-  bool with_words = false; 
+  bool with_words = true; 
   bool static_oracle = true;
   bool arceager = false;
-  //bool eisner = true;
+  bool eisner = false;
   bool init = false;  
 
   //Dict dict("ROOT", "");
   Dict dict(true, arceager);
+  if (eisner) {
+    //hack because we can't include stop as eos
+    dict.convert("STOP", false);
+    dict.convert_tag("STOP", false);
+  }
 
   std::vector<Words> corpus_sents;
   std::vector<Words> corpus_tags;
   std::vector<WxList> corpus_deps;
   
   std::cerr << "Reading training corpus...\n";
-  dict.readFromConllFile(train_file, &corpus_sents, &corpus_tags, &corpus_deps, false);
+  dict.read_from_conll_file(train_file, &corpus_sents, &corpus_tags, &corpus_deps, false);
   std::cerr << "Corpus size: " << corpus_sents.size() << " sentences\t (" << dict.size() << " word types, " << dict.tag_size() << " tags)\n";
 
   //define pyp models with their orders
   const unsigned kShOrder = 6; //5 
   //const unsigned kArcOrder = 4;
-  const unsigned kReOrder = 9; //7, 8, 9, 6, 11
+  const unsigned kReOrder = 10; //7, 8, 9, 6, 11
   const unsigned kTagOrder = 9; //5, 9, 5, 6, 9
   
   unsigned num_transitions = 3;
   if (arceager)
     num_transitions = 4;
 
-  PYPLM<kShOrder> shift_lm(dict.size()+1, 1, 1, 1, 1);
+  PYPLM<kShOrder> shift_lm(dict.size(), 1, 1, 1, 1);
   //PYPLM<kArcOrder> arc_lm(2, 1, 1, 1, 1);
   PYPLM<kTagOrder> tag_lm(dict.tag_size(), 1, 1, 1, 1);
   PYPLM<kReOrder> reduce_lm(num_transitions, 1, 1, 1, 1); 
@@ -75,9 +80,10 @@ int main(int argc, char** argv) {
   std::cerr << "\nStarting training\n";
   auto tr_start = std::chrono::steady_clock::now();
       
-  //TODO train and test for eisner model
-
-   if (semisupervised)
+  if (eisner) {
+    trainSupervisedEisnerParser(corpus_sents, corpus_tags, corpus_deps, num_samples, with_words, dict, eng, &shift_lm, &tag_lm);
+  }
+  else if (semisupervised)
     trainSemisupervisedParser(corpus_sents, corpus_tags, corpus_deps, num_samples, with_words, arceager, static_oracle, dict, eng, &shift_lm, &reduce_lm, &tag_lm);
   else if (supervised)
     trainSupervisedParser(corpus_sents, corpus_tags, corpus_deps, num_samples, with_words, arceager, static_oracle, dict, eng, &shift_lm, &reduce_lm, &tag_lm);
@@ -106,8 +112,11 @@ int main(int argc, char** argv) {
   test_file = "english-wsj-conll07-nowords-nopunc/english_wsj_dev.conll";
   evaluate(test_file, arceager, with_words, dict, eng, shift_lm, reduce_lm, tag_lm); */
   
-  std::string test_file = "english-wsj-conll07/english_wsj_dev.conll";
-  evaluate(test_file, arceager, with_words, dict, eng, shift_lm, reduce_lm, tag_lm); 
+  std::string test_file = "english-wsj/english_wsj_dev.conll";
+  if (eisner)
+    evaluateEisner(test_file, with_words, dict, shift_lm, tag_lm); 
+  else
+    evaluate(test_file, arceager, with_words, dict, eng, shift_lm, reduce_lm, tag_lm); 
   
   /* Generating 
   //sample sentences from the trained model
