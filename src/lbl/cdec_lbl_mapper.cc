@@ -5,9 +5,9 @@
 namespace oxlm {
 
 CdecLBLMapper::CdecLBLMapper(const Dict& dict) : dict(dict) {
-  kUNKNOWN = this->dict.Convert("<unk>");
+  kUNKNOWN = this->dict.convert("<unk>", false);
   for (int i = 0; i < dict.size(); ++i) {
-    add(i, TD::Convert(dict.Convert(i)));
+    add(i, TD::Convert(dict.lookup(i)));
   }
 }
 

@@ -8,10 +8,10 @@ namespace oxlm {
 
 TEST(CdecLBLMapperTest, TestBasic) {
   Dict dict;
-  dict.Convert("<s>");
-  dict.Convert("</s>");
-  dict.Convert("foo");
-  dict.Convert("bar");
+  dict.convert("<s>", false);
+  dict.convert("</s>", false);
+  dict.convert("foo", false);
+  dict.convert("bar", false);
   CdecLBLMapper mapper(dict);
 
   EXPECT_EQ(0, mapper.convert(1));

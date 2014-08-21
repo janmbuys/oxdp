@@ -9,7 +9,7 @@ namespace oxlm {
 TEST(CdecRuleConverterTest, TestBasic) {
   Dict dict;
   for (int i = 0; i < 20; ++i) {
-    dict.Convert(to_string(i));
+    dict.convert(to_string(i), false);
   }
   boost::shared_ptr<CdecLBLMapper> mapper =
       boost::make_shared<CdecLBLMapper>(dict);

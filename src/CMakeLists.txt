@@ -103,7 +103,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 add_subdirectory(lbl)
+add_subdirectory(gdp)
 add_subdirectory(utils)
+#there are also executables in hpyplm
+#but we don't need them now
 
 # Third party libraries
 add_subdirectory(third_party/eigen)

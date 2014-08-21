@@ -12,7 +12,7 @@ void predict(const string& model_file, const string& contexts_file) {
   model.load(model_file);
 
   Dict dict = model.getDict();
-  int kUNKNOWN = dict.Convert("<unk>");
+  int kUNKNOWN = dict.convert("<unk>", false);
 
   string line;
   ifstream in(contexts_file);
@@ -21,7 +21,7 @@ void predict(const string& model_file, const string& contexts_file) {
     string word;
     vector<int> context;
     while (sin >> word) {
-      context.push_back(dict.Convert(word));
+      context.push_back(dict.convert(word, false));
     }
 
     int context_length = context.size();
@@ -41,9 +41,9 @@ void predict(const string& model_file, const string& contexts_file) {
     double sum = 0;
     for (const auto& outcome: outcomes) {
       for (int i = context_length - 1; i >= 0; --i) {
-        cout << dict.Convert(context[i]) << " ";
+        cout << dict.lookup(context[i]) << " ";
       }
-      cout << dict.Convert(outcome.second) << " " << outcome.first << endl;
+      cout << dict.lookup(outcome.second) << " " << outcome.first << endl;
       sum += outcome.first;
     }
 

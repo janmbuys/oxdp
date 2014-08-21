@@ -42,7 +42,7 @@ void loadClassesFromFile(
   ifstream in(class_file);
   string prev_class_str, class_str, token_str, freq_str;
   while (in >> class_str >> token_str >> freq_str) {
-    int w_id = dict.Convert(token_str);
+    int w_id = dict.convert(token_str, false);
 
     if (!prev_class_str.empty() && class_str != prev_class_str) {
       class_freqs.push_back(mass);
@@ -115,7 +115,7 @@ void frequencyBinning(
   int bin_size = remaining_tokens / (num_classes - 1);
   int mass = 0;
   for (size_t i = 0; i < counts.size(); ++i) {
-    WordId id = dict.Convert(counts.at(i).first);
+    WordId id = dict.convert(counts.at(i).first, false);
     mass += counts.at(i).second;
 
     if (mass > bin_size) {
@@ -143,10 +143,10 @@ void frequencyBinning(
 int convert(
     const string& token, Dict& dict,
     bool immutable_dict, bool convert_unknowns) {
-  int w = dict.Convert(token, immutable_dict);
+  int w = dict.convert(token, immutable_dict);
   if (w < 0) {
     if (convert_unknowns) {
-      w = dict.Convert("<unk>", immutable_dict);
+      w = dict.convert("<unk>", immutable_dict);
       assert(w >= 0);
     } else {
       cout << token << " " << w << endl;

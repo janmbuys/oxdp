@@ -22,7 +22,7 @@ void ExtractWordVectors(
 
   ofstream fout(vocab_file);
   for (size_t i = 0; i < word_vectors.cols(); ++i) {
-    fout << dict.Convert(i) << endl;
+    fout << dict.lookup(i) << endl;
   }
 
 

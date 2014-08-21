@@ -55,10 +55,10 @@ class FF_LBLLM : public FeatureFunction {
     stateConverter = boost::make_shared<CdecStateConverter>(max_state_size - 1);
     ruleConverter = boost::make_shared<CdecRuleConverter>(mapper, stateConverter);
 
-    kSTART = dict.Convert("<s>");
-    kSTOP = dict.Convert("</s>");
-    kUNKNOWN = dict.Convert("<unk>");
-    kSTAR = dict.Convert("<{STAR}>");
+    kSTART = dict.convert("<s>", false);
+    kSTOP = dict.convert("</s>", false);
+    kUNKNOWN = dict.convert("<unk>", false);
+    kSTAR = dict.convert("<{STAR}>", false);
   }
 
   void savePersistentCache() {

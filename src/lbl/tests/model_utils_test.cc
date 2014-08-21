@@ -15,7 +15,7 @@ class ModelUtilsTest : public FactoredSGDTest {
 
     vector<string> words = {"<s>", "</s>", "anna", "has", "apples", "."};
     for (const string& word: words) {
-      dict.Convert(word);
+      dict.convert(word, false);
     }
   }
 
@@ -51,20 +51,20 @@ TEST_F(ModelUtilsTest, TestLoadClassesFromFile) {
   EXPECT_EQ(1184, classes[36]);
 
   EXPECT_EQ(1184, dict.size());
-  EXPECT_EQ(0, dict.Convert("<s>"));
-  EXPECT_EQ(1, dict.Convert("</s>"));
-  EXPECT_EQ(2, dict.Convert("question"));
-  EXPECT_EQ(7, dict.Convert("throughout"));
-  EXPECT_EQ(8, dict.Convert("limits"));
-  EXPECT_EQ(1183, dict.Convert("political"));
+  EXPECT_EQ(0, dict.convert("<s>", false));
+  EXPECT_EQ(1, dict.convert("</s>", false));
+  EXPECT_EQ(2, dict.convert("question", false));
+  EXPECT_EQ(7, dict.convert("throughout", false));
+  EXPECT_EQ(8, dict.convert("limits", false));
+  EXPECT_EQ(1183, dict.convert("political", false));
 
   WordId word_id = 0;
-  EXPECT_EQ("<s>", dict.Convert(word_id));
-  EXPECT_EQ("</s>", dict.Convert(1));
-  EXPECT_EQ("question", dict.Convert(2));
-  EXPECT_EQ("throughout", dict.Convert(7));
-  EXPECT_EQ("limits", dict.Convert(8));
-  EXPECT_EQ("political", dict.Convert(1183));
+  EXPECT_EQ("<s>", dict.lookup(word_id));
+  EXPECT_EQ("</s>", dict.lookup(1));
+  EXPECT_EQ("question", dict.lookup(2));
+  EXPECT_EQ("throughout", dict.lookup(7));
+  EXPECT_EQ("limits", dict.lookup(8));
+  EXPECT_EQ("political", dict.lookup(1183));
 
   EXPECT_NEAR(-3.299828887, class_bias(0), EPS);
   EXPECT_NEAR(-3.617283118, class_bias(1), EPS);
@@ -86,18 +86,18 @@ TEST_F(ModelUtilsTest, TestFrequnecyBinning) {
   EXPECT_EQ(1184, classes[30]);
 
   EXPECT_EQ(1184, dict.size());
-  EXPECT_EQ(0, dict.Convert("<s>"));
-  EXPECT_EQ(1, dict.Convert("</s>"));
-  EXPECT_EQ(2, dict.Convert("<unk>"));
-  EXPECT_EQ(3, dict.Convert("the"));
-  EXPECT_EQ(4, dict.Convert(","));
+  EXPECT_EQ(0, dict.convert("<s>", false));
+  EXPECT_EQ(1, dict.convert("</s>", false));
+  EXPECT_EQ(2, dict.convert("<unk>", false));
+  EXPECT_EQ(3, dict.convert("the", false));
+  EXPECT_EQ(4, dict.convert(",", false));
 
   WordId word_id = 0;
-  EXPECT_EQ("<s>", dict.Convert(word_id));
-  EXPECT_EQ("</s>", dict.Convert(1));
-  EXPECT_EQ("<unk>", dict.Convert(2));
-  EXPECT_EQ("the", dict.Convert(3));
-  EXPECT_EQ(",", dict.Convert(4));
+  EXPECT_EQ("<s>", dict.lookup(word_id));
+  EXPECT_EQ("</s>", dict.lookup(1));
+  EXPECT_EQ("<unk>", dict.lookup(2));
+  EXPECT_EQ("the", dict.lookup(3));
+  EXPECT_EQ(",", dict.lookup(4));
 
   EXPECT_NEAR(-3.299828887, class_bias(0), EPS);
   EXPECT_NEAR(-2.021676685, class_bias(1), EPS);
