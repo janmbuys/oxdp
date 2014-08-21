@@ -168,3 +168,4 @@ std::ostream& operator<<(std::ostream& os, const crp_table_manager<N>& tm) {
 }
 
 #endif
+

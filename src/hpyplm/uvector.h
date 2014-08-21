@@ -22,3 +22,4 @@ struct vector_hash {
 };
 
 #endif
+

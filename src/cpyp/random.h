@@ -77,3 +77,4 @@ struct multinomial_distribution {
 }
 
 #endif
+
