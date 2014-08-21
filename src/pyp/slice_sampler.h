@@ -119,3 +119,4 @@ F slice_sampler1d(const LogF& logF0,               //!< log of function to sampl
 }
 
 #endif  // SLICE_SAMPLER_H
+

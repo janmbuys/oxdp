@@ -523,3 +523,4 @@ SparseVector<T> operator/(const SparseVector<T>& a, const double& b) {
 }
 
 #endif
+

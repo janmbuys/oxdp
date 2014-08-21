@@ -219,3 +219,4 @@ bool operator>=(const LogVal<T>& lhs, const LogVal<T>& rhs) {
 typedef LogVal<double> prob_t;
 
 #endif
+

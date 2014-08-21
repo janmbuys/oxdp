@@ -37,3 +37,4 @@ struct gamma_poisson {
 }
 
 #endif
+

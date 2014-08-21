@@ -125,3 +125,4 @@ struct multinomial_distribution_log {
 }
 
 #endif
+
