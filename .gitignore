@@ -4,3 +4,7 @@ lib/
 .tags*
 oxlm.*
 *.orig
+*so
+train*sgd
+train_melbl
+git_revision.cc
