@@ -3,8 +3,9 @@
 
 #include <iostream>
 #include <utility>
+
+#include "utils/random.h"
 #include "msparse_vector.h"
-#include "random.h"
 
 namespace oxlm {
 

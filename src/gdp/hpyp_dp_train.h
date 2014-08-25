@@ -11,7 +11,7 @@
 #include "eisner_parser.h"
 #include "hpyplm/hpyplm.h"
 #include "corpus/corpus.h"
-#include "pyp/random.h"
+#include "utils/random.h"
 #include "pyp/crp.h"
 #include "pyp/tied_parameter_resampler.h"
 

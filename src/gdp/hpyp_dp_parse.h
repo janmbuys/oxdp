@@ -7,7 +7,7 @@
 #include "transition_parser.h"
 #include "eisner_parser.h"
 #include "hpyplm/hpyplm.h"
-#include "pyp/random.h"
+#include "utils/random.h"
 #include "pyp/crp.h"
 
 namespace std {

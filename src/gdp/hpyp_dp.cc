@@ -9,7 +9,7 @@
 #include "corpus/corpus.h"
 #include "transition_parser.h"
 #include "eisner_parser.h"
-#include "pyp/random.h"
+#include "utils/random.h"
 #include "hpyp_dp_parse.h"
 #include "hpyp_dp_train.h"
 #include "hpyp_dp_test.h"

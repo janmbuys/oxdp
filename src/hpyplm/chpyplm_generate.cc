@@ -4,8 +4,8 @@
 
 #include "chpyplm.h"
 #include "corpus/corpus.h"
-#include "pyp/m.h"
-#include "pyp/random.h"
+#include "utils/m.h"
+#include "utils/random.h"
 #include "pyp/crp.h"
 #include "pyp/tied_parameter_resampler.h"
 

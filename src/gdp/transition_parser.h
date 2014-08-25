@@ -6,7 +6,7 @@
 #include<cstdlib>
 
 #include "corpus/corpus.h"
-#include "pyp/random.h"
+#include "utils/random.h"
 #include "arc_list.h"
 #include "eisner_parser.h"
 

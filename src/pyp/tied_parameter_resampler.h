@@ -3,9 +3,10 @@
 
 #include <set>
 #include <vector>
-#include "random.h"
+
+#include "utils/random.h"
+#include "utils/m.h"
 #include "slice_sampler.h"
-#include "m.h"
 
 namespace oxlm {
 

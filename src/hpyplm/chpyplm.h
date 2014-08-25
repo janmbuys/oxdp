@@ -5,10 +5,9 @@
 #include <unordered_map>
 
 #include "hpyplm.h"
-#include "pyp/m.h"
 #include "corpus/corpus.h"
-#include "pyp/random.h"
-
+#include "utils/m.h"
+#include "utils/random.h"
 #include "hpyplm/uvector.h"
 #include "hpyplm/uniform_vocab.h"
 

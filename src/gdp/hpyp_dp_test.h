@@ -11,7 +11,7 @@
 #include "eisner_parser.h"
 #include "hpyp_dp_parse.h"
 #include "hpyplm/hpyplm.h"
-#include "pyp/random.h"
+#include "utils/random.h"
 #include "pyp/crp.h"
 
 namespace oxlm {

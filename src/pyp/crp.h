@@ -8,10 +8,11 @@
 #include <utility>
 #include <unordered_map>
 #include <functional>
-#include "random.h"
+
+#include "utils/random.h"
+#include "utils/m.h"
 #include "slice_sampler.h"
 #include "crp_table_manager.h"
-#include "m.h"
 
 namespace oxlm {
 
