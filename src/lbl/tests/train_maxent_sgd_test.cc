@@ -18,10 +18,15 @@ TEST_F(FactoredSGDTest, TestTrainMaxentSGD) {
   model.learn();
   config->test_file = "test.txt";
   Dict dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = readCorpus(config->test_file, dict);
+  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  dict.read_from_file(config->test_file, test_corpus, false);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
-  EXPECT_NEAR(55.0796585, perplexity(log_likelihood, test_corpus->size()), EPS);
+  size_t test_size = 0;
+  for (unsigned i = 0; i < test_corpus->size(); ++i)
+    test_size += test_corpus->at(i).size() - 1;
+  //EXPECT_NEAR(55.0796585, perplexity(log_likelihood, test_size), EPS);
+  EXPECT_NEAR(61.960216, perplexity(log_likelihood, test_size), EPS);
 }
 
 TEST_F(FactoredSGDTest, TestTrainMaxentSGDSparseFeatures) {
@@ -33,7 +38,8 @@ TEST_F(FactoredSGDTest, TestTrainMaxentSGDSparseFeatures) {
   model.learn();
   config->test_file = "test.txt";
   Dict dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = readCorpus(config->test_file, dict);
+  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  dict.read_from_file(config->test_file, test_corpus, false);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
   EXPECT_NEAR(56.5152015, perplexity(log_likelihood, test_corpus->size()), EPS);
@@ -48,7 +54,8 @@ TEST_F(FactoredSGDTest, TestTrainMaxentSGDCollisions) {
   model.learn();
   config->test_file = "test.txt";
   Dict dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = readCorpus(config->test_file, dict);
+  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  dict.read_from_file(config->test_file, test_corpus, false);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
   EXPECT_NEAR(54.0802192, perplexity(log_likelihood, test_corpus->size()), EPS);
@@ -64,7 +71,8 @@ TEST_F(FactoredSGDTest, TestTrainMaxentSGDExactFiltering) {
   model.learn();
   config->test_file = "test.txt";
   Dict dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = readCorpus(config->test_file, dict);
+  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  dict.read_from_file(config->test_file, test_corpus, false);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
   EXPECT_NEAR(56.5219650, perplexity(log_likelihood, test_corpus->size()), EPS);
@@ -81,7 +89,8 @@ TEST_F(FactoredSGDTest, TestTrainMaxentSGDApproximateFiltering) {
   model.learn();
   config->test_file = "test.txt";
   Dict dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = readCorpus(config->test_file, dict);
+  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  dict.read_from_file(config->test_file, test_corpus, false);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
   EXPECT_NEAR(56.4228439, perplexity(log_likelihood, test_corpus->size()), EPS);

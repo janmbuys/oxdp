@@ -7,7 +7,7 @@
 namespace oxlm {
 
 TEST(GlobalFeatureIndexesPairTest, TestBasic) {
-  vector<int> data = {2, 3, 3, 1};
+  vector<vector<int>> data = {{0, 2, 3, 3, 1}};
   vector<int> classes = {0, 2, 4};
   boost::shared_ptr<Corpus> corpus = boost::make_shared<Corpus>(data);
   boost::shared_ptr<WordToClassIndex> index =

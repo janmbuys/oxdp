@@ -9,7 +9,7 @@ namespace oxlm {
 class NGramFilterTest : public testing::Test {
  protected:
   void SetUp() {
-    vector<int> data = {2, 3, 2, 3, 1, 3, 3, 4, 2, 2, 4, 3, 3, 2, 2, 1};
+    vector<vector<int>> data = {{0, 2, 3, 2, 3, 1, 3, 3, 4, 2, 2, 4, 3, 3, 2, 2, 1}};
     vector<int> classes = {0, 2, 3, 5};
     corpus = boost::make_shared<Corpus>(data);
     index = boost::make_shared<WordToClassIndex>(classes);

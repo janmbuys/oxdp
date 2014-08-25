@@ -7,7 +7,7 @@
 namespace oxlm {
 
 TEST(CollisionCounterTest, TestBasic) {
-  vector<int> data = {3, 4, 2, 3, 1, 5, 3};
+  vector<vector<int>> data = {{0, 3, 4, 2, 3, 1, 5, 3}};
   vector<int> classes = {0, 2, 3, 6};
   boost::shared_ptr<Corpus> corpus = boost::make_shared<Corpus>(data);
   boost::shared_ptr<WordToClassIndex> index =

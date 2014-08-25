@@ -140,6 +140,7 @@ void frequencyBinning(
   in.close();
 }
 
+/*
 int convert(
     const string& token, Dict& dict,
     bool immutable_dict, bool convert_unknowns) {
@@ -175,6 +176,7 @@ boost::shared_ptr<Corpus> readCorpus(
 
   return corpus;
 }
+*/
 
 Real perplexity(Real log_likelihood, size_t corpus_size) {
   return exp(log_likelihood / corpus_size);

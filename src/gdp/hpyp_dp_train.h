@@ -53,7 +53,7 @@ inline void extractParseTrainExamples(const ArcEagerParser& prop_parser, std::ve
 }
 
 //for Eisner parser
-inline void extractParseTrainExamples(const EisnerParser& parser, std::vector<Words>* examples_sh, std::vector<Words>* examples_tag) {
+inline void extractParseTrainExamples(const EisnerParser& parser,std::vector<Words>* examples_sh, std::vector<Words>* examples_tag) {
   //we should actually extract training examples in the same order as generation,
   //but this shouldn't matter too much in practice
   for (WordIndex i = 1; i < static_cast<int>(parser.sentence_length()); ++i) {
@@ -217,17 +217,17 @@ void updatePYPModel(bool insert, MT19937& eng, const std::vector<Words>& example
 
 //for Eisner parsing
 template<unsigned kShiftOrder, unsigned kTagOrder>
-void trainSupervisedEisnerParser(const std::vector<Words>& sents, const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool with_words, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kTagOrder>* tag_lm) {
+void trainSupervisedEisnerParser(const boost::shared_ptr<Sentences>& sents, const boost::shared_ptr<Sentences>& tags, const boost::shared_ptr<IndicesList>& gold_deps, int num_iterations, bool with_words, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kTagOrder>* tag_lm) {
 
   //keep an example list for each sentence
-  std::vector<WordsList> examples_list_sh(sents.size(), WordsList());
-  std::vector<WordsList> examples_list_tag(sents.size(), WordsList());
+  std::vector<WordsList> examples_list_sh(sents->size(), WordsList());
+  std::vector<WordsList> examples_list_tag(sents->size(), WordsList());
   
   //repeat for number of samples: for each sentence, get training examples and update model
   for (int iter = 0; iter < num_iterations; ++iter) {
      //std::cout << "Training iter " << iter << std::endl;
 
-    for (unsigned j = 0; j < sents.size(); ++j) {
+    for (unsigned j = 0; j < sents->size(); ++j) {
       //if (tags[j].size() <= 11) {
       //remove old sample from model
       if (iter > 0) {
@@ -237,7 +237,7 @@ void trainSupervisedEisnerParser(const std::vector<Words>& sents, const std::vec
       }
 
       if (iter == 0) {
-        EisnerParser sample_parse(sents[j], tags[j], gold_deps[j]);
+        EisnerParser sample_parse(sents->at(j), tags->at(j), gold_deps->at(j));
         extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_tag[j]);
         //for (auto ex: examples_list_tag[j])
         //  std::cout << dict.lookupTag(ex[0]) << " " << dict.lookupTag(ex[1]) << std::endl;
@@ -270,18 +270,18 @@ void trainSupervisedEisnerParser(const std::vector<Words>& sents, const std::vec
 
 //for three-way decisions
 template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kTagOrder>
-void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool with_words, bool arceager, bool static_oracle, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
+void trainSupervisedParser(const boost::shared_ptr<Sentences>& sents, const boost::shared_ptr<Sentences>& tags, const boost::shared_ptr<IndicesList>& gold_deps, int num_iterations, bool with_words, bool arceager, bool static_oracle, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
 
   //keep an example list for each sentence
-  std::vector<WordsList> examples_list_sh(sents.size(), WordsList());
-  std::vector<WordsList> examples_list_tag(sents.size(), WordsList());
-  std::vector<WordsList> examples_list_re(sents.size(), WordsList());
+  std::vector<WordsList> examples_list_sh(sents->size(), WordsList());
+  std::vector<WordsList> examples_list_tag(sents->size(), WordsList());
+  std::vector<WordsList> examples_list_re(sents->size(), WordsList());
   
   //repeat for number of samples: for each sentence, get training examples and update model
   for (int iter = 0; iter < num_iterations; ++iter) {
      //std::cout << "Training iter " << iter << std::endl;
 
-    for (unsigned j = 0; j < sents.size(); ++j) {
+    for (unsigned j = 0; j < sents->size(); ++j) {
       //if (tags[j].size() <= 11) {
       //remove old sample from model
       if (iter > 0) {
@@ -292,18 +292,18 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
       }
 
       //get a parse (derivation) given the current parameters
-      ArcList gold_dep(gold_deps[j].size());
-      gold_dep.set_arcs(gold_deps[j]);  //problematic
+      ArcList gold_dep(gold_deps->at(j).size());
+      gold_dep.set_arcs(gold_deps->at(j));  //problematic
 
       if (iter == 0) {
         if (arceager) {
           //std::cout << "gold " << j << std::endl;
-          ArcEagerParser sample_parse = staticEagerGoldParseSentence(sents[j], tags[j], gold_dep);
+          ArcEagerParser sample_parse = staticEagerGoldParseSentence(sents->at(j), tags->at(j), gold_dep);
           extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
           //gold_dep.print_arcs();
           //sample_parse.print_arcs();
         } else { 
-          ArcStandardParser sample_parse = staticGoldParseSentence(sents[j], tags[j], gold_dep);
+          ArcStandardParser sample_parse = staticGoldParseSentence(sents->at(j), tags->at(j), gold_dep);
           //std::cout << sample_parse.actions_str() << "\n";
           //sample_parse.print_arcs();
           extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
@@ -313,10 +313,10 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
         bool resample = false;
         
         if (arceager) {
-          ArcEagerParser sample_parse = particleEagerGoldParseSentence(sents[j], tags[j], gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+          ArcEagerParser sample_parse = particleEagerGoldParseSentence(sents->at(j), tags->at(j), gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
           extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
         } else {  
-          ArcStandardParser sample_parse = particleDynamicGoldParseSentence(sents[j], tags[j], gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+          ArcStandardParser sample_parse = particleDynamicGoldParseSentence(sents->at(j), tags->at(j), gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
           extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
           //technically need a MH acceptance test
         }
@@ -354,20 +354,20 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
 
 //for binary decisions
 template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kArcOrder, unsigned kTagOrder>
-void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool with_words, bool static_oracle, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kArcOrder>* arc_lm, PYPLM<kTagOrder>* tag_lm) {
+void trainSupervisedParser(const boost::shared_ptr<Sentences>& sents, const boost::shared_ptr<Sentences>& tags, const boost::shared_ptr<IndicesList>& gold_deps, int num_iterations, bool with_words, bool static_oracle, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kArcOrder>* arc_lm, PYPLM<kTagOrder>* tag_lm) {
   unsigned num_particles = 100;
   bool resample = false;
 
   //keep an example list for each sentence
-  std::vector<WordsList> examples_list_sh(sents.size(), WordsList());
-  std::vector<WordsList> examples_list_tag(sents.size(), WordsList());
-  std::vector<WordsList> examples_list_re(sents.size(), WordsList());
-  std::vector<WordsList> examples_list_arc(sents.size(), WordsList());
+  std::vector<WordsList> examples_list_sh(sents->size(), WordsList());
+  std::vector<WordsList> examples_list_tag(sents->size(), WordsList());
+  std::vector<WordsList> examples_list_re(sents->size(), WordsList());
+  std::vector<WordsList> examples_list_arc(sents->size(), WordsList());
   
   //repeat for number of samples: for each sentence, get training examples and update model
   for (int iter = 0; iter < num_iterations; ++iter) {
 
-    for (unsigned j = 0; j < sents.size(); ++j) {
+    for (unsigned j = 0; j < sents->size(); ++j) {
       //remove old sample from model
       if (iter > 0) {
         if (with_words)
@@ -378,18 +378,18 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
       }
 
       //get a parse (derivation) given the current parameters
-      ArcList gold_dep(sents[j].size());
-      gold_dep.set_arcs(gold_deps[j]); 
+      ArcList gold_dep(sents->at(j).size());
+      gold_dep.set_arcs(gold_deps->at(j)); 
       ArcStandardParser sample_parse;
      
       if (static_oracle) {
         if (iter == 0) {
-          sample_parse = staticGoldParseSentence(sents[j], tags[j], gold_dep);
+          sample_parse = staticGoldParseSentence(sents->at(j), tags->at(j), gold_dep);
 
           extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_arc[j], &examples_list_tag[j]);
         }
       } else {
-        sample_parse = particleGoldParseSentence(sents[j], tags[j], gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *arc_lm, *tag_lm);
+        sample_parse = particleGoldParseSentence(sents->at(j), tags->at(j), gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *arc_lm, *tag_lm);
 
         extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_arc[j], &examples_list_tag[j]);
         //technically need a MH acceptance test
@@ -429,12 +429,12 @@ void trainSupervisedParser(const std::vector<Words>& sents, const std::vector<Wo
 
 //for three-way decisions
 template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kTagOrder>
-void trainSemisupervisedParser(const std::vector<Words>& sents, const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool with_words, bool arceager, bool static_oracle, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
+void trainSemisupervisedParser(const boost::shared_ptr<Sentences>& sents, const boost::shared_ptr<Sentences>& tags, const boost::shared_ptr<IndicesList>& gold_deps, int num_iterations, bool with_words, bool arceager, bool static_oracle, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
 
   //keep an example list for each sentence
-  std::vector<WordsList> examples_list_sh(sents.size(), WordsList());
-  std::vector<WordsList> examples_list_tag(sents.size(), WordsList());
-  std::vector<WordsList> examples_list_re(sents.size(), WordsList());
+  std::vector<WordsList> examples_list_sh(sents->size(), WordsList());
+  std::vector<WordsList> examples_list_tag(sents->size(), WordsList());
+  std::vector<WordsList> examples_list_re(sents->size(), WordsList());
   
   unsigned split_n = 4000;
   unsigned num_particles = 100;
@@ -456,15 +456,15 @@ void trainSemisupervisedParser(const std::vector<Words>& sents, const std::vecto
       }
 
       //get a parse (derivation) given the current parameters
-      ArcList gold_dep(sents[j].size());
-      gold_dep.set_arcs(gold_deps[j]); 
+      ArcList gold_dep(sents->at(j).size());
+      gold_dep.set_arcs(gold_deps->at(j)); 
 
       if (iter == 0) {
         if (arceager) {
-          ArcEagerParser sample_parse = staticEagerGoldParseSentence(sents[j], tags[j], gold_dep);
+          ArcEagerParser sample_parse = staticEagerGoldParseSentence(sents->at(j), tags->at(j), gold_dep);
           extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
         } else { 
-          ArcStandardParser sample_parse = staticGoldParseSentence(sents[j], tags[j], gold_dep);
+          ArcStandardParser sample_parse = staticGoldParseSentence(sents->at(j), tags->at(j), gold_dep);
           //sample_parse.print_arcs();
           extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
         }
@@ -472,10 +472,10 @@ void trainSemisupervisedParser(const std::vector<Words>& sents, const std::vecto
       } else if (!static_oracle) {
         
         if (arceager) {
-          ArcEagerParser sample_parse = particleEagerGoldParseSentence(sents[j], tags[j], gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+          ArcEagerParser sample_parse = particleEagerGoldParseSentence(sents->at(j), tags->at(j), gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
           extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
         } else {  
-          ArcStandardParser sample_parse = particleDynamicGoldParseSentence(sents[j], tags[j], gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+          ArcStandardParser sample_parse = particleDynamicGoldParseSentence(sents->at(j), tags->at(j), gold_dep, num_particles, resample, with_words, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
           extractParseTrainExamples(sample_parse, &examples_list_sh[j], &examples_list_re[j], &examples_list_tag[j]);
           //technically need a MH acceptance test
         }
@@ -492,24 +492,24 @@ void trainSemisupervisedParser(const std::vector<Words>& sents, const std::vecto
     //Unsupervised part
     num_particles = 1000;
 
-    for (unsigned j = split_n; j < tags.size(); ++j) {
-      if (tags[j].size() <= (max_sent_length+1)) {
+    for (unsigned j = split_n; j < tags->size(); ++j) {
+      if (tags->at(j).size() <= (max_sent_length+1)) {
         
         //remove old sample from model (if there is any)
         updatePYPModel(false, eng, examples_list_tag[j], tag_lm);
         updatePYPModel(false, eng, examples_list_re[j], reduce_lm);
         
         //only for evaluation
-        ArcList gold_dep(tags[j].size());
-        gold_dep.set_arcs(gold_deps[j]); 
+        ArcList gold_dep(tags->at(j).size());
+        gold_dep.set_arcs(gold_deps->at(j)); 
     
         //sample new parse (derivation) 
         //technically need a MH acceptance test
         if (arceager) {
-          ArcEagerParser sample_parse = particleEagerParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+          ArcEagerParser sample_parse = particleEagerParseSentence(Words(tags->at(j).size(), '_'), tags->at(j), gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
           extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_tag[j]);
         } else {
-          ArcStandardParser sample_parse = particleParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+          ArcStandardParser sample_parse = particleParseSentence(Words(tags->at(j).size(), '_'), tags->at(j), gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
           extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_tag[j]);
         }
 
@@ -545,14 +545,14 @@ void trainSemisupervisedParser(const std::vector<Words>& sents, const std::vecto
 
 //for ternary decisions
 template<unsigned kShiftOrder, unsigned kReduceOrder,  unsigned kTagOrder>
-void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool init, bool arceager, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
+void trainUnsupervisedParser(const boost::shared_ptr<Sentences>& tags, const boost::shared_ptr<IndicesList>& gold_deps, int num_iterations, bool init, bool arceager, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kTagOrder>* tag_lm) {
   unsigned num_particles = 1000;
   bool resample = false;
   unsigned max_sent_length = 15;
 
   //keep an example list for each sentence
-  std::vector<WordsList> examples_list_tag(tags.size(), WordsList());
-  std::vector<WordsList> examples_list_re(tags.size(), WordsList());
+  std::vector<WordsList> examples_list_tag(tags->size(), WordsList());
+  std::vector<WordsList> examples_list_re(tags->size(), WordsList());
  
   std::string log_file = "arceager.scores.out";
   std::ofstream outl;
@@ -561,10 +561,10 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
   if (init) {
     //initialize tag_lm with a sequential trigram model
     std::vector<WordId> ctx(kTagOrder - 1, 0);
-    for (unsigned j = 0; j < tags.size(); ++j) {
+    for (unsigned j = 0; j < tags->size(); ++j) {
       ctx.resize(kTagOrder - 1);
-      for (unsigned i = 0; i < tags[j].size(); ++i) {
-        WordId tag = tags[j][i];
+      for (unsigned i = 0; i < tags->at(j).size(); ++i) {
+        WordId tag = tags->at(j)[i];
         Words tag_tuple(1, tag);
         tag_tuple.insert(tag_tuple.end(), ctx.begin() + (ctx.size() - (kTagOrder - 1)), ctx.end());
         examples_list_tag[j].push_back(tag_tuple);
@@ -580,8 +580,8 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
   for (int iter = 0; iter < num_iterations; ++iter) {
 
     //for (unsigned j = 0; j < tags.size(); ++j) {
-    for (unsigned j = 4000; j < tags.size(); ++j) {
-      if (tags[j].size() <= (max_sent_length+1)) {
+    for (unsigned j = 4000; j < tags->size(); ++j) {
+      if (tags->at(j).size() <= (max_sent_length+1)) {
       //if (tags[j].size() <= std::min(iter/2 + 3, 11)) {
 
       //if (((iter < 20) && (tags[j].size() <= 11)) || 
@@ -597,25 +597,25 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
         //}
 
         //only for evaluation
-        ArcList gold_dep(tags[j].size());
-        gold_dep.set_arcs(gold_deps[j]); 
+        ArcList gold_dep(tags->at(j).size());
+        gold_dep.set_arcs(gold_deps->at(j)); 
     
         //sample new parse (derivation) 
         if (arceager) {
           ArcEagerParser sample_parse;
           if ((iter==0) && init)
-            sample_parse = particleInitEagerParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *tag_lm);
+            sample_parse = particleInitEagerParseSentence(Words(tags->at(j).size(), '_'), tags->at(j), gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *tag_lm);
           else
-            sample_parse = particleEagerParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+            sample_parse = particleEagerParseSentence(Words(tags->at(j).size(), '_'), tags->at(j), gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
           //technically need a MH acceptance test
          
           extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_tag[j]);
         } else {
           ArcStandardParser sample_parse;
           if ((iter==0) && init)
-            sample_parse = particleInitParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *tag_lm);
+            sample_parse = particleInitParseSentence(Words(tags->at(j).size(), '_'), tags->at(j), gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *tag_lm);
           else
-            sample_parse = particleParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
+            sample_parse = particleParseSentence(Words(tags->at(j).size(), '_'), tags->at(j), gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *tag_lm);
           //technically need a MH acceptance test
          
           extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_tag[j]);
@@ -663,22 +663,22 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
 
 //for binary decisions
 template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kArcOrder, unsigned kTagOrder>
-void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<WxList>& gold_deps, int num_iterations, bool init, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kArcOrder>* arc_lm, PYPLM<kTagOrder>* tag_lm) {
+void trainUnsupervisedParser(const boost::shared_ptr<Sentences>& tags, const boost::shared_ptr<IndicesList>& gold_deps, int num_iterations, bool init, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>* shift_lm, PYPLM<kReduceOrder>* reduce_lm, PYPLM<kArcOrder>* arc_lm, PYPLM<kTagOrder>* tag_lm) {
   unsigned num_particles = 1000;
   bool resample = false;
 
   //keep an example list for each sentence
-  std::vector<WordsList> examples_list_tag(tags.size(), WordsList());
-  std::vector<WordsList> examples_list_re(tags.size(), WordsList());
-  std::vector<WordsList> examples_list_arc(tags.size(), WordsList());
+  std::vector<WordsList> examples_list_tag(tags->size(), WordsList());
+  std::vector<WordsList> examples_list_re(tags->size(), WordsList());
+  std::vector<WordsList> examples_list_arc(tags->size(), WordsList());
  
   if (init) {
     //initialize tag_lm with a sequential trigram model
     std::vector<WordId> ctx(kTagOrder - 1, 0);
-    for (unsigned j = 0; j < tags.size(); ++j) {
+    for (unsigned j = 0; j < tags->size(); ++j) {
       ctx.resize(kTagOrder - 1);
-      for (unsigned i = 0; i < tags[j].size(); ++i) {
-        WordId tag = tags[j][i];
+      for (unsigned i = 0; i < tags->at(j).size(); ++i) {
+        WordId tag = tags->at(j)[i];
         Words tag_tuple(1, tag);
         tag_tuple.insert(tag_tuple.end(), ctx.begin() + (ctx.size() - (kTagOrder - 1)), ctx.end());
         examples_list_tag[j].push_back(tag_tuple);
@@ -691,9 +691,9 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
   //repeat for number of samples: for each sentence, get training examples and update model
   for (int iter = 0; iter < num_iterations; ++iter) {
 
-    for (unsigned j = 0; j < tags.size(); ++j) {
-      if (((iter < 20) && (tags[j].size() <= 11)) || 
-          ((iter >= 20) && (iter < 40) && (tags[j].size()) <= 21)) {
+    for (unsigned j = 0; j < tags->size(); ++j) {
+      if (((iter < 20) && (tags->at(j).size() <= 11)) || 
+          ((iter >= 20) && (iter < 40) && (tags->at(j).size()) <= 21)) {
 
         //remove old sample from model
         if (iter > 0) {
@@ -705,11 +705,11 @@ void trainUnsupervisedParser(const std::vector<Words>& tags, const std::vector<W
         }
 
         //only for evaluation
-        ArcList gold_dep(tags[j].size());
-        gold_dep.set_arcs(gold_deps[j]); 
+        ArcList gold_dep(tags->at(j).size());
+        gold_dep.set_arcs(gold_deps->at(j)); 
     
         //sample new parse (derivation) 
-        ArcStandardParser sample_parse = particleParseSentence(Words(tags[j].size(), '_'), tags[j], gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *arc_lm, *tag_lm);
+        ArcStandardParser sample_parse = particleParseSentence(Words(tags->at(j).size(), '_'), tags->at(j), gold_dep, num_particles, resample, false, false, dict, eng, *shift_lm, *reduce_lm, *arc_lm, *tag_lm);
         //technically need a MH acceptance test
       
         extractParseTrainExamples(sample_parse, nullptr, &examples_list_re[j], &examples_list_arc[j], &examples_list_tag[j]);

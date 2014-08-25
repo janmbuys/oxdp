@@ -9,7 +9,9 @@ Metadata::Metadata(const boost::shared_ptr<ModelData>& config, Dict& dict) : con
 void Metadata::initialize(const boost::shared_ptr<Corpus>& corpus) {
   unigram = VectorReal::Zero(config->vocab_size);
   for (size_t i = 0; i < corpus->size(); ++i) {
-    unigram(corpus->at(i)) += 1;
+    //don't include start of sentence in unigram distribution
+    for (size_t k = 1; k < corpus->at(i).size(); ++k)
+      unigram(corpus->at(i)[k]) += 1;
   }
   unigram /= unigram.sum();
 }

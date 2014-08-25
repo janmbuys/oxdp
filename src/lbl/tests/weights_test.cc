@@ -22,7 +22,7 @@ class TestWeights : public testing::Test {
     config->ngram_order = 3;
     config->sigmoid = true;
 
-    vector<int> data = {2, 3, 4, 1};
+    vector<vector<int>> data = {{0, 2, 3, 4, 1}};
     corpus = boost::make_shared<Corpus>(data);
     Dict dict;
     metadata = boost::make_shared<Metadata>(config, dict);
@@ -34,8 +34,8 @@ class TestWeights : public testing::Test {
     boost::shared_ptr<ContextProcessor> processor =
         boost::make_shared<ContextProcessor>(corpus, config->ngram_order - 1);
     for (int index: indices) {
-      vector<int> context = processor->extract(index);
-      ret -= weights.predict(corpus->at(index), context);
+      vector<int> context = processor->extract(0, index);
+      ret -= weights.predict(corpus->at(0).at(index), context);
     }
     return ret;
   }
@@ -47,7 +47,7 @@ class TestWeights : public testing::Test {
 
 TEST_F(TestWeights, TestGradientCheck) {
   Weights weights(config, metadata, corpus);
-  vector<int> indices = {0, 1, 2, 3};
+  vector<int> indices = {0};
   Real objective;
   boost::shared_ptr<Weights> gradient =
       weights.getGradient(corpus, indices, objective);
@@ -66,7 +66,7 @@ TEST_F(TestWeights, TestGradientCheckDiagonal) {
   config->diagonal_contexts = true;
 
   Weights weights(config, metadata, corpus);
-  vector<int> indices = {0, 1, 2, 3};
+  vector<int> indices = {0};
   Real objective;
   boost::shared_ptr<Weights> gradient =
       weights.getGradient(corpus, indices, objective);
@@ -78,7 +78,7 @@ TEST_F(TestWeights, TestGradientCheckDiagonal) {
 
 TEST_F(TestWeights, TestPredict) {
   Weights weights(config, metadata, corpus);
-  vector<int> indices = {0, 1, 2, 3};
+  vector<int> indices = {0};
   Real objective = weights.getObjective(corpus, indices);
 
   EXPECT_NEAR(objective, getPredictions(weights, indices), EPS);

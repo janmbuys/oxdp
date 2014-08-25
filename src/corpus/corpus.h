@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <functional>
 
+#include <boost/shared_ptr.hpp>
+
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
@@ -21,6 +23,9 @@ typedef std::string Word;
 typedef int WordId;
 typedef int WordIndex;
 typedef std::vector<WordId> Words;
+typedef std::vector<Words> Sentences;
+typedef std::vector<WordIndex> WxList;
+typedef std::vector<WxList> IndicesList;
 
 class Dict {
 // typedef std::unordered_map<std::string, WordId, std::hash<std::string> > Map;
@@ -45,10 +50,9 @@ public:
     bad0_id_(-1)
   {
     words_.reserve(1000);
-    if (sos!="") {
-      convert(sos_, false);
-      convert_tag(sos_, false);
-    }
+    //sos required
+    convert(sos_, false);
+    convert_tag(sos_, false);
     if (eos!="") {
       convert(eos_, false);
       convert_tag(eos_, false);
@@ -128,23 +132,29 @@ public:
       sent_out->push_back(convert(line.substr(last, cur - last), frozen));
   }
 
-  void read_from_file(const std::string& filename, std::vector<std::vector<WordId> >* src, std::set<WordId>* src_vocab, bool frozen) {
-    src->clear();
+  void read_from_file(const std::string& filename, boost::shared_ptr<std::vector<std::vector<WordId> > >& sents, bool frozen) {
+    sents->clear();
     std::cerr << "Reading from " << filename << std::endl;
     std::ifstream in(filename);
     assert(in);
     std::string line;
     int lc = 0;
     while(getline(in, line)) {
+      //sentence level
       ++lc;
-      src->push_back(std::vector<WordId>());
-      convert_whitespace_delimited_line(line, &src->back(), frozen);
-      for (WordId i = 0; i < static_cast<WordId>(src->back().size()); ++i) 
-        src_vocab->insert(src->back()[i]);
+      sents->push_back(std::vector<WordId>());
+      //add start of sentence symbol
+      sents->back().push_back(0); 
+
+      convert_whitespace_delimited_line(line, &sents->back(), frozen);
+
+      //add end of sentence symbol if defined 
+      if (eos_!="") 
+        sents->back().push_back(1); 
     }
   }
 
-  void read_from_conll_file(const std::string& filename, std::vector<std::vector<WordId> >* sents, std::vector<std::vector<WordId> >* tags, std::vector<std::vector<WordIndex> >* deps, bool frozen) {
+  void read_from_conll_file(const std::string& filename, boost::shared_ptr<std::vector<std::vector<WordId> > >& sents, boost::shared_ptr<std::vector<std::vector<WordId> > >& tags, boost::shared_ptr<std::vector<std::vector<WordIndex> > >& deps, bool frozen) {
     sents->clear();
     tags->clear();
     deps->clear();
@@ -156,11 +166,12 @@ public:
     int state = 1; //have to add new vector
 
     while(getline(in, line)) {
+      //token level
       ++lc;
 
       if (line=="") { 
         state = 1;
-        //add end of sentence symbol (==1)
+        //add end of sentence symbol if defined (==1)
         if (eos_!="") {
           sents->back().push_back(1); 
           tags->back().push_back(1);
@@ -276,7 +287,6 @@ public:
     ar & bad0_id_;
     ar & words_;
     ar & d_;
-    ar & single_d_;
     ar & tags_;
     ar & tag_d_;
   }
@@ -288,7 +298,6 @@ private:
   WordId bad0_id_;
   std::vector<Word> words_;
   std::map<std::string, WordId> d_;
-  std::map<std::string, WordId> single_d_;
   std::vector<Word> tags_;
   std::map<std::string, WordId> tag_d_;
 };

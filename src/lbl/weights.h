@@ -82,7 +82,8 @@ class Weights {
   Real getObjective(
       const boost::shared_ptr<Corpus>& corpus,
       const vector<int>& indices,
-      vector<vector<int>>& contexts,
+      vector<WordId>& words,
+      vector<vector<WordId>>& contexts,
       vector<MatrixReal>& context_vectors,
       MatrixReal& prediction_vectors,
       MatrixReal& word_probs) const;
@@ -90,11 +91,12 @@ class Weights {
   void getContextVectors(
       const boost::shared_ptr<Corpus>& corpus,
       const vector<int>& indices,
-      vector<vector<int>>& contexts,
+      vector<WordId>& words,
+      vector<vector<WordId>>& contexts,
       vector<MatrixReal>& context_vectors) const;
 
   MatrixReal getPredictionVectors(
-      const vector<int>& indices,
+      const size_t prediction_size,
       const vector<MatrixReal>& context_vectors) const;
 
   MatrixReal getContextProduct(
@@ -102,38 +104,36 @@ class Weights {
       bool transpose = false) const;
 
   MatrixReal getProbabilities(
-      const vector<int>& indices,
+      const size_t prediction_size,
       const MatrixReal& prediction_vectors) const;
 
   MatrixReal getWeightedRepresentations(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const vector<WordId>& words,
       const MatrixReal& prediction_vectors,
       const MatrixReal& word_probs) const;
 
   boost::shared_ptr<Weights> getFullGradient(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
-      const vector<vector<int>>& contexts,
+      const vector<WordId>& words,
+      const vector<vector<WordId>>& contexts,
       const vector<MatrixReal>& context_vectors,
       const MatrixReal& prediction_vectors,
       const MatrixReal& weighted_representations,
       MatrixReal& word_probs) const;
 
   void getContextGradient(
-      const vector<int>& indices,
-      const vector<vector<int>>& contexts,
+      const size_t prediction_size,
+      const vector<vector<WordId>>& contexts,
       const vector<MatrixReal>& context_vectors,
       const MatrixReal& weighted_representations,
       const boost::shared_ptr<Weights>& gradient) const;
 
   virtual vector<vector<int>> getNoiseWords(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices) const;
+      const vector<WordId>& words,
+      const boost::shared_ptr<Corpus>& corpus) const;
 
   void estimateProjectionGradient(
+      const vector<WordId>& words,
       const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
       const MatrixReal& prediction_vectors,
       const boost::shared_ptr<Weights>& gradient,
       MatrixReal& weighted_representations,

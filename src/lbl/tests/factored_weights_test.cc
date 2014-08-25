@@ -21,7 +21,7 @@ class FactoredWeightsTest : public testing::Test {
     config->ngram_order = 3;
     config->sigmoid = true;
 
-    vector<int> data = {2, 3, 4, 1};
+    vector<vector<int>> data = {{0, 2, 3, 4, 1}};
     vector<int> classes = {0, 2, 4, 5};
     corpus = boost::make_shared<Corpus>(data);
     index = boost::make_shared<WordToClassIndex>(classes);
@@ -34,8 +34,10 @@ class FactoredWeightsTest : public testing::Test {
     boost::shared_ptr<ContextProcessor> processor =
         boost::make_shared<ContextProcessor>(corpus, config->ngram_order - 1);
     for (int index: indices) {
-      vector<int> context = processor->extract(index);
-      ret -= weights.predict(corpus->at(index), context);
+      for (int k = 1; k < corpus->at(index).size(); ++k) {
+        vector<int> context = processor->extract(index, k);
+        ret -= weights.predict(corpus->at(index).at(k), context);
+      }
     }
     return ret;
   }
@@ -49,7 +51,7 @@ class FactoredWeightsTest : public testing::Test {
 
 TEST_F(FactoredWeightsTest, TestCheckGradient) {
   FactoredWeights weights(config, metadata, corpus);
-  vector<int> indices = {0, 1, 2, 3};
+  vector<int> indices = {0};
   Real objective;
   boost::shared_ptr<FactoredWeights> gradient =
       weights.getGradient(corpus, indices, objective);
@@ -62,7 +64,7 @@ TEST_F(FactoredWeightsTest, TestCheckGradient) {
 TEST_F(FactoredWeightsTest, TestCheckGradientDiagonal) {
   config->diagonal_contexts = true;
   FactoredWeights weights(config, metadata, corpus);
-  vector<int> indices = {0, 1, 2, 3};
+  vector<int> indices = {0};
   Real objective;
   boost::shared_ptr<FactoredWeights> gradient =
       weights.getGradient(corpus, indices, objective);
@@ -74,7 +76,7 @@ TEST_F(FactoredWeightsTest, TestCheckGradientDiagonal) {
 
 TEST_F(FactoredWeightsTest, TestPredict) {
   FactoredWeights weights(config, metadata, corpus);
-  vector<int> indices = {0, 1, 2, 3};
+  vector<int> indices = {0};
 
   Real objective = weights.getObjective(corpus, indices);
 

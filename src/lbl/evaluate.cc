@@ -15,7 +15,8 @@ void evaluate(const string& model_file, const string& test_file, int num_threads
   Model model;
   model.load(model_file);
   Dict dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = readCorpus(test_file, dict, true, true);
+  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  dict.read_from_file(test_file, test_corpus, true);
 
   Real accumulator = 0;
   #pragma omp parallel num_threads(num_threads)

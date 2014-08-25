@@ -2,6 +2,7 @@
 #define _GDP_HPYP_DP_PARSE_H_
 
 #include <cstdlib>
+#include <memory>
 
 #include "transition_parser.h"
 #include "eisner_parser.h"

@@ -23,7 +23,7 @@ class FeatureExactFilterTest : public testing::Test {
 
     // Mini-corpus for producing a few feature contexts, unrelated to the feature
     // indexes defined above.
-    vector<int> data = {2, 3, 4};
+    vector<vector<int>> data = {{0, 2, 3, 4}};
     vector<int> classes = {0, 2, 5};
     boost::shared_ptr<Corpus> corpus = boost::make_shared<Corpus>(data);
     boost::shared_ptr<WordToClassIndex> index =

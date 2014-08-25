@@ -22,7 +22,7 @@ transition_parser: transition_parser.o transition_parser.h
 ## stuff below here is optional
 
 clean:
-	rm -f *.o ../corpus/*.o 
+	rm -f *.o 
 
 clobber: clean
 	rm hpyp_dp 

@@ -52,16 +52,23 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   // Initialize the dictionary now, if it hasn't been initialized when the
   // vocabulary was partitioned in classes.
   bool immutable_dict = config->classes > 0 || config->class_file.size();
-  boost::shared_ptr<Corpus> training_corpus =
-      readCorpus(config->training_file, dict, immutable_dict);
+  boost::shared_ptr<Corpus> training_corpus = boost::make_shared<Corpus>();
+      // = readCorpus(config->training_file, dict, immutable_dict);
+  //TODO also handle conll format files
+  dict.read_from_file(config->training_file, training_corpus, immutable_dict);
+
   config->vocab_size = dict.size();
   cout << "Done reading training corpus..." << endl;
 
-  boost::shared_ptr<Corpus> test_corpus;
+  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
   if (config->test_file.size()) {
-    test_corpus = readCorpus(config->test_file, dict);
+    dict.read_from_file(config->test_file, test_corpus, immutable_dict);
+    //test_corpus = readCorpus(config->test_file, dict);
     cout << "Done reading test corpus..." << endl;
   }
+  size_t test_size = 0;
+  for (unsigned i = 0; i < test_corpus->size(); ++i)
+    test_size += test_corpus->at(i).size() - 1;
 
   if (config->model_input_file.size() == 0) {
     metadata->initialize(training_corpus);
@@ -71,7 +78,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
     Real log_likelihood = 0;
     evaluate(test_corpus, log_likelihood);
     cout << "Initial perplexity: "
-         << perplexity(log_likelihood, test_corpus->size()) << endl;
+         << perplexity(log_likelihood, test_size) << endl;
   }
 
   vector<int> indices(training_corpus->size());
@@ -232,9 +239,13 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);
 
+    size_t test_size = 0;
+    for (unsigned i = 0; i < test_corpus->size(); ++i)
+      test_size += test_corpus->at(i).size() - 1;
+
     #pragma omp master
     {
-      Real test_perplexity = perplexity(log_likelihood, test_corpus->size());
+      Real test_perplexity = perplexity(log_likelihood, test_size);
       Real iteration_time = GetDuration(iteration_start, GetTime());
       cout << "\tMinibatch " << minibatch_counter << ", "
            << "Time: " << GetDuration(iteration_start, GetTime()) << " seconds, "

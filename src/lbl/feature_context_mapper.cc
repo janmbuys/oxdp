@@ -15,22 +15,24 @@ FeatureContextMapper::FeatureContextMapper(
     : index(index), generator(generator),
       wordContextIdsMap(index->getNumClasses()) {
   for (size_t i = 0; i < corpus->size(); ++i) {
-    int word_id = corpus->at(i);
-    int class_id = index->getClass(word_id);
-    vector<int> context = processor->extract(i);
+    for (size_t k = 1; k < corpus->at(i).size(); ++k) {
+      int word_id = corpus->at(i)[k];
+      int class_id = index->getClass(word_id);
+      vector<int> context = processor->extract(i, k);
 
-    vector<FeatureContext> feature_contexts =
-        generator->getFeatureContexts(context);
+      vector<FeatureContext> feature_contexts =
+          generator->getFeatureContexts(context);
 
-    // Map feature context to id if at least one n-gram having that context is
-    // within the topmost max_ngrams ngrams.
-    feature_contexts = filter->filter(word_id, class_id, feature_contexts);
-    for (const FeatureContext& feature_context: feature_contexts) {
-      size_t context_hash = hashFunction(feature_context);
-      classContextIdsMap.insert(make_pair(
-          context_hash, classContextIdsMap.size()));
-      wordContextIdsMap[class_id].insert(make_pair(
-          context_hash, wordContextIdsMap[class_id].size()));
+      // Map feature context to id if at least one n-gram having that context is
+      // within the topmost max_ngrams ngrams.
+      feature_contexts = filter->filter(word_id, class_id, feature_contexts);
+      for (const FeatureContext& feature_context: feature_contexts) {
+        size_t context_hash = hashFunction(feature_context);
+        classContextIdsMap.insert(make_pair(
+            context_hash, classContextIdsMap.size()));
+        wordContextIdsMap[class_id].insert(make_pair(
+            context_hash, wordContextIdsMap[class_id].size()));
+      }
     }
   }
 }
