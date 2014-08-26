@@ -18,8 +18,8 @@ namespace oxlm {
 typedef float Real;
 
 typedef int            WordId;
-typedef vector<WordId> Sentence;
-typedef vector<Sentence> Corpus;
+typedef vector<WordId> Sentence; //TODO change: Words
+typedef vector<Sentence> Corpus; //TODO change: WordsList
 
 typedef vector<vector<int>>                        GlobalFeatureIndexes;
 typedef boost::shared_ptr<GlobalFeatureIndexes>    GlobalFeatureIndexesPtr;

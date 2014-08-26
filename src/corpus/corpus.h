@@ -1,5 +1,5 @@
-#ifndef _PYPDICT_H_
-#define _PYPDICT_H_
+#ifndef _CORPUSDICT_H_
+#define _CORPUSDICT_H_
 
 #include <string>
 #include <iostream>
@@ -23,8 +23,8 @@ typedef std::string Word;
 typedef int WordId;
 typedef int WordIndex;
 typedef std::vector<WordId> Words;
-typedef std::vector<Words> Sentences;
-typedef std::vector<WordIndex> WxList;
+typedef std::vector<WordIndex> Indices; // WxList;
+typedef std::vector<Words> WordsList; //Sentences
 typedef std::vector<WxList> IndicesList;
 
 class Dict {
@@ -302,6 +302,8 @@ private:
   std::map<std::string, WordId> tag_d_;
 };
 
+//TODO figure out if I really need this
+/*
 template <typename Container>
 struct container_hash {
   std::size_t operator()(Container const& c) const {
@@ -320,7 +322,7 @@ template<typename S, typename T> struct hash<pair<S, T>> {
     return seed;
   }
 };
-}
+} */
 
+#endif // CORPUSDICT_H_
 
-#endif // PYPDICT_H_
