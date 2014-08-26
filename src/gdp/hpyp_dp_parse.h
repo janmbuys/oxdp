@@ -2651,7 +2651,7 @@ ArcEagerParser generateEagerSentence(Dict& dict, MT19937& eng, unsigned sent_lim
   ArcEagerParser parser;
   bool terminate_shift = false;
   //bool need_shift = false;
-  parser.buffer_tag(0);
+  parser.push_tag(0);
   parser.shift(0);
     
   do {
@@ -2709,7 +2709,7 @@ ArcEagerParser generateEagerSentence(Dict& dict, MT19937& eng, unsigned sent_lim
       WordId tag = t_mult(eng) + 1;
 
       double tagp = tag_lm.prob(tag, t_ctx); 
-      parser.buffer_tag(tag);
+      parser.push_tag(tag);
       parser.add_particle_weight(tagp);
 
       //sample a word 
@@ -2749,7 +2749,7 @@ template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kTagOrder>
 ArcStandardParser generateSentence(Dict& dict, MT19937& eng, unsigned sent_limit, PYPLM<kShiftOrder>& shift_lm, PYPLM<kReduceOrder>& reduce_lm, PYPLM<kTagOrder>& tag_lm) {
   ArcStandardParser parser;
   bool terminate_shift = false;
-  parser.buffer_tag(0);
+  parser.push_tag(0);
   parser.shift(0);
     
   do {
@@ -2802,7 +2802,7 @@ ArcStandardParser generateSentence(Dict& dict, MT19937& eng, unsigned sent_limit
       WordId tag = t_mult(eng) + 1;
 
       double tagp = tag_lm.prob(tag, t_ctx); 
-      parser.buffer_tag(tag);
+      parser.push_tag(tag);
       parser.add_particle_weight(tagp);
 
       //sample a word 
@@ -2833,7 +2833,7 @@ template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kArcOrder, unsign
 ArcStandardParser generateSentence(Dict& dict, MT19937& eng, PYPLM<kShiftOrder>& shift_lm, PYPLM<kReduceOrder>& reduce_lm, PYPLM<kArcOrder>& arc_lm, PYPLM<kTagOrder>& tag_lm) {
   ArcStandardParser parser;
   bool terminate_shift = false;
-  parser.buffer_tag(0);
+  parser.push_tag(0);
   parser.shift(0);
     
   do {
@@ -2877,7 +2877,7 @@ ArcStandardParser generateSentence(Dict& dict, MT19937& eng, PYPLM<kShiftOrder>&
       WordId tag = t_mult(eng) + 1;
 
       double tagp = tag_lm.prob(tag, t_ctx); 
-      parser.buffer_tag(tag);
+      parser.push_tag(tag);
       parser.add_particle_weight(tagp);
 
       Words w_ctx = parser.shift_context();
