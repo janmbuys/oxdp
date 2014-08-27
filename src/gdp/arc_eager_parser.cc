@@ -11,10 +11,11 @@ bool ArcEagerParser::shift() {
 }
 
 bool ArcEagerParser::shift(WordId w) {
-  WordIndex i = sentence_length();
+  //assume the tag has been generated already
+  WordIndex i = size() - 1;
   push_word(w);
   push_arc();
-  if (!is_buffer_empty()) 
+  if (!buffer_empty()) 
     pop_buffer();
   push_stack(i);
   append_action(kAction::sh);
@@ -60,12 +61,13 @@ bool ArcEagerParser::rightArc() {
 bool ArcEagerParser::rightArc(WordId w) {
   //add right arc and shift
   WordIndex i = stack_top();
-  WordIndex j = sentence_length();
+  //assume the tag has been generated already
+  WordIndex j = size() - 1;
   push_word(w);
   push_arc();
   
   set_arc(j, i);
-  if (!is_buffer_empty()) 
+  if (!buffer_empty()) 
     pop_buffer();
   push_stack(j);
   append_action(kAction::ra);
@@ -78,12 +80,12 @@ kAction ArcEagerParser::oracleNext(const ArcList& gold_arcs) const {
 
   //maybe change so that we can assume stack_depth > 0 
   //force generation of stop asap in training examples
-  if (is_stack_empty()) //|| (buffer_next() < static_cast<int>(sentence_length())) && (tag_at(buffer_next())==1)))
+  if (stack_empty()) //|| (buffer_next() < static_cast<int>(sentence_length())) && (tag_at(buffer_next())==1)))
     return a;
 
   WordIndex i = stack_top();
   //if la or ra is valid
-  if (!is_buffer_empty()) {    
+  if (!buffer_empty()) {    
     WordIndex j = buffer_next();
     if (gold_arcs.has_arc(i, j)) {
       //add left arc eagerly

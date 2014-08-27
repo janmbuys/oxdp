@@ -11,11 +11,11 @@ class Parse: public ParsedSentence {
   public:
   Parse();
   
-  ParsedSentence(Words tags);
+  Parse(Words tags);
 
-  ParsedSentence(Words sent, Words tags);
+  Parse(Words sent, Words tags);
   
-  ParsedSentence(Words sent, Words tags, Indices arcs);
+  Parse(Words sent, Words tags, Indices arcs);
 
   void push_arc() {
     arcs_.push_back(-1);
@@ -67,9 +67,11 @@ class Parse: public ParsedSentence {
     weight_ += w;
   }
 
+  //TODO update where child() -> child_at() is called
+
   //child i < head j
   //find child right of i
-  WordIndex prev_left_child(WordIndex i, WordIndex j) const {
+  WordIndex prev_left_child_at(WordIndex i, WordIndex j) const {
     for (unsigned k = 0; k < (left_children_.at(j).size() - 1); ++k) {
       if (left_children_[j][k] == i) {
         return left_children_[j][k+1];
@@ -81,7 +83,7 @@ class Parse: public ParsedSentence {
 
   //child i > head j
   //find child left of i
-  WordIndex prev_right_child(WordIndex i, WordIndex j) const {
+  WordIndex prev_right_child_at(WordIndex i, WordIndex j) const {
    for (unsigned k = (right_children_[j].size() - 1); k > 0; --k) {
       if (right_children_[j][k] == i) {
         return right_children_[j][k-1];
@@ -91,37 +93,37 @@ class Parse: public ParsedSentence {
     return 0;
   }
   
-  WordIndex leftmost_child(WordIndex j) const {
+  WordIndex leftmost_child_at(WordIndex j) const {
     if ((j >= size()) || (left_children_.at(j).empty())) 
       return -1;
     else
       return left_children_.at(j).front();
   }
 
-  WordIndex rightmost_child(WordIndex j) const {
+  WordIndex rightmost_child_at(WordIndex j) const {
     if ((j >= size()) || (right_children_.at(j).empty())) 
       return -1;
     return right_children_.at(j).back();
   }
 
-  WordIndex leftmost_next_child(WordIndex j) const {
+  WordIndex second_leftmost_child_at(WordIndex j) const {
     if ((j >= size()) || (left_children_.at(j).size() < 2)) 
       return -1;
     else
       return left_children_.at.at(j).at(1);
   }
 
-  WordIndex rightmost_next_child(WordIndex j) const {
+  WordIndex second_rightmost_child_at(WordIndex j) const {
     if ((j >= size()) || (right_children_.at(j).size() < 2)) 
       return -1;
     return right_children_.at(j).rbegin()[1];
   }
   
-  bool has_parent(WordIndex i) const {
+  bool has_parent_at(WordIndex i) const {
     return (arc_at(i) >= 0);
   }
   
-  bool have_children(WordIndex j) const {
+  bool have_children_at(WordIndex j) const {
     return (child_count_at(j) > 0);
   }
 
@@ -131,7 +133,7 @@ class Parse: public ParsedSentence {
 
   bool complete_parse() const {
     for (WordIndex i = 1; i < arcs_.size() - 1; ++i) 
-      if (!has_parent(i))
+      if (!has_parent(i) && (tag_at(i) != 1))
         return false;
     
     return true;

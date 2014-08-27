@@ -40,6 +40,8 @@ class ArcEagerParser : public TransitionParser {
   
   bool reduce();
 
+  kAction oracleNext(const ArcList& gold_arcs) const;
+
   bool left_arc_valid() const {
     //stack_size 1 -> stack top is root
     if (stack_depth() < 2)
@@ -59,7 +61,9 @@ class ArcEagerParser : public TransitionParser {
 
   bool is_terminal_configuration() const {
     //last word generated is STOP
-    return (!is_stack_empty() && (tag_at(stack_top()) == 1)); // && !buffer_next_has_child());
+    return (!stack_empty() && (tag_at(stack_top()) == 1)); 
+    
+    // && !buffer_next_has_child());
     //return (!is_stack_empty() && (stack_top() == static_cast<int>(sentence_length() - 1))); // && !buffer_next_has_child());
 
     //return ((tag_at(stack_top()) == 1)); // && !buffer_next_has_child());
@@ -93,16 +97,12 @@ class ArcEagerParser : public TransitionParser {
   }
 
   Words reduce_context() const {
+    return tag_next_children_word_distance_context(); //lexicalized, smaller context (order 8)
     //return tag_next_children_distance_some_context(); //smaller context
     //return tag_next_children_distance_context(); //full
     //return tag_next_children_word_context(); //lexicalized, full context (?)
-    return tag_next_children_word_distance_context(); //lexicalized, smaller context (order 8)
   }
 
-  Words arc_context() const {
-    return tag_less_context();
-  }
-  
   Words tag_context(kAction a) const {
     Words ctx = tag_next_children_some_context(); //smaller context (order 6)
     //Words ctx = tag_next_children_context(); //full context
@@ -124,7 +124,6 @@ class ArcEagerParser : public TransitionParser {
     return ((buffer_next_ >= 3) && !buffer_next_has_child());
   } */
 
-  kAction oracleNext(const ArcList& gold_arcs) const;
 };
 
 }

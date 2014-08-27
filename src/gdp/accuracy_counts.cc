@@ -1,55 +1,59 @@
 #include "accuracy_counts.h"
+
 #include "arc_standard_parser.h"
 #include "arc_eager_parser.h"
 #include "eisner_parser.h"
 
 //TODO update
 
-void AccuracyCounts::countAccuracy(const EisnerParser& prop_parse, const EisnerParser& gold_parse) {
-  ArcList gold_arcs = gold_parse.arcs();      
-
+//mother method
+void AccuracyCounts::countAccuracy(const Parse& prop_parse, const Parse& gold_parse) {
+  //sentence level
   inc_num_sentences();
-  if (gold_arcs==prop_parse.arcs())
+  if (ParsedSentence::equal_arcs(prop_parse, gold_parse))
     inc_complete_sentences();
-  for (WordIndex i = 1; i < gold_arcs.size(); ++i)
-    if (prop_parse.arcs().has_arc(i, 0) && gold_arcs.has_arc(i, 0)) 
-      inc_root_count();
-
+  add_total_length(gold_parse.size() - 1);
+  
   add_likelihood(prop_parse.weight());
   add_gold_likelihood(gold_parse.weight());
   if (gold_parse.weight() < prop_parse.weight())
     inc_gold_more_likely_count();
 
-  add_total_length(gold_arcs.size() - 1);
-  add_directed_count(prop_parse.directed_accuracy_count(gold_arcs));
-  add_undirected_count(prop_parse.undirected_accuracy_count(gold_arcs));
+  //arc level
+  for (WordIndex j = 1; j < gold_parse.size(); ++j) {
+    if (prop_parse.arc_at(j)==gold_parse_arc_at(j)) {
+      inc_directed_count();
+      inc_undirected_count(); 
+    } else if (prop_parse.has_parent_at(j) && 
+              (gold_parse.arc_at(prop_parse.arc_at(j))==j)) {
+      inc_undirected_count(); 
+    }
+      
+    if (prop_parse.has_arc(j, 0) && gold_parse.has_arc(j, 0)) 
+      inc_root_count();
+  }
 }
 
-//TODO update
-  unsigned directed_accuracy_count(ArcList g_arcs) const {
-    unsigned count = 0;
-    for (WordIndex j = 1; j < arcs_.size(); ++j) {
-      if (arcs_.at(j)==g_arcs.at(j))
-        ++count;
-    }
-    return count;
-  }
+void AccuracyCounts::countAccuracy(const EisnerParser& prop_parse, 
+                                   const EisnerParser& gold_parse) {
+  //just call parent method
+  countAccuracy(prop_parse, gold_parse); 
+}
 
-  unsigned undirected_accuracy_count(ArcList g_arcs) const {
-    unsigned count = 0;
-    for (WordIndex j = 1; j < arcs_.size(); ++j) {
-      if ((arcs_.at(j)==g_arcs.at(j)) || (arcs_.has_parent(j) && g_arcs.at(arcs_.at(j))==static_cast<int>(j)))
-        ++count;
-    }
-    return count;
-  }
+//TODO find the right signature for this
+void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, 
+                                   const ArcStandardParser& gold_parse) {
+  //parent method
+  countAccuracy(prop_parse, gold_parse); 
+  
+  //general for transition parser 
+  add_importance_likelihood(prop_parse.importance_weight());
+  add_beam_likelihood(prop_parse.beam_particle_weight());
+  add_num_actions(prop_parse.num_actions());
 
-
-
-void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const ArcStandardParser& gold_parse) {
   //resimulate the computation of the proposed action sequence to compute accuracy  
+  //TODO need an appropriate constructor
   ArcStandardParser simul(prop_parse.sentence(), prop_parse.tags());
-  ArcList gold_arcs = gold_parse.arcs();      
 
   for (auto& a: prop_parse.actions()) {
     kAction next = simul.oracleDynamicNext(gold_arcs);
@@ -62,50 +66,28 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, const Ar
       inc_reduce_gold();
       if (a==kAction::la || a==kAction::ra) //counts either direction
         inc_reduce_count();
-    } /*  else if (next==kAction::la2 || next==kAction::ra2) {
-          //for reduce: if there exists an arc it should be added...
-          //Unless we know that it is added later in the given parse
-        //action taken is considered the gold action
-        if (a==kAction::sh) {
-          inc_shift_count();
-          inc_shift_gold();
-        } else {
-          inc_reduce_count();
-          inc_reduce_gold();
-        }
-      } */
-
-    if (simul.is_buffer_empty() && next==kAction::re)
+    } 
+  
+    if (simul.buffer_empty() && next==kAction::re)
       inc_final_reduce_error_count();
     
     simul.execute_action(a);
   }
-
-  inc_num_sentences();
-  if (gold_arcs==prop_parse.arcs())
-    inc_complete_sentences();
-  for (WordIndex i = 1; i < gold_arcs.size(); ++i)
-    if (prop_parse.arcs().has_arc(i, 0) && gold_arcs.has_arc(i, 0)) 
-      inc_root_count();
-
-  add_likelihood(prop_parse.particle_weight());
-  add_importance_likelihood(prop_parse.importance_weight());
-  add_beam_likelihood(prop_parse.beam_particle_weight());
-  add_gold_likelihood(gold_parse.particle_weight());
-  add_num_actions(prop_parse.num_actions());
-  if (gold_parse.particle_weight() < prop_parse.particle_weight())
-    inc_gold_more_likely_count();
-
-  add_total_length(gold_arcs.size() - 1);
-  add_directed_count(prop_parse.directed_accuracy_count(gold_arcs));
-  add_undirected_count(prop_parse.undirected_accuracy_count(gold_arcs));
 }
 
 void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcEagerParser& gold_parse) {
-  //resimulate the computation of the proposed action sequence to compute accuracy
+  //parent method
+  countAccuracy(prop_parse, gold_parse); 
+  
+  //general for transition parser 
+  add_importance_likelihood(prop_parse.importance_weight());
+  add_beam_likelihood(prop_parse.beam_particle_weight());
+  add_num_actions(prop_parse.num_actions());
+
+  //resimulate the computation of the proposed action sequence to compute accuracy  
+  //TODO need an appropriate constructor
   ArcEagerParser simul(prop_parse.sentence(), prop_parse.tags());
-  ArcList gold_arcs = gold_parse.arcs();      
-    
+  
   for (auto& a: prop_parse.actions()) {
     kAction next = simul.oracleNext(gold_arcs);
     
@@ -124,24 +106,5 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcEa
     simul.execute_action(a);
   }
             
-  inc_num_sentences();
-  if (gold_arcs==prop_parse.arcs())
-    inc_complete_sentences();
-  for (WordIndex i = 1; i < gold_arcs.size(); ++i)
-    if (prop_parse.arcs().has_arc(i, 0) && gold_arcs.has_arc(i, 0)) 
-      inc_root_count();
-
-  add_likelihood(prop_parse.particle_weight());
-  add_importance_likelihood(prop_parse.importance_weight());
-  add_beam_likelihood(prop_parse.beam_particle_weight());
-  add_gold_likelihood(gold_parse.particle_weight());
-  add_num_actions(prop_parse.num_actions());
-  if (gold_parse.particle_weight() < prop_parse.particle_weight())
-    inc_gold_more_likely_count();
-
-  add_total_length(gold_arcs.size() - 1);
-  add_directed_count(prop_parse.directed_accuracy_count(gold_arcs));
-  add_undirected_count(prop_parse.undirected_accuracy_count(gold_arcs));
-}
-
+}  
 
