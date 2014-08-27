@@ -5,7 +5,7 @@ namespace oxlm {
 //TODO change to put root on initial stack
 
 TransitionParser::TransitionParser():
-  Parse(),
+  Parser(),
   stack_(),
   buffer_next_{0},
   actions_(),
@@ -16,7 +16,7 @@ TransitionParser::TransitionParser():
   }
 
 TransitionParser::TransitionParser(Words tags):
-  Parse(tags),  
+  Parser(tags),  
   stack_(),
   buffer_next_{0},
   actions_(),
@@ -27,7 +27,32 @@ TransitionParser::TransitionParser(Words tags):
   }
 
 TransitionParser::TransitionParser(Words sent, Words tags):  
-  Parse(sent, tags),  
+  Parser(sent, tags),  
+  stack_(),
+  buffer_next_{0},
+  actions_(),
+  importance_weight_{0},
+  beam_weight_{0},
+  num_particles_{1}
+  {
+  }
+
+//copy constructor
+/* TransitionParser::TransitionParser(const TransitionParser& parse):  
+  Parse(parse),  
+  stack_(),
+  buffer_next_{0},
+  actions_(),
+  importance_weight_{0},
+  beam_weight_{0},
+  num_particles_{1}
+  {
+  }  */
+
+//what I want to do
+//implicitly defines the copy constructor
+TransitionParser::TransitionParser(const ParsedSentence& parse):  
+  Parser(parse),  
   stack_(),
   buffer_next_{0},
   actions_(),
@@ -38,7 +63,7 @@ TransitionParser::TransitionParser(Words sent, Words tags):
   }
 
 TransitionParser::TransitionParser(Words sent, Words tags, int num_particles):  
-  Parse(sent, tags),  
+  Parser(sent, tags),  
   stack_(),
   buffer_next_{0},
   actions_(),

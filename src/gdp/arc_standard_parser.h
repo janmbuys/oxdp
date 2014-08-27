@@ -8,21 +8,15 @@ namespace oxlm {
 class ArcStandardParser : public TransitionParser {
   public:
 
-  ArcStandardParser():
-    TransitionParser() {
-  }
+  ArcStandardParser();
 
-  ArcStandardParser(Words sent):
-    TransitionParser(sent) {
-  }
+  ArcStandardParser(Words sent);
 
-  ArcStandardParser(Words sent, Words tags):
-    TransitionParser(sent, tags) {
-  }
+  ArcStandardParser(Words sent, Words tags);
 
-  ArcStandardParser(Words sent, Words tags, int num_particles):
-    TransitionParser(sent, tags, num_particles) {
-  }
+  ArcStandardParser(Words sent, Words tags, int num_particles);
+
+  ArcStandardParser(const ParsedSentence& parse);
 
   bool shift();
 
@@ -32,10 +26,8 @@ class ArcStandardParser : public TransitionParser {
 
   bool rightArc();
   
-  kAction oracleNext(const ArcList& gold_arcs) const;
+  kAction oracleNext(const ParsedSentence& gold_parse) const;
   
-  kAction oracleDynamicNext(const ArcList& gold_arcs) const;
-
   bool left_arc_valid() const {
     if (stack_depth() < 2)
       return false;

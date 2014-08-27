@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "corpus/corpus.h"
+#include "corpus/dict.h"
 
 using namespace std;
 

@@ -2,7 +2,7 @@
 
 namespace oxlm {
 
-ParsedSentence::ParsedSentence()
+ParsedSentence::ParsedSentence():
   TaggedSentence(), 
   arcs_()
   {
@@ -23,6 +23,13 @@ ParsedSentence::ParsedSentence(Words sent, Words tags):
 ParsedSentence::ParsedSentence(Words sent, Words tags, Indices arcs):
   TaggedSentence(sent, tags), 
   arcs_(arcs)
+  {
+  }
+
+//copy constructor ignores the arc values
+ParsedSentence::ParsedSentence(const ParsedSentence& parse):
+  TaggedSentence(parse),
+  arcs_()
   {
   }
 

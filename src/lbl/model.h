@@ -2,7 +2,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "corpus/corpus.h"
+#include "corpus/dict.h"
 #include "lbl/config.h"
 #include "lbl/factored_metadata.h"
 #include "lbl/factored_maxent_metadata.h"

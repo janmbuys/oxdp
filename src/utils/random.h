@@ -81,8 +81,8 @@ struct multinomial_distribution {
   multinomial_distribution(const std::vector<F>& v) : probs(v), sum(std::accumulate(probs.begin(), probs.end(), F(0))) {}
   template <class Engine>
   unsigned operator()(Engine& eng) const {
-    assert(!probs.empty());
-    if (probs.size() == 1) return 0;
+    //assert(!probs.empty());
+    if (probs.size() <= 1) return 0;
     const F random = sum * F(sample_uniform01<double>(eng));    // random number between [0 and sum)
 
     unsigned position = 1;
@@ -103,8 +103,8 @@ struct multinomial_distribution_log {
 
   template <class Engine>
   unsigned operator()(Engine& eng) const {
-    assert(!probs.empty());
-    if (probs.size() == 1) return 0;
+    //assert(!probs.empty());
+    if (probs.size() <= 1) return 0;
     const double random = sum - std::log(sample_uniform01<double>(eng)); // random number between -log( [0 and sum) )
     unsigned position = 1;
     //std::cout << sum << ": [";

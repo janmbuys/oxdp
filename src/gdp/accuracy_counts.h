@@ -1,32 +1,17 @@
 #ifndef _GDP_ACC_COUNTS_H_
 #define _GDP_ACC_COUNTS_H_
 
+#include "arc_standard_parser.h"
+#include "arc_eager_parser.h"
+#include "eisner_parser.h"
+
 namespace oxlm {
 
 class AccuracyCounts {
 
 public:
-  AccuracyCounts(): 
-    likelihood_{0},
-    beam_likelihood_{0},
-    importance_likelihood_{0},
-    gold_likelihood_{0},
-    reduce_count_{0},
-    reduce_gold_{0},
-    shift_count_{0},
-    shift_gold_{0},
-    final_reduce_error_count_{0},
-    total_length_{0},
-    directed_count_{0},
-    undirected_count_{0}, 
-    root_count_{0},
-    gold_more_likely_count_{0},
-    num_actions_{0},
-    complete_sentences_{0},
-    num_sentences_{0}
-  {
-  }
-
+  AccuracyCounts();
+   
   void inc_reduce_count() {
     ++reduce_count_;
   }
@@ -57,6 +42,14 @@ public:
 
   void inc_root_count() {
     ++root_count_;
+  }
+
+  void inc_directed_count() {
+    ++directed_count_;
+  }
+
+  void inc_undirected_count() {
+    ++undirected_count_;
   }
 
   void inc_num_sentences() {
@@ -94,12 +87,18 @@ public:
   void add_undirected_count(int l) {
     undirected_count_ += l; 
   }
-   
-  void countAccuracy(const ArcStandardParser& prop_parse, const ArcStandardParser& gold_parse); 
+  
+  void parseCountAccuracy(const Parser& prop_parse, const ParsedSentence& gold_parse); 
 
-  void countAccuracy(const ArcEagerParser& prop_parse, const ArcEagerParser& gold_parse); 
+  void transitionCountAccuracy(const TransitionParser& prop_parse, const ParsedSentence& gold_parse); 
 
-  void countAccuracy(const EisnerParser& prop_parse, const EisnerParser& gold_parse); 
+  void countAccuracy(const ArcStandardParser& prop_parse, const ParsedSentence& gold_parse); 
+
+  void countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse); 
+
+  void countAccuracy(const EisnerParser& prop_parse, const ParsedSentence& gold_parse); 
+
+  void countLikelihood(double parse_l, double gold_l);
 
   double directed_accuracy() const {
     return (directed_count_ + 0.0)/total_length_;

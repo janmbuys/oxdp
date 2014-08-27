@@ -1,5 +1,5 @@
 #ifndef _GDP_AE_PARSER_H_
-#ifndef _GDP_AS_PARSER_H_
+#define _GDP_AE_PARSER_H_
 
 #include "transition_parser.h"
 
@@ -8,25 +8,15 @@ namespace oxlm {
 class ArcEagerParser : public TransitionParser {
   public:
 
-  ArcEagerParser(): 
-    TransitionParser()
-  {
-  }
+  ArcEagerParser();
 
-  ArcEagerParser(Words sent): 
-    TransitionParser(sent)
-  {
-  }
+  ArcEagerParser(Words sent);
 
-  ArcEagerParser(Words sent, Words tags): 
-    TransitionParser(sent, tags)
-  {
-  }
+  ArcEagerParser(Words sent, Words tags);
 
-  ArcEagerParser(Words sent, Words tags, int num_particles):
-    TransitionParser(sent, tags, num_particles) 
-  {
-  }
+  ArcEagerParser(Words sent, Words tags, int num_particles);
+
+  ArcEagerParser(const ParsedSentence& parse);
 
   bool shift();
   
@@ -40,23 +30,23 @@ class ArcEagerParser : public TransitionParser {
   
   bool reduce();
 
-  kAction oracleNext(const ArcList& gold_arcs) const;
+  kAction oracleNext(const ParsedSentence& gold_parse) const;
 
   bool left_arc_valid() const {
     //stack_size 1 -> stack top is root
     if (stack_depth() < 2)
       return false;    
     WordIndex i = stack_top();
-    return (!has_parent(i));
+    return (!has_parent_at(i));
   }
 
   bool reduce_valid() const {
     WordIndex i = stack_top();
     //if STOP, should not have parent, else it should
     if (tag_at(i) == 1)
-      return !has_parent(i);
+      return !has_parent_at(i);
     else
-      return has_parent(i);
+      return has_parent_at(i);
   }
 
   bool is_terminal_configuration() const {
@@ -103,6 +93,11 @@ class ArcEagerParser : public TransitionParser {
     //return tag_next_children_word_context(); //lexicalized, full context (?)
   }
 
+  Words tag_context() const {
+    return tag_next_children_some_context(); //smaller context (order 6)
+  }
+ 
+  //TODO is there a better way to do this?
   Words tag_context(kAction a) const {
     Words ctx = tag_next_children_some_context(); //smaller context (order 6)
     //Words ctx = tag_next_children_context(); //full context

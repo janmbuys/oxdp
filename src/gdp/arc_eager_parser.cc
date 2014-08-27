@@ -2,6 +2,31 @@
 
 namespace oxlm {
 
+ArcEagerParser::ArcEagerParser(): 
+  TransitionParser()
+{
+}
+
+ArcEagerParser::ArcEagerParser(Words sent): 
+  TransitionParser(sent)
+{
+}
+
+ArcEagerParser::ArcEagerParser(Words sent, Words tags): 
+  TransitionParser(sent, tags)
+{
+}
+
+ArcEagerParser::ArcEagerParser(Words sent, Words tags, int num_particles):
+  TransitionParser(sent, tags, num_particles) 
+{
+}
+
+ArcEagerParser::ArcEagerParser(const ParsedSentence& parse):
+  TransitionParser(parse)
+{
+}   
+
 bool ArcEagerParser::shift() {
   WordIndex i = buffer_next();
   pop_buffer();
@@ -75,7 +100,7 @@ bool ArcEagerParser::rightArc(WordId w) {
 }
 
 //predict the next action according to the oracle
-kAction ArcEagerParser::oracleNext(const ArcList& gold_arcs) const {
+kAction ArcEagerParser::oracleNext(const ParsedSentence& gold_parse) const {
   kAction a = kAction::sh;
 
   //maybe change so that we can assume stack_depth > 0 
@@ -87,18 +112,25 @@ kAction ArcEagerParser::oracleNext(const ArcList& gold_arcs) const {
   //if la or ra is valid
   if (!buffer_empty()) {    
     WordIndex j = buffer_next();
-    if (gold_arcs.has_arc(i, j)) {
+    if (gold_parse.has_arc(i, j)) {
       //add left arc eagerly
       a = kAction::la; 
-    } else if (gold_arcs.has_arc(j, i)) {
+    } else if (gold_parse.has_arc(j, i)) {
       //add right arc eagerly
       a = kAction::ra; 
     } else if (reduce_valid()) {  
-      //reduce if it has a parent and all its children
-      if (child_count_at(i) >= gold_arcs.child_count_at(i)) 
-        a = kAction::re;
+      //if (child_count_at(i) >= gold_arcs.child_count_at(i)) 
+      //  a = kAction::re;
+      //reduce if i has its children
+      a = kAction::re;
+      for (WordIndex k = 1; k < size(); ++k) {
+        if (gold_parse.has_arc(k, i) && !has_arc(k, i)) {
+          a = kAction::sh;
+          break;
+        }
+      }
   
-      //test if we should, else shift
+      //alternatively, test if we should, else shift
       /*for (WordIndex k = i - 1; ((k >= 0) && (a==kAction::sh)); --k) {
         //std::cout << k << " ";
         //if we need to reduce i to be able to add the arc
