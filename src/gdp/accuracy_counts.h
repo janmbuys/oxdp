@@ -3,8 +3,6 @@
 
 namespace oxlm {
 
-//TODO
-
 class AccuracyCounts {
 
 public:

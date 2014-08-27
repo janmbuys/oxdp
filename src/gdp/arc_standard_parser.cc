@@ -11,10 +11,11 @@ bool ArcStandardParser::shift() {
 }
 
 bool ArcStandardParser::shift(WordId w) {
-  WordIndex i = sentence_length();
+  //assume the tag has been generated already
+  WordIndex i = size() - 1;
   push_word(w);
   push_arc();
-  if (!is_buffer_empty()) 
+  if (!buffer_empty()) 
     pop_buffer();
   push_stack(i);
   append_action(kAction::sh);
@@ -58,7 +59,7 @@ kAction ArcStandardParser::oracleNext(const ArcList& gold_arcs) const {
       a = kAction::la;
     else if (gold_arcs.has_arc(j, i) && child_count_at(j)==gold_arcs.child_count_at(j)) 
       a = kAction::ra;
-    else if (!is_buffer_empty()) 
+    else if (!buffer_empty()) 
       a = kAction::sh;
   }
     
@@ -84,7 +85,7 @@ kAction ArcStandardParser::oracleDynamicNext(const ArcList& gold_arcs) const { /
       a = kAction::ra; 
       //if (prop_arcs.has_arc(j, i)) 
       //  a = kAction::ra2;
-    } else if (!is_buffer_empty()) 
+    } else if (!buffer_empty()) 
       a = kAction::sh;
   }
    

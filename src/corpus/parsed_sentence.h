@@ -41,6 +41,11 @@ class ParsedSentence: public TaggedSentence {
     return (arcs_[i] == j);
   }
 
+  friend bool equal_arcs(const ParsedSentence& parse1, 
+                      const ParsedSentence& parse2) const {
+    return (parse1.arcs_ == parse2.arcs_);
+  }
+
   bool is_projective_dependency() const {
     for (int i = 0; i < (size() - 1); ++i)
       for (int j = i + 1; (j < size()); ++j)
