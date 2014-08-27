@@ -2,7 +2,7 @@
 
 #include <boost/make_shared.hpp>
 
-#include "corpus/corpus.h"
+#include "corpus/dict.h"
 #include "lbl/config.h"
 #include "lbl/utils.h"
 

@@ -6,7 +6,7 @@
 
 #include "pyp/crp.h"
 #include "hpyplm/hpyplm.h"
-#include "corpus/corpus.h"
+#include "corpus/dict.h"
 #include "transition_parser.h"
 #include "eisner_parser.h"
 #include "utils/random.h"

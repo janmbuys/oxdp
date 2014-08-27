@@ -7,18 +7,21 @@
 
 namespace oxlm {
 
-class Parse: public ParsedSentence {
+class Parser: public ParsedSentence {
   public:
-  Parse();
+  Parser();
   
-  Parse(Words tags);
+  Parser(Words tags);
 
-  Parse(Words sent, Words tags);
+  Parser(Words sent, Words tags);
   
-  Parse(Words sent, Words tags, Indices arcs);
+  Parser(Words sent, Words tags, Indices arcs);
 
-  void push_arc() {
-    arcs_.push_back(-1);
+  //Parse(const Parse& parse);
+  Parser(const ParsedSentence& parse);
+
+  virtual void push_arc() {
+    ParsedSentence::push_arc();
     left_children_.push_back(Indices()); 
     right_children_.push_back(Indices()); 
   }
@@ -34,9 +37,10 @@ class Parse: public ParsedSentence {
     //TODO make sure insertions are at correct positions
     if (i < j) {
       bool inserted = false;
-      for (WordIndex k = 0; (k < left_children_.at(j).size()) && !inserted; ++k) {
-        if (left_children_[j][k] > i) {
-          left_children_.at(j).insert(k, i);
+      //   WordIndex k = 0; (k < left_children_.at(j).size()) && !inserted; ++k) {
+      for (auto p = left_children_.at(j).begin(); (p < left_children_.at(j).end()) && !inserted; ++p) {
+        if (*p > i) {
+          left_children_.at(j).insert(p, i);
           inserted = true;
         }
       } 
@@ -44,12 +48,13 @@ class Parse: public ParsedSentence {
         left_children_.at(j).push_back(i); 
     } else if (i > j) {
       bool inserted = false;
-      for (WordIndex k = 0; (k < right_children_.at(j).size()) && !inserted; ++k) {
-        if (left_children_[j][k] > i) {
-          left_children_.at(j).insert(k, i);
+     // for (WordIndex k = 0; (k < right_children_.at(j).size()) && !inserted; ++k) {
+     for (auto p = right_children_.at(j).begin(); (p < right_children_.at(j).end()) && !inserted; ++p) {
+        if (*p > i) {
+          right_children_.at(j).insert(p, i);
           inserted = true;
         }
-      } 
+      }
       if (!inserted)
        right_children_.at(j).push_back(i); 
     }
@@ -110,7 +115,7 @@ class Parse: public ParsedSentence {
     if ((j >= size()) || (left_children_.at(j).size() < 2)) 
       return -1;
     else
-      return left_children_.at.at(j).at(1);
+      return left_children_.at(j).at(1);
   }
 
   WordIndex second_rightmost_child_at(WordIndex j) const {
@@ -131,9 +136,18 @@ class Parse: public ParsedSentence {
     return (left_children_.at(j).size() + right_children_.at(j).size());
   }
 
+  bool has_equal_arcs(const ParsedSentence& parse) const {
+    for (WordIndex j = 1; j < size(); ++j) {
+      if (arc_at(j) != parse.arc_at(j))
+        return false;
+    }
+
+    return true;
+  }
+
   bool complete_parse() const {
-    for (WordIndex i = 1; i < arcs_.size() - 1; ++i) 
-      if (!has_parent(i) && (tag_at(i) != 1))
+    for (WordIndex i = 1; i < size(); ++i) 
+      if (!has_parent_at(i) && ((i < (size() - 1)) || (tag_at(i) != 1)))
         return false;
     
     return true;

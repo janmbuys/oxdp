@@ -4,7 +4,7 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "corpus/corpus.h"
+#include "corpus/dict.h"
 #include "lbl/config.h"
 #include "lbl/utils.h"
 #include "utils/serialization_helpers.h"

@@ -1,6 +1,6 @@
 #include <boost/program_options.hpp>
 
-#include "corpus/corpus.h"
+#include "corpus/dict.h"
 #include "lbl/context_processor.h"
 #include "lbl/model.h"
 #include "lbl/utils.h"

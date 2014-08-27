@@ -13,7 +13,7 @@
 #include "hpyplm/uvector.h"
 #include "hpyplm/uniform_vocab.h"
 
-#include "corpus/corpus.h"
+#include "corpus/dict.h"
 
 // An implementation of an N-gram LM based on PYPs as described 
 // in Y.-W. Teh. (2006) A Hierarchical Bayesian Language Model

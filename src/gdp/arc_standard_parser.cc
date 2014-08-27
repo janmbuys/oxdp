@@ -2,6 +2,31 @@
 
 namespace oxlm {
 
+ArcStandardParser::ArcStandardParser():
+  TransitionParser() 
+{
+}
+
+ArcStandardParser::ArcStandardParser(Words sent):
+  TransitionParser(sent) 
+{
+}
+
+ArcStandardParser::ArcStandardParser(Words sent, Words tags):
+  TransitionParser(sent, tags) 
+{
+}
+
+ArcStandardParser::ArcStandardParser(Words sent, Words tags, int num_particles):
+  TransitionParser(sent, tags, num_particles) 
+{
+}
+
+ArcStandardParser::ArcStandardParser(const ParsedSentence& parse):
+  TransitionParser(parse) 
+{
+}
+
 bool ArcStandardParser::shift() {
   WordIndex i = buffer_next();
   pop_buffer();
@@ -46,7 +71,7 @@ bool ArcStandardParser::rightArc() {
 }
  
 //predict the next action according to the oracle
-kAction ArcStandardParser::oracleNext(const ArcList& gold_arcs) const {
+kAction ArcStandardParser::oracleNext(const ParsedSentence& gold_parse) const {
   kAction a = kAction::re;
 
   //assume not in terminal configuration 
@@ -55,41 +80,30 @@ kAction ArcStandardParser::oracleNext(const ArcList& gold_arcs) const {
   else {
     WordIndex i = stack_top_second();
     WordIndex j = stack_top();
-    if (gold_arcs.has_arc(i, j) && child_count_at(i)==gold_arcs.child_count_at(i)) 
+    if (gold_parse.has_arc(i, j)) {
       a = kAction::la;
-    else if (gold_arcs.has_arc(j, i) && child_count_at(j)==gold_arcs.child_count_at(j)) 
+      //check that i has all its children
+      for (WordIndex k = 1; k < size(); ++k) {
+        if (gold_parse.has_arc(k, i) && !has_arc(k, i)) {
+          a = kAction::re;
+          break;
+        }
+      }
+    }
+    else if (gold_parse.has_arc(j, i)) {
       a = kAction::ra;
-    else if (!buffer_empty()) 
+      //check that j has all its children
+      for (WordIndex k = 1; k < size(); ++k) {
+        if (gold_parse.has_arc(k, j) && !has_arc(k, j)) {
+          a = kAction::re;
+          break;
+        }
+      }
+    }
+    if ((a == kAction::re) && !buffer_empty()) 
       a = kAction::sh;
   }
     
-  return a;
-}
-
-//predict the next action according to the oracle, modified for evaluation and error analysis
-//can maybe formulate in terms of loss of each action
-kAction ArcStandardParser::oracleDynamicNext(const ArcList& gold_arcs) const { //, ArcList prop_arcs) {
-  kAction a = kAction::re;
-            
-  //assume not in terminal configuration 
-  if (stack_depth() < 2)
-    a = kAction::sh; 
-  else {
-    WordIndex i = stack_top_second();
-    WordIndex j = stack_top();
-    if (gold_arcs.has_arc(i, j) && (child_count_at(i) >= gold_arcs.child_count_at(i))) {
-      a = kAction::la; 
-      //if (prop_arcs.has_arc(i, j)) 
-      //  a = kAction::la2;
-    } else if (gold_arcs.has_arc(j, i) && (child_count_at(j) >= gold_arcs.child_count_at(j))) { 
-      a = kAction::ra; 
-      //if (prop_arcs.has_arc(j, i)) 
-      //  a = kAction::ra2;
-    } else if (!buffer_empty()) 
-      a = kAction::sh;
-  }
-   
-  //return re if there shouldn't be an arc, but can't do anthing else either
   return a;
 }
 

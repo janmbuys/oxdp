@@ -10,7 +10,7 @@
 #include "transition_parser.h"
 #include "eisner_parser.h"
 #include "hpyplm/hpyplm.h"
-#include "corpus/corpus.h"
+#include "corpus/dict.h"
 #include "utils/random.h"
 #include "pyp/crp.h"
 #include "pyp/tied_parameter_resampler.h"

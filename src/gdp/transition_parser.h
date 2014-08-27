@@ -1,13 +1,13 @@
 #ifndef _GDP_TR_PARSER_H_
 #define _GDP_TR_PARSER_H_
 
-// #include<string>
+#include<string>
 //  #include<functional>
 //  #include<cstdlib>
 
-//#include "utils/random.h"
+#include "utils/random.h"
 #include "corpus/dict.h"
-#include "parse.h"
+#include "parser.h"
 
 namespace oxlm {
 
@@ -21,7 +21,7 @@ typedef std::vector<kAction> ActList;
   return actList[a];
 } */
 
-class TransitionParser: public Parse {
+class TransitionParser: public Parser {
   public:
 
   //use specifically when generating from model
@@ -30,6 +30,9 @@ class TransitionParser: public Parse {
   TransitionParser(Words tags);
 
   TransitionParser(Words sent, Words tags); 
+
+  //TransitionParser(const TransitionParser& parse);  
+  TransitionParser(const ParsedSentence& parse);  
  
   TransitionParser(Words sent, Words tags, int num_particles);
 
@@ -49,7 +52,7 @@ class TransitionParser: public Parse {
 
   virtual Words tag_context() const = 0;
 
-  virtual kAction oracleNext(const Parse& gold_arcs) const = 0;
+  virtual kAction oracleNext(const ParsedSentence& gold_arcs) const = 0;
  
   void pop_buffer() {
     ++buffer_next_;
@@ -147,7 +150,7 @@ class TransitionParser: public Parse {
 
   std::vector<std::string> action_str_list() const {
     const std::vector<std::string> action_names {"sh", "la", "ra", "re", "la2", "ra2"};
-    std::vector<std::string> list = "";
+    std::vector<std::string> list;
     for (kAction a: actions_)
       list.push_back(action_names[static_cast<int>(a)]);
     return list; 
@@ -355,8 +358,8 @@ class TransitionParser: public Parse {
   Words tag_children_distance_context() const {
     Words ctx(9, 0);
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[8] = tag_at(stack_.at(stack_.size()-1));
       if (l1 > 0)
@@ -365,8 +368,8 @@ class TransitionParser: public Parse {
         ctx[6] = tag_at(r1);
     }
     if (stack_.size() >= 2) {
-      WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
-      WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[7] = tag_at(stack_.at(stack_.size()-2));
       if (l2 > 0)
@@ -390,8 +393,8 @@ class TransitionParser: public Parse {
   Words word_tag_some_children_distance_context() const {
     Words ctx(7, 0);
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[6] = tag_at(stack_.at(stack_.size()-1));
       ctx[1] = word_at(stack_.at(stack_.size()-1));
@@ -415,8 +418,8 @@ class TransitionParser: public Parse {
   Words word_tag_children_context() const {
     Words ctx(9, 0);
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[8] = tag_at(stack_.at(stack_.size()-1));
       ctx[1] = word_at(stack_.at(stack_.size()-1));
@@ -426,8 +429,8 @@ class TransitionParser: public Parse {
         ctx[6] = tag_at(r1);
     }
     if (stack_.size() >= 2) {
-      WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
-      WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[7] = tag_at(stack_.at(stack_.size()-2));
       ctx[0] = word_at(stack_.at(stack_.size()-2));
@@ -448,8 +451,8 @@ class TransitionParser: public Parse {
   Words tag_children_context() const {
     Words ctx(8, 0);
     if (stack_.size() >= 1) { 
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[7] = tag_at(stack_.at(stack_.size()-1));
       if (l1 > 0)
@@ -458,8 +461,8 @@ class TransitionParser: public Parse {
         ctx[5] = tag_at(r1);
     }
     if (stack_.size() >= 2) {
-      WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
-      WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[6] = tag_at(stack_.at(stack_.size()-2));
       if (l2 > 0)
@@ -479,8 +482,8 @@ class TransitionParser: public Parse {
   Words tag_less_children_context() const {
     Words ctx(8, 0);
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[7] = tag_at(stack_.at(stack_.size()-1));
       if (l1 > 0)
@@ -489,8 +492,8 @@ class TransitionParser: public Parse {
         ctx[5] = tag_at(r1);
     }
     if (stack_.size() >= 2) {
-      WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
-      WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[6] = tag_at(stack_.at(stack_.size()-2));
       if (l2 >= 0)
@@ -511,8 +514,8 @@ class TransitionParser: public Parse {
   Words tag_less_children_distance_context() const {
     Words ctx(9, 0);
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[8] = tag_at(stack_.at(stack_.size()-1));
       if (r1 > 0)
@@ -521,8 +524,8 @@ class TransitionParser: public Parse {
         ctx[6] = tag_at(l1);
     }
     if (stack_.size() >= 2) {
-      WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
-      WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[7] = tag_at(stack_.at(stack_.size()-2));
       if (r2 >= 0)
@@ -547,8 +550,8 @@ class TransitionParser: public Parse {
   Words tag_some_children_distance_context() const {
     Words ctx(5, 0);
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[4] = tag_at(stack_.at(stack_.size()-1));
       if (r1 > 0)
@@ -557,8 +560,8 @@ class TransitionParser: public Parse {
         ctx[0] = tag_at(l1);
     }
     if (stack_.size() >= 2) {
-      //WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
-      //WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
+      //WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      //WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[3] = tag_at(stack_.at(stack_.size()-2));
       //if (r2 >= 0)
@@ -577,8 +580,8 @@ class TransitionParser: public Parse {
   Words tag_some_children_context() const {
     Words ctx(4, 0);
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[3] = tag_at(stack_.at(stack_.size()-1));
       if (r1 > 0)
@@ -587,8 +590,8 @@ class TransitionParser: public Parse {
         ctx[0] = tag_at(l1);
     }
     if (stack_.size() >= 2) {
-      //WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
-      //WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
+      //WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      //WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[2] = tag_at(stack_.at(stack_.size()-2));
       //if (r2 >= 0)
@@ -607,9 +610,9 @@ class TransitionParser: public Parse {
     Words ctx(7, 0);
     
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex r2 = second_rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex r2 = second_rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       //if (has_parent(stack_.at(stack_.size()-1)))
         //ctx[0] = tag_at(at(stack_.at(stack_.size()-1)));
@@ -623,8 +626,8 @@ class TransitionParser: public Parse {
     }
 
     if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child(buffer_next_);
-      WordIndex bl2 = second_leftmost_child(buffer_next_);
+      WordIndex bl1 = leftmost_child_at(buffer_next_);
+      WordIndex bl2 = second_leftmost_child_at(buffer_next_);
 
       if (bl1 > 0)
         ctx[4] = tag_at(bl1);
@@ -644,8 +647,8 @@ class TransitionParser: public Parse {
     Words ctx(4, 0);
     
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      //WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      //WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[3] = tag_at(stack_.at(stack_.size()-1));
       //if (l1 > 0)
@@ -658,7 +661,7 @@ class TransitionParser: public Parse {
     }
 
     if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child(buffer_next_);
+      WordIndex bl1 = leftmost_child_at(buffer_next_);
       if (bl1 > 0)
         ctx[2] = tag_at(bl1);
     }
@@ -674,8 +677,8 @@ class TransitionParser: public Parse {
     Words ctx(7, 0);
     
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[6] = tag_at(stack_.at(stack_.size()-1));
       if (l1 > 0)
@@ -691,7 +694,7 @@ class TransitionParser: public Parse {
     }
 
     if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child(buffer_next());
+      WordIndex bl1 = leftmost_child_at(buffer_next());
       if (bl1 > 0)
         ctx[4] = tag_at(bl1); 
     }
@@ -711,8 +714,8 @@ class TransitionParser: public Parse {
     Words ctx(6, 0);
     
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      //WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      //WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[5] = tag_at(stack_.at(stack_.size()-1));
       //if (l1 > 0)
@@ -728,7 +731,7 @@ class TransitionParser: public Parse {
     }
 
     if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child(buffer_next());
+      WordIndex bl1 = leftmost_child_at(buffer_next());
       if (bl1 > 0)
         ctx[3] = tag_at(bl1); 
     }
@@ -748,8 +751,8 @@ class TransitionParser: public Parse {
     Words ctx(6, 0);
     
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[5] = tag_at(stack_.at(stack_.size()-1));
       if (l1 > 0)
@@ -760,7 +763,7 @@ class TransitionParser: public Parse {
     }
 
     if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child(buffer_next());
+      WordIndex bl1 = leftmost_child_at(buffer_next());
       if (bl1 > 0)
         ctx[4] = tag_at(bl1); 
     }
@@ -780,8 +783,8 @@ class TransitionParser: public Parse {
     Words ctx(4, 0);
     
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      //WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      //WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[3] = tag_at(stack_.at(stack_.size()-1));
       //if (l1 > 0)
@@ -792,7 +795,7 @@ class TransitionParser: public Parse {
     }
 
     if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child(buffer_next());
+      WordIndex bl1 = leftmost_child_at(buffer_next());
       if (bl1 > 0)
         ctx[2] = tag_at(bl1); 
     }
@@ -812,8 +815,8 @@ class TransitionParser: public Parse {
     Words ctx(7, 0);
     
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      //WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      //WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[6] = tag_at(stack_.at(stack_.size()-1));
       ctx[3] = word_at(stack_.at(stack_.size()-1));
@@ -830,7 +833,7 @@ class TransitionParser: public Parse {
     }
 
     if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child(buffer_next());
+      WordIndex bl1 = leftmost_child_at(buffer_next());
       if (bl1 > 0)
         ctx[4] = tag_at(bl1); 
     }
@@ -851,8 +854,8 @@ class TransitionParser: public Parse {
     Words ctx(7, 0);
     
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[6] = tag_at(stack_.at(stack_.size()-1));
       ctx[4] = word_at(stack_.at(stack_.size()-1));
@@ -864,7 +867,7 @@ class TransitionParser: public Parse {
     }
 
     if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child(buffer_next());
+      WordIndex bl1 = leftmost_child_at(buffer_next());
       if (bl1 > 0)
         ctx[5] = tag_at(bl1); 
     }
@@ -885,8 +888,8 @@ class TransitionParser: public Parse {
     
     //word context 2, pos context 2 + next token
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      //WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      //WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[3] = word_at(stack_.at(stack_.size()-1));
       //ctx[4] = tag_at(stack_.at(stack_.size()-1));
@@ -896,8 +899,8 @@ class TransitionParser: public Parse {
         ctx[1] = tag_at(r1);
     }
     if (stack_.size() >= 2) { 
-      WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
-      //WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      //WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[3] = word_at(stack_.at(stack_.size()-2));
       //ctx[3] = tag_at(stack_.at(stack_.size()-2));
@@ -924,8 +927,8 @@ class TransitionParser: public Parse {
     
     //word context 2, pos context 2 + next token
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[5] = word_at(stack_.at(stack_.size()-1));
       if (l1 > 0)
@@ -934,8 +937,8 @@ class TransitionParser: public Parse {
         ctx[3] = tag_at(r1);
     }
     if (stack_.size() >= 2) { 
-      WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
-      WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[4] = word_at(stack_.at(stack_.size()-2));
       if (l2 > 0)
@@ -961,8 +964,8 @@ class TransitionParser: public Parse {
     
     //word context 2, pos context 2 + next token
     if (stack_.size() >= 1) { 
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
-      WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[1] = word_at(stack_.at(stack_.size()-1));
       //ctx[3] = tag_at(stack_.at(stack_.size()-1));
@@ -972,8 +975,8 @@ class TransitionParser: public Parse {
         ctx[3] = tag_at(r1);
     }
     if (stack_.size() >= 2) { 
-      //WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
-      //WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
+      //WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      //WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[0] = word_at(stack_.at(stack_.size()-2));
       //ctx[0] = tag_at(stack_.at(stack_.size()-2));
@@ -1064,8 +1067,8 @@ class TransitionParser: public Parse {
     }
     
     if (stack_.size() >= 1) { 
-      //WordIndex l1 = leftmost_child(stack_.at(stack_.size()-1));
-      WordIndex r1 = rightmost_child(stack_.at(stack_.size()-1));
+      //WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[2] = tag_at(stack_.at(stack_.size()-1));
       //if (l1 > 0)
@@ -1074,8 +1077,8 @@ class TransitionParser: public Parse {
         ctx[0] = tag_at(r1);
     }
     if (stack_.size() >= 2) { 
-      //WordIndex l2 = leftmost_child(stack_.at(stack_.size()-2));
-      //WordIndex r2 = rightmost_child(stack_.at(stack_.size()-2));
+      //WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+      //WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[1] = tag_at(stack_.at(stack_.size()-2));
       //if (l2 > 0)

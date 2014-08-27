@@ -2,13 +2,13 @@
 
 namespace oxlm {
 
-Sentence::Sentence()
+Sentence::Sentence():
   sentence_()
   {
   }
 
 Sentence::Sentence(Words sent):
-  sentence_(sent),
+  sentence_(sent)
   {
   }
 

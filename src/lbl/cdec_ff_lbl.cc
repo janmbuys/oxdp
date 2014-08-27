@@ -10,7 +10,7 @@
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "corpus/corpus.h"
+#include "corpus/dict.h"
 #include "lbl/cdec_lbl_mapper.h"
 #include "lbl/cdec_rule_converter.h"
 #include "lbl/cdec_state_converter.h"

@@ -2,7 +2,7 @@
 
 namespace oxlm {
 
-TaggedSentence::TaggedSentence()
+TaggedSentence::TaggedSentence():
   Sentence(), 
   tags_()
   {

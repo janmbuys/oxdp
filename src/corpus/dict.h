@@ -25,7 +25,7 @@ typedef int WordIndex;
 typedef std::vector<WordId> Words;
 typedef std::vector<WordIndex> Indices; // WxList;
 typedef std::vector<Words> WordsList; //Sentences
-typedef std::vector<WxList> IndicesList;
+typedef std::vector<Indices> IndicesList;
 
 class Dict {
 // typedef std::unordered_map<std::string, WordId, std::hash<std::string> > Map;
@@ -309,10 +309,11 @@ struct container_hash {
   std::size_t operator()(Container const& c) const {
     return boost::hash_range(c.begin(), c.end());
   }
-};
+}; */
 
 }
 
+/*
 namespace std {
 template<typename S, typename T> struct hash<pair<S, T>> {
   inline size_t operator()(const pair<S, T> & v) const {

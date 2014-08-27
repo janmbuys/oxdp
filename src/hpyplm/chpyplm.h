@@ -5,7 +5,7 @@
 #include <unordered_map>
 
 #include "hpyplm.h"
-#include "corpus/corpus.h"
+#include "corpus/dict.h"
 #include "utils/m.h"
 #include "utils/random.h"
 #include "hpyplm/uvector.h"

@@ -1,27 +1,44 @@
 #include "accuracy_counts.h"
 
-#include "arc_standard_parser.h"
-#include "arc_eager_parser.h"
-#include "eisner_parser.h"
+namespace oxlm {
 
-//TODO update
+AccuracyCounts::AccuracyCounts(): 
+  likelihood_{0},
+  beam_likelihood_{0},
+  importance_likelihood_{0},
+  gold_likelihood_{0},
+  reduce_count_{0},
+  reduce_gold_{0},
+  shift_count_{0},
+  shift_gold_{0},
+  final_reduce_error_count_{0},
+  total_length_{0},
+  directed_count_{0},
+  undirected_count_{0}, 
+  root_count_{0},
+  gold_more_likely_count_{0},
+  num_actions_{0},
+  complete_sentences_{0},
+  num_sentences_{0}
+  {
+  }
 
-//mother method
-void AccuracyCounts::countAccuracy(const Parse& prop_parse, const Parse& gold_parse) {
+void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSentence& gold_parse) {
   //sentence level
   inc_num_sentences();
-  if (ParsedSentence::equal_arcs(prop_parse, gold_parse))
+  if (prop_parse.has_equal_arcs(gold_parse))
     inc_complete_sentences();
   add_total_length(gold_parse.size() - 1);
   
+  //maybe change this again later ...
   add_likelihood(prop_parse.weight());
-  add_gold_likelihood(gold_parse.weight());
+  /* add_gold_likelihood(gold_parse.weight());
   if (gold_parse.weight() < prop_parse.weight())
-    inc_gold_more_likely_count();
+    inc_gold_more_likely_count(); */
 
   //arc level
   for (WordIndex j = 1; j < gold_parse.size(); ++j) {
-    if (prop_parse.arc_at(j)==gold_parse_arc_at(j)) {
+    if (prop_parse.arc_at(j)==gold_parse.arc_at(j)) {
       inc_directed_count();
       inc_undirected_count(); 
     } else if (prop_parse.has_parent_at(j) && 
@@ -34,29 +51,35 @@ void AccuracyCounts::countAccuracy(const Parse& prop_parse, const Parse& gold_pa
   }
 }
 
-void AccuracyCounts::countAccuracy(const EisnerParser& prop_parse, 
-                                   const EisnerParser& gold_parse) {
-  //just call parent method
-  countAccuracy(prop_parse, gold_parse); 
-}
-
-//TODO find the right signature for this
-void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, 
-                                   const ArcStandardParser& gold_parse) {
+void AccuracyCounts::transitionCountAccuracy(const TransitionParser& prop_parse, 
+                                   const ParsedSentence& gold_parse) {
   //parent method
-  countAccuracy(prop_parse, gold_parse); 
+  parseCountAccuracy(prop_parse, gold_parse); 
   
   //general for transition parser 
   add_importance_likelihood(prop_parse.importance_weight());
-  add_beam_likelihood(prop_parse.beam_particle_weight());
+  add_beam_likelihood(prop_parse.beam_weight());
   add_num_actions(prop_parse.num_actions());
+}
 
+void AccuracyCounts::countAccuracy(const EisnerParser& prop_parse, 
+                                   const ParsedSentence& gold_parse) {
+  //just call parent method
+  parseCountAccuracy(prop_parse, gold_parse); 
+}
+
+//this isn't ideal, but good enough for now
+void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, 
+                                   const ParsedSentence& gold_parse) {
+  //parent method
+  transitionCountAccuracy(prop_parse, gold_parse); 
+  
   //resimulate the computation of the proposed action sequence to compute accuracy  
-  //TODO need an appropriate constructor
-  ArcStandardParser simul(prop_parse.sentence(), prop_parse.tags());
+  ArcStandardParser simul(prop_parse); //need sentence and tags
 
   for (auto& a: prop_parse.actions()) {
-    kAction next = simul.oracleDynamicNext(gold_arcs);
+    kAction next = simul.oracleNext(gold_parse);
+
     //count when shifted/reduced when it should have shifted/reduced
     if (next==kAction::sh) {
       inc_shift_gold();
@@ -75,21 +98,15 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse,
   }
 }
 
-void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcEagerParser& gold_parse) {
+void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse) {
   //parent method
-  countAccuracy(prop_parse, gold_parse); 
+  transitionCountAccuracy(prop_parse, gold_parse); 
   
-  //general for transition parser 
-  add_importance_likelihood(prop_parse.importance_weight());
-  add_beam_likelihood(prop_parse.beam_particle_weight());
-  add_num_actions(prop_parse.num_actions());
-
   //resimulate the computation of the proposed action sequence to compute accuracy  
-  //TODO need an appropriate constructor
-  ArcEagerParser simul(prop_parse.sentence(), prop_parse.tags());
+  ArcEagerParser simul(prop_parse);
   
   for (auto& a: prop_parse.actions()) {
-    kAction next = simul.oracleNext(gold_arcs);
+    kAction next = simul.oracleNext(gold_parse);
     
     //include more sophisticated statistics later
     //count when shifted/reduced when it should have shifted/reduced
@@ -105,6 +122,13 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ArcEa
     
     simul.execute_action(a);
   }
-            
 }  
+
+void AccuracyCounts::countLikelihood(double parse_l, double gold_l) {
+  add_gold_likelihood(gold_l);
+  if (gold_l < parse_l)
+    inc_gold_more_likely_count();
+}
+
+}
 

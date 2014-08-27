@@ -5,8 +5,8 @@
 #include<array>
 #include<cstdlib>
 
-#include "corpus/corpus.h"
-#include "arc_list.h"
+#include "corpus/dict.h"
+#include "parser.h"
 
 namespace oxlm {
 
@@ -15,7 +15,7 @@ typedef std::array<WordIndex, 4> ESplitChartItem;
 typedef std::vector<std::vector<EChartItem>> EChart;
 typedef std::vector<std::vector<ESplitChartItem>> ESplitChart;
 
-class EisnerParser: public Parse {
+class EisnerParser: public Parser {
   public:
 
   //specifically for generation
@@ -151,7 +151,7 @@ chart_[i][j][2] << ", " <<  chart_[i][j][3] << ") ";
  
   Words shift_context(WordIndex i, WordIndex j, WordIndex k) const {
     Words ctx(5, 0);
-    if (i >= 0 && i < static_cast<int>(tags_.size()))
+    if (i >= 0 && i < static_cast<int>(size()))
       ctx[4] = tag_at(i);
     else
       ctx[4] = 1; //stop word

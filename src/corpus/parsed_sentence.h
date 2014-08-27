@@ -17,20 +17,21 @@ class ParsedSentence: public TaggedSentence {
 
   ParsedSentence(Words sent, Words tags, Indices arcs);
 
+  ParsedSentence(const ParsedSentence& parse);
+
   void print_arcs() const {
     for (auto ind: arcs_)
       std::cout << ind << " ";
     std::cout << std::endl;   
   }
 
-  //this may be neccessary
- /* Indices arcs() const {
-    return arcs_;
-  } */
-
   virtual void set_arc(WordIndex i, WordIndex j) {
     if ((j >=0) && (j < size()))
       arcs_[i] = j;
+  }
+
+  virtual void push_arc() {
+    arcs_.push_back(-1);
   }
 
   WordIndex arc_at(WordIndex i) const {
@@ -39,11 +40,6 @@ class ParsedSentence: public TaggedSentence {
 
   bool has_arc(WordIndex i, WordIndex j) const {
     return (arcs_[i] == j);
-  }
-
-  friend bool equal_arcs(const ParsedSentence& parse1, 
-                      const ParsedSentence& parse2) const {
-    return (parse1.arcs_ == parse2.arcs_);
   }
 
   bool is_projective_dependency() const {
