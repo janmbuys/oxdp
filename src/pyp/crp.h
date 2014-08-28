@@ -11,8 +11,8 @@
 
 #include "utils/random.h"
 #include "utils/m.h"
-#include "slice_sampler.h"
-#include "crp_table_manager.h"
+#include "pyp/slice_sampler.h"
+#include "pyp/crp_table_manager.h"
 
 namespace oxlm {
 

@@ -46,11 +46,11 @@ class TransitionParser: public Parser {
   
   virtual bool is_terminal_configuration() const = 0;
 
-  virtual Words shift_context() const = 0;
-
-  virtual Words reduce_context() const = 0;
+  virtual Words word_context() const = 0;
 
   virtual Words tag_context() const = 0;
+  
+  virtual Words action_context() const = 0;
 
   virtual kAction oracleNext(const ParsedSentence& gold_arcs) const = 0;
  
@@ -138,11 +138,10 @@ class TransitionParser: public Parser {
   ActList actions() const {
     return actions_;
   }
-   
-  //do we need this?
-  /* kAction last_action() const {
+     
+  kAction last_action() const {
     return actions_.back();
-  } */
+  } 
 
   unsigned num_actions() const {
     return actions_.size();

@@ -4,12 +4,12 @@
 #include <vector>
 #include <unordered_map>
 
-#include "hpyplm.h"
 #include "corpus/dict.h"
 #include "utils/m.h"
 #include "utils/random.h"
-#include "hpyplm/uvector.h"
-#include "hpyplm/uniform_vocab.h"
+#include "pyp/uvector.h"
+#include "pyp/uniform_vocab.h"
+#include "pyp/pyplm.h"
 
 // An implementation of an (NW,NC)-gram LM based on PYPs that predicts each character 
 // of a word conditioned on the previous NW words and NC characters.

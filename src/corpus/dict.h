@@ -27,6 +27,7 @@ typedef std::vector<WordIndex> Indices; // WxList;
 typedef std::vector<Words> WordsList; //Sentences
 typedef std::vector<Indices> IndicesList;
 
+//add a cc file later, but not yet
 class Dict {
 // typedef std::unordered_map<std::string, WordId, std::hash<std::string> > Map;
 // typedef std::map<std::string, WordId> Map;
@@ -78,6 +79,8 @@ public:
       convert_tag(eos_, false);
     }
   } 
+
+  //TODO remove these methods
 
   void convert_whitespace_delimited_line(const std::string& line, std::vector<WordId>* out, bool frozen) {
     size_t cur = 0;
@@ -195,7 +198,9 @@ public:
   }
 
   WordId convert(const Word& word, bool frozen) {
-  
+    if (word == "")
+      return bad0_id_;
+
     //special treatment for sos_ (root)
     if (words_.size()==0 && !frozen) {
       words_.push_back(word);
@@ -255,6 +260,14 @@ public:
 
   WordId max() const {
     return words_.size()-1;
+  }
+
+  WordId sos() const {
+    return convert(sos_, true);
+  }
+
+  WordId eos() const {
+    return convert(eos_, true);
   }
 
   size_t size() const {
