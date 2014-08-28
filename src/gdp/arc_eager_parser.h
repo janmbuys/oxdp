@@ -81,23 +81,24 @@ class ArcEagerParser : public TransitionParser {
 
   //**functions that call the context vector functions for a given configuration
   //(ideally would assert length of order)
-  Words shift_context() const {
+  Words word_context() const {
     return word_tag_next_children_context();  //(order 6)
     //return word_tag_next_context();
-  }
-
-  Words reduce_context() const {
-    return tag_next_children_word_distance_context(); //lexicalized, smaller context (order 8)
-    //return tag_next_children_distance_some_context(); //smaller context
-    //return tag_next_children_distance_context(); //full
-    //return tag_next_children_word_context(); //lexicalized, full context (?)
   }
 
   Words tag_context() const {
     return tag_next_children_some_context(); //smaller context (order 6)
   }
  
+  Words action_context() const {
+    return tag_next_children_word_distance_context(); //lexicalized, smaller context (order 8)
+    //return tag_next_children_distance_some_context(); //smaller context
+    //return tag_next_children_distance_context(); //full
+    //return tag_next_children_word_context(); //lexicalized, full context (?)
+  }
+
   //TODO is there a better way to do this?
+  //problem is we can't append the action before it has been executed
   Words tag_context(kAction a) const {
     Words ctx = tag_next_children_some_context(); //smaller context (order 6)
     //Words ctx = tag_next_children_context(); //full context

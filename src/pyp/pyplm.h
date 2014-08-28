@@ -9,9 +9,8 @@
 
 #include "pyp/crp.h"
 #include "pyp/tied_parameter_resampler.h"
-
-#include "hpyplm/uvector.h"
-#include "hpyplm/uniform_vocab.h"
+#include "yp/uvector.h"
+#include "pyp/uniform_vocab.h"
 
 #include "corpus/dict.h"
 

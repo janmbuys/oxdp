@@ -29,7 +29,7 @@ ParsedSentence::ParsedSentence(Words sent, Words tags, Indices arcs):
 //copy constructor ignores the arc values
 ParsedSentence::ParsedSentence(const ParsedSentence& parse):
   TaggedSentence(parse),
-  arcs_()
+  arcs_(parse.size(), -1)
   {
   }
 

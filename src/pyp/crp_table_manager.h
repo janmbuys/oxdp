@@ -5,7 +5,7 @@
 #include <utility>
 
 #include "utils/random.h"
-#include "msparse_vector.h"
+#include "pyp/msparse_vector.h"
 
 namespace oxlm {
 
