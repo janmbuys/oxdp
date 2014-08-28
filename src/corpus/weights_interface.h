@@ -5,6 +5,7 @@ namespace oxlm {
 
 class WeightsInterface {
 
+  //use negative log probabilities for all predict functions
   virtual double predict(int word, vector<int> context) const = 0;
 
 };

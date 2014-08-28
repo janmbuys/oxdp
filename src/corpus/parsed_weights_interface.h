@@ -7,11 +7,11 @@ namespace oxlm {
 
 class ParsedWeightsInterface: public WeightsInterface {
 
-  virtual double predict_word(int word, vector<int> context) const = 0;
+  virtual double predictWord(int word, vector<int> context) const = 0;
 
-  virtual double predict_tag(int tag, vector<int> context) const = 0;
+  virtual double predictTag(int tag, vector<int> context) const = 0;
   
-  virtual double predict_action(int action, vector<int> context) const = 0;
+  virtual double predictAction(int action, vector<int> context) const = 0;
 };
 
 
