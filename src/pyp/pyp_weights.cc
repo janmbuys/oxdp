@@ -27,6 +27,19 @@ void PypWeights<wOrder>::updateRemove(const DataSet& examples) {
     word_lm->decrement(ex.word, ex.context, eng);
 }
 
+//update PYP model to insert one training example
+template<wOrder>
+void PypWeights<wOrder>::updateInsert(const DataPoint& example) {
+  word_lm->increment(example.prediction, example.context, eng);
+}
+
+//update PYP model to remove one training example
+template<wOrder>
+void PypWeights<wOrder>::updateRemove(const DataPoint& example) {
+  word_lm->decrement(example.word, example.context, eng);
+}
+
+
 template class PypWeights<wordLMOrder>;
 
 }
