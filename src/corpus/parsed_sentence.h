@@ -1,8 +1,8 @@
 #ifndef _CORPUS_PARSESENT_H_
 #define _CORPUS_PARSESENT_H_
 
-#include "dict.h"
-#include "tagged_sentence.h"
+#include "corpus/dict.h"
+#include "corpus/tagged_sentence.h"
 
 namespace oxlm {
 

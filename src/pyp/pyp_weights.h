@@ -1,44 +1,41 @@
 #ifndef _PYP_WEIGHTS_H_
 #define _PYP_WEIGHTS_H_
 
-#include "corpus/weights_interface.h"
+#include "pyp/pyp_weights_interface.h"
 #include "corpus/dict.h"
 #include "corpus/data_point.h"
 #include "pyp/pyplm.h"
 
 namespace oxlm {
 
-const wordLMOrder = 4;
+const LMOrder = 4;
 
-template<wOrder>
-class PypWeights: public WeightsInterface {
+template<kOrder>
+class PypWeights: public PypWeightsInterface {
 
   public:
   PypWeights(size_t vocab_size);
 
-  virtual double predict(WordId word, Words context);
+  double predict(WordId word, Words context) const override;
 
-  virtual double likelihood() {
-    return -word_lm.log_likelihood();
+  double likelihood() const override {
+    return -lm.log_likelihood();
   }
 
-  virtual void resample_hyperparameters() {
-    word_lm.resample_hyperparameters(eng);
-    std::cerr << "  [Word LLH=" << likelihood() << "]\n\n";    
-  }
+  void resampleHyperparameters() override;
 
-  virtual void PypWeights::updateInsert(const DataSet& examples);
+  void updateInsert(const DataSet& examples);
   
-  virtual void PypWeights::updateInsert(const DataPoint& example);
+  void updateInsert(const DataPoint& example);
 
-  virtual void PypWeights::updateRemove(const DataSet& examples);
+  void updateRemove(const DataSet& examples);
   
-  virtual void PypWeights::updateRemove(const DataPoint& example);
+  void updateRemove(const DataPoint& example);
 
   private:
-  PYPLM<wOrder> word_lm;
+  PYPLM<kOrder> lm;
   MT19937 eng;
-}
+};
 
 }
 

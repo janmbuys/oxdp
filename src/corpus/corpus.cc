@@ -1,10 +1,10 @@
 
-#include "corpus.h"
-#include "dict.h"
+#include "corpus/corpus.h"
+#include "corpus/dict.h"
 
 namespace oxlm {
 
-Corpus::Corpus()
+Corpus::Corpus():
   sentences_()
 {
 }
@@ -21,7 +21,7 @@ Words Corpus::convertWhitespaceDelimitedLine(const std::string& line, boost::sha
   //out.push_back(0); 
 
   while (cur < line.size()) {
-    if (is_ws(line[cur++])) {
+    if (Dict::is_ws(line[cur++])) {
       if (state == 0) 
         continue;
       out.push_back(dict->convert(line.substr(last, cur - last - 1), frozen));

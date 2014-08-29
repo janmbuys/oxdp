@@ -94,7 +94,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse,
     if (simul.buffer_empty() && next==kAction::re)
       inc_final_reduce_error_count();
     
-    simul.execute_action(a);
+    simul.executeAction(a);
   }
 }
 
@@ -120,7 +120,7 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const Parse
         inc_reduce_count();
     } 
     
-    simul.execute_action(a);
+    simul.executeAction(a);
   }
 }  
 

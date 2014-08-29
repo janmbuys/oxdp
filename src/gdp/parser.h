@@ -20,15 +20,14 @@ class Parser: public ParsedSentence {
   //Parse(const Parse& parse);
   Parser(const ParsedSentence& parse);
 
-  virtual void push_arc() {
+  void push_arc() override {
     ParsedSentence::push_arc();
     left_children_.push_back(Indices()); 
     right_children_.push_back(Indices()); 
   }
 
-  //overwriting parsed_sentence method.
   //may need a using statement
-  virtual void set_arc(WordIndex i, WordIndex j) {
+  void set_arc(WordIndex i, WordIndex j) override {
     ParsedSentence::set_arc(i, j);
       
     if ((j < 0) || (j >= size()))

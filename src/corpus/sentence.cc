@@ -1,4 +1,4 @@
-#include "sentence.h"
+#include "corpus/sentence.h"
 
 namespace oxlm {
 

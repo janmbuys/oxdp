@@ -1,9 +1,9 @@
-#include "corpus.h"
-#include "dict.h"
+#include "corpus/parsed_corpus.h"
+#include "corpus/dict.h"
 
 namespace oxlm {
 
-ParsedCorpus::ParsedCorpus()
+ParsedCorpus::ParsedCorpus():
   sentences_()
 {
 }
@@ -16,7 +16,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
   int col_num = 0;
    
   while(cur < line.size()) {
-    if (is_ws(line[cur++])) {
+    if (Dict::is_ws(line[cur++])) {
       if (state == 0) 
         continue;
       if (col_num == 1) //1 - word
@@ -39,7 +39,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
     sent_out->push_back(dict->convert(line.substr(last, cur - last), frozen));
 }
 
-void ParsedCorpus::readFromFile(const std::string& filename, boost::shared_ptr<Dict>& dict, 
+void ParsedCorpus::readFile(const std::string& filename, boost::shared_ptr<Dict>& dict, 
                                 bool frozen) {
   Words sent;
   Words tags;
@@ -64,7 +64,7 @@ void ParsedCorpus::readFromFile(const std::string& filename, boost::shared_ptr<D
         arcs.push_back(-1);
       }
 
-      sentence_.push_back(ParsedSentence(sent, tags, arcs));
+      sentences_.push_back(ParsedSentence(sent, tags, arcs));
       state = 1;
     } else {
       if (state==1) {

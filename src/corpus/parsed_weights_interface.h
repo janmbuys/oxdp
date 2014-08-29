@@ -1,17 +1,19 @@
 #ifndef _CORPUS_PWEIGHTS_I_H_
 #define _CORPUS_PWEIGHTS_I_H_
 
-#include "weights_interface.h"
+#include "corpus/weights_interface.h"
 
 namespace oxlm {
 
 class ParsedWeightsInterface: public WeightsInterface {
+  public:
+  virtual double predictWord(int word, std::vector<int> context) const = 0;
 
-  virtual double predictWord(int word, vector<int> context) const = 0;
-
-  virtual double predictTag(int tag, vector<int> context) const = 0;
+  virtual double predictTag(int tag, std::vector<int> context) const = 0;
   
-  virtual double predictAction(int action, vector<int> context) const = 0;
+  virtual double predictAction(int action, std::vector<int> context) const = 0;
+
+  virtual ~ParsedWeightsInterface() {}
 };
 
 

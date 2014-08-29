@@ -104,6 +104,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 add_subdirectory(utils)
 add_subdirectory(corpus)
+add_subdirectory(pyp)
 add_subdirectory(gdp)
 add_subdirectory(lbl)
 #there are also executables in hpyplm

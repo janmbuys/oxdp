@@ -2,45 +2,55 @@
 
 namespace oxlm {
 
-template<wOrder>
-PypWeights<wOrder>::PypWeights(size_t vocab_size):
-      word_lm(vocab_size, 1, 1, 1, 1),
+template<kOrder>
+PypWeights<kOrder>::PypWeights(size_t vocab_size):
+      lm(vocab_size, 1, 1, 1, 1),
       eng() {}
 
 //return negative log probability
-template<wOrder>
-PypWeights<wOrder>::predict(WordId word, Words context) {
-  return -std::log(word_lm.prob(word, context));
+template<kOrder>
+PypWeights<kOrder>::predict(WordId word, Words context) {
+  return -std::log(lm.prob(word, context));
+}
+
+template<kOrder>
+double PypWeights<kOrder>::likelihood() {
+  return -lm.log_likelihood();
+}
+
+template<kOrder>
+void PypWeights<kOrder>::resampleHyperparameters() {
+  lm.resample_hyperparameters(eng);
+  std::cerr << "  [LLH=" << likelihood() << "]\n\n";    
 }
 
 //update PYP model to insert new training examples 
-template<wOrder>
-void PypWeights<wOrder>::updateInsert(const DataSet& examples) {
+template<kOrder>
+void PypWeights<kOrder>::updateInsert(const DataSet& examples) {
   for (const auto& ex: examples) 
-    word_lm->increment(ex.prediction, ex.context, eng);
+    lm->increment(ex.prediction, ex.context, eng);
 }
 
 //update PYP model to remove old training examples
-template<wOrder>
-void PypWeights<wOrder>::updateRemove(const DataSet& examples) {
+template<kOrder>
+void PypWeights<kOrder>::updateRemove(const DataSet& examples) {
   for (const auto& ex: examples) 
-    word_lm->decrement(ex.word, ex.context, eng);
+    lm->decrement(ex.word, ex.context, eng);
 }
 
 //update PYP model to insert one training example
-template<wOrder>
-void PypWeights<wOrder>::updateInsert(const DataPoint& example) {
-  word_lm->increment(example.prediction, example.context, eng);
+template<kOrder>
+void PypWeights<kOrder>::updateInsert(const DataPoint& example) {
+  lm->increment(example.prediction, example.context, eng);
 }
 
 //update PYP model to remove one training example
-template<wOrder>
-void PypWeights<wOrder>::updateRemove(const DataPoint& example) {
-  word_lm->decrement(example.word, example.context, eng);
+template<kOrder>
+void PypWeights<kOrder>::updateRemove(const DataPoint& example) {
+  lm->decrement(example.word, example.context, eng);
 }
 
-
-template class PypWeights<wordLMOrder>;
+template class PypWeights<LMOrder>;
 
 }
 
