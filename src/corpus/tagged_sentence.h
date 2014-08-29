@@ -1,8 +1,8 @@
 #ifndef _CORPUS_TAGSENT_H_
 #define _CORPUS_TAGSENT_H_
 
-#include "dict.h"
-#include "sentence.h"
+#include "corpus/dict.h"
+#include "corpus/sentence.h"
 
 namespace oxlm {
 
@@ -26,7 +26,7 @@ class TaggedSentence: public Sentence {
   }
 
   //overriding base class method
-  virtual size_t size() const {
+  size_t size() const override {
     return tags_.size();
   }
 

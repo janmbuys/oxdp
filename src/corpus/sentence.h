@@ -1,7 +1,7 @@
 #ifndef _CORPUS_SENT_H_
 #define _CORPUS_SENT_H_
 
-#include "dict.h"
+#include "corpus/dict.h"
 
 namespace oxlm {
 

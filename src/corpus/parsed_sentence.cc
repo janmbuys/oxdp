@@ -1,4 +1,4 @@
-#include "parsed_sentence.h"
+#include "corpus/parsed_sentence.h"
 
 namespace oxlm {
 

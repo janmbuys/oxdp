@@ -143,4 +143,62 @@ kAction ArcEagerParser::oracleNext(const ParsedSentence& gold_parse) const {
   return a;
 }
 
+bool ArcEagerParser::isTerminalConfiguration() const {
+  //last word generated is STOP
+  return (!stack_empty() && (tag_at(stack_top()) == 1)); 
+    
+  // && !buffer_next_has_child());
+  //return (!is_stack_empty() && (stack_top() == static_cast<int>(sentence_length() - 1))); // && !buffer_next_has_child());
+
+  //return ((tag_at(stack_top()) == 1)); // && !buffer_next_has_child());
+  //if (is_generating()) 
+  //  return ((buffer_next() >= 3) && (stack_depth() == 1)); 
+  //else     
+  //  return (is_buffer_empty() && (stack_depth() == 1));
+}
+
+bool ArcEagerParser::executeAction(kAction a) {
+  switch(a) {
+  case kAction::sh:
+    return shift();
+  case kAction::la:
+    return leftArc();
+  case kAction::ra:
+    return rightArc();
+  case kAction::re:
+    return reduce();
+  default: 
+    std::cerr << "action not implemented" << std::endl;
+    return false;
+  }
+}
+
+Words ArcEagerParser::wordContext() const {
+  return word_tag_next_children_context();  //(order 6)
+  //return word_tag_next_context();
+}
+
+Words ArcEagerParser::tagContext() const {
+  return tag_next_children_some_context(); //smaller context (order 6)
+}
+ 
+//problem is we can't append the action before it has been executed
+Words ArcEagerParser::tagContext(kAction a) const {
+  Words ctx = tag_next_children_some_context(); //smaller context (order 6)
+  //Words ctx = tag_next_children_context(); //full context
+  ctx.push_back(ctx.back());
+  if (a == kAction::ra)
+    ctx.at(ctx.size()-2) = 1;
+  else
+    ctx.at(ctx.size()-2) = 0;
+  return ctx;
+}
+
+Words ArcEagerParser::actionContext() const {
+  return tag_next_children_word_distance_context(); //lexicalized, smaller context (order 8)
+  //return tag_next_children_distance_some_context(); //smaller context
+  //return tag_next_children_distance_context(); //full
+  //return tag_next_children_word_context(); //lexicalized, full context (?)
+}
+
 }

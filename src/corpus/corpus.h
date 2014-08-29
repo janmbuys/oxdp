@@ -8,7 +8,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "sentence.h"
+#include "corpus/sentence.h"
 
 namespace oxlm {
 
@@ -19,11 +19,12 @@ class Corpus {
   Words convertWhitespaceDelimitedLine(const std::string& line, boost::shared_ptr<Dict>& dict, 
                                              bool frozen);
 
-  void readFile(const std::string& filename, boost::shared_ptr<Dict>& dict, bool frozen);
+  virtual void readFile(const std::string& filename, boost::shared_ptr<Dict>& dict, bool frozen);
 
   Sentence sentence_at(unsigned i) const {
     return sentences_.at(i);
   }
+
 
   private:
   std::vector<Sentence> sentences_;

@@ -262,11 +262,11 @@ public:
     return words_.size()-1;
   }
 
-  WordId sos() const {
+  WordId sos() {
     return convert(sos_, true);
   }
 
-  WordId eos() const {
+  WordId eos() {
     return convert(eos_, true);
   }
 
@@ -277,17 +277,16 @@ public:
   size_t tag_size() const {
     return tags_.size();
   }
-
-  static bool is_ws(char x) {
-    return (x == ' ' || x == '\t');
-  }
-
   std::vector<Word> get_vocab() const {
     return words_;
   }
 
   bool valid(const WordId id) const {
     return (id >= 0);
+  }
+
+  static bool is_ws(char x) {
+    return (x == ' ' || x == '\t');
   }
 
   friend class boost::serialization::access;

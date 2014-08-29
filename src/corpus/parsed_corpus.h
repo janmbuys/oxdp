@@ -8,13 +8,14 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "sentence.h"
+#include "corpus/parsed_sentence.h"
 
 namespace oxlm {
 
+//NB this is not at the moment officially related to corpus
 class ParsedCorpus {
   public:
-  Corpus();
+  ParsedCorpus();
 
   void convertWhitespaceDelimitedConllLine(const std::string& line, 
       boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, Indices* arcs_out, bool frozen);

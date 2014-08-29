@@ -2,7 +2,7 @@
 #define _PYP_PARSE_WEIGHTS_H_
 
 #include "pyp/pyp_weights.h"
-#include "corpus/parsed_weights_interface.h"
+#include "pyp/pyp_parsed_weights_interface.h"
 #include "corpus/dict.h"
 #include "corpus/data_point.h"
 #include "pyp/pyplm.h"
@@ -13,49 +13,37 @@ const tagLMOrder = 6;
 const actionLMOrder = 6;
 
 //NB this is the unlexicalized model, with only tags
-template<wOrder, aOrder>
-class ParsedPypWeights: public PypWeights<wOrder>, public ParsedWeightsInterface {
+template<tOrder, aOrder>
+class ParsedPypWeights<tOrder, aOrder>: public PypWeights<tOrder>, public PypParsedWeightsInterface {
 
   public:
-  ParsedWeights(size_t vocab_size, size_t num_actions);
+  ParsedPypWeights(size_t num_tags, size_t num_actions);
 
-  virtual double predictWord(WordId word, Words context);
+  predictWord(WordId word, Words context) const;
   
-  virtual double predictTag(WordId tag, Words context);
+  double predictTag(WordId tag, Words context) const override;
 
-  virtual double predictAction(WordId action, Words context);
+  double predictAction(WordId action, Words context) const override;
 
-  virtual double word_likelihood() {
-    return 0;
-  }
+  double wordLikelihood() const override;
 
-  virtual double tag_likelihood() {
-    return PypWeights::log_likelihood();
-  }
+  double tagLikelihood() const override;
 
-  virtual double action_likelihood() {
-    return -action_lm.log_likelihood();
-  }
+  double action_likelihood() const override;
 
-  virtual double likelihood() {
-    return tag_likelihood() + action_likelihood();
-  }
+  double likelihood() const override;
 
-  virtual void resample_hyperparameters() {
-    PypWeights<wOrder>::resample_hyperparameters();
-    action_lm.resample_hyperparameters(eng);
-    std::cerr << "  [Action LLH=" << action_likelihood() << "]\n\n";    
-  }
+  void resampleHyperparameters() override;
 
-  virtual void PypWeights::updateInsert(const DataSet& tag_examples, 
+  void updateInsert(const DataSet& tag_examples, 
           const DataSet& action_examples);
 
-  virtual void PypWeights::updateRemove(const DataSet& tag_examples,
+  void updateRemove(const DataSet& tag_examples,
           const DataSet& action_examples);
 
   private:
   PYPLM<aOrder> action_lm;
-}
+};
 
 }
 

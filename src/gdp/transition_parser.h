@@ -36,24 +36,6 @@ class TransitionParser: public Parser {
  
   TransitionParser(Words sent, Words tags, int num_particles);
 
-  virtual bool shift() = 0;
-
-  virtual bool leftArc() = 0;
-
-  virtual bool rightArc() = 0;
-
-  virtual bool execute_action(kAction a) = 0;
-  
-  virtual bool is_terminal_configuration() const = 0;
-
-  virtual Words word_context() const = 0;
-
-  virtual Words tag_context() const = 0;
-  
-  virtual Words action_context() const = 0;
-
-  virtual kAction oracleNext(const ParsedSentence& gold_arcs) const = 0;
- 
   void pop_buffer() {
     ++buffer_next_;
   }
@@ -287,7 +269,7 @@ class TransitionParser: public Parser {
   } 
 
  
-  Words word_context() const {
+  Words raw_word_context() const {
     Words ctx(2, 0);
     
     if (stack_.size() >= 1) { 

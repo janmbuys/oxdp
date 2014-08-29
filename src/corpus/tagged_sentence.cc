@@ -1,4 +1,4 @@
-#include "tagged_sentence.h"
+#include "corpus/tagged_sentence.h"
 
 namespace oxlm {
 
