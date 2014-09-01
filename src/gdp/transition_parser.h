@@ -59,22 +59,24 @@ class TransitionParser: public Parser {
     importance_weight_ = 0;
   }
 
+  //TODO update usage of weight methods
+  
   void set_importance_weight(double w) {
-    importance_weight_ = -std::log(w);
+    importance_weight_ = w;
   }
 
   void add_importance_weight(double w) {
-    importance_weight_ -= std::log(w);
+    importance_weight_ += w;
   }
 
   //void set_log_particle_weight(double w) -> set_weight
 
   void set_particle_weight(double w) {
-    set_weight(-std::log(w));
+    set_weight(w);
   }
 
   void add_particle_weight(double w) {
-    add_weight(-std::log(w));
+    add_weight(w);
   }
 
   void add_beam_weight(double w) {

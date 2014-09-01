@@ -71,8 +71,6 @@ class Parser: public ParsedSentence {
     weight_ += w;
   }
 
-  //TODO update where child() -> child_at() is called
-
   //child i < head j
   //find child right of i
   WordIndex prev_left_child_at(WordIndex i, WordIndex j) const {
