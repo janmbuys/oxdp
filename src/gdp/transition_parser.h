@@ -5,6 +5,9 @@
 //  #include<functional>
 //  #include<cstdlib>
 
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+
 #include "utils/random.h"
 #include "corpus/dict.h"
 #include "parser.h"
@@ -1134,9 +1137,9 @@ class TransitionParser: public Parser {
   }
 
   //also probably won't work, but we can try...
-  /*
-  static bool cmp_particle_weights(const std::unique_ptr<TransitionParser>& p1, 
-                          const std::unique_ptr<TransitionParser>& p2) {
+  
+  static bool cmp_particle_weights(const boost::shared_ptr<TransitionParser>& p1, 
+                          const boost::shared_ptr<TransitionParser>& p2) {
     //null should be the biggest
     if (p1 == nullptr)
       return false;
@@ -1146,8 +1149,9 @@ class TransitionParser: public Parser {
       return (p1->particle_weight() < p2->particle_weight());
   }
 
-  static bool cmp_weighted_importance_weights(const std::unique_ptr<TransitionParser>& p1, 
-                                       const std::unique_ptr<TransitionParser>& p2) {
+
+  static bool cmp_weighted_importance_weights(const boost::shared_ptr<TransitionParser>& p1, 
+                                       const boost::shared_ptr<TransitionParser>& p2) {
     //null or no particles should be the biggest
     if ((p1 == nullptr) || (p1->num_particles() == 0))
       return false;
@@ -1155,8 +1159,7 @@ class TransitionParser: public Parser {
       return true;
     else
       return (p1->weighted_importance_weight() < p2->weighted_importance_weight());
-  } */
-
+  } 
 
   private:
   Indices stack_;
@@ -1167,31 +1170,6 @@ class TransitionParser: public Parser {
   int num_particles_;
 };
 
-
-//one option, but should move to a more appropriate class
-template<class Parser>
-bool cmp_particle_weights(const std::unique_ptr<Parser>& p1, 
-                          const std::unique_ptr<Parser>& p2) {
-  //null should be the biggest
-  if (p1 == nullptr)
-    return false;
-  else if (p2 == nullptr)
-    return true;
-  else
-    return (p1->particle_weight() < p2->particle_weight());
-}
-
-template<class Parser>
-bool cmp_weighted_importance_weights(const std::unique_ptr<Parser>& p1, 
-                                     const std::unique_ptr<Parser>& p2) {
-  //null or no particles should be the biggest
-  if ((p1 == nullptr) || (p1->num_particles() == 0))
-    return false;
-  else if ((p2 == nullptr) || (p2->num_particles() == 0))
-    return true;
-  else
-    return (p1->weighted_importance_weight() < p2->weighted_importance_weight());
-}
 
 /*
 inline bool cmp_particle_ptr_weights_as(const std::unique_ptr<ArcStandardParser>& p1, 

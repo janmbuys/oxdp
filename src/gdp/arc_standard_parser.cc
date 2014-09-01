@@ -107,7 +107,7 @@ kAction ArcStandardParser::oracleNext(const ParsedSentence& gold_parse) const {
   return a;
 }
 
-bool ArcStandardParser::isTerminalConfiguration() const {
+bool ArcStandardParser::inTerminalConfiguration() const {
   //if (is_generating()) return ((buffer_next() >= 3) && (stack_depth() == 1)); //&& !buffer_next_has_child());
   return (buffer_empty() && (stack_depth() == 1));
 }

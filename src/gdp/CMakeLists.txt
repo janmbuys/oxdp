@@ -9,6 +9,9 @@ add_libraries(gdp
   arc_eager_parser.cc
   arc_standard_parser.cc
   accuracy_counts.cc
+  parse_model.cc
+  arc_standard_parse_model.cc
+  arc_eager_parse_model.cc
 )
 
 target_link_libs(gdp corpus)

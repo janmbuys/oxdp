@@ -29,7 +29,7 @@ class ArcStandardParser : public TransitionParser, public TransitionParserInterf
   
   kAction oracleNext(const ParsedSentence& gold_parse) const override;
   
-  bool isTerminalConfiguration() const override;
+  bool inTerminalConfiguration() const override;
 
   bool executeAction(kAction a) override;
  

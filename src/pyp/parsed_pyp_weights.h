@@ -9,17 +9,17 @@
 
 namespace oxlm {
 
-const tagLMOrder = 6;
-const actionLMOrder = 6;
+#define tagLMOrder 6
+#define actionLMOrder 6
 
 //NB this is the unlexicalized model, with only tags
-template<tOrder, aOrder>
-class ParsedPypWeights<tOrder, aOrder>: public PypWeights<tOrder>, public PypParsedWeightsInterface {
+template<unsigned tOrder, unsigned aOrder>
+class ParsedPypWeights: public PypWeights<tOrder>, public PypParsedWeightsInterface {
 
   public:
   ParsedPypWeights(size_t num_tags, size_t num_actions);
 
-  predictWord(WordId word, Words context) const;
+  double predictWord(WordId word, Words context) const override;
   
   double predictTag(WordId tag, Words context) const override;
 
@@ -29,17 +29,17 @@ class ParsedPypWeights<tOrder, aOrder>: public PypWeights<tOrder>, public PypPar
 
   double tagLikelihood() const override;
 
-  double action_likelihood() const override;
+  double actionLikelihood() const override;
 
   double likelihood() const override;
 
-  void resampleHyperparameters() override;
+  void resampleHyperparameters(MT19937& eng) override;
 
   void updateInsert(const DataSet& tag_examples, 
-          const DataSet& action_examples);
+          const DataSet& action_examples, MT19937& eng);
 
   void updateRemove(const DataSet& tag_examples,
-          const DataSet& action_examples);
+          const DataSet& action_examples, MT19937& eng);
 
   private:
   PYPLM<aOrder> action_lm;
