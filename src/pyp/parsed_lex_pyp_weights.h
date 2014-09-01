@@ -5,11 +5,11 @@
 
 namespace oxlm {
 
-const wordLMOrder = 6;
+#define wordLMOrder 6
 
 //NB this is the unlexicalized model, with only tags
-template<wOrder, tOrder, aOrder>
-class ParsedLexPypWeights<wOrder, tOrder, aOrder>: public ParsedPypWeights<tOrder, aOrder> {
+template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
+class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
 
   public:
   ParsedLexPypWeights(size_t vocab_size, size_t num_tags, size_t num_actions);
@@ -18,27 +18,19 @@ class ParsedLexPypWeights<wOrder, tOrder, aOrder>: public ParsedPypWeights<tOrde
 
   double predictWord(WordId word, Words context) const override;
   
-  double likelihood() const override {
-    return wordLikelihood + tagLikelihood() + actionLikelihood();
-  }
+  double likelihood() const override;
 
-  double wordLikelihood() const override {
-    return -lex_lm.log_likelihood();
-  }
+  double wordLikelihood() const override;
 
-  void resampleHyperparameters() override {
-    ParsedPypWeights<tOrder, aOrder>::resampleHyperparameters();
-    lex_lm.resample_hyperparameters(eng);
-    std::cerr << "  [Word LLH=" << word_likelihood() << "]\n\n";    
-  }
+  void resampleHyperparameters(MT19937& eng) override;
 
   void updateInsert(const DataSet& word_examples,
                 const DataSet& tag_examples, 
-                const DataSet& action_examples);
+                const DataSet& action_examples, MT19937& eng);
 
   void updateRemove(const DataSet& word_examples,
           const DataSet& tag_examples,
-          const DataSet& action_examples);
+          const DataSet& action_examples, MT19937& eng);
 
   private:
   PYPLM<wOrder> lex_lm;

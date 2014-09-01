@@ -16,7 +16,7 @@ class TransitionParserInterface {
 
   virtual bool executeAction(kAction a) = 0;
   
-  virtual bool isTerminalConfiguration() const = 0;
+  virtual bool inTerminalConfiguration() const = 0;
 
   virtual Words wordContext() const = 0;
 
@@ -24,7 +24,7 @@ class TransitionParserInterface {
   
   virtual Words actionContext() const = 0;
 
-  virtual ~TransitionParserInterface() = 0 {};
+  virtual ~TransitionParserInterface() {}
 };
 
 }

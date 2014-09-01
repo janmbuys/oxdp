@@ -8,9 +8,9 @@
 
 namespace oxlm {
 
-const LMOrder = 4;
+#define LMOrder 4
 
-template<kOrder>
+template<unsigned kOrder>
 class PypWeights: public PypWeightsInterface {
 
   public:
@@ -18,23 +18,20 @@ class PypWeights: public PypWeightsInterface {
 
   double predict(WordId word, Words context) const override;
 
-  double likelihood() const override {
-    return -lm.log_likelihood();
-  }
+  double likelihood() const override;
 
-  void resampleHyperparameters() override;
+  void resampleHyperparameters(MT19937& eng) override;
 
-  void updateInsert(const DataSet& examples);
+  void updateInsert(const DataSet& examples, MT19937& eng);
   
-  void updateInsert(const DataPoint& example);
+  void updateInsert(const DataPoint& example, MT19937& eng);
 
-  void updateRemove(const DataSet& examples);
+  void updateRemove(const DataSet& examples, MT19937& eng);
   
-  void updateRemove(const DataPoint& example);
+  void updateRemove(const DataPoint& example, MT19937& eng);
 
   private:
   PYPLM<kOrder> lm;
-  MT19937 eng;
 };
 
 }

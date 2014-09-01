@@ -33,7 +33,7 @@ class ArcEagerParser : public TransitionParser, public TransitionParserInterface
 
   kAction oracleNext(const ParsedSentence& gold_parse) const override;
 
-  bool isTerminalConfiguration() const override;
+  bool inTerminalConfiguration() const override;
  
   bool executeAction(kAction a) override;
  
@@ -71,6 +71,22 @@ class ArcEagerParser : public TransitionParser, public TransitionParserInterface
 
     return ((buffer_next_ >= 3) && !buffer_next_has_child());
   } */
+
+  static bool cmp_reduce_particle_weights(const boost::shared_ptr<ArcEagerParser>& p1, 
+                                 const boost::shared_ptr<ArcEagerParser>& p2) {
+  //null should be the biggest
+  if (p1 == nullptr)
+    return false;
+  else if (p2 == nullptr)
+    return true;
+  //then those that cannot reduce
+  else if (!p1->reduce_valid())
+    return false;
+  else if (!p2->reduce_valid())
+    return true;
+  else
+    return (p1->particle_weight() < p2->particle_weight());
+  }
 
 };
 

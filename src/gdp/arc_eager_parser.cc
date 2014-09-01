@@ -143,7 +143,7 @@ kAction ArcEagerParser::oracleNext(const ParsedSentence& gold_parse) const {
   return a;
 }
 
-bool ArcEagerParser::isTerminalConfiguration() const {
+bool ArcEagerParser::inTerminalConfiguration() const {
   //last word generated is STOP
   return (!stack_empty() && (tag_at(stack_top()) == 1)); 
     
