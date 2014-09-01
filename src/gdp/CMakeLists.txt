@@ -10,11 +10,12 @@ add_libraries(gdp
   arc_standard_parser.cc
   accuracy_counts.cc
   parse_model.cc
+  eisner_parse_model.cc
   arc_standard_parse_model.cc
   arc_eager_parse_model.cc
 )
 
-target_link_libs(gdp corpus)
+target_link_libs(gdp corpus pyp)
 
 #############################################
 # Executables
@@ -25,6 +26,6 @@ set(EXECUTABLES
 )
 foreach(f ${EXECUTABLES})
  add_executable(${f} ${f}.cc)
- target_link_libraries(${f} gdp)
+ target_link_libraries(${f} corpus pyp gdp)
 endforeach(f)
 

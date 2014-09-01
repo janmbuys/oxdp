@@ -8,7 +8,9 @@
 
 namespace oxlm {
 
-#define LMOrder 4
+//this definition is problematic, as others depend on it
+//may need multiple template instansiations
+#define LMOrder 6
 
 template<unsigned kOrder>
 class PypWeights: public PypWeightsInterface {

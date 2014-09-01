@@ -5,6 +5,7 @@ namespace oxlm {
 ArcStandardParseModel::ArcStandardParseModel(unsigned beam_size):
   ParseModel(beam_size) {}
 
+//TODO make sure we are always dealing with neg log prob weights
 ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence& sent, 
                                                             const ParsedWeightsInterface& weights) {
   std::vector<AsParserList> beam_chart; 
@@ -29,11 +30,10 @@ ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence&
 
       //for every item in the list, add valid reduce actions to list i - 1 
       for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
-        //TODO see if we can get away with implicit casting
         double reduceleftarcp = weights.predictAction(static_cast<WordId>(kAction::la), beam_chart[i][j]->actionContext());
         double reducerightarcp = weights.predictAction(static_cast<WordId>(kAction::ra), beam_chart[i][j]->actionContext());
         //std::cout << "(la: " << reduceleftarcp << ", ra: " << reducerightarcp << ")" << " ";
-        double reducep = reduceleftarcp + reducerightarcp;
+        double reducep = neg_log_sum_exp(reduceleftarcp, reducerightarcp);
        
         //TODO have option to make la/ra choice deterministic
         beam_chart[i-1].push_back(boost::make_shared<ArcStandardParser>(*beam_chart[i][j]));

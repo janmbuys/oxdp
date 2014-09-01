@@ -107,7 +107,7 @@ add_subdirectory(corpus)
 add_subdirectory(pyp)
 add_subdirectory(gdp)
 add_subdirectory(lbl)
-#there are also executables in hpyplm
+#there are also executables in pyp
 #but we don't need them now
 
 # Third party libraries
