@@ -2,6 +2,7 @@
 #define _PYP_PARSE_LEX_WEIGHTS_H_
 
 #include "pyp/parsed_pyp_weights.h"
+#include "pyp/pyp_parsed_weights_interface.h"
 
 namespace oxlm {
 
@@ -32,8 +33,13 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
           const DataSet& tag_examples,
           const DataSet& action_examples, MT19937& eng);
 
+  size_t numWords() const override;
+
+  size_t vocabSize() const override;
+
   private:
-  PYPLM<wOrder> lex_lm;
+  PYPLM<wOrder> lex_lm_;
+  size_t lex_vocab_size_;
 };
 
 }

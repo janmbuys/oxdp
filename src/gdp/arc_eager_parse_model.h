@@ -2,22 +2,35 @@
 #define _GDP_AE_PARSE_MODEL_H_
 
 #include "gdp/arc_eager_parser.h"
-#include "gdp/parse_model.h"
+#include "gdp/transition_parse_model_interface.h"
+#include "corpus/parsed_weights_interface.h"
 
 namespace oxlm {
 
 typedef std::vector<boost::shared_ptr<ArcEagerParser>> AeParserList;
 
-class ArcEagerParseModel: public ParseModel {
+class ArcEagerParseModel: public TransitionParseModelInterface<ArcEagerParser> {
   public:
-  ArcEagerParseModel(unsigned size);
 
-  ArcEagerParser beamParseSentence(const ParsedSentence& sent, const ParsedWeightsInterface& weights);
+  void resampleParticles(AeParserList* beam_stack, MT19937& eng, unsigned num_particles) override;
+
+  ArcEagerParser beamParseSentence(const ParsedSentence& sent, const ParsedWeightsInterface& weights,
+          unsigned beam_size) override;
+
+  ArcEagerParser particleParseSentence(const ParsedSentence& sent, 
+        const ParsedWeightsInterface& weights, MT19937& eng, unsigned num_particles,
+        bool resample) override;
+
+  ArcEagerParser particleGoldParseSentence(const ParsedSentence& sent, 
+          const ParsedWeightsInterface& weights, MT19937& eng, 
+          unsigned num_particles, bool resample) override;
 
   ArcEagerParser staticGoldParseSentence(const ParsedSentence& sent, 
-                                    const ParsedWeightsInterface& weights);
+                                    const ParsedWeightsInterface& weights) override;
 
-  ArcEagerParser staticGoldParseSentence(const ParsedSentence& sent);
+  ArcEagerParser staticGoldParseSentence(const ParsedSentence& sent) override;
+
+  ArcEagerParser generateSentence(const ParsedWeightsInterface& weights, MT19937& eng) override;
 };
 
 }

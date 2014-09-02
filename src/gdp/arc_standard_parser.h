@@ -18,6 +18,8 @@ class ArcStandardParser : public TransitionParser, public TransitionParserInterf
   ArcStandardParser(Words sent, Words tags, int num_particles);
 
   ArcStandardParser(const ParsedSentence& parse);
+  
+  ArcStandardParser(const ParsedSentence& parse, int num_particles);
 
   bool shift() override;
 
