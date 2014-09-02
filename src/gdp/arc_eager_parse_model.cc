@@ -2,11 +2,30 @@
 
 namespace oxlm {
 
-ArcEagerParseModel::ArcEagerParseModel(unsigned size):
-  ParseModel(size) {}
+void ArcEagerParseModel::resampleParticles(AeParserList* beam_stack, MT19937& eng,
+        unsigned num_particles) {
+  //assume (beam_stack->at(pi)->num_particles() > 0)
+  std::vector<double> importance_w(beam_stack->size(), L_MAX); 
+  for (unsigned i = 0; i < importance_w.size(); ++i) 
+    importance_w[i] = beam_stack->at(i)->weighted_importance_weight();
+
+  //resample according to importance weight
+  multinomial_distribution_log part_mult(importance_w); 
+  std::vector<int> sample_counts(beam_stack->size(), 0);
+  for (unsigned i = 0; i < num_particles;) {
+    unsigned pi = part_mult(eng);
+    ++sample_counts[pi];
+    ++i;
+  }
+
+  for (unsigned i = 0; i < beam_stack->size(); ++i) {
+    beam_stack->at(i)->set_num_particles(sample_counts[i]);
+    beam_stack->at(i)->reset_importance_weight();
+  }
+}
 
 ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent, 
-                                                            const ParsedWeightsInterface& weights) {
+                           const ParsedWeightsInterface& weights, unsigned beam_size) {
   //index in beam_chart is depth-of-stack - 1
   std::vector<AeParserList> beam_chart; 
   beam_chart.push_back(AeParserList());
@@ -36,7 +55,7 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
         double reducep = weights.predictAction(static_cast<WordId>(kAction::re), 
                                                        beam_chart[i][j]->actionContext());
         //std::cout << "(la: " << leftarcreducep << ", re: " << reducep << ") ";
-        //double reducetotalp = leftarcreducep + reducep;
+        //double reducetotalp = neg_log_sum_exp(leftarcreducep, reducep);
        
         //actually also need importance weight if either is invalid
         //left arc invalid also after last shift
@@ -72,7 +91,7 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
                                               beam_chart[i][j]->actionContext());
         double rightarcshiftp = weights.predictAction(static_cast<WordId>(kAction::ra), 
                                               beam_chart[i][j]->actionContext());
-        //double shifttotalp = shiftp + rightarcshiftp;
+        //double shifttotalp = neg_log_sum_exp(shiftp, rightarcshiftp);
         //std::cout << "(sh: " << shiftp << ", ra: " << rightarcshiftp << ") ";
 
         //ra not valid for stop symbol
@@ -169,6 +188,345 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
 
 }
 
+ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& sent, 
+        const ParsedWeightsInterface& weights, MT19937& eng, unsigned num_particles,
+        bool resample) {
+//TODO
+  //Follow approach similar to per-word beam-search, but also keep track of number of particles that is equal to given state
+  //perform sampling and resampling to update these counts, and remove 0 count states
+
+  AeParserList beam_stack; 
+  beam_stack.push_back(boost::make_shared<ArcEagerParser>(sent, static_cast<int>(num_particles))); 
+
+  //shift ROOT symbol (probability 1)
+  beam_stack[0]->shift(); 
+
+  for (unsigned i = 1; i < sent.size(); ++i) {
+    unsigned shift_beam_size = beam_stack.size();
+    //std::cout << i << ": " << shift_beam_size << " ";
+    for (unsigned j = 0; j < beam_stack.size(); ++j) { 
+      if ((beam_stack[j]->num_particles()==0) || 
+          ((j >= shift_beam_size) && (beam_stack[j]->last_action() == kAction::ra)))
+        continue;
+       
+      //sample a sequence of possible actions leading up to the next shift or ra
+
+      int num_samples = beam_stack[j]->num_particles();
+
+      Words r_ctx = beam_stack[j]->actionContext();
+      double shiftp = weights.predictAction(static_cast<WordId>(kAction::sh), r_ctx);
+      double leftarcreducep = weights.predictAction(static_cast<WordId>(kAction::la), r_ctx);
+      double rightarcshiftp = weights.predictAction(static_cast<WordId>(kAction::ra), r_ctx);
+      double reducep = weights.predictAction(static_cast<WordId>(kAction::re), r_ctx); 
+      //double totalreducep = neg_log_sum_exp(reducep, leftarcreducep);
+
+      std::vector<int> sample_counts = {0, 0, 0, 0}; //shift, la, ra, re
+      
+      if (!beam_stack[j]->left_arc_valid())
+        leftarcreducep = L_MAX;
+      if (!beam_stack[j]->reduce_valid())
+        reducep = L_MAX;
+
+      std::vector<double> distr = {shiftp, leftarcreducep, rightarcshiftp, reducep};
+      multinomial_distribution_log mult(distr); 
+      for (int k = 0; k < num_samples; k++) {
+        WordId act = mult(eng);
+        ++sample_counts[act];
+      }
+      
+      //for reduce actions: 
+      if (sample_counts[1] > 0) {
+        beam_stack.push_back(boost::make_shared<ArcEagerParser>(*beam_stack[j]));
+        beam_stack.back()->leftArc();
+        beam_stack.back()->add_particle_weight(leftarcreducep); 
+        beam_stack.back()->set_num_particles(sample_counts[1]); 
+      }
+
+      if (sample_counts[3] > 0) {
+        beam_stack.push_back(boost::make_shared<ArcEagerParser>(*beam_stack[j]));
+        beam_stack.back()->reduce();
+        beam_stack.back()->add_particle_weight(reducep); 
+        beam_stack.back()->set_num_particles(sample_counts[3]); 
+      }
+
+      //for shift actions
+      if (sample_counts[2] > 0) {
+        beam_stack.push_back(boost::make_shared<ArcEagerParser>(*beam_stack[j]));
+
+        double tagp = weights.predictTag(beam_stack[j]->next_tag(), 
+                    beam_stack[j]->tagContext(kAction::ra));
+        double wordp = weights.predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+
+        beam_stack.back()->rightArc();
+        beam_stack.back()->add_importance_weight(wordp); 
+        beam_stack.back()->add_importance_weight(tagp); 
+        beam_stack.back()->add_particle_weight(rightarcshiftp); 
+        beam_stack.back()->add_particle_weight(wordp); 
+        beam_stack.back()->add_particle_weight(tagp); 
+        beam_stack.back()->set_num_particles(sample_counts[2]);
+      } 
+      
+      if (sample_counts[0] == 0)
+        beam_stack[j]->set_num_particles(0);
+      else {
+        double tagp = weights.predictTag(beam_stack[j]->next_tag(), 
+                    beam_stack[j]->tagContext(kAction::sh));
+        double wordp = weights.predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+
+        beam_stack[j]->shift();
+        beam_stack[j]->add_importance_weight(wordp); 
+        beam_stack[j]->add_importance_weight(tagp); 
+        beam_stack[j]->add_particle_weight(shiftp); 
+        beam_stack[j]->add_particle_weight(wordp); 
+        beam_stack[j]->add_particle_weight(tagp); 
+        beam_stack[j]->set_num_particles(sample_counts[0]);
+      }
+    }
+ 
+    if (resample) {
+      //sort and remove 
+      std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_weighted_importance_weights); 
+      for (int j = beam_stack.size()- 1; ((j >= 0) && (beam_stack[j]->num_particles() == 0)); --j)
+        beam_stack.pop_back();
+      //std::cout << "Beam size: " << beam_stack.size();
+      if (beam_stack.size() > 0)
+        resampleParticles(&beam_stack, eng, num_particles);
+      //int active_particle_count = 0;
+      //for (int j = 0; j < beam_stack.size(); ++j)
+      //  if (beam_stack[j]->num_particles() > 0)
+      //   ++active_particle_count;
+      //std::cout << " -> " << active_particle_count << " without null \n";
+    }
+  }
+     
+  ///completion
+  bool has_more_states = true;
+  //std::cout << " compl " << std::endl;
+
+  while (has_more_states) {
+    has_more_states = false;
+    unsigned cur_beam_size = beam_stack.size();
+    //std::cout << cur_beam_size << ": ";
+
+    for (unsigned j = 0; j < cur_beam_size; ++j) { 
+      if ((beam_stack[j]->num_particles() > 0) && !beam_stack[j]->inTerminalConfiguration()) {
+        //add paths for reduce actions
+        //std::cout << beam_stack[j]->stack_depth() << "," << beam_stack[j]->num_particles() << " ";
+        has_more_states = true; 
+        double reducep = weights.predictAction(static_cast<WordId>(kAction::re), beam_stack[j]->actionContext());
+        
+        if (beam_stack[j]->reduce_valid()) {
+          beam_stack[j]->reduce();
+          beam_stack[j]->add_particle_weight(reducep); 
+          beam_stack[j]->add_importance_weight(reducep); 
+        } else {
+          beam_stack[j]->set_num_particles(0);
+        }
+      }
+    }
+    //std::cout << std::endl;
+
+    //no point in resampling here
+  }
+
+  //alternatively, sort according to particle weight 
+  //std::sort(final_beam.begin(), final_beam.end(), cmp_particle_ptr_weights); //handle pointers
+ 
+  std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_weighted_importance_weights); 
+  for (int j = beam_stack.size()- 1; ((j >= 0) && (beam_stack[j]->num_particles() == 0)); --j)
+    beam_stack.pop_back();
+  //std::cout << "Final beam size: " << beam_stack.size() << std::endl;
+
+
+  /* if ((beam_stack.size() > 0) && take_max) {
+    //resampleParticles(&beam_stack, eng, num_particles);
+    std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_particle_weights); 
+    return ArcEagerParser(*beam_stack[0]); 
+  } */
+  if (beam_stack.size() > 0) {
+    //just take 1 sample
+    resampleParticles(&beam_stack, eng, 1);
+    for (unsigned i = 0; i < beam_stack.size(); ++i) {
+      if (beam_stack[i]->num_particles() == 1) {
+        //beam_stack[i]->print_arcs();
+        //float dir_acc = (beam_stack[i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
+        //std::cout << "  Dir Accuracy: " << dir_acc;
+        //std::cout << "  Sample weight: " << (beam_stack[i]->particle_weight()) << std::endl;
+        return ArcEagerParser(*beam_stack[i]); 
+      }
+    }
+  }
+
+  //std::cout << "no parse found" << std::endl;
+  return ArcEagerParser(sent);  
+}
+
+//4-way decisions
+ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentence& sent, 
+        const ParsedWeightsInterface& weights, MT19937& eng, 
+          unsigned num_particles, bool resample) {
+  //TODO
+  //Follow approach similar to per-word beam-search, but also keep track of number of particles that is equal to given state
+  //perform sampling and resampling to update these counts, and remove 0 count states
+
+  AeParserList beam_stack; 
+  beam_stack.push_back(boost::make_shared<ArcEagerParser>(sent, static_cast<int>(num_particles))); 
+
+  //shift ROOT symbol (probability 1)
+  beam_stack[0]->shift(); 
+
+  for (unsigned i = 1; i < sent.size(); ++i) {
+    for (unsigned j = 0; j < beam_stack.size(); ++j) { 
+      if (beam_stack[j]->num_particles()==0)
+        continue;
+       
+      //sample a sequence of possible actions leading up to the next shift
+
+      int num_samples = beam_stack[j]->num_particles();
+
+      Words r_ctx = beam_stack[j]->actionContext();
+      double shiftp = weights.predictAction(static_cast<WordId>(kAction::sh), r_ctx);
+      double leftarcreducep = weights.predictAction(static_cast<WordId>(kAction::la), r_ctx);
+      double rightarcshiftp = weights.predictAction(static_cast<WordId>(kAction::ra), r_ctx);
+      double reducep = weights.predictAction(static_cast<WordId>(kAction::re), r_ctx); 
+      double noarcp = neg_log_sum_exp(reducep, shiftp);
+      //double reducep = neg_log_sum_exp(reduceleftarcp, reducerightarcp); 
+      
+      kAction oracle_next = beam_stack[j]->oracleNext(sent);
+      //only ambiguity is if oracle_next==re - sh also allowed
+
+      if (oracle_next==kAction::la) {
+        beam_stack.push_back(boost::make_shared<ArcEagerParser>(*beam_stack[j]));
+        beam_stack.back()->leftArc();
+        beam_stack.back()->add_particle_weight(leftarcreducep); 
+        beam_stack.back()->add_importance_weight(leftarcreducep); 
+        beam_stack[j]->set_num_particles(0);
+      } else if (oracle_next==kAction::ra) {
+        double tagp = weights.predictTag(beam_stack[j]->next_tag(), 
+                beam_stack[j]->tagContext(kAction::ra));
+        double wordp = weights.predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+        
+        beam_stack[j]->rightArc();
+        beam_stack[j]->add_importance_weight(wordp); 
+        beam_stack[j]->add_importance_weight(tagp); 
+        beam_stack[j]->add_particle_weight(rightarcshiftp); 
+        beam_stack[j]->add_particle_weight(wordp); 
+        beam_stack[j]->add_particle_weight(tagp); 
+      } else {
+        if (oracle_next==kAction::re) {
+          //enforce at least 1 particle to reduce
+          std::vector<int> sample_counts = {0, 1}; //shift, reduce
+          std::vector<double> distr = {shiftp, reducep};
+          multinomial_distribution_log mult(distr); 
+          for (int k = 1; k < num_samples; k++) {
+            WordId act = mult(eng);
+            ++sample_counts[act];
+          }
+
+          if (sample_counts[1] > 0) {
+            beam_stack.push_back(boost::make_shared<ArcEagerParser>(*beam_stack[j]));
+            beam_stack.back()->reduce();
+            beam_stack.back()->add_particle_weight(reducep); 
+            beam_stack.back()->add_importance_weight(reducep - noarcp);
+            beam_stack.back()->set_num_particles(sample_counts[1]); 
+            beam_stack[j]->set_num_particles(sample_counts[0]);
+            beam_stack[j]->add_importance_weight(shiftp - noarcp);
+          }  
+          
+        }
+
+        //shift allowed
+        double tagp = weights.predictTag(beam_stack[j]->next_tag(), 
+                beam_stack[j]->tagContext(kAction::sh));
+        double wordp = weights.predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+
+        beam_stack[j]->shift();
+        beam_stack[j]->add_importance_weight(wordp); 
+        beam_stack[j]->add_importance_weight(tagp);
+        beam_stack[j]->add_particle_weight(shiftp); 
+        beam_stack[j]->add_particle_weight(wordp); 
+        beam_stack[j]->add_particle_weight(tagp); 
+      }
+    }
+       
+    if (resample) {
+      //sort and remove 
+      std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_weighted_importance_weights); 
+      for (int j = beam_stack.size()- 1; ((j >= 0) && (beam_stack[j]->num_particles() == 0)); --j)
+        beam_stack.pop_back();
+      //std::cout << "Beam size: " << beam_stack.size();
+      if (beam_stack.size() > 0)
+        resampleParticles(&beam_stack, eng, num_particles);
+      //int active_particle_count = 0;
+      //for (int j = 0; j < beam_stack.size(); ++j)
+      //  if (beam_stack[j]->num_particles() > 0)
+      //   ++active_particle_count;
+      //std::cout << " -> " << active_particle_count << " without null \n";
+    }
+  }
+  
+  //std::cout << "Beam size: " << beam_stack.size();
+  int active_particle_count = 0;
+  for (int j = 0; j < beam_stack.size(); ++j)
+    if (beam_stack[j]->num_particles() > 0)
+      ++active_particle_count;
+  //std::cout << " -> " << active_particle_count << " without null \n";
+
+  ///completion
+  bool has_more_states = true;
+
+  while (has_more_states) {
+    has_more_states = false;
+    //unsigned cur_beam_size = beam_stack.size();
+    //std::cout << cur_beam_size << ": ";
+
+    for (unsigned j = 0; j < beam_stack.size(); ++j) { 
+      if ((beam_stack[j]->num_particles() > 0) && !beam_stack[j]->inTerminalConfiguration()) {
+        //add paths for reduce actions
+        has_more_states = true; 
+        //include or not?
+        double reducep = weights.predictAction(static_cast<WordId>(kAction::re), beam_stack[j]->actionContext());
+       
+        kAction oracle_next = beam_stack[j]->oracleNext(sent);
+        if (oracle_next==kAction::re) {
+          beam_stack[j]->reduce();
+          //beam_stack[j]->add_particle_weight(reducep); 
+          //beam_stack[j]->add_importance_weight(reducep); 
+        } else {
+          beam_stack[j]->set_num_particles(0);
+        }
+      }
+    }
+    //std::cerr << std::endl;
+  }
+
+  //alternatively, sort according to particle weight 
+  //std::sort(final_beam.begin(), final_beam.end(), cmp_particle_ptr_weights); //handle pointers
+ 
+  std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_weighted_importance_weights); 
+  for (int j = beam_stack.size()- 1; ((j >= 0) && (beam_stack[j]->num_particles() == 0)); --j)
+    beam_stack.pop_back();
+  //std::cerr << beam_stack.size() << " ";
+
+  //just take 1 sample
+  if (beam_stack.size() > 0)
+    resampleParticles(&beam_stack, eng, 1);
+  for (unsigned i = 0; i < beam_stack.size(); ++i) {
+    if (beam_stack[i]->num_particles() == 1) {
+      //beam_stack[i]->print_arcs();
+      //float dir_acc = (beam_stack[i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
+      //std::cout << "  Dir Accuracy: " << dir_acc;
+      std::cout << "  Sample weight: " << (beam_stack[i]->particle_weight()) << std::endl;
+
+      return ArcEagerParser(*beam_stack[i]); 
+    }
+  }
+
+  std::cout << "no parse found" << std::endl;
+  return ArcEagerParser(sent);  
+}
+
+
 ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent,
                                         const ParsedWeightsInterface& weights) {
   ArcEagerParser parser(sent);
@@ -207,6 +565,106 @@ ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence&
 
   return parser;
 }
+
+ArcEagerParser ArcEagerParseModel::generateSentence(const ParsedWeightsInterface& weights, 
+        MT19937& eng) {
+  ArcEagerParser parser;
+  unsigned sent_limit = 100;
+  bool terminate_shift = false;
+  //bool need_shift = false;
+  parser.push_tag(0);
+  parser.shift(0);
+    
+  do {
+    kAction a = kAction::sh; //placeholder action
+    if (parser.size() >= sent_limit) {
+        // check to upper bound sentence length
+        //if (!terminate_shift)
+        //  std::cout << " LENGTH LIMITED ";
+        terminate_shift = true;
+        a = kAction::re;
+    } else {
+      Words r_ctx = parser.actionContext();
+      double shiftp = weights.predictAction(static_cast<WordId>(kAction::sh), r_ctx);
+      double leftarcreducep = weights.predictAction(static_cast<WordId>(kAction::la), r_ctx);
+      double rightarcshiftp = weights.predictAction(static_cast<WordId>(kAction::ra), r_ctx);
+      double reducep = weights.predictAction(static_cast<WordId>(kAction::re), r_ctx); 
+
+      if (!parser.left_arc_valid())
+        leftarcreducep = L_MAX;
+      if (!parser.reduce_valid())
+        reducep = L_MAX;
+      //if (leftarcreducep==0 && reducep==0)
+      //  std::cout << "[ra:" << rightarcshiftp << " sh:" << shiftp << "] ";
+
+      //sample an action
+      std::vector<double> distr = {shiftp, leftarcreducep, rightarcshiftp, reducep};
+      multinomial_distribution_log mult(distr); 
+      WordId act = mult(eng);
+      //std::cout << "(" << parser.stack_depth() << ") ";
+      //std::cout << act << " ";
+      parser.add_particle_weight(distr[act]);
+      
+      if (act==0) {
+        a = kAction::sh;
+      } else if (act==1) {
+        a = kAction::la; 
+        parser.leftArc();
+        //need_shift = true;
+      } else if (act==2) {
+        a = kAction::ra;
+      } else {
+        a = kAction::re;
+        parser.reduce();
+      }
+    } 
+
+    if ((a == kAction::sh) || (a == kAction::ra)) {
+      //need_shift = false;
+      //sample a tag - disallow root tag
+      Words t_ctx = parser.tagContext(a);
+      std::vector<double> t_distr(weights.numTags() - 1, L_MAX);
+      for (WordId w = 1; w < weights.numTags(); ++w) 
+        t_distr[w-1] = weights.predictTag(w, t_ctx); 
+      multinomial_distribution_log t_mult(t_distr);
+      WordId tag = t_mult(eng) + 1;
+
+      double tagp = weights.predictTag(tag, t_ctx); 
+      parser.push_tag(tag);
+      parser.add_particle_weight(tagp);
+
+      //sample a word 
+      Words w_ctx = parser.wordContext();
+      std::vector<double> w_distr(weights.numWords(), 0);
+
+      w_distr[0] = weights.predictWord(-1, w_ctx); //unk probability
+      for (WordId w = 1; w < weights.numWords(); ++w) 
+        w_distr[w] = weights.predictWord(w, w_ctx); 
+      multinomial_distribution_log w_mult(w_distr);
+      WordId word = w_mult(eng);
+      if (word==0)
+        word = -1;
+
+      double wordp = weights.predictWord(word, w_ctx); 
+      parser.add_particle_weight(wordp);
+      
+      //perform action
+      if (a == kAction::ra) {
+        parser.rightArc(word);
+      } else {
+        parser.shift(word);
+      }
+    } //extra condition that left-arc needs a shift following
+    //if (parser.inTerminalConfiguration())
+    //  std::cout << ":" << parser.stack_depth() << " ";
+
+  //} while ((!parser.inTerminalConfiguration() && !terminate_shift) || need_shift);
+  } while (!parser.inTerminalConfiguration() && !terminate_shift);
+  //std::cout << std::endl;
+
+  return parser;
+}
+
 
 }
 

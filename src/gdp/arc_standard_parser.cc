@@ -27,6 +27,12 @@ ArcStandardParser::ArcStandardParser(const ParsedSentence& parse):
 {
 }
 
+ArcStandardParser::ArcStandardParser(const ParsedSentence& parse, int num_particles):
+  TransitionParser(parse, num_particles) 
+{
+}
+
+
 bool ArcStandardParser::shift() {
   WordIndex i = buffer_next();
   pop_buffer();

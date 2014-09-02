@@ -27,6 +27,11 @@ ArcEagerParser::ArcEagerParser(const ParsedSentence& parse):
 {
 }   
 
+ArcEagerParser::ArcEagerParser(const ParsedSentence& parse, int num_particles):
+  TransitionParser(parse, num_particles) 
+{
+}
+
 bool ArcEagerParser::shift() {
   WordIndex i = buffer_next();
   pop_buffer();

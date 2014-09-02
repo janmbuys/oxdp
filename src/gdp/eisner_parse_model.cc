@@ -2,9 +2,6 @@
 
 namespace oxlm {
 
-EisnerParseModel::EisnerParseModel():
-  ParseModel(1) {}
-
 EisnerParser EisnerParseModel::parseSentence(const ParsedSentence& sent, 
         const ParsedWeightsInterface& weights) {
   EisnerParser parser(sent); 
@@ -132,7 +129,7 @@ EisnerParser EisnerParseModel::parseSentence(const ParsedSentence& sent,
   return parser;
 }
 
-void scoreSentence(EisnerParser* parser, const ParsedWeightsInterface& weights) {
+void EisnerParseModel::scoreSentence(EisnerParser* parser, const ParsedWeightsInterface& weights) {
   parser->reset_weight();
 
   for (WordIndex i = 1; (i < static_cast<int>(parser->size())); ++i) {

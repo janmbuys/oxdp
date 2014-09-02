@@ -2,18 +2,17 @@
 #define _GDP_ESNR_PARSE_MODEL_H_
 
 #include "gdp/eisner_parser.h"
-#include "gdp/parse_model.h"
+#include "corpus/parsed_weights_interface.h"
+#include "utils/random.h"
 
 namespace oxlm {
 
-class EisnerParseModel: public ParseModel {
+class EisnerParseModel {
   public:
-  EisnerParseModel();
 
   EisnerParser parseSentence(const ParsedSentence& sent, const ParsedWeightsInterface& weights);
 
-  EisnerParser scoreSentence(EisnerParser* parser, const ParsedWeightsInterface& weights);
-
+  void scoreSentence(EisnerParser* parser, const ParsedWeightsInterface& weights);
   
 };
 

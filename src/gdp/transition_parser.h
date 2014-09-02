@@ -34,10 +34,11 @@ class TransitionParser: public Parser {
 
   TransitionParser(Words sent, Words tags); 
 
-  //TransitionParser(const TransitionParser& parse);  
-  TransitionParser(const ParsedSentence& parse);  
- 
   TransitionParser(Words sent, Words tags, int num_particles);
+
+  TransitionParser(const ParsedSentence& parse);  
+  
+  TransitionParser(const ParsedSentence& parse, int num_particles);  
 
   void pop_buffer() {
     ++buffer_next_;
@@ -1138,8 +1139,6 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
-  //also probably won't work, but we can try...
-  
   static bool cmp_particle_weights(const boost::shared_ptr<TransitionParser>& p1, 
                           const boost::shared_ptr<TransitionParser>& p2) {
     //null should be the biggest
@@ -1171,111 +1170,6 @@ class TransitionParser: public Parser {
   double beam_weight_; //cummulative beam log particle weight
   int num_particles_;
 };
-
-
-/*
-inline bool cmp_particle_ptr_weights_as(const std::unique_ptr<ArcStandardParser>& p1, 
-                                     const std::unique_ptr<ArcStandardParser>& p2) {
-  //null should be the biggest
-  if (p1 == nullptr)
-    return false;
-  else if (p2 == nullptr)
-    return true;
-  else
-    return (p1->particle_weight() < p2->particle_weight());
-}
-
-inline bool cmp_importance_ptr_weights_as(const std::unique_ptr<ArcStandardParser>& p1, 
-                                     const std::unique_ptr<ArcStandardParser>& p2) {
-  //null should be the biggest
-  if (p1 == nullptr)
-    return false;
-  else if (p2 == nullptr)
-    return true;
-  else
-    return (p1->importance_weight() < p2->importance_weight());
-}
-
-inline bool cmp_weighted_particle_ptr_weights_as(const std::unique_ptr<ArcStandardParser>& p1, 
-                                              const std::unique_ptr<ArcStandardParser>& p2) {
-  //null or no particles should be the biggest
-  if ((p1 == nullptr) || (p1->num_particles() == 0))
-    return false;
-  else if ((p2 == nullptr) || (p2->num_particles() == 0))
-    return true;
-  else
-    return (p1->weighted_particle_weight() < p2->weighted_particle_weight());
-}
-
-inline bool cmp_weighted_importance_ptr_weights_as(const std::unique_ptr<ArcStandardParser>& p1, 
-                                                const std::unique_ptr<ArcStandardParser>& p2) {
-  //null or no particles should be the biggest
-  if ((p1 == nullptr) || (p1->num_particles() == 0))
-    return false;
-  else if ((p2 == nullptr) || (p2->num_particles() == 0))
-    return true;
-  else
-    return (p1->weighted_importance_weight() < p2->weighted_importance_weight());
-}
-
-inline bool cmp_reduce_particle_ptr_weights_ae(const std::unique_ptr<ArcEagerParser>& p1, 
-                                     const std::unique_ptr<ArcEagerParser>& p2) {
-  //null should be the biggest
-  if (p1 == nullptr)
-    return false;
-  else if (p2 == nullptr)
-    return true;
-  //then those that cannot reduce
-  else if (!p1->reduce_valid())
-    return false;
-  else if (!p2->reduce_valid())
-    return true;
-    return (p1->particle_weight() < p2->particle_weight());
-}
-
-inline bool cmp_particle_ptr_weights_ae(const std::unique_ptr<ArcEagerParser>& p1, 
-                                     const std::unique_ptr<ArcEagerParser>& p2) {
-  //null should be the biggest
-  if (p1 == nullptr)
-    return false;
-  else if (p2 == nullptr)
-    return true;
-  else
-    return (p1->particle_weight() < p2->particle_weight());
-}
-
-inline bool cmp_importance_ptr_weights_ae(const std::unique_ptr<ArcEagerParser>& p1, 
-                                     const std::unique_ptr<ArcEagerParser>& p2) {
-  //null should be the biggest
-  if (p1 == nullptr)
-    return false;
-  else if (p2 == nullptr)
-    return true;
-  else
-    return (p1->importance_weight() < p2->importance_weight());
-}
-
-inline bool cmp_weighted_particle_ptr_weights_ae(const std::unique_ptr<ArcEagerParser>& p1, 
-                                              const std::unique_ptr<ArcEagerParser>& p2) {
-  //null or no particles should be the biggest
-  if ((p1 == nullptr) || (p1->num_particles() == 0))
-    return false;
-  else if ((p2 == nullptr) || (p2->num_particles() == 0))
-    return true;
-  else
-    return (p1->weighted_particle_weight() < p2->weighted_particle_weight());
-}
-
-inline bool cmp_weighted_importance_ptr_weights_ae(const std::unique_ptr<ArcEagerParser>& p1, 
-                                                const std::unique_ptr<ArcEagerParser>& p2) {
-  //null or no particles should be the biggest
-  if ((p1 == nullptr) || (p1->num_particles() == 0))
-    return false;
-  else if ((p2 == nullptr) || (p2->num_particles() == 0))
-    return true;
-  else
-    return (p1->weighted_importance_weight() < p2->weighted_importance_weight());
-} */
 
 }
 #endif
