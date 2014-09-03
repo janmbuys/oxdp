@@ -277,6 +277,7 @@ public:
   size_t tag_size() const {
     return tags_.size();
   }
+
   std::vector<Word> get_vocab() const {
     return words_;
   }
