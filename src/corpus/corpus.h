@@ -25,6 +25,9 @@ class Corpus {
     return sentences_.at(i);
   }
 
+  size_t size() const {
+    return sentences_.size();
+  }
 
   private:
   std::vector<Sentence> sentences_;
