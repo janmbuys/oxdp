@@ -9,11 +9,12 @@ namespace oxlm {
 
 typedef std::vector<boost::shared_ptr<ArcStandardParser>> AsParserList;
 
-class ArcStandardParseModel: public TransitionParseModelInterface<ArcStandardParser> {
+class ArcStandardParseModel: public TransitionParseModelInterface {
   public:
 
-  void resampleParticles(AsParserList* beam_stack, MT19937& eng, unsigned num_particles) override;
+  void resampleParticles(AsParserList* beam_stack, MT19937& eng, unsigned num_particles);
 
+  //TODO downcast return type to TransitionParser
   ArcStandardParser beamParseSentence(const ParsedSentence& sent, const ParsedWeightsInterface& weights,
                 unsigned beam_size) override;
 

@@ -5,35 +5,43 @@ namespace oxlm {
 EisnerParser::EisnerParser():
   Parser(),
   chart_(),
-  split_chart_()
+  split_chart_(),
+  eos_{1}
   {
   }      
    
 EisnerParser::EisnerParser(Words tags):
   Parser(tags),
   chart_(tags.size(), std::vector<EChartItem>(tags.size(), EChartItem())),
-  split_chart_(tags.size(), std::vector<ESplitChartItem>(tags.size(), ESplitChartItem{-1, -1, -1, -1}))
+  split_chart_(tags.size(), std::vector<ESplitChartItem>(tags.size(), ESplitChartItem{-1, -1, -1, -1})),
+  eos_{1}
   {
   }
    
 EisnerParser::EisnerParser(Words sent, Words tags):
   Parser(tags),
   chart_(sent.size(), std::vector<EChartItem>(sent.size(), EChartItem())),
-  split_chart_(sent.size(), std::vector<ESplitChartItem>(sent.size(), ESplitChartItem{-1, -1, -1, -1}))
+  split_chart_(sent.size(), std::vector<ESplitChartItem>(sent.size(), ESplitChartItem{-1, -1, -1, -1})),
+  eos_{1}
   {
   }
 
 EisnerParser::EisnerParser(Words sent, Words tags, Indices arcs):
   Parser(sent, tags, arcs),
   chart_(sent.size(), std::vector<EChartItem>(sent.size(), EChartItem())),
-  split_chart_(sent.size(), std::vector<ESplitChartItem>(sent.size(), ESplitChartItem{-1, -1, -1, -1}))
+  split_chart_(sent.size(), std::vector<ESplitChartItem>(sent.size(), ESplitChartItem{-1, -1, -1, -1})),
+  eos_{1}
   {
   }
 
 EisnerParser::EisnerParser(const ParsedSentence& parse):
   Parser(parse),
   chart_(parse.size(), std::vector<EChartItem>(parse.size(), EChartItem())),
-  split_chart_(parse.size(), std::vector<ESplitChartItem>(parse.size(), ESplitChartItem{-1, -1, -1, -1})) {}
+  split_chart_(parse.size(), std::vector<ESplitChartItem>(parse.size(), 
+                         ESplitChartItem{-1, -1, -1, -1})),
+  eos_{1} 
+  {
+  }
 
 void EisnerParser::recoverParseTree(WordIndex s, WordIndex t, bool complete, 
        bool left_arc) {
@@ -72,7 +80,7 @@ Words EisnerParser::wordContext(WordIndex i, WordIndex j, WordIndex k) const {
   if (i >= 0 && i < static_cast<int>(size()))
     ctx[4] = tag_at(i);
   else
-    ctx[4] = 1; //stop word
+    ctx[4] = eos(); //stop word
   ctx[3] = tag_at(j);
   if (k > 0)
     ctx[2] = tag_at(k);
@@ -145,6 +153,44 @@ Words EisnerParser::tagContext(WordIndex i, WordIndex j) const {
 
   return ctx;
 } 
+
+
+void EisnerParser::extractExamples(const boost::shared_ptr<DataSet>& word_examples, 
+                                  const boost::shared_ptr<DataSet>& tag_examples) const {
+  //we should actually extract training examples in the same order as generation,
+  //but this shouldn't matter too much in practice
+  for (WordIndex i = 1; i < static_cast<int>(size()); ++i) {
+    //training example head j to i
+    WordIndex j = arc_at(i);
+    if (j == -1)
+      continue;
+    WordIndex prev_child = 0;
+    if (i < j)
+      prev_child = prev_left_child_at(i, j);
+    else if (j < i)
+      prev_child = prev_right_child_at(i, j);
+
+    tag_examples->push_back(DataPoint(tag_at(i), tagContext(i, j, prev_child)));
+    if (!(word_examples == nullptr)) 
+      word_examples->push_back(DataPoint(word_at(i), wordContext(i, j, prev_child)));
+  } 
+
+  for (WordIndex j = 0; j < static_cast<int>(size()); ++j) {
+    //training examples: no further left children
+    WordIndex prev_child = leftmost_child_at(j);
+ 
+    tag_examples->push_back(DataPoint(eos(), tagContext(-1, j, prev_child)));
+    if (!(word_examples == nullptr)) 
+      word_examples->push_back(DataPoint(eos(), wordContext(-1, j, prev_child)));
+    
+    //training examples: no further right children
+    prev_child = rightmost_child_at(j);
+
+    tag_examples->push_back(DataPoint(eos(), tagContext(size(), j, prev_child)));
+    if (!(word_examples == nullptr)) 
+      word_examples->push_back(DataPoint(eos(), wordContext(size(), j, prev_child)));
+  } 
+}
 
 }
 

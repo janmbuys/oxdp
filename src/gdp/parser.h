@@ -3,7 +3,9 @@
 #define _GDP_PARSE_H_
 
 #include "corpus/dict.h"
+#include "corpus/data_point.h"
 #include "corpus/parsed_sentence.h"
+
 
 namespace oxlm {
 

@@ -6,33 +6,29 @@
 
 namespace oxlm {
 
-template <class TParser>
+//try without a template
+
+//template <class TParser>
 class TransitionParseModelInterface {
-
   public:
-
-  //this is a bit of a duplication, but otherwise it would just make things more messy
-  virtual void resampleParticles(std::vector<boost::shared_ptr<TParser>>* beam_stack, MT19937& eng, 
-          unsigned num_particles) = 0;
-      
-  virtual TParser beamParseSentence(const ParsedSentence& sent, 
+  virtual TransitionParser beamParseSentence(const ParsedSentence& sent, 
         const ParsedWeightsInterface& weights, unsigned beam_size) = 0;
 
-  virtual TParser particleParseSentence(const ParsedSentence& sent, 
+  virtual TransitionParser particleParseSentence(const ParsedSentence& sent, 
         const ParsedWeightsInterface& weights, MT19937& eng, unsigned num_particles,
         bool resample) = 0;
 
   //sample a derivation for the gold parse, given the current model
-  virtual TParser particleGoldParseSentence(const ParsedSentence& sent, 
+  virtual TransitionParser particleGoldParseSentence(const ParsedSentence& sent, 
           const ParsedWeightsInterface& weights, MT19937& eng, 
           unsigned num_particles, bool resample) = 0;
 
-  virtual TParser staticGoldParseSentence(const ParsedSentence& sent, 
+  virtual TransitionParser staticGoldParseSentence(const ParsedSentence& sent, 
         const ParsedWeightsInterface& weights) = 0;
 
-  virtual TParser staticGoldParseSentence(const ParsedSentence& sent) = 0;
+  virtual TransitionParser staticGoldParseSentence(const ParsedSentence& sent) = 0;
 
-  virtual TParser generateSentence(const ParsedWeightsInterface& weights, MT19937& eng) = 0;
+  virtual TransitionParser generateSentence(const ParsedWeightsInterface& weights, MT19937& eng) = 0;
 
   virtual ~TransitionParseModelInterface() {}
 

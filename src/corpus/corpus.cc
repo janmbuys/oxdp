@@ -1,6 +1,6 @@
 
-#include "corpus/corpus.h"
 #include "corpus/dict.h"
+#include "corpus/corpus.h"
 
 namespace oxlm {
 
@@ -9,8 +9,8 @@ Corpus::Corpus():
 {
 }
 
-Words Corpus::convertWhitespaceDelimitedLine(const std::string& line, boost::shared_ptr<Dict>& dict, 
-                                             bool frozen) {
+Words Corpus::convertWhitespaceDelimitedLine(const std::string& line, 
+        const boost::shared_ptr<Dict>& dict, bool frozen) {
   Words out;
 
   size_t cur = 0;
@@ -45,7 +45,7 @@ Words Corpus::convertWhitespaceDelimitedLine(const std::string& line, boost::sha
 }
 
 
-void Corpus::readFile(const std::string& filename, boost::shared_ptr<Dict>& dict, bool frozen) {
+void Corpus::readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) {
   std::cerr << "Reading from " << filename << std::endl;
   std::ifstream in(filename);
   assert(in);
@@ -54,6 +54,19 @@ void Corpus::readFile(const std::string& filename, boost::shared_ptr<Dict>& dict
     Words sents = convertWhitespaceDelimitedLine(line, dict, frozen);
     sentences_.push_back(Sentence(sents));
   }
+}
+
+
+size_t Corpus::size() const {
+  return sentences_.size();
+}
+
+size_t Corpus::numTokens() const {
+  size_t total = 0;
+  for (auto sent: sentences_)
+    total += sent.size();
+
+  return total;
 }
 
 }

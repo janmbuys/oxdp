@@ -19,6 +19,8 @@ class ParsedPypWeights: public PypWeights<tOrder>, public PypParsedWeightsInterf
   public:
   ParsedPypWeights(size_t num_tags, size_t num_actions);
 
+  double predict(WordId word, Words context) const override;
+
   double predictWord(WordId word, Words context) const override;
   
   double predictTag(WordId tag, Words context) const override;
@@ -46,6 +48,8 @@ class ParsedPypWeights: public PypWeights<tOrder>, public PypParsedWeightsInterf
   size_t numTags() const override;
 
   size_t numActions() const override;
+  
+  size_t vocabSize() const override;
 
   private:
   PYPLM<aOrder> action_lm_;

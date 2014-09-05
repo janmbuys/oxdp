@@ -12,6 +12,8 @@ add_libraries(gdp
   eisner_parse_model.cc
   arc_standard_parse_model.cc
   arc_eager_parse_model.cc
+  model_config.cc
+  pyp_dp_model.cc
 )
 
 target_link_libs(gdp corpus pyp)
@@ -21,7 +23,7 @@ target_link_libs(gdp corpus pyp)
 #############################################
 
 set(EXECUTABLES
-  train_hpyp_dp
+  train_pyp_dp
 )
 foreach(f ${EXECUTABLES})
  add_executable(${f} ${f}.cc)

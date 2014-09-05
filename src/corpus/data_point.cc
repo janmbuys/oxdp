@@ -2,8 +2,8 @@
 
 namespace oxlm {
 
-DataPoint::DataPoint(const std::vector<int>& context, int word): 
-  context(context), 
-  word(word) {}
+DataPoint::DataPoint(int word, const std::vector<int>& context): 
+  word(word), 
+  context(context) {}
 
 } // namespace oxlm

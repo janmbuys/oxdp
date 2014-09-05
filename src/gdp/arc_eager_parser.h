@@ -47,6 +47,10 @@ class ArcEagerParser : public TransitionParser, public TransitionParserInterface
 
   Words actionContext() const override;
  
+  void extractExamples(const boost::shared_ptr<DataSet>& word_examples,
+                       const boost::shared_ptr<DataSet>& tag_examples,
+                       const boost::shared_ptr<DataSet>& action_examples) const override;
+
   bool left_arc_valid() const {
     //stack_size 1 -> stack top is root
     if (stack_depth() < 2)

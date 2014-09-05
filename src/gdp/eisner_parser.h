@@ -30,6 +30,9 @@ class EisnerParser: public Parser {
 
   void recoverParseTree(WordIndex s, WordIndex t, bool complete, bool left_arc);
 
+  void extractExamples(const boost::shared_ptr<DataSet>& word_examples, 
+                       const boost::shared_ptr<DataSet>& tag_examples) const;
+
   void set_left_incomplete_weight(WordIndex i, WordIndex j, double w) {
     chart_[i][j][0] = w;
   }
@@ -117,9 +120,14 @@ chart_[i][j][2] << ", " <<  chart_[i][j][3] << ") ";
 
   Words tagContext(WordIndex i, WordIndex j) const;
   
+  WordId eos() const {
+    return eos_;
+  }
+
   private: 
   EChart chart_;
   ESplitChart split_chart_;
+  WordId eos_;
 };
 
 }
