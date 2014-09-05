@@ -9,10 +9,10 @@ namespace oxlm {
 
 typedef std::vector<boost::shared_ptr<ArcEagerParser>> AeParserList;
 
-class ArcEagerParseModel: public TransitionParseModelInterface<ArcEagerParser> {
+class ArcEagerParseModel: public TransitionParseModelInterface {
   public:
 
-  void resampleParticles(AeParserList* beam_stack, MT19937& eng, unsigned num_particles) override;
+  void resampleParticles(AeParserList* beam_stack, MT19937& eng, unsigned num_particles);
 
   ArcEagerParser beamParseSentence(const ParsedSentence& sent, const ParsedWeightsInterface& weights,
           unsigned beam_size) override;

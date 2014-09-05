@@ -9,7 +9,7 @@ ParsedCorpus::ParsedCorpus():
 }
 
 void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line, 
-      boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, Indices* arcs_out, bool frozen) {
+      const boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, Indices* arcs_out, bool frozen) {
   size_t cur = 0;
   size_t last = 0;
   int state = 0;
@@ -39,7 +39,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
     sent_out->push_back(dict->convert(line.substr(last, cur - last), frozen));
 }
 
-void ParsedCorpus::readFile(const std::string& filename, boost::shared_ptr<Dict>& dict, 
+void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, 
                                 bool frozen) {
   Words sent;
   Words tags;
@@ -83,6 +83,18 @@ void ParsedCorpus::readFile(const std::string& filename, boost::shared_ptr<Dict>
       convertWhitespaceDelimitedConllLine(line, dict, &sent, &tags, &arcs, frozen); 
     }
   } 
+}
+
+size_t ParsedCorpus::size() const {
+  return sentences_.size();
+}
+
+size_t ParsedCorpus::numTokens() const {
+  size_t total = 0;
+  for (auto sent: sentences_)
+    total += sent.size() - 1;
+
+  return total;
 }
 
 }

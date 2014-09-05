@@ -206,4 +206,29 @@ Words ArcEagerParser::actionContext() const {
   //return tag_next_children_word_context(); //lexicalized, full context (?)
 }
 
+void ArcEagerParser::extractExamples(const boost::shared_ptr<DataSet>& word_examples,
+                       const boost::shared_ptr<DataSet>& tag_examples,
+                       const boost::shared_ptr<DataSet>& action_examples) const {
+  ArcEagerParser parser(*this); //will this work?
+ 
+  for (kAction& a: actions()) {
+    if (a == kAction::sh || a == kAction::ra) {
+      //tag prediction
+      tag_examples->push_back(DataPoint(parser.next_tag(), parser.tagContext(a)));  
+       
+      //word prediction
+      if (!(word_examples == nullptr))  //do we want to do this?
+        word_examples->push_back(DataPoint(parser.next_word(), parser.wordContext()));  
+    }  
+
+    //action prediction
+    action_examples->push_back(DataPoint(static_cast<WordId>(a), parser.actionContext()));
+    //std::cout << static_cast<WordId>(a) << std::endl;
+    parser.executeAction(a);
+  }
+}
+
+
+
+
 }

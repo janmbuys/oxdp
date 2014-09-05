@@ -6,10 +6,10 @@
 namespace oxlm {
 
 struct DataPoint {
-  DataPoint(const std::vector<int>& context, int word);
+  DataPoint(int word, const std::vector<int>& context);
 
-  std::vector<int> context;
   int word;
+  std::vector<int> context;
 };
 
 //for now

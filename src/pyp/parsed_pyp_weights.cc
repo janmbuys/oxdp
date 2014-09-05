@@ -8,6 +8,11 @@ ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(size_t num_tags, size_t num_a
   action_lm_(num_actions, 1, 1, 1, 1),
   num_actions_(num_actions) {}
 
+template<unsigned tOrder, unsigned aOrder> 
+double ParsedPypWeights<tOrder, aOrder>::predict(WordId word, Words context) const {
+  return predictTag(word, context);
+}
+
 template<unsigned tOrder, unsigned aOrder>
 double ParsedPypWeights<tOrder, aOrder>::predictWord(WordId word, Words context) const {
   return 0;
@@ -83,6 +88,10 @@ size_t ParsedPypWeights<tOrder, aOrder>::numActions() const {
   return num_actions_;
 }
 
+template<unsigned tOrder, unsigned aOrder>
+size_t ParsedPypWeights<tOrder, aOrder>::vocabSize() const {
+  return numTags();
+}
 
 template class ParsedPypWeights<tagLMOrder, actionLMOrder>;
 
