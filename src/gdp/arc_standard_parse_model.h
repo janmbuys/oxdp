@@ -14,24 +14,23 @@ class ArcStandardParseModel: public TransitionParseModelInterface {
 
   void resampleParticles(AsParserList* beam_stack, MT19937& eng, unsigned num_particles);
 
-  //TODO downcast return type to TransitionParser
-  ArcStandardParser beamParseSentence(const ParsedSentence& sent, const ParsedWeightsInterface& weights,
+  TransitionParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeightsInterface>& weights,
                 unsigned beam_size) override;
 
-  ArcStandardParser particleParseSentence(const ParsedSentence& sent, 
-        const ParsedWeightsInterface& weights, MT19937& eng, unsigned num_particles,
+  TransitionParser particleParseSentence(const ParsedSentence& sent, 
+        const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, unsigned num_particles,
         bool resample) override;
 
-  ArcStandardParser particleGoldParseSentence(const ParsedSentence& sent, 
-          const ParsedWeightsInterface& weights, MT19937& eng, 
+  TransitionParser particleGoldParseSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, 
           unsigned num_particles, bool resample) override;
 
-  ArcStandardParser staticGoldParseSentence(const ParsedSentence& sent, 
-                                             const ParsedWeightsInterface& weights) override;
+  TransitionParser staticGoldParseSentence(const ParsedSentence& sent, 
+                                             const boost::shared_ptr<ParsedWeightsInterface>& weights) override;
 
-  ArcStandardParser staticGoldParseSentence(const ParsedSentence& sent) override;
+  TransitionParser staticGoldParseSentence(const ParsedSentence& sent) override;
 
-  ArcStandardParser generateSentence(const ParsedWeightsInterface& weights, MT19937& eng) override;
+  TransitionParser generateSentence(const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng) override;
 };
 
 }

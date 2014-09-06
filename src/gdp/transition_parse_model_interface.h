@@ -3,6 +3,7 @@
 
 #include "corpus/parsed_sentence.h"
 #include "corpus/parsed_weights_interface.h"
+#include "gdp/transition_parser.h"
 
 namespace oxlm {
 
@@ -12,23 +13,23 @@ namespace oxlm {
 class TransitionParseModelInterface {
   public:
   virtual TransitionParser beamParseSentence(const ParsedSentence& sent, 
-        const ParsedWeightsInterface& weights, unsigned beam_size) = 0;
+        const boost::shared_ptr<ParsedWeightsInterface>& weights, unsigned beam_size) = 0;
 
   virtual TransitionParser particleParseSentence(const ParsedSentence& sent, 
-        const ParsedWeightsInterface& weights, MT19937& eng, unsigned num_particles,
+        const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, unsigned num_particles,
         bool resample) = 0;
 
   //sample a derivation for the gold parse, given the current model
   virtual TransitionParser particleGoldParseSentence(const ParsedSentence& sent, 
-          const ParsedWeightsInterface& weights, MT19937& eng, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, 
           unsigned num_particles, bool resample) = 0;
 
   virtual TransitionParser staticGoldParseSentence(const ParsedSentence& sent, 
-        const ParsedWeightsInterface& weights) = 0;
+        const boost::shared_ptr<ParsedWeightsInterface>& weights) = 0;
 
   virtual TransitionParser staticGoldParseSentence(const ParsedSentence& sent) = 0;
 
-  virtual TransitionParser generateSentence(const ParsedWeightsInterface& weights, MT19937& eng) = 0;
+  virtual TransitionParser generateSentence(const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng) = 0;
 
   virtual ~TransitionParseModelInterface() {}
 

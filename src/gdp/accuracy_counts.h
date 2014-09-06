@@ -92,13 +92,15 @@ public:
 
   void transitionCountAccuracy(const TransitionParser& prop_parse, const ParsedSentence& gold_parse); 
 
-  void countAccuracy(const ArcStandardParser& prop_parse, const ParsedSentence& gold_parse); 
+  void countEisnerAccuracy(const EisnerParser& prop_parse, const ParsedSentence& gold_parse); 
 
-  void countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse); 
+  void countArcStandardAccuracy(const TransitionParser& prop_parse, const ParsedSentence& gold_parse); 
 
-  void countAccuracy(const EisnerParser& prop_parse, const ParsedSentence& gold_parse); 
+  void countArcEagerAccuracy(const TransitionParser& prop_parse, const ParsedSentence& gold_parse); 
 
   void countLikelihood(double parse_l, double gold_l);
+
+  void printAccuracy() const;
 
   double directed_accuracy() const {
     return (directed_count_ + 0.0)/total_length_;

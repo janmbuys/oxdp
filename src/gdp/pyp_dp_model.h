@@ -14,6 +14,12 @@
 #include "pyp/parsed_pyp_weights.h"
 #include "pyp/parsed_lex_pyp_weights.h"
 
+#include "gdp/transition_parser.h"
+#include "gdp/transition_parse_model_interface.h"
+#include "gdp/arc_standard_parse_model.h"
+#include "gdp/arc_eager_parse_model.h"
+#include "gdp/accuracy_counts.h"
+
 namespace oxlm {
 
 //identity more abstractions later

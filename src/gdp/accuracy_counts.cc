@@ -62,14 +62,14 @@ void AccuracyCounts::transitionCountAccuracy(const TransitionParser& prop_parse,
   add_num_actions(prop_parse.num_actions());
 }
 
-void AccuracyCounts::countAccuracy(const EisnerParser& prop_parse, 
+void AccuracyCounts::countEisnerAccuracy(const EisnerParser& prop_parse, 
                                    const ParsedSentence& gold_parse) {
   //just call parent method
   parseCountAccuracy(prop_parse, gold_parse); 
 }
 
 //this isn't ideal, but good enough for now
-void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, 
+void AccuracyCounts::countArcStandardAccuracy(const TransitionParser& prop_parse, 
                                    const ParsedSentence& gold_parse) {
   //parent method
   transitionCountAccuracy(prop_parse, gold_parse); 
@@ -98,7 +98,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse,
   }
 }
 
-void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse) {
+void AccuracyCounts::countArcEagerAccuracy(const TransitionParser& prop_parse, const ParsedSentence& gold_parse) {
   //parent method
   transitionCountAccuracy(prop_parse, gold_parse); 
   
@@ -128,6 +128,31 @@ void AccuracyCounts::countLikelihood(double parse_l, double gold_l) {
   add_gold_likelihood(gold_l);
   if (gold_l < parse_l)
     inc_gold_more_likely_count();
+}
+
+void AccuracyCounts::printAccuracy() const {
+  std::cerr << "Directed Accuracy: " << directed_accuracy() << std::endl;
+  std::cerr << "Undirected Accuracy: " << undirected_accuracy() << std::endl;
+  std::cerr << "Final reduce error rate: " << final_reduce_error_rate() << std::endl;
+  std::cerr << "Completely correct: " << complete_accuracy() << std::endl;
+  std::cerr << "Root correct: " << root_accuracy() << std::endl;
+  std::cerr << "ArcDirection Precision: " << arc_dir_precision() << std::endl;
+  std::cerr << "Shift recall: " << shift_recall() << std::endl;
+  std::cerr << "Reduce recall: " << reduce_recall() << std::endl;   
+  std::cerr << "Total length: " << total_length() << std::endl;   
+  std::cerr << "Gold Log likelihood: " << gold_likelihood() << std::endl;   
+  std::cerr << "Gold Cross entropy: " << gold_cross_entropy() << std::endl;   
+  std::cerr << "Gold Perplexity: " << gold_perplexity() << std::endl;   
+  std::cerr << "Gold more likely: " << gold_more_likely() << std::endl;   
+  std::cerr << "Log likelihood: " << likelihood() << std::endl;   
+  std::cerr << "Cross entropy: " << cross_entropy() << std::endl;   
+  std::cerr << "Perplexity: " << perplexity() << std::endl;   
+  std::cerr << "Beam Log likelihood: " << beam_likelihood() << std::endl;   
+  std::cerr << "Beam Cross entropy: " << beam_cross_entropy() << std::endl;   
+  std::cerr << "Beam Perplexity: " << beam_perplexity() << std::endl;   
+  std::cerr << "Importance Log likelihood: " << importance_likelihood() << std::endl;   
+  std::cerr << "Importance Cross entropy: " << importance_cross_entropy() << std::endl;
+  std::cerr << "Importance Perplexity: " << importance_perplexity() << std::endl;   
 }
 
 }
