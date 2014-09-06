@@ -24,8 +24,8 @@ void ArcEagerParseModel::resampleParticles(AeParserList* beam_stack, MT19937& en
   }
 }
 
-ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent, 
-                           const ParsedWeightsInterface& weights, unsigned beam_size) {
+TransitionParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent, 
+                           const boost::shared_ptr<ParsedWeightsInterface>& weights, unsigned beam_size) {
   //index in beam_chart is depth-of-stack - 1
   std::vector<AeParserList> beam_chart; 
   beam_chart.push_back(AeParserList());
@@ -50,9 +50,9 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
       //consider reduce and left arc actions
       //for every item in the list, add valid reduce actions to list i - 1 
       for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
-        double leftarcreducep = weights.predictAction(static_cast<WordId>(kAction::la), 
+        double leftarcreducep = weights->predictAction(static_cast<WordId>(kAction::la), 
                                                        beam_chart[i][j]->actionContext());
-        double reducep = weights.predictAction(static_cast<WordId>(kAction::re), 
+        double reducep = weights->predictAction(static_cast<WordId>(kAction::re), 
                                                        beam_chart[i][j]->actionContext());
         //std::cout << "(la: " << leftarcreducep << ", re: " << reducep << ") ";
         //double reducetotalp = neg_log_sum_exp(leftarcreducep, reducep);
@@ -87,18 +87,18 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
       unsigned list_size = beam_chart[i].size();
       for (unsigned j = 0; j < list_size; ++j) {
           
-        double shiftp = weights.predictAction(static_cast<WordId>(kAction::sh), 
+        double shiftp = weights->predictAction(static_cast<WordId>(kAction::sh), 
                                               beam_chart[i][j]->actionContext());
-        double rightarcshiftp = weights.predictAction(static_cast<WordId>(kAction::ra), 
+        double rightarcshiftp = weights->predictAction(static_cast<WordId>(kAction::ra), 
                                               beam_chart[i][j]->actionContext());
         //double shifttotalp = neg_log_sum_exp(shiftp, rightarcshiftp);
         //std::cout << "(sh: " << shiftp << ", ra: " << rightarcshiftp << ") ";
 
         //ra not valid for stop symbol
         if (k < (sent.size() - 1)) {
-          double tagp = weights.predictTag(beam_chart[i][j]->next_tag(), 
+          double tagp = weights->predictTag(beam_chart[i][j]->next_tag(), 
                                            beam_chart[i][j]->tagContext(kAction::ra));
-          double wordp = weights.predictWord(beam_chart[i][j]->next_word(), 
+          double wordp = weights->predictWord(beam_chart[i][j]->next_word(), 
                                              beam_chart[i][j]->wordContext());
          
           beam_chart[i].push_back(boost::make_shared<ArcEagerParser>(*beam_chart[i][j]));
@@ -111,9 +111,9 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
         }
 
         //shift is valid
-        double tagp = weights.predictTag(beam_chart[i][j]->next_tag(), 
+        double tagp = weights->predictTag(beam_chart[i][j]->next_tag(), 
                                            beam_chart[i][j]->tagContext(kAction::sh));
-        double wordp = weights.predictWord(beam_chart[i][j]->next_word(), 
+        double wordp = weights->predictWord(beam_chart[i][j]->next_word(), 
                                              beam_chart[i][j]->wordContext());
           
         beam_chart[i][j]->shift();
@@ -145,7 +145,7 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
     //consider reduce and left arc actions
     //for every item in the list, add valid reduce actions to list i - 1 
     for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
-      double reducep = weights.predictAction(static_cast<WordId>(kAction::re), 
+      double reducep = weights->predictAction(static_cast<WordId>(kAction::re), 
                                              beam_chart[i][j]->actionContext());
                 
       if (beam_chart[i][j]->reduce_valid()) {  
@@ -188,8 +188,8 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
 
 }
 
-ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& sent, 
-        const ParsedWeightsInterface& weights, MT19937& eng, unsigned num_particles,
+TransitionParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& sent, 
+        const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, unsigned num_particles,
         bool resample) {
 //TODO
   //Follow approach similar to per-word beam-search, but also keep track of number of particles that is equal to given state
@@ -214,10 +214,10 @@ ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& s
       int num_samples = beam_stack[j]->num_particles();
 
       Words r_ctx = beam_stack[j]->actionContext();
-      double shiftp = weights.predictAction(static_cast<WordId>(kAction::sh), r_ctx);
-      double leftarcreducep = weights.predictAction(static_cast<WordId>(kAction::la), r_ctx);
-      double rightarcshiftp = weights.predictAction(static_cast<WordId>(kAction::ra), r_ctx);
-      double reducep = weights.predictAction(static_cast<WordId>(kAction::re), r_ctx); 
+      double shiftp = weights->predictAction(static_cast<WordId>(kAction::sh), r_ctx);
+      double leftarcreducep = weights->predictAction(static_cast<WordId>(kAction::la), r_ctx);
+      double rightarcshiftp = weights->predictAction(static_cast<WordId>(kAction::ra), r_ctx);
+      double reducep = weights->predictAction(static_cast<WordId>(kAction::re), r_ctx); 
       //double totalreducep = neg_log_sum_exp(reducep, leftarcreducep);
 
       std::vector<int> sample_counts = {0, 0, 0, 0}; //shift, la, ra, re
@@ -253,9 +253,9 @@ ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& s
       if (sample_counts[2] > 0) {
         beam_stack.push_back(boost::make_shared<ArcEagerParser>(*beam_stack[j]));
 
-        double tagp = weights.predictTag(beam_stack[j]->next_tag(), 
+        double tagp = weights->predictTag(beam_stack[j]->next_tag(), 
                     beam_stack[j]->tagContext(kAction::ra));
-        double wordp = weights.predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+        double wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
 
         beam_stack.back()->rightArc();
         beam_stack.back()->add_importance_weight(wordp); 
@@ -269,9 +269,9 @@ ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& s
       if (sample_counts[0] == 0)
         beam_stack[j]->set_num_particles(0);
       else {
-        double tagp = weights.predictTag(beam_stack[j]->next_tag(), 
+        double tagp = weights->predictTag(beam_stack[j]->next_tag(), 
                     beam_stack[j]->tagContext(kAction::sh));
-        double wordp = weights.predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+        double wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
 
         beam_stack[j]->shift();
         beam_stack[j]->add_importance_weight(wordp); 
@@ -313,7 +313,7 @@ ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& s
         //add paths for reduce actions
         //std::cout << beam_stack[j]->stack_depth() << "," << beam_stack[j]->num_particles() << " ";
         has_more_states = true; 
-        double reducep = weights.predictAction(static_cast<WordId>(kAction::re), beam_stack[j]->actionContext());
+        double reducep = weights->predictAction(static_cast<WordId>(kAction::re), beam_stack[j]->actionContext());
         
         if (beam_stack[j]->reduce_valid()) {
           beam_stack[j]->reduce();
@@ -362,8 +362,8 @@ ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& s
 }
 
 //4-way decisions
-ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentence& sent, 
-        const ParsedWeightsInterface& weights, MT19937& eng, 
+TransitionParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentence& sent, 
+        const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, 
           unsigned num_particles, bool resample) {
   //TODO
   //Follow approach similar to per-word beam-search, but also keep track of number of particles that is equal to given state
@@ -385,10 +385,10 @@ ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentenc
       int num_samples = beam_stack[j]->num_particles();
 
       Words r_ctx = beam_stack[j]->actionContext();
-      double shiftp = weights.predictAction(static_cast<WordId>(kAction::sh), r_ctx);
-      double leftarcreducep = weights.predictAction(static_cast<WordId>(kAction::la), r_ctx);
-      double rightarcshiftp = weights.predictAction(static_cast<WordId>(kAction::ra), r_ctx);
-      double reducep = weights.predictAction(static_cast<WordId>(kAction::re), r_ctx); 
+      double shiftp = weights->predictAction(static_cast<WordId>(kAction::sh), r_ctx);
+      double leftarcreducep = weights->predictAction(static_cast<WordId>(kAction::la), r_ctx);
+      double rightarcshiftp = weights->predictAction(static_cast<WordId>(kAction::ra), r_ctx);
+      double reducep = weights->predictAction(static_cast<WordId>(kAction::re), r_ctx); 
       double noarcp = neg_log_sum_exp(reducep, shiftp);
       //double reducep = neg_log_sum_exp(reduceleftarcp, reducerightarcp); 
       
@@ -402,9 +402,9 @@ ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentenc
         beam_stack.back()->add_importance_weight(leftarcreducep); 
         beam_stack[j]->set_num_particles(0);
       } else if (oracle_next==kAction::ra) {
-        double tagp = weights.predictTag(beam_stack[j]->next_tag(), 
+        double tagp = weights->predictTag(beam_stack[j]->next_tag(), 
                 beam_stack[j]->tagContext(kAction::ra));
-        double wordp = weights.predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+        double wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
         
         beam_stack[j]->rightArc();
         beam_stack[j]->add_importance_weight(wordp); 
@@ -436,9 +436,9 @@ ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentenc
         }
 
         //shift allowed
-        double tagp = weights.predictTag(beam_stack[j]->next_tag(), 
+        double tagp = weights->predictTag(beam_stack[j]->next_tag(), 
                 beam_stack[j]->tagContext(kAction::sh));
-        double wordp = weights.predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+        double wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
 
         beam_stack[j]->shift();
         beam_stack[j]->add_importance_weight(wordp); 
@@ -485,7 +485,7 @@ ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentenc
         //add paths for reduce actions
         has_more_states = true; 
         //include or not?
-        double reducep = weights.predictAction(static_cast<WordId>(kAction::re), beam_stack[j]->actionContext());
+        double reducep = weights->predictAction(static_cast<WordId>(kAction::re), beam_stack[j]->actionContext());
        
         kAction oracle_next = beam_stack[j]->oracleNext(sent);
         if (oracle_next==kAction::re) {
@@ -526,9 +526,8 @@ ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentenc
   return ArcEagerParser(sent);  
 }
 
-
-ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent,
-                                        const ParsedWeightsInterface& weights) {
+TransitionParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent,
+                                        const boost::shared_ptr<ParsedWeightsInterface>& weights) {
   ArcEagerParser parser(sent);
 
   kAction a = kAction::sh;
@@ -536,12 +535,12 @@ ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence&
     a = parser.oracleNext(sent);
     if (!(parser.buffer_empty() && (a == kAction::sh))) {
       //update particle weight
-      double actionp = weights.predictAction(static_cast<WordId>(a), parser.actionContext());
+      double actionp = weights->predictAction(static_cast<WordId>(a), parser.actionContext());
       parser.add_particle_weight(actionp);
 
       if (a == kAction::sh || a == kAction::ra) {
-        double tagp = weights.predictTag(parser.next_tag(), parser.tagContext(a));
-        double wordp = weights.predictWord(parser.next_word(), parser.wordContext());
+        double tagp = weights->predictTag(parser.next_tag(), parser.tagContext(a));
+        double wordp = weights->predictWord(parser.next_word(), parser.wordContext());
         parser.add_particle_weight(tagp);
         parser.add_particle_weight(wordp);
       }
@@ -553,7 +552,7 @@ ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence&
   return parser;
 }
 
-ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent) {
+TransitionParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent) {
   ArcEagerParser parser(sent);
 
   kAction a = kAction::sh;
@@ -566,7 +565,7 @@ ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence&
   return parser;
 }
 
-ArcEagerParser ArcEagerParseModel::generateSentence(const ParsedWeightsInterface& weights, 
+TransitionParser ArcEagerParseModel::generateSentence(const boost::shared_ptr<ParsedWeightsInterface>& weights, 
         MT19937& eng) {
   ArcEagerParser parser;
   unsigned sent_limit = 100;
@@ -585,10 +584,10 @@ ArcEagerParser ArcEagerParseModel::generateSentence(const ParsedWeightsInterface
         a = kAction::re;
     } else {
       Words r_ctx = parser.actionContext();
-      double shiftp = weights.predictAction(static_cast<WordId>(kAction::sh), r_ctx);
-      double leftarcreducep = weights.predictAction(static_cast<WordId>(kAction::la), r_ctx);
-      double rightarcshiftp = weights.predictAction(static_cast<WordId>(kAction::ra), r_ctx);
-      double reducep = weights.predictAction(static_cast<WordId>(kAction::re), r_ctx); 
+      double shiftp = weights->predictAction(static_cast<WordId>(kAction::sh), r_ctx);
+      double leftarcreducep = weights->predictAction(static_cast<WordId>(kAction::la), r_ctx);
+      double rightarcshiftp = weights->predictAction(static_cast<WordId>(kAction::ra), r_ctx);
+      double reducep = weights->predictAction(static_cast<WordId>(kAction::re), r_ctx); 
 
       if (!parser.left_arc_valid())
         leftarcreducep = L_MAX;
@@ -623,29 +622,29 @@ ArcEagerParser ArcEagerParseModel::generateSentence(const ParsedWeightsInterface
       //need_shift = false;
       //sample a tag - disallow root tag
       Words t_ctx = parser.tagContext(a);
-      std::vector<double> t_distr(weights.numTags() - 1, L_MAX);
-      for (WordId w = 1; w < weights.numTags(); ++w) 
-        t_distr[w-1] = weights.predictTag(w, t_ctx); 
+      std::vector<double> t_distr(weights->numTags() - 1, L_MAX);
+      for (WordId w = 1; w < weights->numTags(); ++w) 
+        t_distr[w-1] = weights->predictTag(w, t_ctx); 
       multinomial_distribution_log t_mult(t_distr);
       WordId tag = t_mult(eng) + 1;
 
-      double tagp = weights.predictTag(tag, t_ctx); 
+      double tagp = weights->predictTag(tag, t_ctx); 
       parser.push_tag(tag);
       parser.add_particle_weight(tagp);
 
       //sample a word 
       Words w_ctx = parser.wordContext();
-      std::vector<double> w_distr(weights.numWords(), 0);
+      std::vector<double> w_distr(weights->numWords(), 0);
 
-      w_distr[0] = weights.predictWord(-1, w_ctx); //unk probability
-      for (WordId w = 1; w < weights.numWords(); ++w) 
-        w_distr[w] = weights.predictWord(w, w_ctx); 
+      w_distr[0] = weights->predictWord(-1, w_ctx); //unk probability
+      for (WordId w = 1; w < weights->numWords(); ++w) 
+        w_distr[w] = weights->predictWord(w, w_ctx); 
       multinomial_distribution_log w_mult(w_distr);
       WordId word = w_mult(eng);
       if (word==0)
         word = -1;
 
-      double wordp = weights.predictWord(word, w_ctx); 
+      double wordp = weights->predictWord(word, w_ctx); 
       parser.add_particle_weight(wordp);
       
       //perform action
@@ -658,7 +657,6 @@ ArcEagerParser ArcEagerParseModel::generateSentence(const ParsedWeightsInterface
     //if (parser.inTerminalConfiguration())
     //  std::cout << ":" << parser.stack_depth() << " ";
 
-  //} while ((!parser.inTerminalConfiguration() && !terminate_shift) || need_shift);
   } while (!parser.inTerminalConfiguration() && !terminate_shift);
   //std::cout << std::endl;
 

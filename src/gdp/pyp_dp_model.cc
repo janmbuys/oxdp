@@ -145,25 +145,46 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, do
     
     std::vector<int> indices(test_corpus->size());
     std::iota(indices.begin(), indices.end(), 0);
-    
-    size_t start = 0;
-    while (start < test_corpus->size()) {
-      size_t end = std::min(start + config_->minibatch_size, test_corpus->size());
+   
+    //for now this is hard-coded 
+    std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32, 64};
 
-      //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
-      std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
-      double objective = 0;
-      TransitionParseModelInterface parse_model;
-      if (config_->parser_type==ParserType::arcstandard)
-        parse_model = ArcStandardParseModel();
-      else
-        parse_model = ArcEagerParseModel();
-      //TODO
+    for (unsigned beam_size: beam_sizes) {
+      AccuracyCounts acc_counts;
 
-      accumulator += objective;
-      start = end;
-    } 
+      size_t start = 0;
+      while (start < test_corpus->size()) {
+        size_t end = std::min(start + config_->minibatch_size, test_corpus->size());
 
+        //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
+        std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
+        double objective = 0;
+        boost::shared_ptr<TransitionParseModelInterface> parse_model;
+        //TransitionParseModelInterface parse_model;
+        if (config_->parser_type==ParserType::arcstandard)
+          parse_model = boost::make_shared<ArcStandardParseModel>();
+          //parse_model = ArcStandardParseModel();
+        else if (config_->parser_type==ParserType::arceager)
+          parse_model = boost::make_shared<ArcEagerParseModel>();
+          //parse_model = ArcEagerParseModel();
+        //TODO parallize, maybe move
+        for (size_t j = start; j < end; ++j) {
+          TransitionParser parse = parse_model->beamParseSentence(test_corpus->sentence_at(j), weights_, beam_size);
+
+          if (config_->parser_type==ParserType::arcstandard)
+            acc_counts.countArcStandardAccuracy(parse, test_corpus->sentence_at(j));
+          else if (config_->parser_type==ParserType::arceager)
+            acc_counts.countArcEagerAccuracy(parse, test_corpus->sentence_at(j));
+          objective += parse.particle_weight();
+          //TODO calculate gold likelihood
+        }
+
+        accumulator += objective;
+        start = end;
+      } 
+
+      acc_counts.printAccuracy();
+    }
   }
 }
 

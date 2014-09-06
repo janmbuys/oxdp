@@ -10,9 +10,9 @@ namespace oxlm {
 class EisnerParseModel {
   public:
 
-  EisnerParser parseSentence(const ParsedSentence& sent, const ParsedWeightsInterface& weights);
+  EisnerParser parseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeightsInterface>& weights);
 
-  void scoreSentence(EisnerParser* parser, const ParsedWeightsInterface& weights);
+  void scoreSentence(EisnerParser* parser, const boost::shared_ptr<ParsedWeightsInterface>& weights);
   
 };
 
