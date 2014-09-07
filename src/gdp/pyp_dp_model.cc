@@ -74,11 +74,12 @@ void PypDpModel::learn() {
 
       
       std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
-      //TODO implement context extractor, etc
       
       //index boundaries for splitting among threads
       //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
       //TODO implement training
+      //for now don't implement seperate context extractor 
+
 
       if ((minibatch_counter % 1000 == 0 && minibatch_counter <= 10000) || 
            minibatch_counter % 10000 == 0) {
