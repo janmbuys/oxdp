@@ -155,8 +155,7 @@ Words EisnerParser::tagContext(WordIndex i, WordIndex j) const {
 } 
 
 
-void EisnerParser::extractExamples(const boost::shared_ptr<DataSet>& word_examples, 
-                                  const boost::shared_ptr<DataSet>& tag_examples) const {
+void EisnerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
   //we should actually extract training examples in the same order as generation,
   //but this shouldn't matter too much in practice
   for (WordIndex i = 1; i < static_cast<int>(size()); ++i) {
@@ -170,25 +169,25 @@ void EisnerParser::extractExamples(const boost::shared_ptr<DataSet>& word_exampl
     else if (j < i)
       prev_child = prev_right_child_at(i, j);
 
-    tag_examples->push_back(DataPoint(tag_at(i), tagContext(i, j, prev_child)));
-    if (!(word_examples == nullptr)) 
-      word_examples->push_back(DataPoint(word_at(i), wordContext(i, j, prev_child)));
+    examples->add_tag_example(DataPoint(tag_at(i), tagContext(i, j, prev_child)));
+    //if (!(word_examples == nullptr)) 
+    examples->add_word_example(DataPoint(word_at(i), wordContext(i, j, prev_child)));
   } 
 
   for (WordIndex j = 0; j < static_cast<int>(size()); ++j) {
     //training examples: no further left children
     WordIndex prev_child = leftmost_child_at(j);
  
-    tag_examples->push_back(DataPoint(eos(), tagContext(-1, j, prev_child)));
-    if (!(word_examples == nullptr)) 
-      word_examples->push_back(DataPoint(eos(), wordContext(-1, j, prev_child)));
+    examples->add_tag_example(DataPoint(eos(), tagContext(-1, j, prev_child)));
+    //if (!(word_examples == nullptr)) 
+    examples->add_word_example(DataPoint(eos(), wordContext(-1, j, prev_child)));
     
     //training examples: no further right children
     prev_child = rightmost_child_at(j);
 
-    tag_examples->push_back(DataPoint(eos(), tagContext(size(), j, prev_child)));
-    if (!(word_examples == nullptr)) 
-      word_examples->push_back(DataPoint(eos(), wordContext(size(), j, prev_child)));
+    examples->add_tag_example(DataPoint(eos(), tagContext(size(), j, prev_child)));
+    //if (!(word_examples == nullptr)) 
+    examples->add_word_example(DataPoint(eos(), wordContext(size(), j, prev_child)));
   } 
 }
 

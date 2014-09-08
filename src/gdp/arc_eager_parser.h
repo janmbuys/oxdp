@@ -1,8 +1,9 @@
 #ifndef _GDP_AE_PARSER_H_
 #define _GDP_AE_PARSER_H_
 
-#include "transition_parser.h"
-#include "transition_parser_interface.h"
+#include "corpus/parse_data_set.h"
+#include "gdp/transition_parser.h"
+#include "gdp/transition_parser_interface.h"
 
 namespace oxlm {
 
@@ -47,9 +48,7 @@ class ArcEagerParser : public TransitionParser, public TransitionParserInterface
 
   Words actionContext() const override;
  
-  void extractExamples(const boost::shared_ptr<DataSet>& word_examples,
-                       const boost::shared_ptr<DataSet>& tag_examples,
-                       const boost::shared_ptr<DataSet>& action_examples) const override;
+  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const override;
 
   bool left_arc_valid() const {
     //stack_size 1 -> stack top is root

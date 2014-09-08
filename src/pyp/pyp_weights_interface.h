@@ -1,8 +1,9 @@
 #ifndef _PYP_WEIGHTS_I_H_ 
 #define _PYP_WEIGHTS_I_H_ 
 
-#include "corpus/weights_interface.h"
 #include "utils/random.h"
+#include "corpus/weights_interface.h"
+#include "corpus/data_set.h"
 
 namespace oxlm {
 
@@ -11,6 +12,10 @@ class PypWeightsInterface: public WeightsInterface {
   virtual double likelihood() const = 0;
 
   virtual void resampleHyperparameters(MT19937& eng) = 0;
+
+  virtual void updateInsert(const DataSet& examples, MT19937& eng) = 0;
+
+  virtual void updateRemove(const DataSet& examples, MT19937& eng) = 0;
 
   virtual ~PypWeightsInterface() {}
 };

@@ -6,9 +6,7 @@
 
 namespace oxlm {
 
-#define wordLMOrder 6
-
-//NB this is the unlexicalized model, with only tags
+//this is the lexicalized model, with tags and words
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
 
@@ -25,14 +23,14 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
 
   void resampleHyperparameters(MT19937& eng) override;
 
-  void updateInsert(const DataSet& word_examples,
-                const DataSet& tag_examples, 
-                const DataSet& action_examples, MT19937& eng);
+  void updateInsert(const ParseDataSet& examples, MT19937& eng) override;
 
-  void updateRemove(const DataSet& word_examples,
-          const DataSet& tag_examples,
-          const DataSet& action_examples, MT19937& eng);
+  void updateRemove(const ParseDataSet& examples, MT19937& eng) override;
 
+  void updateInsert(const DataSet& examples, MT19937& eng) override;
+
+  void updateRemove(const DataSet& examples, MT19937& eng) override;
+  
   size_t numWords() const override;
 
   size_t vocabSize() const override;

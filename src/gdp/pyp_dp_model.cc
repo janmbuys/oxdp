@@ -37,13 +37,23 @@ void PypDpModel::learn() {
 
   //instantiate weights
 
-  if (config_->lexicalised)
-    weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrder, tagLMOrder, actionLMOrder>>(
+  if (config_->lexicalised) {
+    if (config_->parser_type == ParserType::arcstandard)
+      weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(
             dict_->size(), dict_->tag_size(), num_actions_);
-  else
-    weights_ = boost::make_shared<ParsedPypWeights<tagLMOrder, actionLMOrder>>(
+    else if (config_->parser_type == ParserType::arceager)
+      weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>(
+            dict_->size(), dict_->tag_size(), num_actions_);
+
+  } else {
+    if (config_->parser_type == ParserType::arcstandard)
+      weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(
             dict_->tag_size(), num_actions_);
- 
+    else if (config_->parser_type == ParserType::arceager)
+      weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>(
+            dict_->tag_size(), num_actions_);
+  }
+
   std::vector<int> indices(training_corpus->size());
   std::iota(indices.begin(), indices.end(), 0);
 

@@ -7,10 +7,13 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
-#include "pyp/pyp_parsed_weights_interface.h"
-#include "gdp/model_config.h"
 #include "corpus/dict.h"
 #include "corpus/parsed_corpus.h"
+#include "corpus/parse_data_set.h"
+
+#include "pyp/utils.h"
+#include "pyp/pyp_parsed_weights_interface.h"
+#include "gdp/model_config.h"
 #include "pyp/parsed_pyp_weights.h"
 #include "pyp/parsed_lex_pyp_weights.h"
 

@@ -12,8 +12,7 @@ struct DataPoint {
   std::vector<int> context;
 };
 
-//for now
-typedef std::vector<DataPoint> DataSet;
+typedef std::vector<DataPoint> DataPoints;
 
 } // namespace oxlm
 

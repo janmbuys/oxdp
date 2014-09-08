@@ -9,6 +9,8 @@ add_libraries(corpus
   corpus.cc
   parsed_corpus.cc
   data_point.cc
+  data_set.cc
+  parse_data_set.cc
 )
 
 #target_link_libs(corpus)

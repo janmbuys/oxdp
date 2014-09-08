@@ -1,6 +1,7 @@
 #ifndef _GDP_AS_PARSER_H
 #define _GDP_AS_PARSER_H
 
+#include "corpus/parse_data_set.h"
 #include "gdp/transition_parser.h"
 #include "gdp/transition_parser_interface.h"
 
@@ -48,9 +49,7 @@ class ArcStandardParser : public TransitionParser, public TransitionParserInterf
     return (i != 0);
   }
 
-  void extractExamples(const boost::shared_ptr<DataSet>& word_examples,
-                       const boost::shared_ptr<DataSet>& tag_examples,
-                       const boost::shared_ptr<DataSet>& action_examples) const override;
+  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const override;
 
   //just in case this might help
   //but this should be static...

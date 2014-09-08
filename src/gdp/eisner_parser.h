@@ -6,7 +6,8 @@
 #include<cstdlib>
 
 #include "corpus/dict.h"
-#include "parser.h"
+#include "corpus/parse_data_set.h"
+#include "gdp/parser.h"
 
 namespace oxlm {
 
@@ -30,8 +31,7 @@ class EisnerParser: public Parser {
 
   void recoverParseTree(WordIndex s, WordIndex t, bool complete, bool left_arc);
 
-  void extractExamples(const boost::shared_ptr<DataSet>& word_examples, 
-                       const boost::shared_ptr<DataSet>& tag_examples) const;
+  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
 
   void set_left_incomplete_weight(WordIndex i, WordIndex j, double w) {
     chart_[i][j][0] = w;

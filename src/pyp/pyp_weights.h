@@ -5,12 +5,9 @@
 #include "corpus/dict.h"
 #include "corpus/data_point.h"
 #include "pyp/pyplm.h"
+#include "pyp/utils.h"
 
 namespace oxlm {
-
-//this definition is problematic, as others depend on it
-//may need multiple template instansiations
-#define LMOrder 6
 
 template<unsigned kOrder>
 class PypWeights: public PypWeightsInterface {
@@ -24,12 +21,16 @@ class PypWeights: public PypWeightsInterface {
 
   void resampleHyperparameters(MT19937& eng) override;
 
-  void updateInsert(const DataSet& examples, MT19937& eng);
+  void updateInsert(const DataSet& examples, MT19937& eng) override;
+  
+  void updateRemove(const DataSet& examples, MT19937& eng) override;
+ 
+  void updateInsert(const DataPoints& examples, MT19937& eng);
+  
+  void updateRemove(const DataPoints& examples, MT19937& eng);
   
   void updateInsert(const DataPoint& example, MT19937& eng);
 
-  void updateRemove(const DataSet& examples, MT19937& eng);
-  
   void updateRemove(const DataPoint& example, MT19937& eng);
 
   size_t vocabSize() const override;

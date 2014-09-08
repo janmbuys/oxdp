@@ -57,20 +57,30 @@ void ParsedPypWeights<tOrder, aOrder>::resampleHyperparameters(MT19937& eng) {
 
 //update PYP model to insert new training examples 
 template<unsigned tOrder, unsigned aOrder>
-void ParsedPypWeights<tOrder, aOrder>::updateInsert(const DataSet& tag_examples, 
-        const DataSet& action_examples, MT19937& eng) {
-  PypWeights<tOrder>::updateInsert(tag_examples, eng);
-  for (const auto& ex: action_examples) 
-    action_lm_.increment(ex.word, ex.context, eng);
+void ParsedPypWeights<tOrder, aOrder>::updateInsert(const ParseDataSet& examples, MT19937& eng) {
+  PypWeights<tOrder>::updateInsert(examples.tag_examples(), eng);
+  for (unsigned i = 0; i < examples.size(); ++i)
+    action_lm_.increment(examples.action_at(i), examples.action_context_at(i), eng);
 }
 
 //update PYP model to remove old training examples
 template<unsigned tOrder, unsigned aOrder>
-void ParsedPypWeights<tOrder, aOrder>::updateRemove(const DataSet& tag_examples, 
-        const DataSet& action_examples, MT19937& eng) {
-  PypWeights<tOrder>::updateRemove(tag_examples, eng);
-  for (const auto& ex: action_examples) 
-    action_lm_.decrement(ex.word, ex.context, eng);
+void ParsedPypWeights<tOrder, aOrder>::updateRemove(const ParseDataSet& examples, MT19937& eng) {
+  PypWeights<tOrder>::updateRemove(examples.tag_examples(), eng);
+  for (unsigned i = 0; i < examples.size(); ++i)
+    action_lm_.decrement(examples.action_at(i), examples.action_context_at(i), eng);
+}
+
+//update PYP model to insert new training examples 
+template<unsigned tOrder, unsigned aOrder>
+void ParsedPypWeights<tOrder, aOrder>::updateInsert(const DataSet& examples, MT19937& eng) {
+  PypWeights<tOrder>::updateInsert(examples, eng);
+}
+
+//update PYP model to remove old training examples
+template<unsigned tOrder, unsigned aOrder>
+void ParsedPypWeights<tOrder, aOrder>::updateRemove(const DataSet& examples, MT19937& eng) {
+  PypWeights<tOrder>::updateRemove(examples, eng);
 }
 
 template<unsigned tOrder, unsigned aOrder>
@@ -93,7 +103,11 @@ size_t ParsedPypWeights<tOrder, aOrder>::vocabSize() const {
   return numTags();
 }
 
-template class ParsedPypWeights<tagLMOrder, actionLMOrder>;
+template class ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>;
+
+#if ((tagLMOrderAS != tagLMOrderAE) || (actionLMOrderAS != actionLMOrderAE))
+template class ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>;
+#endif
 
 }
 

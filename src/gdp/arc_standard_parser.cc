@@ -152,23 +152,21 @@ Words ArcStandardParser::actionContext() const {
   //return tag_some_children_distance_context(); //best smaller context (order 6)
 }
 
-void ArcStandardParser::extractExamples(const boost::shared_ptr<DataSet>& word_examples,
-                       const boost::shared_ptr<DataSet>& tag_examples,
-                       const boost::shared_ptr<DataSet>& action_examples) const {
-  ArcStandardParser parser(*this); //will this work?
+void ArcStandardParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
+  ArcStandardParser parser(*this); 
  
   for (kAction& a: actions()) {
     if (a == kAction::sh) {
       //tag prediction
-      tag_examples->push_back(DataPoint(parser.next_tag(), parser.tagContext()));  
+      examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext()));  
        
       //word prediction
-      if (!(word_examples == nullptr))  //do we want to do this?
-        word_examples->push_back(DataPoint(parser.next_word(), parser.wordContext()));  
+      //if (!(word_examples == nullptr))  //do we want to do this?
+      examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
     }  
 
     //action prediction
-    action_examples->push_back(DataPoint(static_cast<WordId>(a), parser.actionContext()));
+    examples->add_action_example(DataPoint(static_cast<WordId>(a), parser.actionContext()));
     //std::cout << static_cast<WordId>(a) << std::endl;
     parser.executeAction(a);
   }
