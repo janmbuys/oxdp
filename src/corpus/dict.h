@@ -17,15 +17,9 @@
 #include <boost/serialization/string.hpp>
 #include <boost/functional/hash.hpp>
 
-namespace oxlm {
+#include "corpus/utils.h"
 
-typedef std::string Word;
-typedef int WordId;
-typedef int WordIndex;
-typedef std::vector<WordId> Words;
-typedef std::vector<WordIndex> Indices; // WxList;
-typedef std::vector<Words> WordsList; //Sentences
-typedef std::vector<Indices> IndicesList;
+namespace oxlm {
 
 //add a cc file later, but not yet
 class Dict {

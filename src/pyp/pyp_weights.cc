@@ -27,15 +27,29 @@ void PypWeights<kOrder>::resampleHyperparameters(MT19937& eng) {
 //update PYP model to insert new training examples 
 template<unsigned kOrder>
 void PypWeights<kOrder>::updateInsert(const DataSet& examples, MT19937& eng) {
-  for (const auto& ex: examples) 
-    lm_.increment(ex.word, ex.context, eng);
+  for (unsigned i = 0; i < examples.size(); ++i)
+    lm_.increment(examples.wordAt(i), examples.contextAt(i), eng);
 }
 
 //update PYP model to remove old training examples
 template<unsigned kOrder>
 void PypWeights<kOrder>::updateRemove(const DataSet& examples, MT19937& eng) {
-  for (const auto& ex: examples) 
-    lm_.decrement(ex.word, ex.context, eng);
+  for (unsigned i = 0; i < examples.size(); ++i)
+    lm_.decrement(examples.wordAt(i), examples.contextAt(i), eng);
+}
+
+//update PYP model to insert new training examples 
+template<unsigned kOrder>
+void PypWeights<kOrder>::updateInsert(const DataPoints& examples, MT19937& eng) {
+  for (unsigned i = 0; i < examples.size(); ++i)
+    lm_.increment(examples.at(i).word, examples.at(i).context, eng);
+}
+
+//update PYP model to remove old training examples
+template<unsigned kOrder>
+void PypWeights<kOrder>::updateRemove(const DataPoints& examples, MT19937& eng) {
+  for (unsigned i = 0; i < examples.size(); ++i)
+    lm_.decrement(examples.at(i).word, examples.at(i).context, eng);
 }
 
 //update PYP model to insert one training example
@@ -55,7 +69,19 @@ size_t PypWeights<kOrder>::vocabSize() const {
   return vocab_size_;
 }
 
-template class PypWeights<LMOrder>;
+template class PypWeights<tagLMOrderAS>;
+
+#if (wordLMOrderAS != tagLMOrderAS)
+template class PypWeights<wordLMOrderAS>;
+#endif
+
+#if ((tagLMOrderAE != tagLMOrderAS) && (tagLMOrderAE != wordLMOrderAS))
+template class PypWeights<tagLMOrderAE>;
+#endif
+
+#if ((wordLMOrderAE != tagLMOrderAS) && (wordLMOrderAE != wordLMOrderAS) && (wordLMOrderAE != tagLMOrderAE))
+template class PypWeights<wordLMOrderAE>;
+#endif
 
 }
 

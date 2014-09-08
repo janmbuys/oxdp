@@ -9,9 +9,6 @@
 
 namespace oxlm {
 
-#define tagLMOrder 6
-#define actionLMOrder 6
-
 //NB this is the unlexicalized model, with only tags
 template<unsigned tOrder, unsigned aOrder>
 class ParsedPypWeights: public PypWeights<tOrder>, public PypParsedWeightsInterface {
@@ -37,11 +34,13 @@ class ParsedPypWeights: public PypWeights<tOrder>, public PypParsedWeightsInterf
 
   void resampleHyperparameters(MT19937& eng) override;
 
-  void updateInsert(const DataSet& tag_examples, 
-          const DataSet& action_examples, MT19937& eng);
+  void updateInsert(const ParseDataSet& examples, MT19937& eng) override;
 
-  void updateRemove(const DataSet& tag_examples,
-          const DataSet& action_examples, MT19937& eng);
+  void updateRemove(const ParseDataSet& examples, MT19937& eng) override;
+
+  void updateInsert(const DataSet& examples, MT19937& eng) override;
+
+  void updateRemove(const DataSet& examples, MT19937& eng) override;
 
   size_t numWords() const override;
 

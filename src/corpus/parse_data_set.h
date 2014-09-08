@@ -1,14 +1,24 @@
 #ifndef _CORPUS_PARSE_DATA_SET_H_
 #define _CORPUS_PARSE_DATA_SET_H_
 
-#include "data_point.h"
+#include "corpus/dict.h"
+#include "corpus/data_point.h"
+#include "corpus/data_set_interface.h"
 
 namespace oxlm {
 
-class ParseDataSet {
+class ParseDataSet: public DataSetInterface {
   public:
 
-  ParseDataSet();
+  void addExample(DataPoint example) override;
+
+  DataPoint exampleAt(unsigned i) const override;
+
+  WordId wordAt(unsigned i) const override;
+
+  Words contextAt(unsigned i) const override;
+
+  size_t size() const override;
 
   void add_word_example(DataPoint example) {
     word_examples_.push_back(example);
@@ -58,7 +68,17 @@ class ParseDataSet {
     return action_examples_.at(i).context;
   }
 
+  DataPoints word_examples() const {
+    return word_examples_;
+  }
 
+  DataPoints tag_examples() const {
+    return tag_examples_;
+  }
+
+  DataPoints action_examples() const {
+    return action_examples_;
+  }
 
   size_t word_example_size() const {
      return word_examples_.size();
@@ -73,11 +93,10 @@ class ParseDataSet {
   }
 
   private:
-  DataSet word_examples_;
-  DataSet tag_examples_;
-  DataSet action_examples_;
-
-}
+  DataPoints word_examples_;
+  DataPoints tag_examples_;
+  DataPoints action_examples_;
+};
 
 
 }
