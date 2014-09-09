@@ -72,4 +72,26 @@ TransitionParser::TransitionParser(const ParsedSentence& parse, int num_particle
   {
   }
 
+void TransitionParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
+  TransitionParser parser(*this); //will this work?
+ 
+  for (kAction& a: actions()) {
+    //TODO update: if in set of shift actions
+    if (a == kAction::sh) {
+      //tag prediction
+      examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext(a)));  
+       
+      //word prediction
+      //if (!(word_examples == nullptr))  //do we want to do this?
+      examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
+    }  
+
+    //action prediction
+    examples->add_action_example(DataPoint(static_cast<WordId>(a), parser.actionContext()));
+    //std::cout << static_cast<WordId>(a) << std::endl;
+    parser.executeAction(a);
+  }
+}
+
+
 }

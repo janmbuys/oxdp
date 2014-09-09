@@ -206,7 +206,7 @@ Words ArcEagerParser::actionContext() const {
   //return tag_next_children_word_context(); //lexicalized, full context (?)
 }
 
-void ArcEagerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
+/*void ArcEagerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
   ArcEagerParser parser(*this); //will this work?
  
   for (kAction& a: actions()) {
@@ -224,7 +224,7 @@ void ArcEagerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& exam
     //std::cout << static_cast<WordId>(a) << std::endl;
     parser.executeAction(a);
   }
-}
+} */
 
 
 

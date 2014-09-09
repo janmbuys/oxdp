@@ -18,6 +18,7 @@ PypDpModel::PypDpModel(const boost::shared_ptr<ModelConfig>& config):
 }
 
 void PypDpModel::learn() {
+  MT19937 eng;
   //read training data
   std::cerr << "Reading training corpus...\n";
   boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>();
@@ -68,28 +69,44 @@ void PypDpModel::learn() {
   //TODO need a proper way to keep track of indices
   // one way is to randomize only once, not for each iteration
   // else keep sentence index while building examples for a minibatch
-  //std::vector<DataSet> word_examples_list(training_corpus->size(), DataSet());
-  //std::vector<DataSet> tag_examples_list(training_corpus->size(), DataSet());
-  //std::vector<DataSet> action_examples_list(trainings_corpus->size(), DataSet());
-
+  std::vector<ParseDataSet> examples_list(training_corpus->size(), ParseDataSet());
+ 
+  boost::shared_ptr<TransitionParseModelInterface> parse_model;
+  if (config_->parser_type==ParserType::arcstandard)
+        parse_model = boost::make_shared<ArcStandardParseModel>();
+      else if (config_->parser_type==ParserType::arceager)
+        parse_model = boost::make_shared<ArcEagerParseModel>();
+       
   for (int iter = 0; iter < config_->iterations; ++iter) {
     //auto iteretion_start = GetTime(); //possibly clashing definitions
     if (config_->randomise)
       std::random_shuffle(indices.begin(), indices.end());
    
+    //first implement version where we don't store examples from previous iteration
+
     size_t start = 0;
     //loop over minibatches
     while (start < training_corpus->size()) {
       size_t end = std::min(training_corpus->size(), start + minibatch_size);
-
       
       std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
-      
+      boost::shared_ptr<ParseDataSet> minibatch_examples = boost::make_shared<ParseDataSet>();
+
       //index boundaries for splitting among threads
       //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
       //TODO implement training
       //for now don't implement seperate context extractor 
 
+      //TransitionParseModelInterface parse_model;
+       
+      //critical loop
+      for (size_t j = start; j < end; ++j) {
+        TransitionParser parse = parse_model->staticGoldParseSentence(training_corpus->sentence_at(j)); 
+                                                                     //, weights_);
+        parse.extractExamples(minibatch_examples);
+      }     
+
+      weights_->updateInsert(*minibatch_examples, eng); //is this ok?
 
       if ((minibatch_counter % 1000 == 0 && minibatch_counter <= 10000) || 
            minibatch_counter % 10000 == 0) {
