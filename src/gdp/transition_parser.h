@@ -11,6 +11,7 @@
 #include "utils/random.h"
 #include "corpus/dict.h"
 #include "parser.h"
+#include "corpus/parse_data_set.h"
 
 namespace oxlm {
 
@@ -39,6 +40,8 @@ class TransitionParser: public Parser {
   TransitionParser(const ParsedSentence& parse);  
   
   TransitionParser(const ParsedSentence& parse, int num_particles);  
+
+  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
 
   void pop_buffer() {
     ++buffer_next_;

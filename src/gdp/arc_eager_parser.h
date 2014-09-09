@@ -48,7 +48,7 @@ class ArcEagerParser : public TransitionParser, public TransitionParserInterface
 
   Words actionContext() const override;
  
-  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const override;
+  //void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const override;
 
   bool left_arc_valid() const {
     //stack_size 1 -> stack top is root

@@ -24,7 +24,7 @@ class TransitionParserInterface {
   
   virtual Words actionContext() const = 0;
 
-  virtual void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const = 0;
+  //virtual void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const = 0;
 
   virtual ~TransitionParserInterface() {}
 };
