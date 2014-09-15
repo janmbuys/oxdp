@@ -24,7 +24,7 @@ void ArcStandardParseModel::resampleParticles(AsParserList* beam_stack, MT19937&
   }
 }
 
-TransitionParser ArcStandardParseModel::beamParseSentence(const ParsedSentence& sent, 
+ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence& sent, 
                                const boost::shared_ptr<ParsedWeightsInterface>& weights, unsigned beam_size) {
   std::vector<AsParserList> beam_chart; 
   beam_chart.push_back(AsParserList());
@@ -133,7 +133,7 @@ TransitionParser ArcStandardParseModel::beamParseSentence(const ParsedSentence& 
 }
 
 
-TransitionParser ArcStandardParseModel::particleParseSentence(const ParsedSentence& sent, 
+ArcStandardParser ArcStandardParseModel::particleParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, unsigned num_particles,
         bool resample) {
     //Follow approach similar to per-word beam-search, but also keep track of number of particles that is equal to given state
@@ -344,7 +344,7 @@ TransitionParser ArcStandardParseModel::particleParseSentence(const ParsedSenten
 
 //sample a derivation for the gold parse, given the current model
 //three-way decisions
-TransitionParser ArcStandardParseModel::particleGoldParseSentence(const ParsedSentence& sent, 
+ArcStandardParser ArcStandardParseModel::particleGoldParseSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, unsigned num_particles, bool resample) {
   //Follow approach similar to per-word beam-search, but also keep track of number of particles that is equal to given state
   //perform sampling and resampling to update these counts, and remove 0 count states
@@ -519,7 +519,7 @@ TransitionParser ArcStandardParseModel::particleGoldParseSentence(const ParsedSe
 }
 
 
-TransitionParser ArcStandardParseModel::staticGoldParseSentence(const ParsedSentence& sent, 
+ArcStandardParser ArcStandardParseModel::staticGoldParseSentence(const ParsedSentence& sent, 
                                     const boost::shared_ptr<ParsedWeightsInterface>& weights) {
   ArcStandardParser parser(sent);
   
@@ -545,7 +545,7 @@ TransitionParser ArcStandardParseModel::staticGoldParseSentence(const ParsedSent
   return parser;
 }
     
-TransitionParser ArcStandardParseModel::staticGoldParseSentence(const ParsedSentence& sent) {
+ArcStandardParser ArcStandardParseModel::staticGoldParseSentence(const ParsedSentence& sent) {
   ArcStandardParser parser(sent);
   
   kAction a = kAction::sh;
@@ -559,7 +559,7 @@ TransitionParser ArcStandardParseModel::staticGoldParseSentence(const ParsedSent
 }
 
 //generate a sentence: ternary decisions
-TransitionParser ArcStandardParseModel::generateSentence(const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+ArcStandardParser ArcStandardParseModel::generateSentence(const boost::shared_ptr<ParsedWeightsInterface>& weights, 
         MT19937& eng) {
   unsigned sent_limit = 100;
   ArcStandardParser parser;
@@ -643,6 +643,27 @@ TransitionParser ArcStandardParseModel::generateSentence(const boost::shared_ptr
   return parser;
 }
 
+void ArcStandardParseModel::extractSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  ArcStandardParser parse = staticGoldParseSentence(sent); 
+  parse.extractExamples(examples);
+}
+
+void ArcStandardParseModel::extractSentence(ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  ArcStandardParser parse = staticGoldParseSentence(sent, weights);
+  parse.extractExamples(examples);
+}
+
+double ArcStandardParseModel::evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          size_t beam_size) {
+  ArcStandardParser parse = beamParseSentence(sent, weights, beam_size);
+  acc_counts->countAccuracy(parse, sent);
+  return parse.particle_weight();
+}
 
 }
 

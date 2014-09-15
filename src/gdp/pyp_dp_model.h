@@ -21,11 +21,13 @@
 #include "gdp/transition_parse_model_interface.h"
 #include "gdp/arc_standard_parse_model.h"
 #include "gdp/arc_eager_parse_model.h"
+#include "gdp/eisner_parse_model.h"
 #include "gdp/accuracy_counts.h"
 
 namespace oxlm {
 
 //identity more abstractions later
+template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
 class PypDpModel {
   public:
   PypDpModel();
@@ -44,7 +46,8 @@ class PypDpModel {
   private:
   boost::shared_ptr<ModelConfig> config_;
   boost::shared_ptr<Dict> dict_;
-  boost::shared_ptr<PypParsedWeightsInterface> weights_; //see if this works
+  boost::shared_ptr<PypParsedWeightsInterface> weights_;
+  boost::shared_ptr<ParseModelInterface> parse_model_;
   size_t num_actions_;
 };
 

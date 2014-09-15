@@ -32,6 +32,20 @@ class ParseDataSet: public DataSetInterface {
     action_examples_.push_back(example);
   }
 
+  void extend(const boost::shared_ptr<ParseDataSet>& examples) {
+    for (unsigned i = 0; i < examples->size(); ++i) {
+      add_word_example(examples->word_example_at(i));
+      add_tag_example(examples->tag_example_at(i));
+      add_action_example(examples->action_example_at(i));
+    }
+  }
+
+  void clear() {
+    word_examples_.clear();
+    tag_examples_.clear();
+    action_examples_.clear();
+  }
+
   DataPoint word_example_at(unsigned i) const {
     return word_examples_.at(i);
   }

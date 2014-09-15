@@ -152,7 +152,7 @@ Words ArcStandardParser::actionContext() const {
   //return tag_some_children_distance_context(); //best smaller context (order 6)
 }
 
-/*
+
 void ArcStandardParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
   ArcStandardParser parser(*this); 
  
@@ -171,6 +171,6 @@ void ArcStandardParser::extractExamples(const boost::shared_ptr<ParseDataSet>& e
     //std::cout << static_cast<WordId>(a) << std::endl;
     parser.executeAction(a);
   }
-} */
+} 
 
 }

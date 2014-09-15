@@ -169,4 +169,31 @@ void EisnerParseModel::scoreSentence(EisnerParser* parser, const boost::shared_p
   //std::cout << parser->weight() << std::endl;
 } 
 
+void EisnerParseModel::extractSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  EisnerParser parse(sent);
+  //add arcs
+  for (unsigned i = 0; i < sent.size(); ++i)
+    if (sent.arc_at(i) >= 0)
+      parse.set_arc(i, sent.arc_at(i));
+
+  parse.extractExamples(examples);
+}
+
+void EisnerParseModel::extractSentence(ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<ParseDataSet>& examples) {
+ extractSentence(sent, examples);
+ //scoreSentence(&parse, weights);
+}
+
+double EisnerParseModel::evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          size_t beam_size) {
+  EisnerParser parse = parseSentence(sent, weights);
+  acc_counts->countAccuracy(parse, sent);
+  return parse.weight(); 
+}   
+
 }

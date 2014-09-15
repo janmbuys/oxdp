@@ -49,7 +49,7 @@ class ArcStandardParser : public TransitionParser, public TransitionParserInterf
     return (i != 0);
   }
 
-  //void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const override;
+  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const override;
 
   //just in case this might help
   //but this should be static...

@@ -9,28 +9,40 @@ namespace oxlm {
 
 typedef std::vector<boost::shared_ptr<ArcEagerParser>> AeParserList;
 
-class ArcEagerParseModel: public TransitionParseModelInterface {
+class ArcEagerParseModel: public TransitionParseModelInterface<ArcEagerParser> {
   public:
 
   void resampleParticles(AeParserList* beam_stack, MT19937& eng, unsigned num_particles);
 
-  TransitionParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeightsInterface>& weights,
+  ArcEagerParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeightsInterface>& weights,
           unsigned beam_size) override;
 
-  TransitionParser particleParseSentence(const ParsedSentence& sent, 
+  ArcEagerParser particleParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, unsigned num_particles,
         bool resample) override;
 
-  TransitionParser particleGoldParseSentence(const ParsedSentence& sent, 
+  ArcEagerParser particleGoldParseSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, 
           unsigned num_particles, bool resample) override;
 
-  TransitionParser staticGoldParseSentence(const ParsedSentence& sent, 
+  ArcEagerParser staticGoldParseSentence(const ParsedSentence& sent, 
                                     const boost::shared_ptr<ParsedWeightsInterface>& weights) override;
 
-  TransitionParser staticGoldParseSentence(const ParsedSentence& sent) override;
+  ArcEagerParser staticGoldParseSentence(const ParsedSentence& sent) override;
 
-  TransitionParser generateSentence(const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng) override;
+  ArcEagerParser generateSentence(const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng) override;
+
+  void extractSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParseDataSet>& examples) override;
+
+  void extractSentence(ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<ParseDataSet>& examples) override;
+
+  double evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          size_t beam_size) override; 
 };
 
 }

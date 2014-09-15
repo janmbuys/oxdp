@@ -10,8 +10,6 @@
 #include <unordered_map>
 #include <functional>
 
-#include <boost/shared_ptr.hpp>
-
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>

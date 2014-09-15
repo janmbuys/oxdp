@@ -1,3 +1,4 @@
+#include "corpus/utils.h"
 #include "corpus/dict.h"
 #include "gdp/model_config.h"
 #include "gdp/pyp_dp_model.h"
@@ -21,10 +22,15 @@ int main(int argc, char** argv) {
   config->iterations = 1;
   config->minibatch_size = 1;
   
-  PypDpModel model(config); 
-  
-  model.learn();
-  //model.evaluate();
+  if (config->parser_type == ParserType::arcstandard) {
+    PypDpModel<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS> model(config); 
+    model.learn();
+    //model.evaluate();
+
+  } else if (config->parser_type == ParserType::arcstandard) {
+    PypDpModel<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE> model(config); 
+    model.learn();
+  }
 
   return 0;
 }
