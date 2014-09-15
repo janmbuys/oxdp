@@ -2,22 +2,31 @@
 
 namespace oxlm {
 
-PypDpModel::PypDpModel(): 
+template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
+PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::PypDpModel(): 
     num_actions_{1} {
   dict_ = boost::make_shared<Dict>(true, false);
 } 
 
-PypDpModel::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
+template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
+PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config),
     num_actions_{1} {
   dict_ = boost::make_shared<Dict>(true, config->parser_type==ParserType::arceager);
-  if (config->parser_type == ParserType::arcstandard)
+  if (config->parser_type == ParserType::arcstandard) {
+    parse_model_ = boost::make_shared<ArcStandardParseModel>();
     num_actions_ = 3;
-  else if (config->parser_type == ParserType::arceager)
+  } else if (config->parser_type == ParserType::arceager) {
+    parse_model_ = boost::make_shared<ArcEagerParseModel>();
     num_actions_ = 4;
+  } else {
+    parse_model_ = boost::make_shared<EisnerParseModel>();
+    num_actions_ = 1;
+  }
 }
 
-void PypDpModel::learn() {
+template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
+void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::learn() {
   MT19937 eng;
   //read training data
   std::cerr << "Reading training corpus...\n";
@@ -39,20 +48,11 @@ void PypDpModel::learn() {
   //instantiate weights
 
   if (config_->lexicalised) {
-    if (config_->parser_type == ParserType::arcstandard)
-      weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(
+    weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrder, tagLMOrder, actionLMOrder>>(
             dict_->size(), dict_->tag_size(), num_actions_);
-    else if (config_->parser_type == ParserType::arceager)
-      weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>(
-            dict_->size(), dict_->tag_size(), num_actions_);
-
   } else {
-    if (config_->parser_type == ParserType::arcstandard)
-      weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(
-            dict_->tag_size(), num_actions_);
-    else if (config_->parser_type == ParserType::arceager)
-      weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>(
-            dict_->tag_size(), num_actions_);
+    weights_ = boost::make_shared<ParsedPypWeights<tagLMOrder, actionLMOrder>>(dict_->tag_size(), 
+            num_actions_);
   }
 
   std::vector<int> indices(training_corpus->size());
@@ -69,13 +69,8 @@ void PypDpModel::learn() {
   //TODO need a proper way to keep track of indices
   // one way is to randomize only once, not for each iteration
   // else keep sentence index while building examples for a minibatch
-  std::vector<ParseDataSet> examples_list(training_corpus->size(), ParseDataSet());
- 
-  boost::shared_ptr<TransitionParseModelInterface> parse_model;
-  if (config_->parser_type==ParserType::arcstandard)
-        parse_model = boost::make_shared<ArcStandardParseModel>();
-      else if (config_->parser_type==ParserType::arceager)
-        parse_model = boost::make_shared<ArcEagerParseModel>();
+  std::vector<boost::shared_ptr<ParseDataSet>> examples_list(training_corpus->size(), 
+          boost::make_shared<ParseDataSet>());
        
   for (int iter = 0; iter < config_->iterations; ++iter) {
     //auto iteretion_start = GetTime(); //possibly clashing definitions
@@ -91,22 +86,25 @@ void PypDpModel::learn() {
       
       std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
       boost::shared_ptr<ParseDataSet> minibatch_examples = boost::make_shared<ParseDataSet>();
+      boost::shared_ptr<ParseDataSet> old_minibatch_examples = boost::make_shared<ParseDataSet>();
 
       //index boundaries for splitting among threads
       //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
-      //TODO implement training
-      //for now don't implement seperate context extractor 
-
-      //TransitionParseModelInterface parse_model;
        
       //critical loop
-      for (size_t j = start; j < end; ++j) {
-        TransitionParser parse = parse_model->staticGoldParseSentence(training_corpus->sentence_at(j)); 
+      for (auto j: minibatch) {
+        if (iter > 0) {
+          old_minibatch_examples->extend(examples_list.at(j));
+        }            
+        examples_list.at(j)->clear();
+        parse_model_->extractSentence(training_corpus->sentence_at(j), examples_list.at(j));
                                                                      //, weights_);
-        parse.extractExamples(minibatch_examples);
+        minibatch_examples->extend(examples_list.at(j));
+        //parse_model_->extractSentence(training_corpus->sentence_at(j), minibatch_examples);
       }     
 
-      weights_->updateInsert(*minibatch_examples, eng); //is this ok?
+      weights_->updateRemove(*old_minibatch_examples, eng); 
+      weights_->updateInsert(*minibatch_examples, eng); 
 
       if ((minibatch_counter % 1000 == 0 && minibatch_counter <= 10000) || 
            minibatch_counter % 10000 == 0) {
@@ -137,7 +135,8 @@ void PypDpModel::learn() {
 
 }
 
-void PypDpModel::evaluate() const {
+template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
+void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::evaluate() const {
  //read test data 
   boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
   test_corpus->readFile(config_->test_file, dict_, true);
@@ -151,7 +150,8 @@ void PypDpModel::evaluate() const {
   std::cout << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
-void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, int minibatch_counter, 
+template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
+void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, int minibatch_counter, 
                    double& log_likelihood, double& best_perplexity) const {
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);
@@ -166,7 +166,8 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, in
   }
 }
 
-void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, double& accumulator) 
+template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
+void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, double& accumulator) 
     const {
   if (test_corpus != nullptr) {
     accumulator = 0;
@@ -178,7 +179,7 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, do
     std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32, 64};
 
     for (unsigned beam_size: beam_sizes) {
-      AccuracyCounts acc_counts;
+      boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>();
 
       size_t start = 0;
       while (start < test_corpus->size()) {
@@ -187,23 +188,11 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, do
         //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
         std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
         double objective = 0;
-        boost::shared_ptr<TransitionParseModelInterface> parse_model;
-        //TransitionParseModelInterface parse_model;
-        if (config_->parser_type==ParserType::arcstandard)
-          parse_model = boost::make_shared<ArcStandardParseModel>();
-          //parse_model = ArcStandardParseModel();
-        else if (config_->parser_type==ParserType::arceager)
-          parse_model = boost::make_shared<ArcEagerParseModel>();
-          //parse_model = ArcEagerParseModel();
+            
         //TODO parallize, maybe move
         for (size_t j = start; j < end; ++j) {
-          TransitionParser parse = parse_model->beamParseSentence(test_corpus->sentence_at(j), weights_, beam_size);
-
-          if (config_->parser_type==ParserType::arcstandard)
-            acc_counts.countArcStandardAccuracy(parse, test_corpus->sentence_at(j));
-          else if (config_->parser_type==ParserType::arceager)
-            acc_counts.countArcEagerAccuracy(parse, test_corpus->sentence_at(j));
-          objective += parse.particle_weight();
+          objective += parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, 
+                                                     beam_size);
           //TODO calculate gold likelihood
         }
 
@@ -211,11 +200,13 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, do
         start = end;
       } 
 
-      acc_counts.printAccuracy();
+      acc_counts->printAccuracy();
     }
   }
 }
 
+template class PypDpModel<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>;
+template class PypDpModel<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>;
 
 }
 

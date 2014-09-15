@@ -62,14 +62,14 @@ void AccuracyCounts::transitionCountAccuracy(const TransitionParser& prop_parse,
   add_num_actions(prop_parse.num_actions());
 }
 
-void AccuracyCounts::countEisnerAccuracy(const EisnerParser& prop_parse, 
+void AccuracyCounts::countAccuracy(const EisnerParser& prop_parse, 
                                    const ParsedSentence& gold_parse) {
   //just call parent method
   parseCountAccuracy(prop_parse, gold_parse); 
 }
 
 //this isn't ideal, but good enough for now
-void AccuracyCounts::countArcStandardAccuracy(const TransitionParser& prop_parse, 
+void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, 
                                    const ParsedSentence& gold_parse) {
   //parent method
   transitionCountAccuracy(prop_parse, gold_parse); 
@@ -98,7 +98,7 @@ void AccuracyCounts::countArcStandardAccuracy(const TransitionParser& prop_parse
   }
 }
 
-void AccuracyCounts::countArcEagerAccuracy(const TransitionParser& prop_parse, const ParsedSentence& gold_parse) {
+void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse) {
   //parent method
   transitionCountAccuracy(prop_parse, gold_parse); 
   

@@ -10,14 +10,12 @@
 
 #include "utils/random.h"
 #include "corpus/dict.h"
-#include "parser.h"
 #include "corpus/parse_data_set.h"
+#include "gdp/utils.h"
+#include "gdp/parser.h"
+#include "gdp/transition_parser_interface.h"
 
 namespace oxlm {
-
-enum class kAction: WordId {sh, la, ra, re, la2, ra2};
-
-typedef std::vector<kAction> ActList;
 
 //don't think I'm using this anywhere
 /* inline kAction convert_to_action(WordId a) {
@@ -40,8 +38,6 @@ class TransitionParser: public Parser {
   TransitionParser(const ParsedSentence& parse);  
   
   TransitionParser(const ParsedSentence& parse, int num_particles);  
-
-  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
 
   void pop_buffer() {
     ++buffer_next_;

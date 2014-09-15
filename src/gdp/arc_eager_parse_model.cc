@@ -24,7 +24,7 @@ void ArcEagerParseModel::resampleParticles(AeParserList* beam_stack, MT19937& en
   }
 }
 
-TransitionParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent, 
+ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent, 
                            const boost::shared_ptr<ParsedWeightsInterface>& weights, unsigned beam_size) {
   //index in beam_chart is depth-of-stack - 1
   std::vector<AeParserList> beam_chart; 
@@ -188,7 +188,7 @@ TransitionParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sen
 
 }
 
-TransitionParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& sent, 
+ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, unsigned num_particles,
         bool resample) {
 //TODO
@@ -362,7 +362,7 @@ TransitionParser ArcEagerParseModel::particleParseSentence(const ParsedSentence&
 }
 
 //4-way decisions
-TransitionParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentence& sent, 
+ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, 
           unsigned num_particles, bool resample) {
   //TODO
@@ -526,7 +526,7 @@ TransitionParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSente
   return ArcEagerParser(sent);  
 }
 
-TransitionParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent,
+ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent,
                                         const boost::shared_ptr<ParsedWeightsInterface>& weights) {
   ArcEagerParser parser(sent);
 
@@ -552,7 +552,7 @@ TransitionParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentenc
   return parser;
 }
 
-TransitionParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent) {
+ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent) {
   ArcEagerParser parser(sent);
 
   kAction a = kAction::sh;
@@ -565,7 +565,7 @@ TransitionParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentenc
   return parser;
 }
 
-TransitionParser ArcEagerParseModel::generateSentence(const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+ArcEagerParser ArcEagerParseModel::generateSentence(const boost::shared_ptr<ParsedWeightsInterface>& weights, 
         MT19937& eng) {
   ArcEagerParser parser;
   unsigned sent_limit = 100;
@@ -663,6 +663,27 @@ TransitionParser ArcEagerParseModel::generateSentence(const boost::shared_ptr<Pa
   return parser;
 }
 
+void ArcEagerParseModel::extractSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  ArcEagerParser parse = staticGoldParseSentence(sent); 
+  parse.extractExamples(examples);
+}
+
+void ArcEagerParseModel::extractSentence(ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  ArcEagerParser parse = staticGoldParseSentence(sent, weights);
+  parse.extractExamples(examples);
+}
+
+double ArcEagerParseModel::evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          size_t beam_size) {
+  ArcEagerParser parse = beamParseSentence(sent, weights, beam_size);
+  acc_counts->countAccuracy(parse, sent);
+  return parse.particle_weight();
+}
 
 }
 

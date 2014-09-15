@@ -1,6 +1,9 @@
 #ifndef _GDP_TR_PARSER_I_H
 #define _GDP_TR_PARSER_I_H
 
+#include "gdp/utils.h"
+#include "corpus/parse_data_set.h"
+
 namespace oxlm {
 
 class TransitionParserInterface {
@@ -24,7 +27,7 @@ class TransitionParserInterface {
   
   virtual Words actionContext() const = 0;
 
-  //virtual void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const = 0;
+  virtual void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const = 0;
 
   virtual ~TransitionParserInterface() {}
 };
