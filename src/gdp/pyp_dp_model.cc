@@ -36,10 +36,11 @@ void PypDpModel::learn() {
   //don't worry about working with an existing model now
 
   //read test data 
+  std::cerr << "Reading test corpus...\n";
   boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
   if (config_->test_file.size()) {
     test_corpus->readFile(config_->test_file, dict_, true);
-    std::cout << "Done reading test corpus..." << std::endl;
+    std::cerr << "Done reading test corpus..." << std::endl;
   }
 
   //instantiate weights
@@ -85,6 +86,7 @@ void PypDpModel::learn() {
           boost::make_shared<ParseDataSet>());
        
   for (int iter = 0; iter < config_->iterations; ++iter) {
+    std::cerr << "Training iteration " << iter << std::endl;
     //auto iteretion_start = GetTime(); //possibly clashing definitions
     if (config_->randomise)
       std::random_shuffle(indices.begin(), indices.end());
@@ -105,6 +107,8 @@ void PypDpModel::learn() {
        
       //critical loop
       for (auto j: minibatch) {
+        //std::cout << "Gold arcs: ";
+        //training_corpus->sentence_at(j).print_arcs();
         if (iter > 0) {
           old_minibatch_examples->extend(examples_list.at(j));
         }            
@@ -133,13 +137,13 @@ void PypDpModel::learn() {
 
     //double iteration_time = GetDuration(iteration_start, GetTime());
    //TODO update
-    std::cout << "Iteration: " << iter << ", "
+    std::cerr << "Iteration: " << iter << ", "
          //    << "Time: " << iteration_time << " seconds, "
              << "Training Objective: " << weights_->likelihood() / training_corpus->numTokens() 
            << "\n\n";
   }
 
-  std::cout << "Overall minimum perplexity: " << best_perplexity << std::endl;
+  std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;
 
   /*switch (config_->parserl_type) {
     case ParserType::eisner:
@@ -153,14 +157,14 @@ void PypDpModel::evaluate() const {
  //read test data 
   boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
   test_corpus->readFile(config_->test_file, dict_, true);
-  std::cout << "Done reading test corpus..." << std::endl;
+  std::cerr << "Done reading test corpus..." << std::endl;
   
   double log_likelihood = 0;
   evaluate(test_corpus, log_likelihood);
     
   size_t test_size = test_corpus->numTokens(); //TODO should actually be number of examples
   double test_perplexity = std::exp(log_likelihood/test_size); //TODO use perplexity function
-  std::cout << "Test Perplexity: " << test_perplexity << std::endl;
+  std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
 void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, int minibatch_counter, 
@@ -170,7 +174,7 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, in
     
     size_t test_size = test_corpus->numTokens(); //TODO should actually be number of examples
     double test_perplexity = std::exp(log_likelihood/test_size); //TODO use perplexity function
-    std::cout << "\tMinibatch " << minibatch_counter << ", "
+    std::cerr << "\tMinibatch " << minibatch_counter << ", "
          << "Test Perplexity: " << test_perplexity << std::endl;
 
     if (test_perplexity < best_perplexity) 

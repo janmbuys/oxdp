@@ -17,7 +17,7 @@ class ParsedSentence: public TaggedSentence {
 
   ParsedSentence(Words sent, Words tags, Indices arcs);
 
-  ParsedSentence(const ParsedSentence& parse);
+  ParsedSentence(const TaggedSentence& parse);
 
   void print_arcs() const {
     for (auto ind: arcs_)

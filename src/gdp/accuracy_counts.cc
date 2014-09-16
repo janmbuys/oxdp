@@ -75,7 +75,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse,
   transitionCountAccuracy(prop_parse, gold_parse); 
   
   //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcStandardParser simul(static_cast<ParsedSentence>(prop_parse)); //need sentence and tags
+  ArcStandardParser simul(static_cast<TaggedSentence>(prop_parse)); //need sentence and tags
 
   for (auto& a: prop_parse.actions()) {
     kAction next = simul.oracleNext(gold_parse);
@@ -103,7 +103,7 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const Parse
   transitionCountAccuracy(prop_parse, gold_parse); 
   
   //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcEagerParser simul(static_cast<ParsedSentence>(prop_parse));
+  ArcEagerParser simul(static_cast<TaggedSentence>(prop_parse));
   
   for (auto& a: prop_parse.actions()) {
     kAction next = simul.oracleNext(gold_parse);

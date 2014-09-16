@@ -34,11 +34,7 @@ EisnerParser::EisnerParser(Words sent, Words tags, Indices arcs):
   {
   }
 
-EisnerParser::EisnerParser(const EisnerParser& parse):
-  EisnerParser(static_cast<ParsedSentence>(parse)) {
-}
-
-EisnerParser::EisnerParser(const ParsedSentence& parse):
+EisnerParser::EisnerParser(const TaggedSentence& parse):
   Parser(parse),
   chart_(parse.size(), std::vector<EChartItem>(parse.size(), EChartItem())),
   split_chart_(parse.size(), std::vector<ESplitChartItem>(parse.size(), 

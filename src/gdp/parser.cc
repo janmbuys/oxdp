@@ -38,19 +38,7 @@ Parser::Parser(Words sent, Words tags, Indices arcs):
       set_arc(i, arcs.at(i));
   }
 
-//copy constructor that does not copy arcs
-/* Parse::Parse(const Parse& parse):
-  TaggedSentence(parse),
-  arcs_(), //is the lawful??
-  //ParsedSentence(parse), //alternatively
-  left_children_(tags.size(), Indices()),  
-  right_children_(tags.size(), Indices())  
-  {
-  } */
-
-//what I want to do
-//implicitly defines copy constructor
-Parser::Parser(const ParsedSentence& parse):
+Parser::Parser(const TaggedSentence& parse):
   ParsedSentence(parse),
   left_children_(parse.size(), Indices()),  
   right_children_(parse.size(), Indices()), 

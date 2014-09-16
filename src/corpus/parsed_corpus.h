@@ -34,7 +34,7 @@ class ParsedCorpus: public CorpusInterface {
   size_t numTokens() const override;
 
   private:
-  std::vector<ParsedSentence> sentences_;
+    std::vector<ParsedSentence> sentences_;
 
 };
 

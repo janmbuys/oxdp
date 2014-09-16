@@ -18,9 +18,9 @@ class ArcEagerParser : public TransitionParser, public TransitionParserInterface
 
   ArcEagerParser(Words sent, Words tags, int num_particles);
 
-  ArcEagerParser(const ParsedSentence& parse);
+  ArcEagerParser(const TaggedSentence& parse);
 
-  ArcEagerParser(const ParsedSentence& parse, int num_particles);
+  ArcEagerParser(const TaggedSentence& parse, int num_particles);
 
   bool shift() override;
   

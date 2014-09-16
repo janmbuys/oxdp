@@ -64,7 +64,12 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         arcs.push_back(-1);
       }
 
-      sentences_.push_back(ParsedSentence(sent, tags, arcs)); // this envokes the copy constructor...
+      sentences_.push_back(ParsedSentence(sent, tags, arcs)); 
+      //add arcs seperately
+      //for (unsigned i = 1; i < sent.size(); ++i)
+      //  sentences_.back().set_arc(i, arcs.at(i));
+      sentences_.back().print_arcs();
+
       state = 1;
     } else {
       if (state==1) {
@@ -82,7 +87,10 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
 
       convertWhitespaceDelimitedConllLine(line, dict, &sent, &tags, &arcs, frozen); 
     }
-  } 
+  }
+
+  for (int i = 0 ; i < sentences_.size(); ++i)
+    sentences_.at(i).print_arcs();
 }
 
 size_t ParsedCorpus::size() const {
