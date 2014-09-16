@@ -28,10 +28,10 @@ ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence&
                                const boost::shared_ptr<ParsedWeightsInterface>& weights, unsigned beam_size) {
   std::vector<AsParserList> beam_chart; 
   beam_chart.push_back(AsParserList());
-  beam_chart[0].push_back(boost::make_shared<ArcStandardParser>(sent)); 
+  beam_chart[0].push_back(boost::make_shared<ArcStandardParser>(static_cast<TaggedSentence>(sent))); 
 
-  std::cout << "gold arcs: ";
-  sent.print_arcs();
+  //std::cout << "gold arcs: ";
+  //sent.print_arcs();
 
   //shift ROOT symbol (probability 1)
   beam_chart[0][0]->shift(); 
@@ -119,7 +119,7 @@ ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence&
 
   //print parses
   //add verbose option?
-  for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
+  /* for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
     std::cout << beam_chart[n][i]->particle_weight() << " ";
     beam_chart[n][i]->print_arcs();
     beam_chart[n][i]->print_actions();
@@ -127,11 +127,11 @@ ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence&
     //can't do this now, but add if needed later
     //float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
     //std::cout << "  Dir Accuracy: " << dir_acc;
-  }  
+  } */
 
   if (beam_chart[n].size()==0) {
     std::cout << "no parse found" << std::endl;
-    return ArcStandardParser(sent);  
+    return ArcStandardParser(static_cast<TaggedSentence>(sent));  
   } else
     return ArcStandardParser(*beam_chart[n][0]); 
 }
@@ -144,7 +144,7 @@ ArcStandardParser ArcStandardParseModel::particleParseSentence(const ParsedSente
   //perform sampling and resampling to update these counts, and remove 0 count states
 
   AsParserList beam_stack; 
-  beam_stack.push_back(boost::make_shared<ArcStandardParser>(sent, static_cast<int>(num_particles))); 
+  beam_stack.push_back(boost::make_shared<ArcStandardParser>(static_cast<TaggedSentence>(sent), static_cast<int>(num_particles))); 
 
   //shift ROOT symbol (probability 1)
   beam_stack[0]->shift(); 
@@ -343,7 +343,7 @@ ArcStandardParser ArcStandardParseModel::particleParseSentence(const ParsedSente
   }
 
   std::cout << "no parse found" << std::endl;
-  return ArcStandardParser(sent);  
+  return ArcStandardParser(static_cast<TaggedSentence>(sent));  
 }
 
 //sample a derivation for the gold parse, given the current model
@@ -354,7 +354,7 @@ ArcStandardParser ArcStandardParseModel::particleGoldParseSentence(const ParsedS
   //perform sampling and resampling to update these counts, and remove 0 count states
   
   AsParserList beam_stack; 
-  beam_stack.push_back(boost::make_shared<ArcStandardParser>(sent, static_cast<int>(num_particles))); 
+  beam_stack.push_back(boost::make_shared<ArcStandardParser>(static_cast<TaggedSentence>(sent), static_cast<int>(num_particles))); 
 
   //shift ROOT symbol (probability 1)
   beam_stack[0]->shift(); 
@@ -519,13 +519,13 @@ ArcStandardParser ArcStandardParseModel::particleGoldParseSentence(const ParsedS
   }
 
   std::cout << "no parse found" << std::endl;
-  return ArcStandardParser(sent);  
+  return ArcStandardParser(static_cast<TaggedSentence>(sent));  
 }
 
 
 ArcStandardParser ArcStandardParseModel::staticGoldParseSentence(const ParsedSentence& sent, 
                                     const boost::shared_ptr<ParsedWeightsInterface>& weights) {
-  ArcStandardParser parser(sent);
+  ArcStandardParser parser(static_cast<TaggedSentence>(sent));
   
   kAction a = kAction::sh;
   while (!parser.inTerminalConfiguration() && (a != kAction::re)) {
@@ -550,7 +550,7 @@ ArcStandardParser ArcStandardParseModel::staticGoldParseSentence(const ParsedSen
 }
     
 ArcStandardParser ArcStandardParseModel::staticGoldParseSentence(const ParsedSentence& sent) {
-  ArcStandardParser parser(sent);
+  ArcStandardParser parser(static_cast<TaggedSentence>(sent));
   
   kAction a = kAction::sh;
   while (!parser.inTerminalConfiguration() && (a != kAction::re)) {
@@ -657,6 +657,8 @@ void ArcStandardParseModel::extractSentence(ParsedSentence& sent,
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
   ArcStandardParser parse = staticGoldParseSentence(sent, weights);
+  //std::cout << "Gold actions: ";
+  //parse.print_actions();
   parse.extractExamples(examples);
 }
 

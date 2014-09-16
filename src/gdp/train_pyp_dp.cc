@@ -15,14 +15,13 @@ int main(int argc, char** argv) {
   config->training_file = training_file;
   config->test_file = test_file;
 
-  config->parser_type = ParserType::arcstandard; 
-  config->lexicalised = false;
+  config->parser_type = ParserType::arceager; 
+  //lexalization also influences context functions and sizes...
+  config->lexicalised = true;
 
   config->randomise = true;
   config->iterations = 1;
   config->minibatch_size = 1;
-  
-  std::cerr << "start" << std::endl;
 
   PypDpModel model(config); 
   model.learn();

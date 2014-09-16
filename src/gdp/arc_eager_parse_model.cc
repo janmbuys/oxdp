@@ -29,7 +29,7 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
   //index in beam_chart is depth-of-stack - 1
   std::vector<AeParserList> beam_chart; 
   beam_chart.push_back(AeParserList());
-  beam_chart[0].push_back(boost::make_shared<ArcEagerParser>(sent)); 
+  beam_chart[0].push_back(boost::make_shared<ArcEagerParser>(static_cast<TaggedSentence>(sent))); 
 
   //shift ROOT symbol (probability 1)
   beam_chart[0][0]->shift(); 
@@ -168,21 +168,21 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
   for (unsigned i = 0; (i < beam_chart[n].size()); ++i) 
     beam_chart[n][0]->add_particle_weight(beam_chart[n][i]->particle_weight());
 
-  for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
+  /*for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
     beam_chart[n][i]->print_arcs();
     beam_chart[n][i]->print_actions();
 
     //float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
     //std::cout << "  Dir Accuracy: " << dir_acc;
     //std::cout << "  Sample weight: " << (beam_chart[n][i]->particle_weight()) << std::endl;
-  }  
+  } */ 
 
   if (beam_chart[n].size()==0) {
     //std::cout << "no parse found" << std::endl;
-    return ArcEagerParser(sent);  
+  return ArcEagerParser(static_cast<TaggedSentence>(sent));  
   } else {
-    beam_chart[n][0]->print_arcs();
-    beam_chart[n][0]->print_actions();
+    //beam_chart[n][0]->print_arcs();
+    //beam_chart[n][0]->print_actions();
     return ArcEagerParser(*beam_chart[n][0]); 
   }
 
@@ -196,7 +196,7 @@ ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& s
   //perform sampling and resampling to update these counts, and remove 0 count states
 
   AeParserList beam_stack; 
-  beam_stack.push_back(boost::make_shared<ArcEagerParser>(sent, static_cast<int>(num_particles))); 
+  beam_stack.push_back(boost::make_shared<ArcEagerParser>(static_cast<TaggedSentence>(sent), static_cast<int>(num_particles))); 
 
   //shift ROOT symbol (probability 1)
   beam_stack[0]->shift(); 
@@ -358,7 +358,7 @@ ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& s
   }
 
   //std::cout << "no parse found" << std::endl;
-  return ArcEagerParser(sent);  
+  return ArcEagerParser(static_cast<TaggedSentence>(sent));  
 }
 
 //4-way decisions
@@ -370,7 +370,7 @@ ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentenc
   //perform sampling and resampling to update these counts, and remove 0 count states
 
   AeParserList beam_stack; 
-  beam_stack.push_back(boost::make_shared<ArcEagerParser>(sent, static_cast<int>(num_particles))); 
+  beam_stack.push_back(boost::make_shared<ArcEagerParser>(static_cast<TaggedSentence>(sent), static_cast<int>(num_particles))); 
 
   //shift ROOT symbol (probability 1)
   beam_stack[0]->shift(); 
@@ -523,12 +523,12 @@ ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentenc
   }
 
   std::cout << "no parse found" << std::endl;
-  return ArcEagerParser(sent);  
+  return ArcEagerParser(static_cast<TaggedSentence>(sent));  
 }
 
 ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent,
                                         const boost::shared_ptr<ParsedWeightsInterface>& weights) {
-  ArcEagerParser parser(sent);
+  ArcEagerParser parser(static_cast<TaggedSentence>(sent));
 
   kAction a = kAction::sh;
   while (!parser.inTerminalConfiguration() && !(parser.buffer_empty() && (a == kAction::sh))) {
@@ -553,7 +553,7 @@ ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence&
 }
 
 ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent) {
-  ArcEagerParser parser(sent);
+  ArcEagerParser parser(static_cast<TaggedSentence>(sent));
 
   kAction a = kAction::sh;
   while (!parser.inTerminalConfiguration() && !(parser.buffer_empty() && (a == kAction::sh))) {

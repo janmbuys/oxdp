@@ -22,12 +22,12 @@ ArcStandardParser::ArcStandardParser(Words sent, Words tags, int num_particles):
 {
 }
 
-ArcStandardParser::ArcStandardParser(const ParsedSentence& parse):
+ArcStandardParser::ArcStandardParser(const TaggedSentence& parse):
   TransitionParser(parse) 
 {
 }
 
-ArcStandardParser::ArcStandardParser(const ParsedSentence& parse, int num_particles):
+ArcStandardParser::ArcStandardParser(const TaggedSentence& parse, int num_particles):
   TransitionParser(parse, num_particles) 
 {
 }
@@ -153,7 +153,7 @@ Words ArcStandardParser::actionContext() const {
 
 
 void ArcStandardParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
-  ArcStandardParser parser(static_cast<ParsedSentence>(*this)); 
+  ArcStandardParser parser(static_cast<TaggedSentence>(*this)); 
  
   //note that we are extracting the initial shift as an example
   for (kAction& a: actions()) {

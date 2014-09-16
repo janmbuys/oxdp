@@ -22,12 +22,12 @@ ArcEagerParser::ArcEagerParser(Words sent, Words tags, int num_particles):
 {
 }
 
-ArcEagerParser::ArcEagerParser(const ParsedSentence& parse):
+ArcEagerParser::ArcEagerParser(const TaggedSentence& parse):
   TransitionParser(parse)
 {
 }   
 
-ArcEagerParser::ArcEagerParser(const ParsedSentence& parse, int num_particles):
+ArcEagerParser::ArcEagerParser(const TaggedSentence& parse, int num_particles):
   TransitionParser(parse, num_particles) 
 {
 }
@@ -207,7 +207,7 @@ Words ArcEagerParser::actionContext() const {
 }
 
 void ArcEagerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
-  ArcEagerParser parser(static_cast<ParsedSentence>(*this)); 
+  ArcEagerParser parser(static_cast<TaggedSentence>(*this)); 
 
   for (kAction& a: actions()) {
     if (a == kAction::sh || a == kAction::ra) {

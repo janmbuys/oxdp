@@ -50,7 +50,7 @@ TransitionParser::TransitionParser(Words sent, Words tags):
 
 //what I want to do
 //implicitly defines the copy constructor
-TransitionParser::TransitionParser(const ParsedSentence& parse):  
+TransitionParser::TransitionParser(const TaggedSentence& parse):  
   Parser(parse),  
   stack_(),
   buffer_next_{0},
@@ -61,7 +61,7 @@ TransitionParser::TransitionParser(const ParsedSentence& parse):
   {
   }
 
-TransitionParser::TransitionParser(const ParsedSentence& parse, int num_particles):  
+TransitionParser::TransitionParser(const TaggedSentence& parse, int num_particles):  
   Parser(parse),  
   stack_(),
   buffer_next_{0},

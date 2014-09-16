@@ -20,7 +20,7 @@ class Parser: public ParsedSentence {
   Parser(Words sent, Words tags, Indices arcs);
 
   //Parse(const Parse& parse);
-  Parser(const ParsedSentence& parse);
+  Parser(const TaggedSentence& parse);
 
   void push_arc() override {
     ParsedSentence::push_arc();

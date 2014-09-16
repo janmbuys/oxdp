@@ -35,9 +35,9 @@ class TransitionParser: public Parser {
 
   TransitionParser(Words sent, Words tags, int num_particles);
 
-  TransitionParser(const ParsedSentence& parse);  
+  TransitionParser(const TaggedSentence& parse);  
   
-  TransitionParser(const ParsedSentence& parse, int num_particles);  
+  TransitionParser(const TaggedSentence& parse, int num_particles);  
 
   void pop_buffer() {
     ++buffer_next_;
