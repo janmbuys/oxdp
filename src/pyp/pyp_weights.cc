@@ -83,5 +83,15 @@ template class PypWeights<tagLMOrderAE>;
 template class PypWeights<wordLMOrderAE>;
 #endif
 
+#if ((tagLMOrderE != wordLMOrderAE) && (tagLMOrderE != tagLMOrderAS) && (tagLMOrderE != wordLMOrderAS) && (tagLMOrderE != tagLMOrderAE))
+template class PypWeights<tagLMOrderE>;
+#endif
+
+#if ((wordLMOrderE != tagLMOrderE) && (wordLMOrderE != wordLMOrderAE) && (wordLMOrderE != tagLMOrderAS) && (wordLMOrderE != wordLMOrderAS) && (wordLMOrderE != tagLMOrderAE))
+template class PypWeights<wordLMOrderE>;
+#endif
+
+
+
 }
 

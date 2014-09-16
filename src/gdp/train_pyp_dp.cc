@@ -22,15 +22,11 @@ int main(int argc, char** argv) {
   config->iterations = 1;
   config->minibatch_size = 1;
   
-  if (config->parser_type == ParserType::arcstandard) {
-    PypDpModel<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS> model(config); 
-    model.learn();
-    //model.evaluate();
+  std::cerr << "start" << std::endl;
 
-  } else if (config->parser_type == ParserType::arcstandard) {
-    PypDpModel<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE> model(config); 
-    model.learn();
-  }
+  PypDpModel model(config); 
+  model.learn();
+  //model.evaluate();
 
   return 0;
 }

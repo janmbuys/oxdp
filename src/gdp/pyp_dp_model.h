@@ -27,7 +27,6 @@
 namespace oxlm {
 
 //identity more abstractions later
-template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
 class PypDpModel {
   public:
   PypDpModel();

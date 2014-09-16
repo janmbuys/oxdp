@@ -2,14 +2,12 @@
 
 namespace oxlm {
 
-template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
-PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::PypDpModel(): 
+PypDpModel::PypDpModel(): 
     num_actions_{1} {
   dict_ = boost::make_shared<Dict>(true, false);
 } 
 
-template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
-PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
+PypDpModel::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config),
     num_actions_{1} {
   dict_ = boost::make_shared<Dict>(true, config->parser_type==ParserType::arceager);
@@ -25,8 +23,7 @@ PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::PypDpModel(const boost::shar
   }
 }
 
-template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
-void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::learn() {
+void PypDpModel::learn() {
   MT19937 eng;
   //read training data
   std::cerr << "Reading training corpus...\n";
@@ -48,10 +45,25 @@ void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::learn() {
   //instantiate weights
 
   if (config_->lexicalised) {
-    weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrder, tagLMOrder, actionLMOrder>>(
+    if (config_->parser_type == ParserType::arcstandard)
+      weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(
             dict_->size(), dict_->tag_size(), num_actions_);
+    else if (config_->parser_type == ParserType::arceager)
+      weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>(
+            dict_->size(), dict_->tag_size(), num_actions_);
+    else
+      weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>(
+            dict_->size(), dict_->tag_size(), num_actions_);
+
   } else {
-    weights_ = boost::make_shared<ParsedPypWeights<tagLMOrder, actionLMOrder>>(dict_->tag_size(), 
+    if (config_->parser_type == ParserType::arcstandard)
+      weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(dict_->tag_size(), 
+            num_actions_);
+    else if (config_->parser_type == ParserType::arceager)
+      weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>(dict_->tag_size(), 
+            num_actions_);
+    else
+      weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderE, 1>>(dict_->tag_size(), 
             num_actions_);
   }
 
@@ -106,14 +118,16 @@ void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::learn() {
       weights_->updateRemove(*old_minibatch_examples, eng); 
       weights_->updateInsert(*minibatch_examples, eng); 
 
-      if ((minibatch_counter % 1000 == 0 && minibatch_counter <= 10000) || 
+      //for now, only evaluate at end of iteration
+      /* if ((minibatch_counter % 1000 == 0 && minibatch_counter <= 10000) || 
            minibatch_counter % 10000 == 0) {
         evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
-      }
+      } */
 
       ++minibatch_counter;
       start = end;
     }     
+    //std::cout << std::endl;
 
     evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
 
@@ -135,8 +149,7 @@ void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::learn() {
 
 }
 
-template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
-void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::evaluate() const {
+void PypDpModel::evaluate() const {
  //read test data 
   boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
   test_corpus->readFile(config_->test_file, dict_, true);
@@ -150,8 +163,7 @@ void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::evaluate() const {
   std::cout << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
-template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
-void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, int minibatch_counter, 
+void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, int minibatch_counter, 
                    double& log_likelihood, double& best_perplexity) const {
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);
@@ -166,8 +178,7 @@ void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::evaluate(const boost::s
   }
 }
 
-template <unsigned wordLMOrder, unsigned tagLMOrder, unsigned actionLMOrder>
-void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, double& accumulator) 
+void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, double& accumulator) 
     const {
   if (test_corpus != nullptr) {
     accumulator = 0;
@@ -179,6 +190,7 @@ void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::evaluate(const boost::s
     std::vector<unsigned> beam_sizes{1, 2, 4, 8, 16, 32, 64};
 
     for (unsigned beam_size: beam_sizes) {
+      std::cerr << "parsing with beam size " << beam_size << ":\n";
       boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>();
 
       size_t start = 0;
@@ -204,9 +216,6 @@ void PypDpModel<wordLMOrder, tagLMOrder, actionLMOrder>::evaluate(const boost::s
     }
   }
 }
-
-template class PypDpModel<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>;
-template class PypDpModel<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>;
 
 }
 

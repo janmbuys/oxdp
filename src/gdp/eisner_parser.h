@@ -27,6 +27,8 @@ class EisnerParser: public Parser {
 
   EisnerParser(Words sent, Words tags, Indices arcs);
 
+  EisnerParser(const EisnerParser& parse);
+
   EisnerParser(const ParsedSentence& parse);
 
   void recoverParseTree(WordIndex s, WordIndex t, bool complete, bool left_arc);

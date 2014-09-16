@@ -79,7 +79,7 @@ template class ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>
 template class ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>;
 #endif
 
-
+template class ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>;
 
 }
 

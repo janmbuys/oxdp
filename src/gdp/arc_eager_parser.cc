@@ -207,8 +207,8 @@ Words ArcEagerParser::actionContext() const {
 }
 
 void ArcEagerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
-  ArcEagerParser parser(*this); //will this work?
- 
+  ArcEagerParser parser(static_cast<ParsedSentence>(*this)); 
+
   for (kAction& a: actions()) {
     if (a == kAction::sh || a == kAction::ra) {
       //tag prediction

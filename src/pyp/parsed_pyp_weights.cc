@@ -109,5 +109,7 @@ template class ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>;
 template class ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>;
 #endif
 
+template class ParsedPypWeights<tagLMOrderE, 1>;
+
 }
 
