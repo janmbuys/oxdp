@@ -30,6 +30,9 @@ ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence&
   beam_chart.push_back(AsParserList());
   beam_chart[0].push_back(boost::make_shared<ArcStandardParser>(sent)); 
 
+  std::cout << "gold arcs: ";
+  sent.print_arcs();
+
   //shift ROOT symbol (probability 1)
   beam_chart[0][0]->shift(); 
 
@@ -115,6 +118,7 @@ ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence&
     beam_chart[n][0]->add_beam_weight(beam_chart[n][i]->particle_weight());
 
   //print parses
+  //add verbose option?
   for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
     std::cout << beam_chart[n][i]->particle_weight() << " ";
     beam_chart[n][i]->print_arcs();

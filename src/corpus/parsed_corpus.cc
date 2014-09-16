@@ -64,7 +64,7 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         arcs.push_back(-1);
       }
 
-      sentences_.push_back(ParsedSentence(sent, tags, arcs));
+      sentences_.push_back(ParsedSentence(sent, tags, arcs)); // this envokes the copy constructor...
       state = 1;
     } else {
       if (state==1) {

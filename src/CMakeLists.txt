@@ -82,6 +82,7 @@ add_custom_target(all_tests)
 # Generate both static and shared libraries.
 #############################################
 
+#now only shared libraries
 macro(add_libraries _name)
   set(files ${ARGN})
   add_library(${_name} SHARED ${files})
@@ -107,8 +108,6 @@ add_subdirectory(corpus)
 add_subdirectory(pyp)
 add_subdirectory(gdp)
 add_subdirectory(lbl)
-#there are also executables in pyp
-#but we don't need them now
 
 # Third party libraries
 add_subdirectory(third_party/eigen)

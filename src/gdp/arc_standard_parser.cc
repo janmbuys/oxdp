@@ -32,7 +32,6 @@ ArcStandardParser::ArcStandardParser(const ParsedSentence& parse, int num_partic
 {
 }
 
-
 bool ArcStandardParser::shift() {
   WordIndex i = buffer_next();
   pop_buffer();
@@ -154,10 +153,13 @@ Words ArcStandardParser::actionContext() const {
 
 
 void ArcStandardParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
-  ArcStandardParser parser(*this); 
+  ArcStandardParser parser(static_cast<ParsedSentence>(*this)); 
  
+  //note that we are extracting the initial shift as an example
   for (kAction& a: actions()) {
     if (a == kAction::sh) {
+      DataPoint point(parser.next_tag(), parser.tagContext());
+
       //tag prediction
       examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext()));  
        
@@ -168,7 +170,6 @@ void ArcStandardParser::extractExamples(const boost::shared_ptr<ParseDataSet>& e
 
     //action prediction
     examples->add_action_example(DataPoint(static_cast<WordId>(a), parser.actionContext()));
-    //std::cout << static_cast<WordId>(a) << std::endl;
     parser.executeAction(a);
   }
 } 
