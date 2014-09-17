@@ -10,35 +10,31 @@ class MinibatchFactoredMaxentWeights : public FactoredWeights {
  public:
   MinibatchFactoredMaxentWeights(
       const boost::shared_ptr<ModelData>& config,
-      const boost::shared_ptr<FactoredMaxentMetadata>& metadata,
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& minibatch_indices);
-
-  MinibatchFactoredMaxentWeights(
-      const boost::shared_ptr<ModelData>& config,
-      const boost::shared_ptr<FactoredMaxentMetadata>& metadata,
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& minibatch_indices,
-      const boost::shared_ptr<FactoredWeights>& base_gradient);
+      const boost::shared_ptr<FactoredMaxentMetadata>& metadata);
 
   MinibatchFactoredMaxentWeights(
       int num_classes, const boost::shared_ptr<FactoredWeights>& base_gradient);
 
-  void update(
+  void init(
+      const boost::shared_ptr<Corpus>& corpus,
+      const vector<int>& minibatch);
+
+  void syncUpdate(
+      const MinibatchWords& words,
       const boost::shared_ptr<MinibatchFactoredMaxentWeights>& gradient);
 
  private:
   friend class GlobalFactoredMaxentWeights;
-
-  void initialize(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& minibatch_indices);
 
  protected:
   boost::shared_ptr<FactoredMaxentMetadata> metadata;
 
   boost::shared_ptr<MinibatchFeatureStore> U;
   vector<boost::shared_ptr<MinibatchFeatureStore>> V;
+
+ private:
+  Mutex mutexU;
+  vector<Mutex> mutexesV;
 };
 
 } // namespace oxlm

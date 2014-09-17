@@ -79,15 +79,24 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 
   Real best_perplexity = numeric_limits<Real>::infinity();
   Real global_objective = 0, test_objective = 0;
-  boost::shared_ptr<MinibatchWeights> global_gradient;
+  boost::shared_ptr<MinibatchWeights> global_gradient =
+      boost::make_shared<MinibatchWeights>(config, metadata);
   boost::shared_ptr<GlobalWeights> adagrad =
       boost::make_shared<GlobalWeights>(config, metadata);
+  MinibatchWords global_words;
+
+  int shared_index = 0;
+  // For no particular reason. It just looks like this works best.
+  int task_size = sqrt(config->minibatch_size);
 
   omp_set_num_threads(config->threads);
   #pragma omp parallel
   {
     int minibatch_counter = 1;
     int minibatch_size = config->minibatch_size;
+    boost::shared_ptr<MinibatchWeights> gradient =
+        boost::make_shared<MinibatchWeights>(config, metadata);
+
     for (int iter = 0; iter < config->iterations; ++iter) {
       auto iteration_start = GetTime();
 
@@ -98,55 +107,94 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         }
         global_objective = 0;
       }
-      // Wait until the master threads finishes shuffling the indices.
+      // Wait until the master thread finishes shuffling the indices.
       #pragma omp barrier
 
       size_t start = 0;
       while (start < training_corpus->size()) {
         size_t end = min(training_corpus->size(), start + minibatch_size);
 
+        vector<int> minibatch(
+            indices.begin() + start,
+            min(indices.begin() + end, indices.end()));
+        global_gradient->init(training_corpus, minibatch);
+        // Reset the set of minibatch words shared across all threads.
         #pragma omp master
         {
-          vector<int> minibatch(indices.begin() + start, indices.begin() + end);
-          global_gradient = boost::make_shared<MinibatchWeights>(
-              config, metadata, training_corpus, minibatch);
+          global_words = MinibatchWords();
+          shared_index = 0;
         }
 
-        // Wait until the global gradient is reset to 0. Otherwise, some
-        // gradient updates may be ignored if the global gradient is reset
-        // afterwards.
+        gradient->init(training_corpus, minibatch);
+
+        // Wait until the global gradient is initialized. Otherwise, some
+        // gradient updates may be ignored.
         #pragma omp barrier
 
-        vector<int> minibatch = scatterMinibatch(start, end, indices);
-        Real objective;
-        boost::shared_ptr<MinibatchWeights> gradient;
-        if (config->noise_samples > 0) {
-          gradient = weights->estimateGradient(
-              training_corpus, minibatch, objective);
-        } else {
-          gradient = weights->getGradient(
-              training_corpus, minibatch, objective);
+        Real objective = 0;
+        MinibatchWords words;
+        size_t task_start;
+        while (true) {
+          #pragma omp critical
+          {
+            task_start = shared_index;
+            shared_index += task_size;
+          }
+
+          if (task_start < minibatch.size()) {
+            size_t task_end = min(task_start + task_size, minibatch.size());
+            vector<int> task(
+                minibatch.begin() + task_start, minibatch.begin() + task_end);
+            if (config->noise_samples > 0) {
+              weights->estimateGradient(
+                  training_corpus, task, gradient, objective, words);
+            } else {
+              weights->getGradient(
+                  training_corpus, task, gradient, objective, words);
+            }
+          } else {
+            break;
+          }
         }
 
+        global_gradient->syncUpdate(words, gradient);
         #pragma omp critical
         {
-          global_gradient->update(gradient);
           global_objective += objective;
+          global_words.merge(words);
         }
 
+        // Wait until the global gradient is fully updated by all threads and
+        // the global words are fully merged.
         #pragma omp barrier
 
+        // Prepare minibatch words for parallel processing.
         #pragma omp master
-        {
-          update(global_gradient, adagrad);
+        global_words.transform();
 
-          Real minibatch_factor =
-              static_cast<Real>(end - start) / training_corpus->size();
-          global_objective += regularize(global_gradient, minibatch_factor);
-        }
-
-        // Wait for master thread to update model.
+        // Wait until the minibatch words are fully prepared for parallel
+        // processing.
         #pragma omp barrier
+
+        update(global_words, global_gradient, adagrad);
+
+        // Wait for all threads to finish making the model gradient update.
+        #pragma omp barrier
+
+        Real minibatch_factor =
+            static_cast<Real>(end - start) / training_corpus->size();
+        objective = regularize(global_gradient, minibatch_factor);
+        #pragma omp critical
+        global_objective += objective;
+
+        // Clear gradients.
+        gradient->clear(words, false);
+        global_gradient->clear(global_words, true);
+
+        // Wait the regularization update to finish and make sure the global
+        // words are reset only after the global gradient is fully cleared.
+        #pragma omp barrier
+
         if ((minibatch_counter % 100 == 0 && minibatch_counter <= 1000) ||
             minibatch_counter % 1000 == 0) {
           evaluate(test_corpus, iteration_start, minibatch_counter,
@@ -176,10 +224,11 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
 void Model<GlobalWeights, MinibatchWeights, Metadata>::update(
+    const MinibatchWords& global_words,
     const boost::shared_ptr<MinibatchWeights>& global_gradient,
     const boost::shared_ptr<GlobalWeights>& adagrad) {
-  adagrad->updateSquared(global_gradient);
-  weights->updateAdaGrad(global_gradient, adagrad);
+  adagrad->updateSquared(global_words, global_gradient);
+  weights->updateAdaGrad(global_words, global_gradient, adagrad);
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
@@ -209,7 +258,9 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
     size_t start = 0;
     while (start < test_corpus->size()) {
       size_t end = min(start + config->minibatch_size, test_corpus->size());
-      vector<int> minibatch = scatterMinibatch(start, end, indices);
+      vector<int> minibatch(
+          indices.begin() + start, min(indices.begin() + end, indices.end()));
+      minibatch = scatterMinibatch(minibatch);
 
       Real objective = weights->getObjective(test_corpus, minibatch);
       #pragma omp critical

@@ -3,6 +3,7 @@ set(TESTS
     bloom_filter_test
     class_context_extractor_test
     class_context_hasher_test
+    class_distribution_test
     collision_counter_test
     collision_global_feature_store_test
     collision_minibatch_feature_store_test
@@ -21,6 +22,7 @@ set(TESTS
     global_feature_indexes_pair_test
     metadata_test
     minibatch_feature_indexes_pair_test
+    minibatch_words_test
     model_test
     model_utils_test
     ngram_test
@@ -32,14 +34,14 @@ set(TESTS
     train_factored_sgd_test
     train_maxent_sgd_test
     train_sgd_test
-    unconstrained_feature_store_test
     utils_test
     weights_test
     word_context_extractor_test
     word_context_hasher_test
+    word_distributions_test
     word_to_class_index_test)
 
-set(LIBRARIES lbl)
+set(LIBRARIES murmurhash lbl)
 
 if(CDEC_FOUND AND CDEC_LIBRARIES_FOUND)
   set(TESTS ${TESTS}

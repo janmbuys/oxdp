@@ -64,34 +64,19 @@ class GlobalFactoredMaxentWeightsTest : public testing::Test {
   boost::shared_ptr<FactoredMaxentMetadata> metadata;
 };
 
-TEST_F(GlobalFactoredMaxentWeightsTest, TestCheckGradientUnconstrained) {
-  config->sparse_features = false;
-  metadata = boost::make_shared<FactoredMaxentMetadata>(
-      config, dict, index, mapper, populator, matcher);
-  GlobalFactoredMaxentWeights weights(config, metadata, corpus);
-
-  vector<int> indices = {0, 1, 2, 3, 4};
-  Real objective;
-
-  boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
-      weights.getGradient(corpus, indices, objective);
-
-  // See the comment in weights_test.cc if you suspect the gradient is not
-  // computed correctly.
-  EXPECT_TRUE(weights.checkGradient(corpus, indices, gradient, 1e-3));
-}
-
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCheckGradientSparse) {
-  config->sparse_features = true;
   metadata = boost::make_shared<FactoredMaxentMetadata>(
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus);
 
   vector<int> indices = {0, 1, 2, 3, 4};
-  Real objective;
 
+  Real objective;
+  MinibatchWords words;
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
-      weights.getGradient(corpus, indices, objective);
+       boost::make_shared<MinibatchFactoredMaxentWeights>(config, metadata);
+  gradient->init(corpus, indices);
+  weights.getGradient(corpus, indices, gradient, objective, words);
 
   // See the comment in weights_test.cc if you suspect the gradient is not
   // computed correctly.
@@ -99,17 +84,19 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCheckGradientSparse) {
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionsNoFilter) {
-  config->sparse_features = true;
   config->hash_space = 100;
   metadata = boost::make_shared<FactoredMaxentMetadata>(
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus);
 
   vector<int> indices = {0, 1, 2, 3, 4};
-  Real objective;
 
+  Real objective;
+  MinibatchWords words;
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
-      weights.getGradient(corpus, indices, objective);
+       boost::make_shared<MinibatchFactoredMaxentWeights>(config, metadata);
+  gradient->init(corpus, indices);
+  weights.getGradient(corpus, indices, gradient, objective, words);
 
   // See the comment in weights_test.cc if you suspect the gradient is not
   // computed correctly.
@@ -117,7 +104,6 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionsNoFilter) {
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionExactFiltering) {
-  config->sparse_features = true;
   config->hash_space = 100;
   config->filter_contexts = true;
   metadata = boost::make_shared<FactoredMaxentMetadata>(
@@ -126,9 +112,11 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionExactFiltering) {
 
   vector<int> indices = {0, 1, 2, 3, 4};
   Real objective;
-
+  MinibatchWords words;
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
-      weights.getGradient(corpus, indices, objective);
+       boost::make_shared<MinibatchFactoredMaxentWeights>(config, metadata);
+  gradient->init(corpus, indices);
+  weights.getGradient(corpus, indices, gradient, objective, words);
 
   // See the comment in weights_test.cc if you suspect the gradient is not
   // computed correctly.
@@ -136,7 +124,6 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionExactFiltering) {
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionApproximateFiltering) {
-  config->sparse_features = true;
   config->hash_space = 100;
   config->filter_contexts = true;
   config->filter_error_rate = 0.1;
@@ -148,9 +135,11 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionApproximateFiltering) {
 
   vector<int> indices = {0, 1, 2, 3, 4};
   Real objective;
-
+  MinibatchWords words;
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
-      weights.getGradient(corpus, indices, objective);
+       boost::make_shared<MinibatchFactoredMaxentWeights>(config, metadata);
+  gradient->init(corpus, indices);
+  weights.getGradient(corpus, indices, gradient, objective, words);
 
   // See the comment in weights_test.cc if you suspect the gradient is not
   // computed correctly.
@@ -171,7 +160,6 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestPredict) {
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestSerialization) {
-  config->sparse_features = false;
   metadata = boost::make_shared<FactoredMaxentMetadata>(
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus), weights_copy;

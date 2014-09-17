@@ -6,6 +6,7 @@ add_libraries(lbl
   bloom_filter_populator.cc
   class_context_extractor.cc
   class_context_hasher.cc
+  class_distribution.cc
   collision_counter.cc
   collision_global_feature_store.cc
   collision_minibatch_feature_store.cc
@@ -34,6 +35,7 @@ add_libraries(lbl
   minibatch_factored_maxent_weights.cc
   minibatch_feature_indexes_pair.cc
   minibatch_feature_store.cc
+  minibatch_words.cc
   model.cc
   model_utils.cc
   ngram.cc
@@ -41,11 +43,11 @@ add_libraries(lbl
   query_cache.cc
   sparse_global_feature_store.cc
   sparse_minibatch_feature_store.cc
-  unconstrained_feature_store.cc
   utils.cc
   weights.cc
   word_context_extractor.cc
   word_context_hasher.cc
+  word_distributions.cc
   word_to_class_index.cc
 )
 
@@ -76,7 +78,7 @@ set(EXECUTABLES
 )
 foreach(f ${EXECUTABLES})
  add_executable(${f} ${f}.cc)
- target_link_libraries(${f} lbl utils)
+ target_link_libraries(${f} lbl murmurhash utils)
 endforeach(f)
 
 add_subdirectory(tests)

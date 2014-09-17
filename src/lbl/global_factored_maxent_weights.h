@@ -22,6 +22,8 @@ class GlobalFactoredMaxentWeights : public FactoredWeights {
       const boost::shared_ptr<FactoredMaxentMetadata>& metadata,
       const boost::shared_ptr<Corpus>& training_corpus);
 
+  virtual size_t numParameters() const;
+
   virtual void getProbabilities(
       const boost::shared_ptr<Corpus>& corpus,
       const vector<int>& indices,
@@ -30,12 +32,14 @@ class GlobalFactoredMaxentWeights : public FactoredWeights {
       MatrixReal& class_probs,
       vector<VectorReal>& word_probs) const;
 
-  boost::shared_ptr<MinibatchFactoredMaxentWeights> getGradient(
+  void getGradient(
       const boost::shared_ptr<Corpus>& corpus,
       const vector<int>& indices,
-      Real& objective) const;
+      const boost::shared_ptr<MinibatchFactoredMaxentWeights>& gradient,
+      Real& objective,
+      MinibatchWords& words) const;
 
-  boost::shared_ptr<MinibatchFactoredMaxentWeights> getFullGradient(
+  void getFullGradient(
       const boost::shared_ptr<Corpus>& corpus,
       const vector<int>& indices,
       const vector<vector<int>>& contexts,
@@ -43,12 +47,16 @@ class GlobalFactoredMaxentWeights : public FactoredWeights {
       const MatrixReal& prediction_vectors,
       const MatrixReal& weighted_representations,
       MatrixReal& class_probs,
-      vector<VectorReal>& word_probs) const;
+      vector<VectorReal>& word_probs,
+      const boost::shared_ptr<MinibatchFactoredMaxentWeights>& gradient,
+      MinibatchWords& words) const;
 
-  boost::shared_ptr<MinibatchFactoredMaxentWeights> estimateGradient(
+  void estimateGradient(
       const boost::shared_ptr<Corpus>& corpus,
       const vector<int>& indices,
-      Real& objective) const;
+      const boost::shared_ptr<MinibatchFactoredMaxentWeights>& gradient,
+      Real& objective,
+      MinibatchWords& words) const;
 
   bool checkGradient(
       const boost::shared_ptr<Corpus>& corpus,
@@ -57,9 +65,11 @@ class GlobalFactoredMaxentWeights : public FactoredWeights {
       Real eps);
 
   void updateSquared(
+      const MinibatchWords& global_words,
       const boost::shared_ptr<MinibatchFactoredMaxentWeights>& global_gradient);
 
   void updateAdaGrad(
+      const MinibatchWords& global_words,
       const boost::shared_ptr<MinibatchFactoredMaxentWeights>& global_gradient,
       const boost::shared_ptr<GlobalFactoredMaxentWeights>& adagrad);
 
