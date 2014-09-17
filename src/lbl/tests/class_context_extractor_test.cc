@@ -11,7 +11,7 @@ namespace oxlm {
 class ClassContextExtractorTest : public testing::Test {
  protected:
   void SetUp() {
-    vector<vector<int>> data = {{0, 2, 2, 2, 3, 1}};
+    vector<int> data = {2, 2, 2, 3, 1};
     vector<int> classes = {0, 2, 3, 4};
     boost::shared_ptr<Corpus> corpus = boost::make_shared<Corpus>(data);
     boost::shared_ptr<WordToClassIndex> index =

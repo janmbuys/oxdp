@@ -9,7 +9,7 @@ namespace oxlm {
 class FeatureContextMapperTest : public testing::Test {
  protected:
   void SetUp() {
-    vector<vector<int>> data = {{0, 2, 3, 4, 5, 6, 1}};
+    vector<int> data = {2, 3, 4, 5, 6, 1};
     vector<int> classes = {0, 2, 4, 7};
     corpus = boost::make_shared<Corpus>(data);
     index = boost::make_shared<WordToClassIndex>(classes);

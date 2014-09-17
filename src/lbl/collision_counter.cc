@@ -72,25 +72,23 @@ CollisionCounter::CollisionCounter(
 
   auto start_time = GetTime();
   for (size_t i = 0; i < corpus->size(); ++i) {
-    for (size_t k = 1; k < corpus->at(i).size(); ++k) {
-      int class_id = index->getClass(corpus->at(i)[k]);
-      vector<int> context = processor->extract(i, k);
-      vector<FeatureContext> feature_contexts =
-          generator.getFeatureContexts(context);
+    int class_id = index->getClass(corpus->at(i));
+    vector<int> context = processor->extract(i);
+    vector<FeatureContext> feature_contexts =
+        generator.getFeatureContexts(context);
 
-      for (const FeatureContext& feature_context: feature_contexts) {
-        int key = class_hasher->getKey(feature_context);
-        for (int index: class_filter->getIndexes(feature_context)) {
-          observedClassQueries.insert(NGram(index, feature_context.data));
-          observedKeys.insert((key + index) % config->hash_space);
-        }
+    for (const FeatureContext& feature_context: feature_contexts) {
+      int key = class_hasher->getKey(feature_context);
+      for (int index: class_filter->getIndexes(feature_context)) {
+        observedClassQueries.insert(NGram(index, feature_context.data));
+        observedKeys.insert((key + index) % config->hash_space);
+      }
 
-        key = word_hashers[class_id]->getKey(feature_context);
-        for (int index: word_filters[class_id]->getIndexes(feature_context)) {
-          observedWordQueries[class_id]
-              .insert(NGram(index, class_id, feature_context.data));
-          observedKeys.insert((key + index) % config->hash_space);
-        }
+      key = word_hashers[class_id]->getKey(feature_context);
+      for (int index: word_filters[class_id]->getIndexes(feature_context)) {
+        observedWordQueries[class_id]
+            .insert(NGram(index, class_id, feature_context.data));
+        observedKeys.insert((key + index) % config->hash_space);
       }
     }
   }

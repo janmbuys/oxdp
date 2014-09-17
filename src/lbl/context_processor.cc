@@ -8,7 +8,7 @@ ContextProcessor::ContextProcessor(
     : corpus(corpus), contextSize(context_size),
       startId(start_id), endId(end_id) {}
 
-vector<WordId> ContextProcessor::extract(int sentence_index, int position) const {
+vector<WordId> ContextProcessor::extract(int position) const {
   vector<WordId> context;
 
   // The context is constructed starting from the most recent word:
@@ -17,8 +17,8 @@ vector<WordId> ContextProcessor::extract(int sentence_index, int position) const
   bool sentence_start = position == 0;
   for (int i = contextSize - 1; i >= 0; --i) {
     int index = context_start + i;
-    sentence_start |= (index < 0 || corpus->at(sentence_index).at(index) == endId);
-    int word_id = sentence_start ? startId : corpus->at(sentence_index).at(index);
+    sentence_start |= (index < 0 || corpus->at(index) == endId);
+    int word_id = sentence_start ? startId : corpus->at(index);
     context.push_back(word_id);
   }
 

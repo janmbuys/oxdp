@@ -23,7 +23,8 @@ class GlobalFactoredMaxentWeights : public FactoredWeights {
       const boost::shared_ptr<Corpus>& training_corpus);
 
   virtual void getProbabilities(
-    const vector<WordId>& words,
+      const boost::shared_ptr<Corpus>& corpus,
+      const vector<int>& indices,
       const vector<vector<int>>& contexts,
       const MatrixReal& prediction_vectors,
       MatrixReal& class_probs,
@@ -37,7 +38,6 @@ class GlobalFactoredMaxentWeights : public FactoredWeights {
   boost::shared_ptr<MinibatchFactoredMaxentWeights> getFullGradient(
       const boost::shared_ptr<Corpus>& corpus,
       const vector<int>& indices,
-      const vector<WordId>& words,
       const vector<vector<int>>& contexts,
       const vector<MatrixReal>& context_vectors,
       const MatrixReal& prediction_vectors,

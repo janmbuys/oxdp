@@ -23,7 +23,7 @@ class GlobalFactoredMaxentWeightsTest : public testing::Test {
     config->feature_context_size = 2;
     config->sigmoid = true;
 
-    vector<vector<int>> data = {{0, 2, 3, 2, 4, 1}};
+    vector<int> data = {2, 3, 2, 4, 1};
     vector<int> classes = {0, 2, 4, 5};
     corpus = boost::make_shared<Corpus>(data);
     index = boost::make_shared<WordToClassIndex>(classes);
@@ -48,10 +48,8 @@ class GlobalFactoredMaxentWeightsTest : public testing::Test {
     boost::shared_ptr<ContextProcessor> processor =
         boost::make_shared<ContextProcessor>(corpus, config->ngram_order - 1);
     for (int index: indices) {
-      for (int k = 1; k < corpus->at(index).size(); ++k) {
-        vector<int> context = processor->extract(index, k);
-        ret -= weights.predict(corpus->at(index)[k], context);
-      }
+      vector<int> context = processor->extract(index);
+      ret -= weights.predict(corpus->at(index), context);
     }
     return ret;
   }
@@ -72,7 +70,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCheckGradientUnconstrained) {
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus);
 
-  vector<int> indices = {0};
+  vector<int> indices = {0, 1, 2, 3, 4};
   Real objective;
 
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
@@ -89,7 +87,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCheckGradientSparse) {
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus);
 
-  vector<int> indices = {0};
+  vector<int> indices = {0, 1, 2, 3, 4};
   Real objective;
 
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
@@ -107,7 +105,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionsNoFilter) {
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus);
 
-  vector<int> indices = {0};
+  vector<int> indices = {0, 1, 2, 3, 4};
   Real objective;
 
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
@@ -126,7 +124,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionExactFiltering) {
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus);
 
-  vector<int> indices = {0};
+  vector<int> indices = {0, 1, 2, 3, 4};
   Real objective;
 
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
@@ -148,7 +146,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionApproximateFiltering) {
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus);
 
-  vector<int> indices = {0};
+  vector<int> indices = {0, 1, 2, 3, 4};
   Real objective;
 
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
@@ -163,7 +161,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestPredict) {
   metadata = boost::make_shared<FactoredMaxentMetadata>(
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus);
-  vector<int> indices = {0};
+  vector<int> indices = {0, 1, 2, 3};
 
   Real objective = weights.getObjective(corpus, indices);
 

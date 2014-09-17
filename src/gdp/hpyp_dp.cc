@@ -2,8 +2,6 @@
 #include <cstdlib>
 #include <chrono>
 
-#include <boost/make_shared.hpp>
-
 #include "pyp/crp.h"
 #include "hpyplm/hpyplm.h"
 #include "corpus/corpus.h"
@@ -56,13 +54,13 @@ int main(int argc, char** argv) {
     dict.convert_tag("STOP", false);
   }
 
-  boost::shared_ptr<Sentences> corpus_sents = boost::make_shared<Sentences>();
-  boost::shared_ptr<Sentences> corpus_tags = boost::make_shared<Sentences>();
-  boost::shared_ptr<IndicesList> corpus_deps= boost::make_shared<IndicesList>();
+  std::vector<Words> corpus_sents;
+  std::vector<Words> corpus_tags;
+  std::vector<WxList> corpus_deps;
   
   std::cerr << "Reading training corpus...\n";
-  dict.read_from_conll_file(train_file, corpus_sents, corpus_tags, corpus_deps, false);
-  std::cerr << "Corpus size: " << corpus_sents->size() << " sentences\t (" << dict.size() << " word types, " << dict.tag_size() << " tags)\n";
+  dict.read_from_conll_file(train_file, &corpus_sents, &corpus_tags, &corpus_deps, false);
+  std::cerr << "Corpus size: " << corpus_sents.size() << " sentences\t (" << dict.size() << " word types, " << dict.tag_size() << " tags)\n";
 
   //define pyp models with their orders
   const unsigned kShOrder = 6; //5 

@@ -119,15 +119,16 @@ void GlobalFactoredMaxentWeights::initialize() {
 }
 
 void GlobalFactoredMaxentWeights::getProbabilities(
-    const vector<WordId>& words,
+    const boost::shared_ptr<Corpus>& corpus,
+    const vector<int>& indices,
     const vector<vector<int>>& contexts,
     const MatrixReal& prediction_vectors,
     MatrixReal& class_probs,
     vector<VectorReal>& word_probs) const {
-  class_probs = S.transpose() * prediction_vectors + T * MatrixReal::Ones(1, words.size());
+  class_probs = S.transpose() * prediction_vectors + T * MatrixReal::Ones(1, indices.size());
 
-  for (size_t i = 0; i < words.size(); ++i) {
-    int word_id = words[i];
+  for (size_t i = 0; i < indices.size(); ++i) {
+    int word_id = corpus->at(indices[i]);
     int class_id = index->getClass(word_id);
 
     VectorReal prediction_vector = prediction_vectors.col(i);
@@ -144,28 +145,26 @@ boost::shared_ptr<MinibatchFactoredMaxentWeights> GlobalFactoredMaxentWeights::g
     const boost::shared_ptr<Corpus>& corpus,
     const vector<int>& indices,
     Real& objective) const {
-  vector<WordId> words;
-  vector<vector<WordId>> contexts;
+  vector<vector<int>> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
   MatrixReal class_probs;
   vector<VectorReal> word_probs;
   objective = getObjective(
-      corpus, indices, words, contexts, context_vectors, prediction_vectors,
+      corpus, indices, contexts, context_vectors, prediction_vectors,
       class_probs, word_probs);
 
   MatrixReal weighted_representations = getWeightedRepresentations(
-      words, prediction_vectors, class_probs, word_probs);
+      corpus, indices, prediction_vectors, class_probs, word_probs);
 
   return getFullGradient(
-      corpus, indices, words, contexts, context_vectors, prediction_vectors,
+      corpus, indices, contexts, context_vectors, prediction_vectors,
       weighted_representations, class_probs, word_probs);
 }
 
 boost::shared_ptr<MinibatchFactoredMaxentWeights> GlobalFactoredMaxentWeights::getFullGradient(
     const boost::shared_ptr<Corpus>& corpus,
     const vector<int>& indices,
-    const vector<WordId>& words,
     const vector<vector<int>>& contexts,
     const vector<MatrixReal>& context_vectors,
     const MatrixReal& prediction_vectors,
@@ -174,15 +173,15 @@ boost::shared_ptr<MinibatchFactoredMaxentWeights> GlobalFactoredMaxentWeights::g
     vector<VectorReal>& word_probs) const {
   boost::shared_ptr<FactoredWeights> base_gradient =
       FactoredWeights::getFullGradient(
-          words, contexts, context_vectors, prediction_vectors,
+          corpus, indices, contexts, context_vectors, prediction_vectors,
           weighted_representations, class_probs, word_probs);
 
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
       boost::make_shared<MinibatchFactoredMaxentWeights>(
           config, metadata, corpus, indices, base_gradient);
 
-  for (size_t i = 0; i < words.size(); ++i) {
-    int word_id = words[i];
+  for (size_t i = 0; i < indices.size(); ++i) {
+    int word_id = corpus->at(indices[i]);
     int class_id = index->getClass(word_id);
 
     gradient->U->update(contexts[i], class_probs.col(i));

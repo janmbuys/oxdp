@@ -5,8 +5,6 @@
 #include <cstdlib>
 #include <chrono>
 
-#include <boost/make_shared.hpp>
-
 #include "transition_parser.h"
 #include "eisner_parser.h"
 #include "hpyp_dp_parse.h"
@@ -18,13 +16,13 @@ namespace oxlm {
 
 template<unsigned kShiftOrder, unsigned kReduceOrder, unsigned kTagOrder>
 double evaluate(std::string test_file, bool arceager, bool with_words, Dict& dict, MT19937& eng, PYPLM<kShiftOrder>& shift_lm, PYPLM<kReduceOrder>& reduce_lm, PYPLM<kTagOrder>& tag_lm) {
-  boost::shared_ptr<Sentences> test_sents = boost::make_shared<Sentences>();
-  boost::shared_ptr<Sentences> test_tags = boost::make_shared<Sentences>();
-  boost::shared_ptr<IndicesList> test_deps = boost::make_shared<IndicesList>();
- 
+  std::vector<Words> test_sents;
+  std::vector<Words> test_tags;
+  std::vector<WxList> test_deps;
+
   std::cerr << "Reading test corpus...\n";
-  dict.read_from_conll_file(test_file, test_sents, test_tags, test_deps, true);
-  std::cerr << "Corpus size: " << test_sents->size() << " sentences\n";
+  dict.read_from_conll_file(test_file, &test_sents, &test_tags, &test_deps, true);
+  std::cerr << "Corpus size: " << test_sents.size() << " sentences\n";
       
   //std::string out_file = "alpino_dev.system.conll";
   //std::string out_file = "wsj_dev.system.conll.out";
@@ -41,15 +39,15 @@ double evaluate(std::string test_file, bool arceager, bool with_words, Dict& dic
     //std::ofstream outs;
     //outs.open(out_file);
             
-    for (unsigned j = 0; j < test_sents->size(); ++j) {
-      ArcList gold_arcs(test_deps->at(j).size());
-      gold_arcs.set_arcs(test_deps->at(j));
+    for (unsigned j = 0; j < test_sents.size(); ++j) {
+      ArcList gold_arcs(test_deps[j].size());
+      gold_arcs.set_arcs(test_deps[j]);
 
       //auto parser;
       if (arceager) {
-        ArcEagerParser parser = beamParseSentenceEager(test_sents->at(j), test_tags->at(j), gold_arcs, beam_size, with_words, dict, eng, shift_lm, reduce_lm, tag_lm);
+        ArcEagerParser parser = beamParseSentenceEager(test_sents[j], test_tags[j], gold_arcs, beam_size, with_words, dict, eng, shift_lm, reduce_lm, tag_lm);
         //ArcEagerParser parser = particleEagerParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, resample, true, with_words, dict, eng, shift_lm, reduce_lm, tag_lm);
-        ArcEagerParser gold_parse = staticEagerGoldParseSentence(test_sents->at(j), test_tags->at(j), gold_arcs, with_words, shift_lm, reduce_lm, tag_lm);
+        ArcEagerParser gold_parse = staticEagerGoldParseSentence(test_sents[j], test_tags[j], gold_arcs, with_words, shift_lm, reduce_lm, tag_lm);
         acc_counts.countAccuracy(parser, gold_parse);
         
         //write output to conll-format file
@@ -58,11 +56,11 @@ double evaluate(std::string test_file, bool arceager, bool with_words, Dict& dic
 
         //outs << "\n";
       } else {
-        ArcStandardParser parser = beamParseSentence(test_sents->at(j), test_tags->at(j), gold_arcs, beam_size, with_words, dict, eng, shift_lm, reduce_lm, tag_lm);
+        ArcStandardParser parser = beamParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, with_words, dict, eng, shift_lm, reduce_lm, tag_lm);
         //if (!gold_arcs.is_projective_dependency())
         //  std::cerr << "Non-projective\n";
         //ArcStandardParser parser = particleParseSentence(test_sents[j], test_tags[j], gold_arcs, beam_size, resample, true, with_words, dict, eng, shift_lm, reduce_lm, tag_lm);
-        ArcStandardParser gold_parse = staticGoldParseSentence(test_sents->at(j), test_tags->at(j), gold_arcs, with_words, shift_lm, reduce_lm, tag_lm);
+        ArcStandardParser gold_parse = staticGoldParseSentence(test_sents[j], test_tags[j], gold_arcs, with_words, shift_lm, reduce_lm, tag_lm);
         acc_counts.countAccuracy(parser, gold_parse);
 
         //write output to conll-format file
@@ -76,7 +74,7 @@ double evaluate(std::string test_file, bool arceager, bool with_words, Dict& dic
     //outs.close();
     auto pr_dur = std::chrono::steady_clock::now() - pr_start;
     int milli_sec_dur = std::chrono::duration_cast<std::chrono::milliseconds>(pr_dur).count();
-    double sents_per_sec = (static_cast<int>(test_sents->size()) * 1000.0 / milli_sec_dur);
+    double sents_per_sec = (static_cast<int>(test_sents.size()) * 1000.0 / milli_sec_dur);
     std::cerr << "\nParsing done...time " << static_cast<int>(milli_sec_dur / 1000.0)
         << "s (" << static_cast<int>(sents_per_sec) << " sentences per second)\n";
  
@@ -111,13 +109,13 @@ double evaluate(std::string test_file, bool arceager, bool with_words, Dict& dic
 
 template<unsigned kShiftOrder, unsigned kTagOrder>
 double evaluateEisner(std::string test_file, bool with_words, Dict& dict, PYPLM<kShiftOrder>& shift_lm, PYPLM<kTagOrder>& tag_lm) {
-  boost::shared_ptr<Sentences> test_sents;
-  boost::shared_ptr<Sentences> test_tags;
-  boost::shared_ptr<IndicesList> test_deps;
+  std::vector<Words> test_sents;
+  std::vector<Words> test_tags;
+  std::vector<WxList> test_deps;
 
   std::cerr << "Reading test corpus...\n";
-  dict.read_from_conll_file(test_file, test_sents, test_tags, test_deps, true);
-  std::cerr << "Corpus size: " << test_sents->size() << " sentences\n";
+  dict.read_from_conll_file(test_file, &test_sents, &test_tags, &test_deps, true);
+  std::cerr << "Corpus size: " << test_sents.size() << " sentences\n";
       
   double acc = 0.0;
 
@@ -128,16 +126,16 @@ double evaluateEisner(std::string test_file, bool with_words, Dict& dict, PYPLM<
   //std::ofstream outs;
   //outs.open(out_file);
             
-  for (unsigned j = 0; j < test_sents->size(); ++j) {
-    ArcList gold_arcs(test_deps->at(j).size());
-    gold_arcs.set_arcs(test_deps->at(j));
+  for (unsigned j = 0; j < test_sents.size(); ++j) {
+    ArcList gold_arcs(test_deps[j].size());
+    gold_arcs.set_arcs(test_deps[j]);
 
-    EisnerParser gold_parse(test_sents->at(j), test_tags->at(j), test_deps->at(j));
+    EisnerParser gold_parse(test_sents[j], test_tags[j], test_deps[j]);
     std::cout << "gold ";
     eisnerScoreSentence(&gold_parse, with_words, dict, shift_lm, tag_lm);
     std::cout <<  gold_parse.weight() << " ";
     gold_parse.print_arcs();
-    EisnerParser parser = eisnerParseSentence(test_sents->at(j), test_tags->at(j), gold_arcs, with_words, dict, shift_lm, tag_lm);
+    EisnerParser parser = eisnerParseSentence(test_sents[j], test_tags[j], gold_arcs, with_words, dict, shift_lm, tag_lm);
     acc_counts.countAccuracy(parser, gold_parse);
     parser.print_sentence(dict);
     if (gold_parse.weight() < parser.weight())
@@ -152,7 +150,7 @@ double evaluateEisner(std::string test_file, bool with_words, Dict& dict, PYPLM<
   //outs.close();
   auto pr_dur = std::chrono::steady_clock::now() - pr_start;
   int milli_sec_dur = std::chrono::duration_cast<std::chrono::milliseconds>(pr_dur).count();
-  double sents_per_sec = (static_cast<int>(test_sents->size()) * 1000.0 / milli_sec_dur);
+  double sents_per_sec = (static_cast<int>(test_sents.size()) * 1000.0 / milli_sec_dur);
   std::cerr << "\nParsing done...time " << static_cast<int>(milli_sec_dur / 1000.0)
       << "s (" << static_cast<int>(sents_per_sec) << " sentences per second)\n";
  
@@ -174,6 +172,9 @@ double evaluateEisner(std::string test_file, bool with_words, Dict& dict, PYPLM<
 
   return acc;
 }
+
+
+
 
 }
 

@@ -25,7 +25,7 @@ class UnconstrainedFeatureStoreTest : public ::testing::Test {
  protected:
 
   virtual void SetUp() {
-    vector<vector<int>> data = {{0, 2, 3, 4, 5, 6}};
+    vector<int> data = {2, 3, 4, 5, 6};
     vector<int> classes = {0, 2, 7};
     boost::shared_ptr<Corpus> corpus = boost::make_shared<Corpus>(data);
     boost::shared_ptr<WordToClassIndex> index =

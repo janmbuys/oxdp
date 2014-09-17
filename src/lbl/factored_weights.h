@@ -77,7 +77,6 @@ class FactoredWeights : public Weights {
   Real getObjective(
       const boost::shared_ptr<Corpus>& corpus,
       const vector<int>& indices,
-      vector<WordId>& words,
       vector<vector<int>>& contexts,
       vector<MatrixReal>& context_vectors,
       MatrixReal& prediction_vectors,
@@ -85,20 +84,23 @@ class FactoredWeights : public Weights {
       vector<VectorReal>& word_probs) const;
 
   virtual void getProbabilities(
-      const vector<WordId>& words,
+      const boost::shared_ptr<Corpus>& corpus,
+      const vector<int>& indices,
       const vector<vector<int>>& contexts,
       const MatrixReal& prediction_vectors,
       MatrixReal& class_probs,
       vector<VectorReal>& word_probs) const;
 
   MatrixReal getWeightedRepresentations(
-      const vector<WordId>& words,
+      const boost::shared_ptr<Corpus>& corpus,
+      const vector<int>& indices,
       const MatrixReal& prediction_vectors,
       const MatrixReal& class_probs,
       const vector<VectorReal>& word_probs) const;
 
   boost::shared_ptr<FactoredWeights> getFullGradient(
-      const vector<WordId>& words,
+      const boost::shared_ptr<Corpus>& corpus,
+      const vector<int>& indices,
       const vector<vector<int>>& contexts,
       const vector<MatrixReal>& context_vectors,
       const MatrixReal& prediction_vectors,
@@ -107,15 +109,16 @@ class FactoredWeights : public Weights {
       vector<VectorReal>& word_probs) const;
 
   virtual vector<vector<int>> getNoiseWords(
-      const vector<WordId>& words,
-      const boost::shared_ptr<Corpus>& corpus) const;
+      const boost::shared_ptr<Corpus>& corpus,
+      const vector<int>& indices) const;
 
   vector<vector<int>> getNoiseClasses(
-      const vector<WordId>& words) const;
+      const boost::shared_ptr<Corpus>& corpus,
+      const vector<int>& indices) const;
 
   void estimateProjectionGradient(
-      const vector<WordId>& words,
       const boost::shared_ptr<Corpus>& corpus,
+      const vector<int>& indices,
       const MatrixReal& prediction_vectors,
       const boost::shared_ptr<FactoredWeights>& gradient,
       MatrixReal& weighted_representations,

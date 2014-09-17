@@ -31,17 +31,15 @@ BloomFilterPopulator::BloomFilterPopulator(
   }
 
   for (size_t i = 0; i < corpus->size(); ++i) {
-    for (size_t k = 1; k < corpus->at(i).size(); ++k) {
-      int word_id = corpus->at(i)[k];
-      int class_id = index->getClass(word_id);
-      int word_class_id = index->getWordIndexInClass(word_id);
-      vector<int> context = processor.extract(i, k);
-      for (const auto& feature_context: generator.getFeatureContexts(context)) {
-        bloomFilter->increment(
-            class_hasher.getPrediction(class_id, feature_context));
-        bloomFilter->increment(
-            word_hashers[class_id].getPrediction(word_class_id, feature_context));
-      }
+    int word_id = corpus->at(i);
+    int class_id = index->getClass(word_id);
+    int word_class_id = index->getWordIndexInClass(word_id);
+    vector<int> context = processor.extract(i);
+    for (const auto& feature_context: generator.getFeatureContexts(context)) {
+      bloomFilter->increment(
+          class_hasher.getPrediction(class_id, feature_context));
+      bloomFilter->increment(
+          word_hashers[class_id].getPrediction(word_class_id, feature_context));
     }
   }
 }

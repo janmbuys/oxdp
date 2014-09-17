@@ -14,15 +14,13 @@ NGramFilter::NGramFilter(
   }
 
   for (size_t i = 0; i < corpus->size(); ++i) {
-    for (size_t k = 1; k < corpus->at(i).size(); ++k) {
-      int word_id = corpus->at(i)[k];
-      int class_id = index->getClass(word_id);
-      vector<int> context = processor->extract(i, k);
-      for (const auto& feature_context: generator->getFeatureContexts(context)) {
-        NGram ngram(word_id, class_id, feature_context.data);
-        size_t ngram_hash = hashFunction(ngram);
-        ++ngramFrequencies[ngram_hash];
-      }
+    int word_id = corpus->at(i);
+    int class_id = index->getClass(word_id);
+    vector<int> context = processor->extract(i);
+    for (const auto& feature_context: generator->getFeatureContexts(context)) {
+      NGram ngram(word_id, class_id, feature_context.data);
+      size_t ngram_hash = hashFunction(ngram);
+      ++ngramFrequencies[ngram_hash];
     }
   }
 

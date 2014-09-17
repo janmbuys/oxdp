@@ -16,24 +16,22 @@ FeatureMatcher::FeatureMatcher(
     : corpus(corpus), index(index), generator(generator), mapper(mapper) {
   featureIndexes = boost::make_shared<GlobalFeatureIndexesPair>(index, mapper);
   for (size_t i = 0; i < corpus->size(); ++i) {
-    for (size_t k = 1; k < corpus->at(i).size(); ++k) {
-      int word_id = corpus->at(i)[k];
-      int class_id = index->getClass(word_id);
-      int word_class_id = index->getWordIndexInClass(word_id);
-      vector<WordId> context = processor->extract(i, k);
+    int word_id = corpus->at(i);
+    int class_id = index->getClass(word_id);
+    int word_class_id = index->getWordIndexInClass(word_id);
+    vector<WordId> context = processor->extract(i);
 
-      vector<FeatureContext> feature_contexts =
-          generator->getFeatureContexts(context);
-      // Add feature indexes only for the topmost max_ngrams ngrams.
-      feature_contexts = filter->filter(word_id, class_id, feature_contexts);
+    vector<FeatureContext> feature_contexts =
+        generator->getFeatureContexts(context);
+    // Add feature indexes only for the topmost max_ngrams ngrams.
+    feature_contexts = filter->filter(word_id, class_id, feature_contexts);
 
-      for (int context_id: mapper->getClassContextIds(feature_contexts)) {
-        featureIndexes->addClassIndex(context_id, class_id);
-      }
+    for (int context_id: mapper->getClassContextIds(feature_contexts)) {
+      featureIndexes->addClassIndex(context_id, class_id);
+    }
 
-      for (int context_id: mapper->getWordContextIds(class_id, feature_contexts)) {
-        featureIndexes->addWordIndex(class_id, context_id, word_class_id);
-      }
+    for (int context_id: mapper->getWordContextIds(class_id, feature_contexts)) {
+      featureIndexes->addWordIndex(class_id, context_id, word_class_id);
     }
   }
 }
@@ -51,26 +49,24 @@ MinibatchFeatureIndexesPairPtr FeatureMatcher::getMinibatchFeatures(
   MinibatchFeatureIndexesPairPtr minibatch_feature_indexes =
       boost::make_shared<MinibatchFeatureIndexesPair>(index);
   for (int i: minibatch_indexes) {
-    for (int k = 1; k < corpus->at(i).size(); ++k) {
-      int word_id = corpus->at(i)[k];
-      int class_id = index->getClass(word_id);
-      int word_class_id = index->getWordIndexInClass(word_id);
-      vector<WordId> context = processor->extract(i, k);
+    int word_id = corpus->at(i);
+    int class_id = index->getClass(word_id);
+    int word_class_id = index->getWordIndexInClass(word_id);
+    vector<WordId> context = processor->extract(i);
 
-      vector<FeatureContext> feature_contexts =
-          generator->getFeatureContexts(context);
+    vector<FeatureContext> feature_contexts =
+        generator->getFeatureContexts(context);
 
-      for (int context_id: mapper->getClassContextIds(feature_contexts)) {
-        minibatch_feature_indexes->setClassIndexes(
-            context_id, featureIndexes->getClassFeatures(context_id));
-      }
-  
-      for (int context_id: mapper->getWordContextIds(class_id, feature_contexts)) {
-        minibatch_feature_indexes->setWordIndexes(
-            class_id,
-            context_id,
-            featureIndexes->getWordFeatures(class_id, context_id));
-      }
+    for (int context_id: mapper->getClassContextIds(feature_contexts)) {
+      minibatch_feature_indexes->setClassIndexes(
+          context_id, featureIndexes->getClassFeatures(context_id));
+    }
+
+    for (int context_id: mapper->getWordContextIds(class_id, feature_contexts)) {
+      minibatch_feature_indexes->setWordIndexes(
+          class_id,
+          context_id,
+          featureIndexes->getWordFeatures(class_id, context_id));
     }
   }
 
