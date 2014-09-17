@@ -70,7 +70,7 @@ CollisionCounter::CollisionCounter(
     }
   }
 
-  auto start_time = GetTime();
+  auto start_time = get_time();
   for (size_t i = 0; i < corpus->size(); ++i) {
     int class_id = index->getClass(corpus->at(i));
     vector<int> context = processor->extract(i);
@@ -92,7 +92,7 @@ CollisionCounter::CollisionCounter(
       }
     }
   }
-  cout << "Counting collisions took " << GetDuration(start_time, GetTime())
+  cout << "Counting collisions took " << get_duration(start_time, get_time())
        << " seconds..." << endl;
 }
 

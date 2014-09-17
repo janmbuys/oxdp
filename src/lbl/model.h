@@ -3,6 +3,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "corpus/dict.h"
+#include "corpus/corpus.h"
+
 #include "lbl/config.h"
 #include "lbl/factored_metadata.h"
 #include "lbl/factored_maxent_metadata.h"
@@ -30,7 +32,7 @@ class Model {
 
   Model(const boost::shared_ptr<ModelData>& config);
 
-  Dict getDict() const;
+  boost::shared_ptr<Dict> getDict() const;
 
   boost::shared_ptr<ModelData> getConfig() const;
 
@@ -67,7 +69,7 @@ class Model {
       int minibatch_counter, Real& objective, Real& best_perplexity) const;
 
   boost::shared_ptr<ModelData> config;
-  Dict dict;
+  boost::shared_ptr<Dict> dict;
   boost::shared_ptr<Metadata> metadata;
   boost::shared_ptr<GlobalWeights> weights;
 };

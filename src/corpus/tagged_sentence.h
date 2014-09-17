@@ -17,7 +17,7 @@ class TaggedSentence: public Sentence {
 
   void print_tags(Dict& dict) const {
     for (auto tag: tags_)
-      std::cout << dict.lookup_tag(tag) << " ";
+      std::cout << dict.lookupTag(tag) << " ";
     std::cout << std::endl;
   }
   

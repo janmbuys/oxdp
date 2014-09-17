@@ -9,11 +9,11 @@ namespace oxlm {
 FactoredMaxentMetadata::FactoredMaxentMetadata() {}
 
 FactoredMaxentMetadata::FactoredMaxentMetadata(
-    const boost::shared_ptr<ModelData>& config, Dict& dict)
+    const boost::shared_ptr<ModelData>& config, boost::shared_ptr<Dict>& dict)
     : FactoredMetadata(config, dict) {}
 
 FactoredMaxentMetadata::FactoredMaxentMetadata(
-    const boost::shared_ptr<ModelData>& config, Dict& dict,
+    const boost::shared_ptr<ModelData>& config, boost::shared_ptr<Dict>& dict,
     const boost::shared_ptr<WordToClassIndex>& index,
     const boost::shared_ptr<FeatureContextMapper>& mapper,
     const boost::shared_ptr<BloomFilterPopulator>& populator,

@@ -24,7 +24,7 @@ class TestWeights : public testing::Test {
 
     vector<int> data = {2, 3, 4, 1};
     corpus = boost::make_shared<Corpus>(data);
-    Dict dict;
+    boost::shared_ptr<Dict> dict = boost::make_shared<Dict>();
     metadata = boost::make_shared<Metadata>(config, dict);
   }
 

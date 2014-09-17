@@ -7,11 +7,11 @@
 namespace oxlm {
 
 TEST(CdecLBLMapperTest, TestBasic) {
-  Dict dict;
-  dict.convert("<s>", false);
-  dict.convert("</s>", false);
-  dict.convert("foo", false);
-  dict.convert("bar", false);
+  boost::shared_ptr<Dict> dict = boost::make_shared<Dict>();
+  dict->convert("<s>", false);
+  dict->convert("</s>", false);
+  dict->convert("foo", false);
+  dict->convert("bar", false);
   CdecLBLMapper mapper(dict);
 
   EXPECT_EQ(0, mapper.convert(1));

@@ -43,7 +43,6 @@ add_libraries(lbl
   query_cache.cc
   sparse_global_feature_store.cc
   sparse_minibatch_feature_store.cc
-  utils.cc
   weights.cc
   word_context_extractor.cc
   word_context_hasher.cc
@@ -78,7 +77,7 @@ set(EXECUTABLES
 )
 foreach(f ${EXECUTABLES})
  add_executable(${f} ${f}.cc)
- target_link_libraries(${f} lbl murmurhash utils)
+ target_link_libraries(${f} lbl murmurhash utils corpus)
 endforeach(f)
 
 add_subdirectory(tests)

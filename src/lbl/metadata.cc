@@ -4,7 +4,7 @@ namespace oxlm {
 
 Metadata::Metadata() {}
 
-Metadata::Metadata(const boost::shared_ptr<ModelData>& config, Dict& dict) : config(config) {}
+Metadata::Metadata(const boost::shared_ptr<ModelData>& config,boost::shared_ptr<Dict>& dict) : config(config) {}
 
 void Metadata::initialize(const boost::shared_ptr<Corpus>& corpus) {
   unigram = VectorReal::Zero(config->vocab_size);

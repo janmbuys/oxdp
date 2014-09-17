@@ -16,13 +16,13 @@ vector<int> scatterMinibatch(const vector<int>& minibatch);
 
 void loadClassesFromFile(
     const string& class_file, const string& training_file,
-    vector<int>& classes, Dict& dict, VectorReal& class_bias);
+    vector<int>& classes, boost::shared_ptr<Dict>& dict, VectorReal& class_bias);
 
 void frequencyBinning(
     const string& training_file, int num_classes,
-    vector<int>& classes, Dict& dict, VectorReal& class_bias);
+    vector<int>& classes, boost::shared_ptr<Dict>& dict, VectorReal& class_bias);
 
-int convert(
+/* int convert(
     const string& file, Dict& dict,
     bool immutable_dict, bool convert_unknowns);
 
@@ -30,6 +30,6 @@ boost::shared_ptr<Corpus> readCorpus(
     const string& file, Dict& dict,
     bool immutable_dict = true, bool convert_unknowns = false);
 
-Real perplexity(Real log_likelihood, size_t corpus_size);
+Real perplexity(Real log_likelihood, size_t corpus_size); */
 
 } // namespace oxlm

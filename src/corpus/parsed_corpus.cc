@@ -22,7 +22,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
       if (col_num == 1) //1 - word
         sent_out->push_back(dict->convert(line.substr(last, cur - last - 1), frozen));
       else if (col_num == 4) //4 - postag (3 - course postag)
-        tags_out->push_back(dict->convert_tag(line.substr(last, cur - last - 1), frozen));
+        tags_out->push_back(dict->convertTag(line.substr(last, cur - last - 1), frozen));
       else if (col_num == 6)
         arcs_out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
        ++col_num;

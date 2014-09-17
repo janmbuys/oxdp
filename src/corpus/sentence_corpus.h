@@ -9,40 +9,32 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
-#include <boost/serialization/vector.hpp>
-
 #include "corpus/dict.h"
 #include "corpus/sentence.h"
 #include "corpus/corpus_interface.h"
 
 namespace oxlm {
 
-class Corpus: public CorpusInterface {
+class SentenceCorpus: public CorpusInterface {
   public:
-  Corpus();
+  SentenceCorpus();
 
-  Corpus(Words corpus);
+  Words convertWhitespaceDelimitedLine(const std::string& line, const boost::shared_ptr<Dict>& dict, 
+                                             bool frozen);
 
   virtual void readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) override;
 
-  WordId at(unsigned i) const {
-    return corpus_.at(i);
+  Sentence sentence_at(unsigned i) const {
+    return sentences_.at(i);
   }
 
   size_t size() const override;
 
   size_t numTokens() const override;
  
-
-  friend class boost::serialization::access;
-
-  template<class Archive>
-  void serialize(Archive & ar, const unsigned int version) {
-    ar & corpus_;
-  }
-
   private:
-  Words corpus_;
+  std::vector<Sentence> sentences_;
+
 
 };
 

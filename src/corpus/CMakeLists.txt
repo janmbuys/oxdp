@@ -3,6 +3,7 @@
 #############################################
 
 add_libraries(corpus
+  dict.cc
   sentence.cc
   tagged_sentence.cc
   parsed_sentence.cc

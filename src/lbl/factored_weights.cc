@@ -289,7 +289,7 @@ vector<vector<int>> FactoredWeights::getNoiseWords(
     int class_id = index->getClass(word_id);
     int class_start = index->getClassMarker(class_id);
 
-    auto start_sampling = GetTime();
+    auto start_sampling = get_time();
     for (int j = 0; j < config->noise_samples; ++j) {
       noise_words[i].push_back(wordDists->sample(class_id));
     }
@@ -307,7 +307,7 @@ vector<vector<int>> FactoredWeights::getNoiseClasses(
   }
 
   vector<vector<int>> noise_classes(indices.size());
-  auto start_sampling = GetTime();
+  auto start_sampling = get_time();
   for (size_t i = 0; i < indices.size(); ++i) {
     for (int j = 0; j < config->noise_samples; ++j) {
       noise_classes[i].push_back(classDist->sample());

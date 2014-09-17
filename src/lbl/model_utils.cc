@@ -25,7 +25,7 @@ vector<int> scatterMinibatch(const vector<int>& minibatch) {
 
 void loadClassesFromFile(
     const string& class_file, const string& training_file,
-    vector<int>& classes, Dict& dict, VectorReal& class_bias) {
+    vector<int>& classes, boost::shared_ptr<Dict>& dict, VectorReal& class_bias) {
   ifstream tin(training_file);
   string line;
   int num_eos_tokens = 0;
@@ -42,7 +42,7 @@ void loadClassesFromFile(
   ifstream in(class_file);
   string prev_class_str, class_str, token_str, freq_str;
   while (in >> class_str >> token_str >> freq_str) {
-    int w_id = dict.convert(token_str, false);
+    int w_id = dict->convert(token_str, false);
 
     if (!prev_class_str.empty() && class_str != prev_class_str) {
       class_freqs.push_back(mass);
@@ -58,23 +58,23 @@ void loadClassesFromFile(
   }
 
   class_freqs.push_back(mass);
-  classes.push_back(dict.size());
+  classes.push_back(dict->size());
 
   class_bias = VectorReal::Zero(class_freqs.size());
   for (size_t i = 0; i < class_freqs.size(); ++i) {
     class_bias(i) = log(class_freqs.at(i)) - log(total_mass);
   }
 
-  cout << "Read " << dict.size() << " types in "
+  cout << "Read " << dict->size() << " types in "
        << classes.size() - 1 << " classes with an average of "
-       << dict.size() / float(classes.size() - 1) << " types per bin." << endl;
+       << dict->size() / float(classes.size() - 1) << " types per bin." << endl;
 
   in.close();
 }
 
 void frequencyBinning(
     const string& training_file, int num_classes,
-    vector<int>& classes, Dict& dict, VectorReal& class_bias) {
+    vector<int>& classes, boost::shared_ptr<Dict>& dict, VectorReal& class_bias) {
   ifstream in(training_file);
   string line, token;
 
@@ -115,7 +115,7 @@ void frequencyBinning(
   int bin_size = remaining_tokens / (num_classes - 1);
   int mass = 0;
   for (size_t i = 0; i < counts.size(); ++i) {
-    WordId id = dict.convert(counts.at(i).first, false);
+    WordId id = dict->convert(counts.at(i).first, false);
     mass += counts.at(i).second;
 
     if (mass > bin_size) {
@@ -127,19 +127,20 @@ void frequencyBinning(
     }
   }
 
-  if (classes.back() != int(dict.size())) {
-    classes.push_back(dict.size());
+  if (classes.back() != int(dict->size())) {
+    classes.push_back(dict->size());
   }
 
   assert(classes.size() == num_classes + 1);
   class_bias.array() -= log(num_eos_tokens + num_tokens);
 
-  cout << "Binned " << dict.size() << " types in "
+  cout << "Binned " << dict->size() << " types in "
        << classes.size() - 1 << " classes with an average of "
-       << dict.size() / float(classes.size() - 1) << " types per bin." << endl;
+       << dict->size() / float(classes.size() - 1) << " types per bin." << endl;
   in.close();
 }
 
+/*
 int convert(
     const string& token, Dict& dict,
     bool immutable_dict, bool convert_unknowns) {
@@ -174,10 +175,10 @@ boost::shared_ptr<Corpus> readCorpus(
   }
 
   return corpus;
-}
+} 
 
 Real perplexity(Real log_likelihood, size_t corpus_size) {
   return exp(log_likelihood / corpus_size);
-}
+} */
 
 } // namespace oxlm

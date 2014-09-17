@@ -1,6 +1,8 @@
 #include <boost/program_options.hpp>
 
 #include "corpus/dict.h"
+#include "corpus/corpus.h"
+
 #include "lbl/context_processor.h"
 #include "lbl/model.h"
 #include "lbl/utils.h"
@@ -15,11 +17,11 @@ void score(const string& model_file, const string& data_file) {
   model.load(model_file);
 
   boost::shared_ptr<ModelData> config = model.getConfig();
-  Dict dict = model.getDict();
+  shared_ptr<Dict> dict = model.getDict();
 
-  int eos = dict.convert("</s>", false);
-  boost::shared_ptr<Corpus> test_corpus =
-      readCorpus(data_file, dict, true, true);
+  int eos = dict->convert("</s>", false);
+  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  test_corpus->readFile(data_file, dict, true);
 
   double total = 0;
   ContextProcessor processor(test_corpus, config->ngram_order - 1);
@@ -28,7 +30,7 @@ void score(const string& model_file, const string& data_file) {
     vector<int> context = processor.extract(i);
     double log_prob = model.predict(word_id, context);
     total += log_prob;
-    cout << "(" << dict.lookup(word_id) << " " << log_prob << ") ";
+    cout << "(" << dict->lookup(word_id) << " " << log_prob << ") ";
     if (word_id == eos) {
       cout << "Total: " << total << endl;
       total = 0;

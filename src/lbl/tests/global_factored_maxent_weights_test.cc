@@ -55,7 +55,7 @@ class GlobalFactoredMaxentWeightsTest : public testing::Test {
   }
 
   boost::shared_ptr<ModelData> config;
-  Dict dict;
+  boost::shared_ptr<Dict> dict;
   boost::shared_ptr<Corpus> corpus;
   boost::shared_ptr<WordToClassIndex> index;
   boost::shared_ptr<FeatureContextMapper> mapper;
@@ -65,6 +65,7 @@ class GlobalFactoredMaxentWeightsTest : public testing::Test {
 };
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCheckGradientSparse) {
+  dict = boost::make_shared<Dict>();
   metadata = boost::make_shared<FactoredMaxentMetadata>(
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus);
@@ -84,6 +85,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCheckGradientSparse) {
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionsNoFilter) {
+  dict = boost::make_shared<Dict>();
   config->hash_space = 100;
   metadata = boost::make_shared<FactoredMaxentMetadata>(
       config, dict, index, mapper, populator, matcher);
@@ -104,6 +106,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionsNoFilter) {
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionExactFiltering) {
+  dict = boost::make_shared<Dict>();
   config->hash_space = 100;
   config->filter_contexts = true;
   metadata = boost::make_shared<FactoredMaxentMetadata>(
@@ -124,6 +127,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionExactFiltering) {
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionApproximateFiltering) {
+  dict = boost::make_shared<Dict>();
   config->hash_space = 100;
   config->filter_contexts = true;
   config->filter_error_rate = 0.1;
@@ -147,6 +151,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionApproximateFiltering) {
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestPredict) {
+  dict = boost::make_shared<Dict>();
   metadata = boost::make_shared<FactoredMaxentMetadata>(
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus);
@@ -160,6 +165,7 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestPredict) {
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestSerialization) {
+  dict = boost::make_shared<Dict>();
   metadata = boost::make_shared<FactoredMaxentMetadata>(
       config, dict, index, mapper, populator, matcher);
   GlobalFactoredMaxentWeights weights(config, metadata, corpus), weights_copy;

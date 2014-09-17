@@ -10,6 +10,9 @@
 #include "third_party/eigen/Eigen/Sparse"
 #include "third_party/smhasher/MurmurHash3.h"
 
+#include "corpus/utils.h"
+#include "corpus/corpus.h"
+
 using namespace std;
 using namespace chrono;
 
@@ -17,8 +20,8 @@ namespace oxlm {
 
 typedef float Real;
 
-typedef int            WordId;
-typedef vector<WordId> Corpus;
+//typedef int            WordId;
+//typedef vector<WordId> Corpus;
 
 typedef vector<vector<int>>                        GlobalFeatureIndexes;
 typedef boost::shared_ptr<GlobalFeatureIndexes>    GlobalFeatureIndexesPtr;
@@ -32,8 +35,8 @@ typedef Eigen::Array<Real, Eigen::Dynamic, 1>               ArrayReal;
 typedef Eigen::Array<Real, Eigen::Dynamic, Eigen::Dynamic>  Array2DReal;
 typedef Eigen::SparseVector<Real>                           SparseVectorReal;
 
-typedef high_resolution_clock Clock;
-typedef Clock::time_point     Time;
+//typedef high_resolution_clock Clock;
+//typedef Clock::time_point     Time;
 
 
 // Helper operations on vectors.
@@ -65,9 +68,9 @@ inline Array2DReal sigmoidDerivative(const MatrixReal& v) {
 
 // Helper functions for time measurement.
 
-Time GetTime();
+//Time GetTime();
 
-double GetDuration(const Time& start_time, const Time& stop_time);
+//double GetDuration(const Time& start_time, const Time& stop_time);
 
 inline size_t MurmurHash(const vector<int>& data, int seed = 0) {
   size_t result[2] = {0, 0};

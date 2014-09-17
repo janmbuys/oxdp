@@ -21,18 +21,21 @@
 namespace oxlm {
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-Model<GlobalWeights, MinibatchWeights, Metadata>::Model() {}
+Model<GlobalWeights, MinibatchWeights, Metadata>::Model() {
+  dict = boost::make_shared<Dict>();
+}
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
 Model<GlobalWeights, MinibatchWeights, Metadata>::Model(
     const boost::shared_ptr<ModelData>& config)
     : config(config) {
+  dict = boost::make_shared<Dict>();
   metadata = boost::make_shared<Metadata>(config, dict);
   srand(1);
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-Dict Model<GlobalWeights, MinibatchWeights, Metadata>::getDict() const {
+boost::shared_ptr<Dict> Model<GlobalWeights, MinibatchWeights, Metadata>::getDict() const {
   return dict;
 }
 
@@ -52,14 +55,14 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   // Initialize the dictionary now, if it hasn't been initialized when the
   // vocabulary was partitioned in classes.
   bool immutable_dict = config->classes > 0 || config->class_file.size();
-  boost::shared_ptr<Corpus> training_corpus =
-      readCorpus(config->training_file, dict, immutable_dict);
-  config->vocab_size = dict.size();
+  boost::shared_ptr<Corpus> training_corpus = boost::make_shared<Corpus>();
+  training_corpus->readFile(config->training_file, dict, immutable_dict);
+  config->vocab_size = dict->size();
   cout << "Done reading training corpus..." << endl;
 
-  boost::shared_ptr<Corpus> test_corpus;
+  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
   if (config->test_file.size()) {
-    test_corpus = readCorpus(config->test_file, dict);
+    test_corpus->readFile(config->training_file, dict, true);
     cout << "Done reading test corpus..." << endl;
   }
 
@@ -98,7 +101,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         boost::make_shared<MinibatchWeights>(config, metadata);
 
     for (int iter = 0; iter < config->iterations; ++iter) {
-      auto iteration_start = GetTime();
+      auto iteration_start = get_time();
 
       #pragma omp master
       {
@@ -209,7 +212,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
                test_objective, best_perplexity);
       #pragma omp master
       {
-        Real iteration_time = GetDuration(iteration_start, GetTime());
+        Real iteration_time = get_duration(iteration_start, get_time());
         cout << "Iteration: " << iter << ", "
              << "Time: " << iteration_time << " seconds, "
              << "Objective: " << global_objective / training_corpus->size()
@@ -286,9 +289,9 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
     #pragma omp master
     {
       Real test_perplexity = perplexity(log_likelihood, test_corpus->size());
-      Real iteration_time = GetDuration(iteration_start, GetTime());
+      Real iteration_time = get_duration(iteration_start, get_time());
       cout << "\tMinibatch " << minibatch_counter << ", "
-           << "Time: " << GetDuration(iteration_start, GetTime()) << " seconds, "
+           << "Time: " << get_duration(iteration_start, get_time()) << " seconds, "
            << "Test Perplexity: " << test_perplexity << endl;
 
       if (test_perplexity < best_perplexity) {
@@ -325,7 +328,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::save() const {
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
 void Model<GlobalWeights, MinibatchWeights, Metadata>::load(const string& filename) {
   if (filename.size() > 0) {
-    auto start_time = GetTime();
+    auto start_time = get_time();
     cerr << "Loading model from " << filename << "..." << endl;
     ifstream fin(filename);
     boost::archive::binary_iarchive iar(fin);
@@ -333,7 +336,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::load(const string& filena
     iar >> dict;
     iar >> weights;
     iar >> metadata;
-    cerr << "Reading model took " << GetDuration(start_time, GetTime())
+    cerr << "Reading model took " << get_duration(start_time, get_time())
          << " seconds..." << endl;
   }
 }

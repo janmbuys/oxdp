@@ -15,7 +15,7 @@ class Metadata {
  public:
   Metadata();
 
-  Metadata(const boost::shared_ptr<ModelData>& config, Dict& dict);
+  Metadata(const boost::shared_ptr<ModelData>& config, boost::shared_ptr<Dict>& dict);
 
   void initialize(const boost::shared_ptr<Corpus>& corpus);
 

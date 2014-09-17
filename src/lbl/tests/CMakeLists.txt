@@ -31,17 +31,17 @@ set(TESTS
     query_cache_test
     sparse_global_feature_store_test
     sparse_minibatch_feature_store_test
-    train_factored_sgd_test
-    train_maxent_sgd_test
-    train_sgd_test
     utils_test
     weights_test
     word_context_extractor_test
     word_context_hasher_test
     word_distributions_test
-    word_to_class_index_test)
+    word_to_class_index_test
+    train_sgd_test
+    train_maxent_sgd_test
+    train_factored_sgd_test)
 
-set(LIBRARIES murmurhash lbl)
+set(LIBRARIES murmurhash lbl corpus)
 
 if(CDEC_FOUND AND CDEC_LIBRARIES_FOUND)
   set(TESTS ${TESTS}
