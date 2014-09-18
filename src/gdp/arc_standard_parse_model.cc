@@ -26,6 +26,8 @@ void ArcStandardParseModel::resampleParticles(AsParserList* beam_stack, MT19937&
 
 ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence& sent, 
                                const boost::shared_ptr<ParsedWeightsInterface>& weights, unsigned beam_size) {
+  bool direction_deterministic = true;
+    
   std::vector<AsParserList> beam_chart; 
   beam_chart.push_back(AsParserList());
   beam_chart[0].push_back(boost::make_shared<ArcStandardParser>(static_cast<TaggedSentence>(sent))); 
@@ -56,26 +58,24 @@ ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence&
         //std::cout << "(la: " << reduceleftarcp << ", ra: " << reducerightarcp << ")" << " ";
         double reducep = neg_log_sum_exp(reduceleftarcp, reducerightarcp);
        
-        //TODO have option to make la/ra choice deterministic
-        beam_chart[i-1].push_back(boost::make_shared<ArcStandardParser>(*beam_chart[i][j]));
-        if (i > 1) { //left arc only invalid when stack size is 2 **
-          beam_chart[i-1].push_back(boost::make_shared<ArcStandardParser>(*beam_chart[i][j]));
+        //TODO so adding both to the same list is giving an issue
 
+        //left arc only invalid when stack size is 2 **
+        if ((i > 1) && (!direction_deterministic || (reduceleftarcp < reducerightarcp))) { 
+          beam_chart[i-1].push_back(boost::make_shared<ArcStandardParser>(*beam_chart[i][j]));
           beam_chart[i-1].back()->leftArc();
           beam_chart[i-1].back()->add_particle_weight(reduceleftarcp);
-          beam_chart[i-1].rbegin()[1]->rightArc();
-          beam_chart[i-1].rbegin()[1]->add_particle_weight(reducerightarcp); 
-
-          if (k == sent.size()) {  
+          if (k == sent.size())   
             beam_chart[i-1].back()->add_importance_weight(reducep); 
-            beam_chart[i-1].rbegin()[1]->add_importance_weight(reducep); 
-          } 
-        } else {
+        } 
+        
+        //right arc 
+        if ((i==1) || (!direction_deterministic || (reducerightarcp <= reduceleftarcp))) {
+          beam_chart[i-1].push_back(boost::make_shared<ArcStandardParser>(*beam_chart[i][j]));
           beam_chart[i-1].back()->rightArc();
           beam_chart[i-1].back()->add_particle_weight(reducerightarcp); 
-          
           if (k == sent.size()) 
-            beam_chart[i-1].back()->add_importance_weight(reducerightarcp - reducep); 
+            beam_chart[i-1].back()->add_importance_weight(reducep); 
         }
       }
     }
@@ -119,7 +119,7 @@ ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence&
 
   //print parses
   //add verbose option?
-  /* for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
+  for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
     std::cout << beam_chart[n][i]->particle_weight() << " ";
     beam_chart[n][i]->print_arcs();
     beam_chart[n][i]->print_actions();
@@ -127,7 +127,7 @@ ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence&
     //can't do this now, but add if needed later
     //float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
     //std::cout << "  Dir Accuracy: " << dir_acc;
-  } */
+  } 
 
   if (beam_chart[n].size()==0) {
     std::cout << "no parse found" << std::endl;

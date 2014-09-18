@@ -64,7 +64,7 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
           beam_chart[i-1].back()->leftArc();
           beam_chart[i-1].back()->add_particle_weight(leftarcreducep);
         } 
-        
+        //else //TODO temp experiment - basically no difference
         if (beam_chart[i][j]->reduce_valid()) {          
           beam_chart[i-1].push_back(boost::make_shared<ArcEagerParser>(*beam_chart[i][j]));
           beam_chart[i-1].back()->reduce();
@@ -151,9 +151,9 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
       if (beam_chart[i][j]->reduce_valid()) {  
         beam_chart[i-1].push_back(boost::make_shared<ArcEagerParser>(*beam_chart[i][j]));
         beam_chart[i-1].back()->reduce();
-        //in some models, don't add the weights
-        beam_chart[i-1].back()->add_particle_weight(reducep); 
-        beam_chart[i-1].back()->add_importance_weight(reducep); 
+        //in some models, don't add the weights TODO
+        //beam_chart[i-1].back()->add_particle_weight(reducep); 
+        //beam_chart[i-1].back()->add_importance_weight(reducep); 
         //std::cout << j << " re valid ";
       }
     }
@@ -166,16 +166,17 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
   unsigned const n = 0; 
   //std::cout << "Beam size: " << beam_chart[n].size() << std::endl;
   for (unsigned i = 0; (i < beam_chart[n].size()); ++i) 
-    beam_chart[n][0]->add_particle_weight(beam_chart[n][i]->particle_weight());
+    beam_chart[n][0]->add_beam_weight(beam_chart[n][i]->particle_weight());
 
-  /*for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
+  for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
+    std::cout << beam_chart[n][i]->particle_weight() << " ";
     beam_chart[n][i]->print_arcs();
     beam_chart[n][i]->print_actions();
 
     //float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
     //std::cout << "  Dir Accuracy: " << dir_acc;
     //std::cout << "  Sample weight: " << (beam_chart[n][i]->particle_weight()) << std::endl;
-  } */ 
+  }  
 
   if (beam_chart[n].size()==0) {
     //std::cout << "no parse found" << std::endl;
@@ -185,7 +186,6 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
     //beam_chart[n][0]->print_actions();
     return ArcEagerParser(*beam_chart[n][0]); 
   }
-
 }
 
 ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& sent, 

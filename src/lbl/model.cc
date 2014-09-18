@@ -60,8 +60,9 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   config->vocab_size = dict->size();
   cout << "Done reading training corpus..." << endl;
 
-  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  boost::shared_ptr<Corpus> test_corpus; 
   if (config->test_file.size()) {
+    test_corpus = boost::make_shared<Corpus>();
     test_corpus->readFile(config->training_file, dict, true);
     cout << "Done reading test corpus..." << endl;
   }

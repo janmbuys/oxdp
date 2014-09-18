@@ -2,10 +2,11 @@
 #define _GDP_MODEL_CONFIG_H_
 
 #include <string>
+#include <vector>
 
 namespace oxlm {
 
-enum class ParserType {eisner, arcstandard, arceager};
+enum class ParserType {ngram, eisner, arcstandard, arceager};
 
 struct ModelConfig {
   ModelConfig();
@@ -17,6 +18,10 @@ struct ModelConfig {
   bool randomise;
   ParserType parser_type;
   bool lexicalised;
+  size_t vocab_size; 
+  size_t num_tags;
+  size_t num_actions;
+  std::vector<unsigned> beam_sizes;
 
   bool operator==(const ModelConfig& other) const;
 };

@@ -52,8 +52,8 @@ WordId Dict::convert(const Word& word, bool frozen) {
   if (word == "")
     return bad0_id_;
 
-  //special treatment for sos_ (root)
-  if (words_.size()==0 && !frozen) {
+  //remove special treatment for sos_ (root)
+  /*if (words_.size()==0 && !frozen) {
     words_.push_back(word);
     d_[word] = 0;
     return 0;
@@ -65,13 +65,12 @@ WordId Dict::convert(const Word& word, bool frozen) {
     return 1;
   } else if (word == eos_) {
     return 1;
-  }
+  } */
 
   auto i = d_.find(word);
   if (i == d_.end()) {
     if (frozen) 
       return bad0_id_;
-            
     words_.push_back(word);
     d_[word] = words_.size()-1;
     return words_.size()-1;

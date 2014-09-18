@@ -68,7 +68,7 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
       //add arcs seperately
       //for (unsigned i = 1; i < sent.size(); ++i)
       //  sentences_.back().set_arc(i, arcs.at(i));
-      sentences_.back().print_arcs();
+      //sentences_.back().print_arcs();
 
       state = 1;
     } else {
@@ -89,8 +89,8 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
     }
   }
 
-  for (int i = 0 ; i < sentences_.size(); ++i)
-    sentences_.at(i).print_arcs();
+  //for (int i = 0 ; i < sentences_.size(); ++i)
+  //  sentences_.at(i).print_arcs();
 }
 
 size_t ParsedCorpus::size() const {

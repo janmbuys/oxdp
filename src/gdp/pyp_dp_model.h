@@ -13,7 +13,7 @@
 
 #include "pyp/utils.h"
 #include "pyp/pyp_parsed_weights_interface.h"
-#include "gdp/model_config.h"
+#include "pyp/model_config.h"
 #include "pyp/parsed_pyp_weights.h"
 #include "pyp/parsed_lex_pyp_weights.h"
 
@@ -47,7 +47,6 @@ class PypDpModel {
   boost::shared_ptr<Dict> dict_;
   boost::shared_ptr<PypParsedWeightsInterface> weights_;
   boost::shared_ptr<ParseModelInterface> parse_model_;
-  size_t num_actions_;
 };
 
 }

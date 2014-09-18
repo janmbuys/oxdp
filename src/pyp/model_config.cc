@@ -7,7 +7,12 @@ ModelConfig::ModelConfig():
     minibatch_size(1), 
     randomise(false), 
     parser_type(ParserType::arcstandard),
-    lexicalised(false) {}
+    lexicalised(false),
+    vocab_size(1),
+    num_tags(1),
+    num_actions(1),
+    beam_sizes(1, 1)
+    {}
 
 bool ModelConfig::operator==(const ModelConfig& other) const {
   return (training_file == other.training_file
