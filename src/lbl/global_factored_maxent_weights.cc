@@ -311,9 +311,9 @@ Real GlobalFactoredMaxentWeights::regularizerUpdate(
 }
 
 Real GlobalFactoredMaxentWeights::predict(
-    int word_id, vector<int> context) const {
-  int class_id = index->getClass(word_id);
-  int word_class_id = index->getWordIndexInClass(word_id);
+    int word, vector<int> context) const {
+  int class_id = index->getClass(word);
+  int word_class_id = index->getWordIndexInClass(word);
   VectorReal prediction_vector = getPredictionVector(context);
 
   Real class_prob = 0;
@@ -334,7 +334,7 @@ Real GlobalFactoredMaxentWeights::predict(
   ret = classNormalizerCache.get(context);
   if (ret.second) {
     Real word_score = V[class_id]->get(context)(word_class_id);
-    word_prob = R.col(word_id).dot(prediction_vector) + B(word_id) + word_score - ret.first;
+    word_prob = R.col(word).dot(prediction_vector) + B(word) + word_score - ret.first;
   } else {
     Real normalizer = 0;
     VectorReal word_probs = logSoftMax(
@@ -345,6 +345,11 @@ Real GlobalFactoredMaxentWeights::predict(
   }
 
   return class_prob + word_prob;
+}
+
+
+int GlobalFactoredMaxentWeights::vocabSize() const {
+  return FactoredWeights::vocabSize();
 }
 
 bool GlobalFactoredMaxentWeights::operator==(

@@ -42,17 +42,17 @@ class ParsedPypWeights: public PypWeights<tOrder>, public PypParsedWeightsInterf
 
   void updateRemove(const DataSet& examples, MT19937& eng) override;
 
-  size_t numWords() const override;
+  int numWords() const override;
 
-  size_t numTags() const override;
+  int numTags() const override;
 
-  size_t numActions() const override;
+  int numActions() const override;
   
-  size_t vocabSize() const override;
+  int vocabSize() const override;
 
   private:
   PYPLM<aOrder> action_lm_;
-  size_t num_actions_;
+  int num_actions_;
 };
 
 }

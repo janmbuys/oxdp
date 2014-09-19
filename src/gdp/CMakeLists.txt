@@ -12,7 +12,6 @@ add_libraries(gdp
   eisner_parse_model.cc
   arc_standard_parse_model.cc
   arc_eager_parse_model.cc
-  model_config.cc
   pyp_dp_model.cc
 )
 

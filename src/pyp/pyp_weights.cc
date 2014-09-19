@@ -65,7 +65,7 @@ void PypWeights<kOrder>::updateRemove(const DataPoint& example, MT19937& eng) {
 }
 
 template<unsigned kOrder>
-size_t PypWeights<kOrder>::vocabSize() const {
+int PypWeights<kOrder>::vocabSize() const {
   return vocab_size_;
 }
 

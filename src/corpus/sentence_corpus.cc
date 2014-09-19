@@ -1,6 +1,4 @@
-
-#include "corpus/dict.h"
-#include "corpus/corpus.h"
+#include "corpus/sentence_corpus.h"
 
 namespace oxlm {
 
@@ -64,7 +62,7 @@ size_t SentenceCorpus::size() const {
 size_t SentenceCorpus::numTokens() const {
   size_t total = 0;
   for (auto sent: sentences_)
-    total += sent.size();
+    total += sent.size(); 
 
   return total;
 }

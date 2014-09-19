@@ -18,9 +18,9 @@ struct ModelConfig {
   bool randomise;
   ParserType parser_type;
   bool lexicalised;
-  size_t vocab_size; 
-  size_t num_tags;
-  size_t num_actions;
+  int vocab_size; 
+  int num_tags;
+  int num_actions;
   std::vector<unsigned> beam_sizes;
 
   bool operator==(const ModelConfig& other) const;

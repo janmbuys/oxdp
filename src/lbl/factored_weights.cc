@@ -466,9 +466,9 @@ void FactoredWeights::clear(const MinibatchWords& words, bool parallel_update) {
   }
 }
 
-Real FactoredWeights::predict(int word_id, vector<int> context) const {
-  int class_id = index->getClass(word_id);
-  int word_class_id = index->getWordIndexInClass(word_id);
+Real FactoredWeights::predict(int word, vector<int> context) const {
+  int class_id = index->getClass(word);
+  int word_class_id = index->getWordIndexInClass(word);
   VectorReal prediction_vector = getPredictionVector(context);
 
   Real class_prob;
@@ -487,7 +487,7 @@ Real FactoredWeights::predict(int word_id, vector<int> context) const {
   Real word_prob;
   ret = classNormalizerCache.get(context);
   if (ret.second) {
-    word_prob = R.col(word_id).dot(prediction_vector) + B(word_id) - ret.first;
+    word_prob = R.col(word).dot(prediction_vector) + B(word) - ret.first;
   } else {
     Real normalizer = 0;
     VectorReal word_probs = logSoftMax(
@@ -498,6 +498,10 @@ Real FactoredWeights::predict(int word_id, vector<int> context) const {
   }
 
   return class_prob + word_prob;
+}
+
+int FactoredWeights::vocabSize() const {
+  return Weights::vocabSize();
 }
 
 void FactoredWeights::clearCache() {

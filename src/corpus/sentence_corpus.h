@@ -1,5 +1,5 @@
-#ifndef _CORPUS_CORPUS_H_
-#define _CORPUS_CORPUS_H_
+#ifndef _CORPUS_S_CORPUS_H_
+#define _CORPUS_S_CORPUS_H_
 
 #include <string>
 #include <iostream>
@@ -22,7 +22,7 @@ class SentenceCorpus: public CorpusInterface {
   Words convertWhitespaceDelimitedLine(const std::string& line, const boost::shared_ptr<Dict>& dict, 
                                              bool frozen);
 
-  virtual void readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) override;
+  void readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) override;
 
   Sentence sentence_at(unsigned i) const {
     return sentences_.at(i);

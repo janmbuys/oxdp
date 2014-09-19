@@ -14,7 +14,7 @@ class WeightsInterface {
 
   virtual double predict(int word, std::vector<int> context) const = 0;
 
-  virtual size_t vocabSize() const = 0;
+  virtual int vocabSize() const = 0;
 
   virtual ~WeightsInterface() {}
 

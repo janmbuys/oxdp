@@ -23,7 +23,7 @@ class Corpus: public CorpusInterface {
 
   Corpus(Words corpus);
 
-  virtual void readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) override;
+  void readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) override;
 
   WordId at(unsigned i) const {
     return corpus_.at(i);

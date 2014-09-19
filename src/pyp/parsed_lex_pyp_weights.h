@@ -31,13 +31,13 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
 
   void updateRemove(const DataSet& examples, MT19937& eng) override;
   
-  size_t numWords() const override;
+  int numWords() const override;
 
-  size_t vocabSize() const override;
+  int vocabSize() const override;
 
   private:
   PYPLM<wOrder> lex_lm_;
-  size_t lex_vocab_size_;
+  int lex_vocab_size_;
 };
 
 }

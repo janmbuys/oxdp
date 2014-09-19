@@ -1,27 +1,36 @@
-#ifndef _PYP_NGRAM_MODEL_H_
-#define _PYP_NGRAM_MODEL_H_
+#ifndef _CORPUS_NGRAM_MODEL_H_
+#define _CORPUS_NGRAM_MODEL_H_
 
 #include "corpus/utils.h"
 #include "corpus/sentence.h"
 #include "corpus/data_set.h"
-#include "corpus/model_interface.h"
+#include "corpus/corpus.h"
 #include "corpus/weights_interface.h"
 
 namespace oxlm {
 
-class NGramModel: public ModelInterface {
+class NGramModel {
   public:
-  NgramModel(unsigned order, WordId eos);
+  NGramModel(unsigned order, WordId sos, WordId eos);
+
+  Words extractContext(const boost::shared_ptr<Corpus> corpus, int position);
+
+  void extract(const boost::shared_ptr<Corpus> corpus, int position,     
+          const boost::shared_ptr<DataSet>& examples);
+
+  double evaluate(const boost::shared_ptr<Corpus> corpus, int position, 
+          const boost::shared_ptr<WeightsInterface>& weights); 
 
   void extractSentence(const Sentence& sent, 
-          const boost::shared_ptr<DataSet>& examples) override;
+          const boost::shared_ptr<DataSet>& examples);
 
   //return likelihood
   double evaluateSentence(const Sentence& sent, 
-          const boost::shared_ptr<WeightsInterface>& weights) override;
+          const boost::shared_ptr<WeightsInterface>& weights);
 
   private:
   unsigned order_;
+  WordId sos_;
   WordId eos_;
           
 };

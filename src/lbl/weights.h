@@ -8,6 +8,8 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/thread/tss.hpp>
 
+#include "corpus/weights_interface.h"
+
 #include "lbl/context_cache.h"
 #include "lbl/metadata.h"
 #include "lbl/minibatch_words.h"
@@ -23,7 +25,7 @@ typedef Eigen::Map<VectorReal> WeightsType;
 typedef boost::shared_ptr<mutex> Mutex;
 typedef pair<size_t, size_t> Block;
 
-class Weights {
+class Weights: public WeightsInterface {
  public:
   Weights();
 
@@ -87,7 +89,9 @@ class Weights {
 
   void clear(const MinibatchWords& words, bool parallel_update);
 
-  Real predict(int word_id, vector<int> context) const;
+  Real predict(int word, vector<int> context) const override;
+
+  int vocabSize() const override;
 
   void clearCache();
 

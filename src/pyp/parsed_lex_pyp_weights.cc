@@ -64,12 +64,12 @@ void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateRemove(const DataSet& ex
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-size_t ParsedLexPypWeights<wOrder, tOrder, aOrder>::numWords() const {
+int ParsedLexPypWeights<wOrder, tOrder, aOrder>::numWords() const {
   return lex_vocab_size_;
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-size_t ParsedLexPypWeights<wOrder, tOrder, aOrder>::vocabSize() const {
+int ParsedLexPypWeights<wOrder, tOrder, aOrder>::vocabSize() const {
   return numWords();
 }
 

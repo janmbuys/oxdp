@@ -63,7 +63,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   boost::shared_ptr<Corpus> test_corpus; 
   if (config->test_file.size()) {
     test_corpus = boost::make_shared<Corpus>();
-    test_corpus->readFile(config->training_file, dict, true);
+    test_corpus->readFile(config->test_file, dict, true);
     cout << "Done reading test corpus..." << endl;
   }
 
@@ -149,6 +149,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
             size_t task_end = min(task_start + task_size, minibatch.size());
             vector<int> task(
                 minibatch.begin() + task_start, minibatch.begin() + task_end);
+            //TODO extract training examples
             if (config->noise_samples > 0) {
               weights->estimateGradient(
                   training_corpus, task, gradient, objective, words);
@@ -199,11 +200,12 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         // words are reset only after the global gradient is fully cleared.
         #pragma omp barrier
 
-        if ((minibatch_counter % 100 == 0 && minibatch_counter <= 1000) ||
+        //don't evaluate before end of iteration
+        /* if ((minibatch_counter % 100 == 0 && minibatch_counter <= 1000) ||
             minibatch_counter % 1000 == 0) {
           evaluate(test_corpus, iteration_start, minibatch_counter,
                    test_objective, best_perplexity);
-        }
+        } */
 
         ++minibatch_counter;
         start = end;
@@ -265,6 +267,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
       vector<int> minibatch(
           indices.begin() + start, min(indices.begin() + end, indices.end()));
       minibatch = scatterMinibatch(minibatch);
+      //TODO use evaluate method
 
       Real objective = weights->getObjective(test_corpus, minibatch);
       #pragma omp critical
@@ -293,6 +296,8 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
       Real iteration_time = get_duration(iteration_start, get_time());
       cout << "\tMinibatch " << minibatch_counter << ", "
            << "Time: " << get_duration(iteration_start, get_time()) << " seconds, "
+           << "Test Likelihood: " << log_likelihood << endl
+           << "Test Size: " << test_corpus->size() << endl
            << "Test Perplexity: " << test_perplexity << endl;
 
       if (test_perplexity < best_perplexity) {

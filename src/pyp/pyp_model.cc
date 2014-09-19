@@ -1,4 +1,4 @@
-#include "gdp/pyp_dp_model.h"
+#include "pyp/pyp_model.h"
 
 namespace oxlm {
 
@@ -9,7 +9,7 @@ PypModel::PypModel() {
 PypModel::PypModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config) {
   dict_ = boost::make_shared<Dict>();
-  model_ = boost::make_shared<NGramModel>(wordLMOrder, dict_->eos());
+  model_ = boost::make_shared<NGramModel>(wordLMOrder, dict_->sos(), dict_->eos());
 }
 
 void PypModel::learn() {
@@ -113,8 +113,8 @@ void PypModel::evaluate() const {
   double log_likelihood = 0;
   evaluate(test_corpus, log_likelihood);
     
-  size_t test_size = test_corpus->numTokens(); //TODO should actually be number of examples
-  double test_perplexity = std::exp(log_likelihood/test_size); //TODO use perplexity function
+  double test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
+     
   std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
@@ -123,9 +123,10 @@ void PypModel::evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, in
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);
     
-    size_t test_size = test_corpus->numTokens(); //TODO should actually be number of examples
-    double test_perplexity = std::exp(log_likelihood/test_size); //TODO use perplexity function
+    double test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
     std::cerr << "\tMinibatch " << minibatch_counter << ", "
+           << "Test Likelihood: " << log_likelihood << std::endl
+           << "Test Size: " << test_corpus->numTokens() << std::endl
          << "Test Perplexity: " << test_perplexity << std::endl;
 
     if (test_perplexity < best_perplexity) 
@@ -141,31 +142,27 @@ void PypModel::evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, do
     std::vector<int> indices(test_corpus->size());
     std::iota(indices.begin(), indices.end(), 0);
    
-      std::cerr << "Evaluating:\n";
-      auto eval_start = get_time();
-      boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>();
+    std::cerr << "Evaluating:\n";
+    auto eval_start = get_time();
+    size_t start = 0;
 
-      size_t start = 0;
-      while (start < test_corpus->size()) {
-        size_t end = std::min(start + config_->minibatch_size, test_corpus->size());
+    while (start < test_corpus->size()) {
+      size_t end = std::min(start + config_->minibatch_size, test_corpus->size());
 
-        //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
-        std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
-        double objective = 0;
+      //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
+      std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
+      double objective = 0;
             
-        //TODO parallize, maybe move
-        for (size_t j = start; j < end; ++j) {
-          objective += parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_);
-        }
+      //TODO parallize, maybe move
+      for (auto j: minibatch) 
+        objective += model_->evaluateSentence(test_corpus->sentence_at(j), weights_);
 
-        accumulator += objective;
-        start = end;
-      } 
+      accumulator += objective;
+      start = end;
+    } 
 
-      double eval_time = get_duration(eval_start, get_time());
-      std::cerr << "(" << eval_time << "seconds)\n"; 
-      acc_counts->printAccuracy();
-    }
+    double eval_time = get_duration(eval_start, get_time());
+    std::cerr << "Time: " << eval_time << " seconds\n"; 
   }
 }
 

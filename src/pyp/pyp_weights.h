@@ -33,11 +33,11 @@ class PypWeights: public PypWeightsInterface {
 
   void updateRemove(const DataPoint& example, MT19937& eng);
 
-  size_t vocabSize() const override;
+  int vocabSize() const override;
 
   private:
   PYPLM<kOrder> lm_;
-  size_t vocab_size_;
+  int vocab_size_;
 };
 
 }

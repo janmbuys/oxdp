@@ -2,32 +2,64 @@
 
 namespace oxlm {
 
-NGramModel::NGramModel(unsigned order, WordId eos):
+NGramModel::NGramModel(unsigned order, WordId sos, WordId eos):
     order_(order),
+    sos_(sos), 
     eos_(eos) {}
+
+Words NGramModel::extractContext(const boost::shared_ptr<Corpus> corpus, int position) {
+  Words context;
+
+  // The context is constructed starting from the most recent word:
+  // context = [w_{n-1}, w_{n-2}, ...]
+  // different order - but will it matter if we change it around??
+  int context_start = position - order_ + 1;
+  bool sentence_start = (position == 0); 
+  for (int i = order_; i >= 0; --i) {
+    int index = context_start + i;
+    sentence_start |= (index < 0 || corpus->at(index) == eos_);
+    int word_id = sentence_start ? sos_: corpus->at(index);
+    context.push_back(word_id);
+  }
+
+  return context;
+}
+
+void NGramModel::extract(const boost::shared_ptr<Corpus> corpus, int position,
+    const boost::shared_ptr<DataSet>& examples) {
+  WordId word = corpus->at(position);
+  Words context = extractContext(corpus, position);
+  examples->addExample(DataPoint(word, context));  
+}
+
+double NGramModel::evaluate(const boost::shared_ptr<Corpus> corpus, int position, 
+          const boost::shared_ptr<WeightsInterface>& weights) {
+  WordId word = corpus->at(position);
+  Words context = extractContext(corpus, position);
+  return weights->predict(word, context);
+}
 
 void NGramModel::extractSentence(const Sentence& sent, 
           const boost::shared_ptr<DataSet>& examples) {
-  Words ctx(ngram_order_ - 1, eos_);
+  Words context(order_ - 1, sos_);
   //eos is already at end of sentence
   for (int i = 0; i < sent.size(); ++i) {    
-    //ctx(i, i+ngram_order-1)
-    DataPoint example(sent.at(i), Words(ctx.begin() + i, ctx.begin() + i + ngram_order_ - 1));
+    WordId word = sent.word_at(i);
+    DataPoint example(word, Words(context.begin() + i, context.begin() + i + order_ - 1));
     examples->addExample(example);
-    ctx.push_back(sent.at(i));
+    context.push_back(word);
   }    
-  
 }
 
 double NGramModel::evaluateSentence(const Sentence& sent, 
           const boost::shared_ptr<WeightsInterface>& weights) {
   double weight = 0;
-  Words ctx(ngram_order_ -1, eos_);
+  Words context(order_ -1, sos_);
   //eos is already at end of sentence
-  for (int i = 0; i < sent.size(); ++i) {    
-    //ctx(i, i+ngram_order-1)
-    weight += weights->predict(sent.at(i), Words(ctx.begin() + i, ctx.begin() + i + ngram_order_ - 1));
-    ctx.push_back(sent.at(i));
+  for (int i = 0; i < static_cast<int>(sent.size()); ++i) {    
+    WordId word = sent.word_at(i);
+    weight += weights->predict(word, Words(context.begin() + i, context.begin() + i + order_ - 1));
+    context.push_back(word);
   }  
 
   return weight;

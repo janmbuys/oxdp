@@ -558,19 +558,23 @@ VectorReal Weights::getPredictionVector(const vector<int>& context) const {
   return config->sigmoid ? sigmoid(prediction_vector) : prediction_vector;
 }
 
-Real Weights::predict(int word_id, vector<int> context) const {
+Real Weights::predict(int word, vector<int> context) const {
   VectorReal prediction_vector = getPredictionVector(context);
 
   auto ret = normalizerCache.get(context);
   if (ret.second) {
-    return R.col(word_id).dot(prediction_vector) + B(word_id) - ret.first;
+    return R.col(word).dot(prediction_vector) + B(word) - ret.first;
   } else {
     Real normalizer = 0;
     VectorReal word_probs = logSoftMax(
         R.transpose() * prediction_vector + B, normalizer);
     normalizerCache.set(context, normalizer);
-    return word_probs(word_id);
+    return word_probs(word);
   }
+}
+
+int Weights::vocabSize() const {
+  return config->vocab_size;
 }
 
 void Weights::clearCache() {

@@ -10,8 +10,7 @@
 #include "corpus/dict.h"
 #include "corpus/sentence_corpus.h"
 #include "corpus/data_set.h"
-#include "corpus/model_interface.h"
-#include "corpus/linear_model.h"
+#include "corpus/ngram_model.h"
 
 #include "pyp/utils.h"
 #include "pyp/pyp_weights_interface.h"
@@ -40,7 +39,7 @@ class PypModel {
   boost::shared_ptr<ModelConfig> config_;
   boost::shared_ptr<Dict> dict_;
   boost::shared_ptr<PypWeightsInterface> weights_;
-  boost::shared_ptr<ModelInterface> model_;
+  boost::shared_ptr<NGramModel> model_;
 };
 
 }

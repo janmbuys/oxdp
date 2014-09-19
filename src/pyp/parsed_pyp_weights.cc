@@ -84,22 +84,22 @@ void ParsedPypWeights<tOrder, aOrder>::updateRemove(const DataSet& examples, MT1
 }
 
 template<unsigned tOrder, unsigned aOrder>
-size_t ParsedPypWeights<tOrder, aOrder>::numWords() const {
+int ParsedPypWeights<tOrder, aOrder>::numWords() const {
   return 1;
 }
 
 template<unsigned tOrder, unsigned aOrder>
-size_t ParsedPypWeights<tOrder, aOrder>::numTags() const {
+int ParsedPypWeights<tOrder, aOrder>::numTags() const {
   return PypWeights<tOrder>::vocabSize();
 }
 
 template<unsigned tOrder, unsigned aOrder>
-size_t ParsedPypWeights<tOrder, aOrder>::numActions() const {
+int ParsedPypWeights<tOrder, aOrder>::numActions() const {
   return num_actions_;
 }
 
 template<unsigned tOrder, unsigned aOrder>
-size_t ParsedPypWeights<tOrder, aOrder>::vocabSize() const {
+int ParsedPypWeights<tOrder, aOrder>::vocabSize() const {
   return numTags();
 }
 

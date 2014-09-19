@@ -201,7 +201,7 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, do
         double objective = 0;
             
         //TODO parallize, maybe move
-        for (size_t j = start; j < end; ++j) {
+        for (auto j: minibatch) {
           objective += parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, 
                                                      beam_size);
           //TODO calculate gold likelihood

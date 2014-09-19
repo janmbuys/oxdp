@@ -13,11 +13,11 @@ class ParsedWeightsInterface: public WeightsInterface {
   
   virtual double predictAction(int action, std::vector<int> context) const = 0;
 
-  virtual size_t numWords() const = 0;
+  virtual int numWords() const = 0;
   
-  virtual size_t numTags() const = 0;
+  virtual int numTags() const = 0;
 
-  virtual size_t numActions() const = 0;
+  virtual int numActions() const = 0;
 
   virtual ~ParsedWeightsInterface() {}
 };
