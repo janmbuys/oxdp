@@ -4,6 +4,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/make_shared.hpp>
 
+#include "corpus/ngram_model.h"
 #include "lbl/context_processor.h"
 #include "lbl/factored_maxent_metadata.h"
 #include "lbl/global_factored_maxent_weights.h"
@@ -39,18 +40,15 @@ class GlobalFactoredMaxentWeightsTest : public testing::Test {
         corpus, index, processor, generator, filter);
     matcher = boost::make_shared<FeatureMatcher>(
         corpus, index, processor, generator, filter, mapper);
+    ngram_model = boost::make_shared<NGramModel>(config->ngram_order, dict->sos(), dict->eos());
   }
 
   Real getPredictions(
-      const GlobalFactoredMaxentWeights& weights,
+      const boost::shared_ptr<GlobalFactoredMaxentWeights>& weights,
       const vector<int>& indices) const {
     Real ret = 0;
-    boost::shared_ptr<ContextProcessor> processor =
-        boost::make_shared<ContextProcessor>(corpus, config->ngram_order - 1);
-    for (int index: indices) {
-      vector<int> context = processor->extract(index);
-      ret -= weights.predict(corpus->at(index), context);
-    }
+    for (int index: indices) 
+      ret += ngram_model->evaluate(corpus, index, weights);
     return ret;
   }
 
@@ -62,6 +60,7 @@ class GlobalFactoredMaxentWeightsTest : public testing::Test {
   boost::shared_ptr<BloomFilterPopulator> populator;
   boost::shared_ptr<FeatureMatcher> matcher;
   boost::shared_ptr<FactoredMaxentMetadata> metadata;
+  boost::shared_ptr<NGramModel> ngram_model;
 };
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCheckGradientSparse) {
@@ -77,11 +76,15 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCheckGradientSparse) {
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
        boost::make_shared<MinibatchFactoredMaxentWeights>(config, metadata);
   gradient->init(corpus, indices);
-  weights.getGradient(corpus, indices, gradient, objective, words);
+
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
+  weights.getGradient(examples, gradient, objective, words);
 
   // See the comment in weights_test.cc if you suspect the gradient is not
   // computed correctly.
-  EXPECT_TRUE(weights.checkGradient(corpus, indices, gradient, 1e-3));
+  EXPECT_TRUE(weights.checkGradient(examples, gradient, 1e-3));
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionsNoFilter) {
@@ -98,11 +101,15 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionsNoFilter) {
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
        boost::make_shared<MinibatchFactoredMaxentWeights>(config, metadata);
   gradient->init(corpus, indices);
-  weights.getGradient(corpus, indices, gradient, objective, words);
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
+  
+  weights.getGradient(examples, gradient, objective, words);
 
   // See the comment in weights_test.cc if you suspect the gradient is not
   // computed correctly.
-  EXPECT_TRUE(weights.checkGradient(corpus, indices, gradient, 1e-3));
+  EXPECT_TRUE(weights.checkGradient(examples, gradient, 1e-3));
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionExactFiltering) {
@@ -119,11 +126,14 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionExactFiltering) {
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
        boost::make_shared<MinibatchFactoredMaxentWeights>(config, metadata);
   gradient->init(corpus, indices);
-  weights.getGradient(corpus, indices, gradient, objective, words);
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
+  weights.getGradient(examples, gradient, objective, words);
 
   // See the comment in weights_test.cc if you suspect the gradient is not
   // computed correctly.
-  EXPECT_TRUE(weights.checkGradient(corpus, indices, gradient, 1e-3));
+  EXPECT_TRUE(weights.checkGradient(examples, gradient, 1e-3));
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionApproximateFiltering) {
@@ -143,21 +153,29 @@ TEST_F(GlobalFactoredMaxentWeightsTest, TestCollisionApproximateFiltering) {
   boost::shared_ptr<MinibatchFactoredMaxentWeights> gradient =
        boost::make_shared<MinibatchFactoredMaxentWeights>(config, metadata);
   gradient->init(corpus, indices);
-  weights.getGradient(corpus, indices, gradient, objective, words);
+
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
+  weights.getGradient(examples, gradient, objective, words);
 
   // See the comment in weights_test.cc if you suspect the gradient is not
   // computed correctly.
-  EXPECT_TRUE(weights.checkGradient(corpus, indices, gradient, 1e-3));
+  EXPECT_TRUE(weights.checkGradient(examples, gradient, 1e-3));
 }
 
 TEST_F(GlobalFactoredMaxentWeightsTest, TestPredict) {
   dict = boost::make_shared<Dict>();
   metadata = boost::make_shared<FactoredMaxentMetadata>(
       config, dict, index, mapper, populator, matcher);
-  GlobalFactoredMaxentWeights weights(config, metadata, corpus);
-  vector<int> indices = {0, 1, 2, 3};
+  boost::shared_ptr<GlobalFactoredMaxentWeights> weights = boost::make_shared<GlobalFactoredMaxentWeights>(config, metadata, corpus);
 
-  Real objective = weights.getObjective(corpus, indices);
+  vector<int> indices = {0, 1, 2, 3};
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
+
+  Real objective = weights->getObjective(examples);
 
   EXPECT_NEAR(objective, getPredictions(weights, indices), EPS);
   // Check cache values.

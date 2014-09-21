@@ -25,23 +25,20 @@ class GlobalFactoredMaxentWeights : public FactoredWeights {
   virtual size_t numParameters() const;
 
   virtual void getProbabilities(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const vector<vector<int>>& contexts,
       const MatrixReal& prediction_vectors,
       MatrixReal& class_probs,
       vector<VectorReal>& word_probs) const;
 
   void getGradient(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const boost::shared_ptr<MinibatchFactoredMaxentWeights>& gradient,
       Real& objective,
       MinibatchWords& words) const;
 
   void getFullGradient(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const vector<vector<int>>& contexts,
       const vector<MatrixReal>& context_vectors,
       const MatrixReal& prediction_vectors,
@@ -52,15 +49,13 @@ class GlobalFactoredMaxentWeights : public FactoredWeights {
       MinibatchWords& words) const;
 
   void estimateGradient(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const boost::shared_ptr<MinibatchFactoredMaxentWeights>& gradient,
       Real& objective,
       MinibatchWords& words) const;
 
   bool checkGradient(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const boost::shared_ptr<MinibatchFactoredMaxentWeights>& gradient,
       Real eps);
 
@@ -85,8 +80,7 @@ class GlobalFactoredMaxentWeights : public FactoredWeights {
 
  protected:
   bool checkGradientStore(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const boost::shared_ptr<GlobalFeatureStore>& store,
       const boost::shared_ptr<MinibatchFeatureStore>& gradient_store,
       Real eps);

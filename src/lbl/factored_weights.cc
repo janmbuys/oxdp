@@ -89,34 +89,32 @@ void FactoredWeights::setModelParameters() {
 }
 
 Real FactoredWeights::getObjective(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices) const {
+    const boost::shared_ptr<DataSet>& examples) {
   vector<vector<int>> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
   MatrixReal class_probs;
   vector<VectorReal> word_probs;
   return getObjective(
-      corpus, indices, contexts, context_vectors, prediction_vectors,
+      examples, contexts, context_vectors, prediction_vectors,
       class_probs, word_probs);
 }
 
 Real FactoredWeights::getObjective(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices,
+    const boost::shared_ptr<DataSet>& examples,
     vector<vector<int>>& contexts,
     vector<MatrixReal>& context_vectors,
     MatrixReal& prediction_vectors,
     MatrixReal& class_probs,
     vector<VectorReal>& word_probs) const {
-  getContextVectors(corpus, indices, contexts, context_vectors);
-  prediction_vectors = getPredictionVectors(indices, context_vectors);
+  getContextVectors(examples, contexts, context_vectors);
+  prediction_vectors = getPredictionVectors(examples->size(), context_vectors);
   getProbabilities(
-      corpus, indices, contexts, prediction_vectors, class_probs, word_probs);
+      examples, contexts, prediction_vectors, class_probs, word_probs);
 
   Real objective = 0;
-  for (size_t i = 0; i < indices.size(); ++i) {
-    int word_id = corpus->at(indices[i]);
+  for (size_t i = 0; i < examples->size(); ++i) {
+    int word_id = examples->wordAt(i);
     int class_id = index->getClass(word_id);
     int word_class_id = index->getWordIndexInClass(word_id);
 
@@ -128,8 +126,7 @@ Real FactoredWeights::getObjective(
 }
 
 void FactoredWeights::getGradient(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices,
+    const boost::shared_ptr<DataSet>& examples,
     const boost::shared_ptr<FactoredWeights>& gradient,
     Real& objective,
     MinibatchWords& words) const {
@@ -138,16 +135,16 @@ void FactoredWeights::getGradient(
   MatrixReal prediction_vectors, class_probs;
   vector<VectorReal> word_probs;
   objective += getObjective(
-      corpus, indices, contexts, context_vectors, prediction_vectors,
+      examples, contexts, context_vectors, prediction_vectors,
       class_probs, word_probs);
 
   setContextWords(contexts, words);
 
   MatrixReal weighted_representations = getWeightedRepresentations(
-      corpus, indices, prediction_vectors, class_probs, word_probs);
+      examples, prediction_vectors, class_probs, word_probs);
 
   getFullGradient(
-      corpus, indices, contexts, context_vectors, prediction_vectors,
+      examples, contexts, context_vectors, prediction_vectors,
       weighted_representations, class_probs, word_probs, gradient, words);
 }
 
@@ -164,19 +161,19 @@ VectorReal FactoredWeights::classB(int class_id) const {
 }
 
 void FactoredWeights::getProbabilities(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices,
+    const boost::shared_ptr<DataSet>& examples,
     const vector<vector<int>>& contexts,
     const MatrixReal& prediction_vectors,
     MatrixReal& class_probs,
     vector<VectorReal>& word_probs) const {
-  class_probs = S.transpose() * prediction_vectors + T * MatrixReal::Ones(1, indices.size());
-  for (size_t i = 0; i < indices.size(); ++i) {
+  class_probs = S.transpose() * prediction_vectors 
+                + T * MatrixReal::Ones(1, examples->size());
+  for (size_t i = 0; i < examples->size(); ++i) {
     class_probs.col(i) = softMax(class_probs.col(i));
   }
 
-  for (size_t i = 0; i < indices.size(); ++i) {
-    int word_id = corpus->at(indices[i]);
+  for (size_t i = 0; i < examples->size(); ++i) {
+    int word_id = examples->wordAt(i);
     int class_id = index->getClass(word_id);
 
     VectorReal prediction_vector = prediction_vectors.col(i);
@@ -186,15 +183,14 @@ void FactoredWeights::getProbabilities(
 }
 
 MatrixReal FactoredWeights::getWeightedRepresentations(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices,
+    const boost::shared_ptr<DataSet>& examples,
     const MatrixReal& prediction_vectors,
     const MatrixReal& class_probs,
     const vector<VectorReal>& word_probs) const {
   MatrixReal weighted_representations = S * class_probs;
 
-  for (size_t i = 0; i < indices.size(); ++i) {
-    int word_id = corpus->at(indices[i]);
+  for (size_t i = 0; i < examples->size(); ++i) {
+    int word_id = examples->wordAt(i);
     int class_id = index->getClass(word_id);
 
     weighted_representations.col(i) += classR(class_id) * word_probs[i];
@@ -209,8 +205,7 @@ MatrixReal FactoredWeights::getWeightedRepresentations(
 }
 
 void FactoredWeights::getFullGradient(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices,
+    const boost::shared_ptr<DataSet>& examples,
     const vector<vector<int>>& contexts,
     const vector<MatrixReal>& context_vectors,
     const MatrixReal& prediction_vectors,
@@ -219,8 +214,8 @@ void FactoredWeights::getFullGradient(
     vector<VectorReal>& word_probs,
     const boost::shared_ptr<FactoredWeights>& gradient,
     MinibatchWords& words) const {
-  for (size_t i = 0; i < indices.size(); ++i) {
-    int word_id = corpus->at(indices[i]);
+  for (size_t i = 0; i < examples->size(); ++i) {
+    int word_id = examples->wordAt(i); 
     int class_id = index->getClass(word_id);
     int word_class_id = index->getWordIndexInClass(word_id);
     class_probs(class_id, i) -= 1;
@@ -229,8 +224,8 @@ void FactoredWeights::getFullGradient(
 
   gradient->S += prediction_vectors * class_probs.transpose();
   gradient->T += class_probs.rowwise().sum();
-  for (size_t i = 0; i < indices.size(); ++i) {
-    int word_id = corpus->at(indices[i]);
+  for (size_t i = 0; i < examples->size(); ++i) {
+    int word_id = examples->wordAt(i); 
     int class_id = index->getClass(word_id);
     int class_start = index->getClassMarker(class_id);
     int class_size = index->getClassSize(class_id);
@@ -245,25 +240,24 @@ void FactoredWeights::getFullGradient(
   }
 
   getContextGradient(
-      indices, contexts, context_vectors, weighted_representations, gradient);
+      examples->size(), contexts, context_vectors, weighted_representations, gradient);
 }
 
 bool FactoredWeights::checkGradient(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices,
+    const boost::shared_ptr<DataSet>& examples,
     const boost::shared_ptr<FactoredWeights>& gradient,
     double eps) {
-  if (!Weights::checkGradient(corpus, indices, gradient, eps)) {
+  if (!Weights::checkGradient(examples, gradient, eps)) {
     return false;
   }
 
   for (int i = 0; i < size; ++i) {
     FW(i) += eps;
-    Real objective_plus = getObjective(corpus, indices);
+    Real objective_plus = getObjective(examples);
     FW(i) -= eps;
 
     FW(i) -= eps;
-    Real objective_minus = getObjective(corpus, indices);
+    Real objective_minus = getObjective(examples);
     FW(i) += eps;
 
     double est_gradient = (objective_plus - objective_minus) / (2 * eps);
@@ -276,16 +270,15 @@ bool FactoredWeights::checkGradient(
 }
 
 vector<vector<int>> FactoredWeights::getNoiseWords(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices) const {
+    const boost::shared_ptr<DataSet>& examples) const {
   if (!wordDists.get()) {
     wordDists.reset(new WordDistributions(metadata->getUnigram(), index));
   }
 
   VectorReal unigram = metadata->getUnigram();
-  vector<vector<int>> noise_words(indices.size());
-  for (size_t i = 0; i < indices.size(); ++i) {
-    int word_id = corpus->at(indices[i]);
+  vector<vector<int>> noise_words(examples->size());
+  for (size_t i = 0; i < examples->size(); ++i) {
+    int word_id = examples->wordAt(i);
     int class_id = index->getClass(word_id);
     int class_start = index->getClassMarker(class_id);
 
@@ -299,16 +292,15 @@ vector<vector<int>> FactoredWeights::getNoiseWords(
 }
 
 vector<vector<int>> FactoredWeights::getNoiseClasses(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices) const {
+    size_t prediction_size) const {
   if (!classDist.get()) {
     VectorReal class_unigram = metadata->getClassBias().array().exp();
     classDist.reset(new ClassDistribution(class_unigram));
   }
 
-  vector<vector<int>> noise_classes(indices.size());
+  vector<vector<int>> noise_classes(prediction_size);
   auto start_sampling = get_time();
-  for (size_t i = 0; i < indices.size(); ++i) {
+  for (size_t i = 0; i < prediction_size; ++i) {
     for (int j = 0; j < config->noise_samples; ++j) {
       noise_classes[i].push_back(classDist->sample());
     }
@@ -318,22 +310,21 @@ vector<vector<int>> FactoredWeights::getNoiseClasses(
 }
 
 void FactoredWeights::estimateProjectionGradient(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices,
+    const boost::shared_ptr<DataSet>& examples,
     const MatrixReal& prediction_vectors,
     const boost::shared_ptr<FactoredWeights>& gradient,
     MatrixReal& weighted_representations,
     Real& objective,
     MinibatchWords& words) const {
   Weights::estimateProjectionGradient(
-      corpus, indices, prediction_vectors, gradient,
+      examples, prediction_vectors, gradient,
       weighted_representations, objective, words);
 
   int noise_samples = config->noise_samples;
   VectorReal class_unigram = metadata->getClassBias().array().exp();
-  vector<vector<int>> noise_classes = getNoiseClasses(corpus, indices);
-  for (size_t i = 0; i < indices.size(); ++i) {
-    int word_id = corpus->at(indices[i]);
+  vector<vector<int>> noise_classes = getNoiseClasses(examples->size());
+  for (size_t i = 0; i < examples->size(); ++i) {
+    int word_id = examples->wordAt(i);
     int class_id = index->getClass(word_id);
     Real log_pos_prob = S.col(class_id).dot(prediction_vectors.col(i)) + T(class_id);
     Real pos_prob = exp(log_pos_prob);
@@ -365,23 +356,22 @@ void FactoredWeights::estimateProjectionGradient(
 }
 
 void FactoredWeights::estimateGradient(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& indices,
+    const boost::shared_ptr<DataSet>& examples,
     const boost::shared_ptr<FactoredWeights>& gradient,
     Real& objective,
     MinibatchWords& words) const {
   vector<vector<int>> contexts;
   vector<MatrixReal> context_vectors;
-  getContextVectors(corpus, indices, contexts, context_vectors);
+  getContextVectors(examples, contexts, context_vectors);
 
   setContextWords(contexts, words);
 
   MatrixReal prediction_vectors =
-      getPredictionVectors(indices, context_vectors);
+      getPredictionVectors(examples->size(), context_vectors);
 
   MatrixReal weighted_representations;
   estimateProjectionGradient(
-      corpus, indices, prediction_vectors, gradient,
+      examples, prediction_vectors, gradient,
       weighted_representations, objective, words);
 
   if (config->sigmoid) {
@@ -389,7 +379,7 @@ void FactoredWeights::estimateGradient(
   }
 
   getContextGradient(
-      indices, contexts, context_vectors, weighted_representations, gradient);
+      examples->size(), contexts, context_vectors, weighted_representations, gradient);
 }
 
 void FactoredWeights::syncUpdate(

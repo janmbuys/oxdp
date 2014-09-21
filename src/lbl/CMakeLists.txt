@@ -15,6 +15,7 @@ add_libraries(lbl
   context_processor.cc
   factored_maxent_metadata.cc
   factored_metadata.cc
+  weights.cc
   factored_weights.cc
   feature_approximate_filter.cc
   feature_context.cc
@@ -43,7 +44,6 @@ add_libraries(lbl
   query_cache.cc
   sparse_global_feature_store.cc
   sparse_minibatch_feature_store.cc
-  weights.cc
   word_context_extractor.cc
   word_context_hasher.cc
   word_distributions.cc

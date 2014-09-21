@@ -4,6 +4,8 @@
 
 #include "corpus/dict.h"
 #include "corpus/corpus.h"
+#include "corpus/data_set.h"
+#include "corpus/ngram_model.h"
 
 #include "lbl/config.h"
 #include "lbl/factored_metadata.h"
@@ -72,6 +74,7 @@ class Model {
   boost::shared_ptr<Dict> dict;
   boost::shared_ptr<Metadata> metadata;
   boost::shared_ptr<GlobalWeights> weights;
+  boost::shared_ptr<NGramModel> ngram_model;
 };
 
 class LM : public Model<Weights, Weights, Metadata> {

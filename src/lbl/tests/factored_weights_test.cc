@@ -4,6 +4,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/make_shared.hpp>
 
+#include "corpus/ngram_model.h"
 #include "lbl/context_processor.h"
 #include "lbl/factored_weights.h"
 #include "utils/constants.h"
@@ -27,17 +28,14 @@ class FactoredWeightsTest : public testing::Test {
     index = boost::make_shared<WordToClassIndex>(classes);
     dict = boost::make_shared<Dict>();
     metadata = boost::make_shared<FactoredMetadata>(config, dict, index);
+    ngram_model = boost::make_shared<NGramModel>(config->ngram_order, dict->sos(), dict->eos());
   }
 
   Real getPredictions(
-      const FactoredWeights& weights, const vector<int>& indices) const {
+      const boost::shared_ptr<FactoredWeights>& weights, const vector<int>& indices) const {
     Real ret = 0;
-    boost::shared_ptr<ContextProcessor> processor =
-        boost::make_shared<ContextProcessor>(corpus, config->ngram_order - 1);
-    for (int index: indices) {
-      vector<int> context = processor->extract(index);
-      ret -= weights.predict(corpus->at(index), context);
-    }
+    for (int index: indices) 
+      ret += ngram_model->evaluate(corpus, index, weights);
     return ret;
   }
 
@@ -46,6 +44,7 @@ class FactoredWeightsTest : public testing::Test {
   boost::shared_ptr<WordToClassIndex> index;
   boost::shared_ptr<FactoredMetadata> metadata;
   boost::shared_ptr<Corpus> corpus;
+  boost::shared_ptr<NGramModel> ngram_model;
 };
 
 TEST_F(FactoredWeightsTest, TestCheckGradient) {
@@ -53,12 +52,17 @@ TEST_F(FactoredWeightsTest, TestCheckGradient) {
   vector<int> indices = {0, 1, 2, 3};
   Real objective;
   MinibatchWords words;
+
   boost::shared_ptr<FactoredWeights> gradient =
       boost::make_shared<FactoredWeights>(config, metadata);
-  weights.getGradient(corpus, indices, gradient, objective, words);
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
+
+  weights.getGradient(examples, gradient, objective, words);
   // See the comment in weights_test.cc if you suspect the gradient is not
   // computed correctly.
-  EXPECT_TRUE(weights.checkGradient(corpus, indices, gradient, 1e-3));
+  EXPECT_TRUE(weights.checkGradient(examples, gradient, 1e-3));
 }
 
 TEST_F(FactoredWeightsTest, TestCheckGradientDiagonal) {
@@ -69,18 +73,24 @@ TEST_F(FactoredWeightsTest, TestCheckGradientDiagonal) {
   MinibatchWords words;
   boost::shared_ptr<FactoredWeights> gradient =
       boost::make_shared<FactoredWeights>(config, metadata);
-  weights.getGradient(corpus, indices, gradient, objective, words);
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
+  weights.getGradient(examples, gradient, objective, words);
 
   // See the comment in weights_test.cc if you suspect the gradient is not
   // computed correctly.
-  EXPECT_TRUE(weights.checkGradient(corpus, indices, gradient, 1e-3));
+  EXPECT_TRUE(weights.checkGradient(examples, gradient, 1e-3));
 }
 
 TEST_F(FactoredWeightsTest, TestPredict) {
-  FactoredWeights weights(config, metadata, corpus);
+  boost::shared_ptr<FactoredWeights> weights = boost::make_shared<FactoredWeights>(config, metadata, corpus);
   vector<int> indices = {0, 1, 2, 3};
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
 
-  Real objective = weights.getObjective(corpus, indices);
+  Real objective = weights->getObjective(examples);
 
   EXPECT_NEAR(objective, getPredictions(weights, indices), EPS);
   // Check cache values.

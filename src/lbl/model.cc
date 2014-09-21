@@ -31,6 +31,7 @@ Model<GlobalWeights, MinibatchWeights, Metadata>::Model(
     : config(config) {
   dict = boost::make_shared<Dict>();
   metadata = boost::make_shared<Metadata>(config, dict);
+  ngram_model = boost::make_shared<NGramModel>(config->ngram_order, dict->sos(), dict->eos());
   srand(1);
 }
 
@@ -121,6 +122,8 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         vector<int> minibatch(
             indices.begin() + start,
             min(indices.begin() + end, indices.end()));
+        
+
         global_gradient->init(training_corpus, minibatch);
         // Reset the set of minibatch words shared across all threads.
         #pragma omp master
@@ -149,13 +152,23 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
             size_t task_end = min(task_start + task_size, minibatch.size());
             vector<int> task(
                 minibatch.begin() + task_start, minibatch.begin() + task_end);
-            //TODO extract training examples
+            //collect the training examples for the minibatch
+            boost::shared_ptr<DataSet> task_examples = boost::make_shared<DataSet>();
+            
+            //?
+            #pragma omp critical
+            {
+              for (int j: task) {
+                ngram_model->extract(training_corpus,  j, task_examples);
+              }
+            }
+
             if (config->noise_samples > 0) {
               weights->estimateGradient(
-                  training_corpus, task, gradient, objective, words);
+                  task_examples, gradient, objective, words);
             } else {
               weights->getGradient(
-                  training_corpus, task, gradient, objective, words);
+                  task_examples, gradient, objective, words);
             }
           } else {
             break;
@@ -266,10 +279,25 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
       size_t end = min(start + config->minibatch_size, test_corpus->size());
       vector<int> minibatch(
           indices.begin() + start, min(indices.begin() + end, indices.end()));
+      //Real objective = weights->getObjective(test_corpus, minibatch);
+      
+      //option 1: computationally slightly more efficient
+      /*minibatch = scatterMinibatch(minibatch);
+      boost::shared_ptr<DataSet> minibatch_examples = boost::make_shared<DataSet>();
+      for (int j: task) 
+        ngram_model->extract(test_corpus,  j, minibatch_examples);
+      //Real objective = weights->getObjective(minibatch_examples); */
+      
+      //option 2: more extendable
+      Real objective = 0;
       minibatch = scatterMinibatch(minibatch);
-      //TODO use evaluate method
 
-      Real objective = weights->getObjective(test_corpus, minibatch);
+        //will this be fine is parallel?
+      {
+        for (int j: minibatch)
+          objective += ngram_model->evaluate(test_corpus, j, weights);
+      }
+
       #pragma omp critical
       accumulator += objective;
 

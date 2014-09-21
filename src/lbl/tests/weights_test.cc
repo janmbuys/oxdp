@@ -4,8 +4,10 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/make_shared.hpp>
 
+#include "corpus/ngram_model.h"
 #include "lbl/context_processor.h"
 #include "lbl/weights.h"
+
 #include "utils/constants.h"
 #include "utils/testing.h"
 
@@ -26,23 +28,21 @@ class TestWeights : public testing::Test {
     corpus = boost::make_shared<Corpus>(data);
     boost::shared_ptr<Dict> dict = boost::make_shared<Dict>();
     metadata = boost::make_shared<Metadata>(config, dict);
+    ngram_model = boost::make_shared<NGramModel>(config->ngram_order, dict->sos(), dict->eos());
   }
 
   Real getPredictions(
-      const Weights& weights, const vector<int>& indices) const {
+      const boost::shared_ptr<Weights>& weights, const vector<int>& indices) const {
     Real ret = 0;
-    boost::shared_ptr<ContextProcessor> processor =
-        boost::make_shared<ContextProcessor>(corpus, config->ngram_order - 1);
-    for (int index: indices) {
-      vector<int> context = processor->extract(index);
-      ret -= weights.predict(corpus->at(index), context);
-    }
+    for (int index: indices) 
+      ret += ngram_model->evaluate(corpus, index, weights);
     return ret;
   }
 
   boost::shared_ptr<ModelData> config;
   boost::shared_ptr<Metadata> metadata;
   boost::shared_ptr<Corpus> corpus;
+  boost::shared_ptr<NGramModel> ngram_model;
 };
 
 TEST_F(TestWeights, TestGradientCheck) {
@@ -50,9 +50,14 @@ TEST_F(TestWeights, TestGradientCheck) {
   vector<int> indices = {0, 1, 2, 3};
   Real objective;
   MinibatchWords words;
+
   boost::shared_ptr<Weights> gradient =
       boost::make_shared<Weights>(config, metadata);
-  weights.getGradient(corpus, indices, gradient, objective, words);
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
+  
+  weights.getGradient(examples, gradient, objective, words);
 
   // In truth, using float for model parameters instead of double seriously
   // degrades the gradient computation, but has no negative effect on the
@@ -61,7 +66,7 @@ TEST_F(TestWeights, TestGradientCheck) {
   // If you suspect there might be something off with the gradient, change
   // typedef Real to double and set a lower accepted error (e.g. 1e-5) when
   // checking the gradient.
-  EXPECT_TRUE(weights.checkGradient(corpus, indices, gradient, 1e-3));
+  EXPECT_TRUE(weights.checkGradient(examples, gradient, 1e-3));
 }
 
 TEST_F(TestWeights, TestGradientCheckDiagonal) {
@@ -73,17 +78,23 @@ TEST_F(TestWeights, TestGradientCheckDiagonal) {
   MinibatchWords words;
   boost::shared_ptr<Weights> gradient =
       boost::make_shared<Weights>(config, metadata);
-  weights.getGradient(corpus, indices, gradient, objective, words);
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
+  weights.getGradient(examples, gradient, objective, words);
 
   // See the comment above if you suspect the gradient is not computed
   // correctly.
-  EXPECT_TRUE(weights.checkGradient(corpus, indices, gradient, 1e-3));
+  EXPECT_TRUE(weights.checkGradient(examples, gradient, 1e-3));
 }
 
 TEST_F(TestWeights, TestPredict) {
-  Weights weights(config, metadata, corpus);
+  boost::shared_ptr<Weights> weights = boost::make_shared<Weights>(config, metadata, corpus);
   vector<int> indices = {0, 1, 2, 3};
-  Real objective = weights.getObjective(corpus, indices);
+  boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
+  for (int j: indices) 
+    ngram_model->extract(corpus, j, examples);
+  Real objective = weights->getObjective(examples);
 
   EXPECT_NEAR(objective, getPredictions(weights, indices), EPS);
   // Check cache values.

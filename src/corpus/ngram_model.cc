@@ -15,7 +15,7 @@ Words NGramModel::extractContext(const boost::shared_ptr<Corpus> corpus, int pos
   // different order - but will it matter if we change it around??
   int context_start = position - order_ + 1;
   bool sentence_start = (position == 0); 
-  for (int i = order_; i >= 0; --i) {
+  for (int i = order_ - 2; i >= 0; --i) {
     int index = context_start + i;
     sentence_start |= (index < 0 || corpus->at(index) == eos_);
     int word_id = sentence_start ? sos_: corpus->at(index);

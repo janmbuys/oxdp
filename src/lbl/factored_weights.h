@@ -33,25 +33,21 @@ class FactoredWeights : public Weights {
       const vector<int>& minibatch);
 
   void getGradient(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const boost::shared_ptr<FactoredWeights>& gradient,
       Real& objective,
       MinibatchWords& words) const;
 
   virtual Real getObjective(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices) const;
+      const boost::shared_ptr<DataSet>& examples);
 
   bool checkGradient(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const boost::shared_ptr<FactoredWeights>& gradient,
       double eps);
 
   void estimateGradient(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const boost::shared_ptr<FactoredWeights>& gradient,
       Real& objective,
       MinibatchWords& words) const;
@@ -91,8 +87,7 @@ class FactoredWeights : public Weights {
   VectorReal classB(int class_id) const;
 
   Real getObjective(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       vector<vector<int>>& contexts,
       vector<MatrixReal>& context_vectors,
       MatrixReal& prediction_vectors,
@@ -100,23 +95,20 @@ class FactoredWeights : public Weights {
       vector<VectorReal>& word_probs) const;
 
   virtual void getProbabilities(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+    const boost::shared_ptr<DataSet>& examples,
       const vector<vector<int>>& contexts,
       const MatrixReal& prediction_vectors,
       MatrixReal& class_probs,
       vector<VectorReal>& word_probs) const;
 
   MatrixReal getWeightedRepresentations(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const MatrixReal& prediction_vectors,
       const MatrixReal& class_probs,
       const vector<VectorReal>& word_probs) const;
 
   void getFullGradient(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const vector<vector<int>>& contexts,
       const vector<MatrixReal>& context_vectors,
       const MatrixReal& prediction_vectors,
@@ -127,16 +119,13 @@ class FactoredWeights : public Weights {
       MinibatchWords& words) const;
 
   virtual vector<vector<int>> getNoiseWords(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices) const;
+      const boost::shared_ptr<DataSet>& examples) const;
 
   vector<vector<int>> getNoiseClasses(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices) const;
+      size_t prediction_size) const;
 
   void estimateProjectionGradient(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& indices,
+      const boost::shared_ptr<DataSet>& examples,
       const MatrixReal& prediction_vectors,
       const boost::shared_ptr<FactoredWeights>& gradient,
       MatrixReal& weighted_representations,
