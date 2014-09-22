@@ -61,7 +61,7 @@ class Parser: public ParsedSentence {
     }
   }
 
-  void set_weight(double w) {
+  void set_weight(Real w) {
     weight_ = w;
   }
 
@@ -69,7 +69,7 @@ class Parser: public ParsedSentence {
     weight_ = 0;
   }
 
-  void add_weight(double w) {
+  void add_weight(Real w) {
     weight_ += w;
   }
 
@@ -152,14 +152,14 @@ class Parser: public ParsedSentence {
     return true;
   }
 
-  double weight() const {
+  Real weight() const {
     return weight_;
   }
 
   private:
   IndicesList left_children_;
   IndicesList right_children_;
-  double weight_; 
+  Real weight_; 
 };
 
 }

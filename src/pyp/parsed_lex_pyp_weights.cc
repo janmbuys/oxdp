@@ -9,22 +9,22 @@ ParsedLexPypWeights<wOrder, tOrder, aOrder>::ParsedLexPypWeights(size_t vocab_si
   lex_vocab_size_(vocab_size) {}
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-double ParsedLexPypWeights<wOrder, tOrder, aOrder>::predict(WordId word, Words context) const {
+Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::predict(WordId word, Words context) const {
   return predictWord(word, context);
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-double ParsedLexPypWeights<wOrder, tOrder, aOrder>::predictWord(WordId word, Words context) const {
+Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::predictWord(WordId word, Words context) const {
   return -std::log(lex_lm_.prob(word, context));
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-double ParsedLexPypWeights<wOrder, tOrder, aOrder>::likelihood() const {
+Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::likelihood() const {
   return wordLikelihood() + ParsedPypWeights<tOrder, aOrder>::tagLikelihood() + ParsedPypWeights<tOrder, aOrder>::actionLikelihood();
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-double ParsedLexPypWeights<wOrder, tOrder, aOrder>::wordLikelihood() const {
+Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::wordLikelihood() const {
   return -lex_lm_.log_likelihood();
 }
 

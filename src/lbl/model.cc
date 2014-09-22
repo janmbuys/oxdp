@@ -155,13 +155,9 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
             //collect the training examples for the minibatch
             boost::shared_ptr<DataSet> task_examples = boost::make_shared<DataSet>();
             
-            //?
-            #pragma omp critical
-            {
-              for (int j: task) {
-                ngram_model->extract(training_corpus,  j, task_examples);
-              }
-            }
+            // #pragma omp critical
+            for (int j: task) 
+              ngram_model->extract(training_corpus,  j, task_examples);
 
             if (config->noise_samples > 0) {
               weights->estimateGradient(

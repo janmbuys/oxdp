@@ -61,25 +61,25 @@ class TransitionParser: public Parser {
 
   //TODO update usage of weight methods
   
-  void set_importance_weight(double w) {
+  void set_importance_weight(Real w) {
     importance_weight_ = w;
   }
 
-  void add_importance_weight(double w) {
+  void add_importance_weight(Real w) {
     importance_weight_ += w;
   }
 
-  //void set_log_particle_weight(double w) -> set_weight
+  //void set_log_particle_weight(Real w) -> set_weight
 
-  void set_particle_weight(double w) {
+  void set_particle_weight(Real w) {
     set_weight(w);
   }
 
-  void add_particle_weight(double w) {
+  void add_particle_weight(Real w) {
     add_weight(w);
   }
 
-  void add_beam_weight(double w) {
+  void add_beam_weight(Real w) {
     if (beam_weight_==0)
       beam_weight_ = w;
     else
@@ -148,15 +148,15 @@ class TransitionParser: public Parser {
     std::cout << std::endl;
   }
 
-  double particle_weight() const {
+  Real particle_weight() const {
     return weight();
   }
 
-   double importance_weight() const {
+   Real importance_weight() const {
     return importance_weight_;
   }
 
-  double beam_weight() const {
+  Real beam_weight() const {
     return beam_weight_;
   }
 
@@ -164,11 +164,11 @@ class TransitionParser: public Parser {
     return num_particles_;
   }
 
-  double weighted_particle_weight() const {
+  Real weighted_particle_weight() const {
     return (weight() - std::log(num_particles_));
   }
 
-  double weighted_importance_weight() const {
+  Real weighted_importance_weight() const {
     return (importance_weight_ - std::log(num_particles_));
   }
 
@@ -1165,8 +1165,8 @@ class TransitionParser: public Parser {
   Indices stack_;
   WordIndex buffer_next_;
   ActList actions_;
-  double importance_weight_; 
-  double beam_weight_; //cummulative beam log particle weight
+  Real importance_weight_; 
+  Real beam_weight_; //cummulative beam log particle weight
   int num_particles_;
 };
 

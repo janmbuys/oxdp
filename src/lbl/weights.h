@@ -8,8 +8,8 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/thread/tss.hpp>
 
-#include "corpus/weights_interface.h"
 #include "corpus/data_set.h"
+#include "corpus/weights_interface.h"
 
 #include "lbl/context_cache.h"
 #include "lbl/metadata.h"

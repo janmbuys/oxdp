@@ -9,12 +9,12 @@ PypWeights<kOrder>::PypWeights(size_t vocab_size):
 
 //return negative log probability
 template<unsigned kOrder>
-double PypWeights<kOrder>::predict(WordId word, Words context) const {
+Real PypWeights<kOrder>::predict(WordId word, Words context) const {
   return -std::log(lm_.prob(word, context));
 }
 
 template<unsigned kOrder>
-double PypWeights<kOrder>::likelihood() const {
+Real PypWeights<kOrder>::likelihood() const {
   return -lm_.log_likelihood();
 }
 

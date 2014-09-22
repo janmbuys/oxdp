@@ -9,42 +9,42 @@ ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(size_t num_tags, size_t num_a
   num_actions_(num_actions) {}
 
 template<unsigned tOrder, unsigned aOrder> 
-double ParsedPypWeights<tOrder, aOrder>::predict(WordId word, Words context) const {
+Real ParsedPypWeights<tOrder, aOrder>::predict(WordId word, Words context) const {
   return predictTag(word, context);
 }
 
 template<unsigned tOrder, unsigned aOrder>
-double ParsedPypWeights<tOrder, aOrder>::predictWord(WordId word, Words context) const {
+Real ParsedPypWeights<tOrder, aOrder>::predictWord(WordId word, Words context) const {
   return 0;
 }
 
 template<unsigned tOrder, unsigned aOrder>
-double ParsedPypWeights<tOrder, aOrder>::predictTag(WordId tag, Words context) const {
+Real ParsedPypWeights<tOrder, aOrder>::predictTag(WordId tag, Words context) const {
   return PypWeights<tOrder>::predict(tag, context);
 }
 
 template<unsigned tOrder, unsigned aOrder>
-double ParsedPypWeights<tOrder, aOrder>::predictAction(WordId action, Words context) const {
+Real ParsedPypWeights<tOrder, aOrder>::predictAction(WordId action, Words context) const {
   return -std::log(action_lm_.prob(action, context));
 }
 
 template<unsigned tOrder, unsigned aOrder>
-double ParsedPypWeights<tOrder, aOrder>::wordLikelihood() const {
+Real ParsedPypWeights<tOrder, aOrder>::wordLikelihood() const {
   return 0;
 }
 
 template<unsigned tOrder, unsigned aOrder>
-double ParsedPypWeights<tOrder, aOrder>::tagLikelihood() const {
+Real ParsedPypWeights<tOrder, aOrder>::tagLikelihood() const {
   return PypWeights<tOrder>::likelihood();
 }
 
 template<unsigned tOrder, unsigned aOrder>
-double ParsedPypWeights<tOrder, aOrder>::actionLikelihood() const {
+Real ParsedPypWeights<tOrder, aOrder>::actionLikelihood() const {
   return -action_lm_.log_likelihood();
 }
 
 template<unsigned tOrder, unsigned aOrder>
-double ParsedPypWeights<tOrder, aOrder>::likelihood() const {
+Real ParsedPypWeights<tOrder, aOrder>::likelihood() const {
   return tagLikelihood() + actionLikelihood();
 }
 

@@ -31,9 +31,9 @@ class PypModel {
   void evaluate() const;
 
   void evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, int minibatch_counter, 
-                   double& log_likelihood, double& best_perplexity) const;
+                   Real& log_likelihood, Real& best_perplexity) const;
 
-  void evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, double& accumulator) const;
+  void evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, Real& accumulator) const;
 
   private:
   boost::shared_ptr<ModelConfig> config_;

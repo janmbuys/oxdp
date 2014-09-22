@@ -19,7 +19,7 @@ class ParseModelInterface {
           const boost::shared_ptr<ParseDataSet>& examples) = 0;
 
   //return likelihood
-  virtual double evaluateSentence(const ParsedSentence& sent, 
+  virtual Real evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) = 0; 

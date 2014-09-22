@@ -39,7 +39,7 @@ class ArcEagerParseModel: public TransitionParseModelInterface<ArcEagerParser> {
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) override;
 
-  double evaluateSentence(const ParsedSentence& sent, 
+  Real evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) override; 

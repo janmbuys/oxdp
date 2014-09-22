@@ -56,19 +56,19 @@ public:
     ++num_sentences_;
   }
 
-  void add_likelihood(double l) {
+  void add_likelihood(Real l) {
     likelihood_ += l;
   }
 
-  void add_importance_likelihood(double l) {
+  void add_importance_likelihood(Real l) {
     importance_likelihood_ += l;
   }
 
-  void add_beam_likelihood(double l) {
+  void add_beam_likelihood(Real l) {
     beam_likelihood_ += l;
   }
 
-  void add_gold_likelihood(double l) {
+  void add_gold_likelihood(Real l) {
     gold_likelihood_ += l;
   }
 
@@ -98,55 +98,55 @@ public:
 
   void countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse); 
 
-  void countLikelihood(double parse_l, double gold_l);
+  void countLikelihood(Real parse_l, Real gold_l);
 
   void printAccuracy() const;
 
-  double directed_accuracy() const {
+  Real directed_accuracy() const {
     return (directed_count_ + 0.0)/total_length_;
   }
 
-  double undirected_accuracy() const {
+  Real undirected_accuracy() const {
     return (undirected_count_ + 0.0)/total_length_;
   }
 
-  double complete_accuracy() const {
+  Real complete_accuracy() const {
     return (complete_sentences_ + 0.0)/num_sentences_;
   }
 
-  double root_accuracy() const {
+  Real root_accuracy() const {
     return (root_count_ + 0.0)/num_sentences_;
   }
 
-  double gold_more_likely() const {
+  Real gold_more_likely() const {
     return (gold_more_likely_count_ + 0.0)/num_sentences_;
   }
 
-  double arc_dir_precision() const {
+  Real arc_dir_precision() const {
     return (directed_count_ + 0.0)/undirected_count_;
   }
 
-  double reduce_recall() const {
+  Real reduce_recall() const {
     return (reduce_count_ + 0.0)/reduce_gold_;
   }
 
-  double shift_recall() const {
+  Real shift_recall() const {
     return (shift_count_ + 0.0)/shift_gold_;
   }
 
-  double likelihood() const {
+  Real likelihood() const {
     return likelihood_;
   }
 
-  double importance_likelihood() const {
+  Real importance_likelihood() const {
     return importance_likelihood_;
   }
 
-  double beam_likelihood() const {
+  Real beam_likelihood() const {
     return beam_likelihood_;
   }
 
-  double gold_likelihood() const {
+  Real gold_likelihood() const {
     return gold_likelihood_;
   }
 
@@ -154,50 +154,50 @@ public:
     return total_length_;
   }
 
-  double final_reduce_error_rate() const {
+  Real final_reduce_error_rate() const {
     return (final_reduce_error_count_ + 0.0)/total_length_;
   }
 
-  double cross_entropy() const {
+  Real cross_entropy() const {
     return likelihood_/(std::log(2)*total_length_);
     //return likelihood_/(std::log(2)*num_actions_);
   }
 
-  double beam_cross_entropy() const {
+  Real beam_cross_entropy() const {
     return beam_likelihood_/(std::log(2)*total_length_);
     //return beam_likelihood_/(std::log(2)*num_actions_);
   }
   
-  double importance_cross_entropy() const {
+  Real importance_cross_entropy() const {
     return importance_likelihood_/(std::log(2)*total_length_);
   }
   
-  double gold_cross_entropy() const {
+  Real gold_cross_entropy() const {
     return gold_likelihood_/(std::log(2)*total_length_);
     //return gold_likelihood_/(std::log(2)*num_actions_);
   }
 
-  double perplexity() const {
+  Real perplexity() const {
     return std::pow(2, cross_entropy());
   }
 
-  double beam_perplexity() const {
+  Real beam_perplexity() const {
     return std::pow(2, beam_cross_entropy());
   }
 
-  double importance_perplexity() const {
+  Real importance_perplexity() const {
     return std::pow(2, importance_cross_entropy());
   }
 
-  double gold_perplexity() const {
+  Real gold_perplexity() const {
     return std::pow(2, gold_cross_entropy());
   }
 
 private:
-    double likelihood_;  
-    double beam_likelihood_;  
-    double importance_likelihood_;  
-    double gold_likelihood_;  
+    Real likelihood_;  
+    Real beam_likelihood_;  
+    Real importance_likelihood_;  
+    Real gold_likelihood_;  
     int reduce_count_; 
     int reduce_gold_;
     int shift_count_;

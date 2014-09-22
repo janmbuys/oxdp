@@ -16,21 +16,21 @@ class ParsedPypWeights: public PypWeights<tOrder>, public PypParsedWeightsInterf
   public:
   ParsedPypWeights(size_t num_tags, size_t num_actions);
 
-  double predict(WordId word, Words context) const override;
+  Real predict(WordId word, Words context) const override;
 
-  double predictWord(WordId word, Words context) const override;
+  Real predictWord(WordId word, Words context) const override;
   
-  double predictTag(WordId tag, Words context) const override;
+  Real predictTag(WordId tag, Words context) const override;
 
-  double predictAction(WordId action, Words context) const override;
+  Real predictAction(WordId action, Words context) const override;
 
-  double wordLikelihood() const override;
+  Real wordLikelihood() const override;
 
-  double tagLikelihood() const override;
+  Real tagLikelihood() const override;
 
-  double actionLikelihood() const override;
+  Real actionLikelihood() const override;
 
-  double likelihood() const override;
+  Real likelihood() const override;
 
   void resampleHyperparameters(MT19937& eng) override;
 

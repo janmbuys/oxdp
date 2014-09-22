@@ -12,7 +12,7 @@ class WeightsInterface {
 
   //use negative log probabilities for all predict functions
 
-  virtual double predict(int word, std::vector<int> context) const = 0;
+  virtual Real predict(int word, std::vector<int> context) const = 0;
 
   virtual int vocabSize() const = 0;
 

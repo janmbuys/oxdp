@@ -41,8 +41,8 @@ void PypModel::learn() {
   std::vector<int> indices(training_corpus->size());
   std::iota(indices.begin(), indices.end(), 0);
 
-  double best_perplexity = std::numeric_limits<double>::infinity();
-  double test_objective = 0; 
+  Real best_perplexity = std::numeric_limits<Real>::infinity();
+  Real test_objective = 0; 
   int minibatch_counter = 1;
   int minibatch_size = config_->minibatch_size;
 
@@ -90,7 +90,7 @@ void PypModel::learn() {
     }     
     //std::cout << std::endl;
 
-    double iteration_time = get_duration(iteration_start, get_time());
+    Real iteration_time = get_duration(iteration_start, get_time());
 
     std::cerr << "Iteration: " << iter << ", "
              << "Training Time: " << iteration_time << " seconds, "
@@ -110,20 +110,20 @@ void PypModel::evaluate() const {
   test_corpus->readFile(config_->test_file, dict_, true);
   std::cerr << "Done reading test corpus..." << std::endl;
   
-  double log_likelihood = 0;
+  Real log_likelihood = 0;
   evaluate(test_corpus, log_likelihood);
     
-  double test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
+  Real test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
      
   std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
 void PypModel::evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, int minibatch_counter, 
-                   double& log_likelihood, double& best_perplexity) const {
+                   Real& log_likelihood, Real& best_perplexity) const {
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);
     
-    double test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
+    Real test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
     std::cerr << "\tMinibatch " << minibatch_counter << ", "
            << "Test Likelihood: " << log_likelihood << std::endl
            << "Test Size: " << test_corpus->numTokens() << std::endl
@@ -134,7 +134,7 @@ void PypModel::evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, in
   }
 }
 
-void PypModel::evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, double& accumulator) 
+void PypModel::evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, Real& accumulator) 
     const {
   if (test_corpus != nullptr) {
     accumulator = 0;
@@ -151,7 +151,7 @@ void PypModel::evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, do
 
       //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
       std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
-      double objective = 0;
+      Real objective = 0;
             
       //TODO parallize, maybe move
       for (auto j: minibatch) 
@@ -161,7 +161,7 @@ void PypModel::evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, do
       start = end;
     } 
 
-    double eval_time = get_duration(eval_start, get_time());
+    Real eval_time = get_duration(eval_start, get_time());
     std::cerr << "Time: " << eval_time << " seconds\n"; 
   }
 }

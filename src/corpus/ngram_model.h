@@ -18,14 +18,14 @@ class NGramModel {
   void extract(const boost::shared_ptr<Corpus> corpus, int position,     
           const boost::shared_ptr<DataSet>& examples);
 
-  double evaluate(const boost::shared_ptr<Corpus> corpus, int position, 
+  Real evaluate(const boost::shared_ptr<Corpus> corpus, int position, 
           const boost::shared_ptr<WeightsInterface>& weights); 
 
   void extractSentence(const Sentence& sent, 
           const boost::shared_ptr<DataSet>& examples);
 
   //return likelihood
-  double evaluateSentence(const Sentence& sent, 
+  Real evaluateSentence(const Sentence& sent, 
           const boost::shared_ptr<WeightsInterface>& weights);
 
   private:

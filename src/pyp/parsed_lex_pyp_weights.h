@@ -13,13 +13,13 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
   public:
   ParsedLexPypWeights(size_t vocab_size, size_t num_tags, size_t num_actions);
 
-  double predict(WordId word, Words context) const override;
+  Real predict(WordId word, Words context) const override;
 
-  double predictWord(WordId word, Words context) const override;
+  Real predictWord(WordId word, Words context) const override;
   
-  double likelihood() const override;
+  Real likelihood() const override;
 
-  double wordLikelihood() const override;
+  Real wordLikelihood() const override;
 
   void resampleHyperparameters(MT19937& eng) override;
 

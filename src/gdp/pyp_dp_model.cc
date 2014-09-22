@@ -73,8 +73,8 @@ void PypDpModel::learn() {
   std::vector<int> indices(training_corpus->size());
   std::iota(indices.begin(), indices.end(), 0);
 
-  double best_perplexity = std::numeric_limits<double>::infinity();
-  double test_objective = 0; //use later
+  Real best_perplexity = std::numeric_limits<Real>::infinity();
+  Real test_objective = 0; //use later
   int minibatch_counter = 1;
   int minibatch_size = config_->minibatch_size;
 
@@ -136,7 +136,7 @@ void PypDpModel::learn() {
     }     
     //std::cout << std::endl;
 
-    double iteration_time = get_duration(iteration_start, get_time());
+    Real iteration_time = get_duration(iteration_start, get_time());
 
     std::cerr << "Iteration: " << iter << ", "
              << "Training Time: " << iteration_time << " seconds, "
@@ -156,21 +156,21 @@ void PypDpModel::evaluate() const {
   test_corpus->readFile(config_->test_file, dict_, true);
   std::cerr << "Done reading test corpus..." << std::endl;
   
-  double log_likelihood = 0;
+  Real log_likelihood = 0;
   evaluate(test_corpus, log_likelihood);
     
   size_t test_size = test_corpus->numTokens(); //TODO should actually be number of examples
-  double test_perplexity = std::exp(log_likelihood/test_size); //TODO use perplexity function
+  Real test_perplexity = std::exp(log_likelihood/test_size); //TODO use perplexity function
   std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
 void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, int minibatch_counter, 
-                   double& log_likelihood, double& best_perplexity) const {
+                   Real& log_likelihood, Real& best_perplexity) const {
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);
     
     size_t test_size = test_corpus->numTokens(); //TODO should actually be number of examples
-    double test_perplexity = std::exp(log_likelihood/test_size); //TODO use perplexity function
+    Real test_perplexity = std::exp(log_likelihood/test_size); //TODO use perplexity function
     std::cerr << "\tMinibatch " << minibatch_counter << ", "
          << "Test Perplexity: " << test_perplexity << std::endl;
 
@@ -179,7 +179,7 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, in
   }
 }
 
-void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, double& accumulator) 
+void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) 
     const {
   if (test_corpus != nullptr) {
     accumulator = 0;
@@ -198,7 +198,7 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, do
 
         //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
         std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
-        double objective = 0;
+        Real objective = 0;
             
         //TODO parallize, maybe move
         for (auto j: minibatch) {
@@ -211,8 +211,8 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, do
         start = end;
       } 
 
-      double beam_time = get_duration(beam_start, get_time());
-      double sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
+      Real beam_time = get_duration(beam_start, get_time());
+      Real sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
       std::cerr << "(" << static_cast<int>(sents_per_sec) << " sentences per second)\n"; 
       acc_counts->printAccuracy();
     }

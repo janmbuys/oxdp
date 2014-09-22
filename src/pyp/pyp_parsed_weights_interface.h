@@ -10,11 +10,11 @@ namespace oxlm {
 class PypParsedWeightsInterface: public ParsedWeightsInterface, public PypWeightsInterface {
 
   public:
-  virtual double wordLikelihood() const = 0;
+  virtual Real wordLikelihood() const = 0;
     
-  virtual double tagLikelihood() const = 0;
+  virtual Real tagLikelihood() const = 0;
   
-  virtual double actionLikelihood() const = 0;
+  virtual Real actionLikelihood() const = 0;
 
   virtual void updateInsert(const ParseDataSet& examples, MT19937& eng) = 0;
 

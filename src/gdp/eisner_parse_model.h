@@ -2,7 +2,9 @@
 #define _GDP_ESNR_PARSE_MODEL_H_
 
 #include "utils/random.h"
+#include "corpus/utils.h"
 #include "corpus/parsed_weights_interface.h"
+
 #include "gdp/parse_model_interface.h"
 #include "gdp/eisner_parser.h"
 
@@ -22,7 +24,7 @@ class EisnerParseModel: public ParseModelInterface {
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) override;
 
-  double evaluateSentence(const ParsedSentence& sent, 
+  Real evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) override; 

@@ -1,9 +1,9 @@
 #ifndef _PYP_WEIGHTS_H_
 #define _PYP_WEIGHTS_H_
 
-#include "pyp/pyp_weights_interface.h"
 #include "corpus/dict.h"
 #include "corpus/data_point.h"
+#include "pyp/pyp_weights_interface.h"
 #include "pyp/pyplm.h"
 #include "pyp/utils.h"
 
@@ -15,9 +15,9 @@ class PypWeights: public PypWeightsInterface {
   public:
   PypWeights(size_t vocab_size);
 
-  double predict(WordId word, Words context) const override;
+  Real predict(WordId word, Words context) const override;
 
-  double likelihood() const override;
+  Real likelihood() const override;
 
   void resampleHyperparameters(MT19937& eng) override;
 

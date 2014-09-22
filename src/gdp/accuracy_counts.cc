@@ -124,7 +124,7 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const Parse
   }
 }  
 
-void AccuracyCounts::countLikelihood(double parse_l, double gold_l) {
+void AccuracyCounts::countLikelihood(Real parse_l, Real gold_l) {
   add_gold_likelihood(gold_l);
   if (gold_l < parse_l)
     inc_gold_more_likely_count();

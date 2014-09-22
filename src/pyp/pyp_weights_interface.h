@@ -9,7 +9,7 @@ namespace oxlm {
 
 class PypWeightsInterface: public WeightsInterface {
   public:
-  virtual double likelihood() const = 0;
+  virtual Real likelihood() const = 0;
 
   virtual void resampleHyperparameters(MT19937& eng) = 0;
 

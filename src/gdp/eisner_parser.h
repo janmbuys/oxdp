@@ -11,7 +11,7 @@
 
 namespace oxlm {
 
-typedef std::array<double, 4> EChartItem;
+typedef std::array<Real, 4> EChartItem;
 typedef std::array<WordIndex, 4> ESplitChartItem;
 typedef std::vector<std::vector<EChartItem>> EChart;
 typedef std::vector<std::vector<ESplitChartItem>> ESplitChart;
@@ -33,19 +33,19 @@ class EisnerParser: public Parser {
 
   void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
 
-  void set_left_incomplete_weight(WordIndex i, WordIndex j, double w) {
+  void set_left_incomplete_weight(WordIndex i, WordIndex j, Real w) {
     chart_[i][j][0] = w;
   }
 
-  void set_right_incomplete_weight(WordIndex i, WordIndex j, double w) {
+  void set_right_incomplete_weight(WordIndex i, WordIndex j, Real w) {
     chart_[i][j][1] = w;
   }
 
-  void set_left_complete_weight(WordIndex i, WordIndex j, double w) {
+  void set_left_complete_weight(WordIndex i, WordIndex j, Real w) {
     chart_[i][j][2] = w;
   }
 
-  void set_right_complete_weight(WordIndex i, WordIndex j, double w) {
+  void set_right_complete_weight(WordIndex i, WordIndex j, Real w) {
     chart_[i][j][3] = w;
   }
 
@@ -77,19 +77,19 @@ chart_[i][j][2] << ", " <<  chart_[i][j][3] << ") ";
 
   //get chart item weights
 
-  double left_incomplete_weight(WordIndex i, WordIndex j) const {
+  Real left_incomplete_weight(WordIndex i, WordIndex j) const {
     return chart_[i][j][0];
   }
 
-  double right_incomplete_weight(WordIndex i, WordIndex j) const {
+  Real right_incomplete_weight(WordIndex i, WordIndex j) const {
     return chart_[i][j][1];
   }
 
-  double left_complete_weight(WordIndex i, WordIndex j) const {
+  Real left_complete_weight(WordIndex i, WordIndex j) const {
     return chart_[i][j][2];
   }
 
-  double right_complete_weight(WordIndex i, WordIndex j) const {
+  Real right_complete_weight(WordIndex i, WordIndex j) const {
     return chart_[i][j][3];
   }
 

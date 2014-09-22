@@ -13,20 +13,20 @@ EisnerParser EisnerParseModel::parseSentence(const ParsedSentence& sent,
 
       //assign weights and splits to the four things in chart item (s, t)
 
-      double left_incomp_w = L_MAX;
+      Real left_incomp_w = L_MAX;
       WordIndex split = -1;
       for (WordIndex r = s; r < t; ++r) {
         WordIndex prev_child = parser.left_complete_split(r+1, t); // + 1;
-        double left_weight = weights->predictTag(parser.tag_at(s), 
+        Real left_weight = weights->predictTag(parser.tag_at(s), 
                 parser.tagContext(s, t, prev_child)) + weights->predictWord(
                    parser.word_at(s), parser.wordContext(s, t, prev_child));
         //s has no more right children
         prev_child = parser.right_complete_split(s, r);
-        double stop_weight = weights->predictTag(parser.eos(), parser.tagContext(sent.size(), 
+        Real stop_weight = weights->predictTag(parser.eos(), parser.tagContext(sent.size(), 
                     s, prev_child)) + weights->predictWord(parser.eos(), 
                       parser.wordContext(sent.size(), s, prev_child));
         
-        double w = parser.right_complete_weight(s, r)
+        Real w = parser.right_complete_weight(s, r)
                    + parser.left_complete_weight(r+1, t)
                    + left_weight
                    + stop_weight;
@@ -38,21 +38,21 @@ EisnerParser EisnerParseModel::parseSentence(const ParsedSentence& sent,
       parser.set_left_incomplete_weight(s, t, left_incomp_w);
       parser.set_left_incomplete_split(s, t, split);
       
-      double right_incomp_w = L_MAX;
+      Real right_incomp_w = L_MAX;
       split = -1;
       for (WordIndex r = s; r < t; ++r) {
         WordIndex prev_child = parser.right_complete_split(s, r);
-        double right_weight = weights->predictTag(parser.tag_at(t), 
+        Real right_weight = weights->predictTag(parser.tag_at(t), 
                  parser.tagContext(t, s, prev_child)) + weights->predictWord(
                    parser.word_at(t), parser.wordContext(t, s, prev_child));
         
         //t has no more left children
         prev_child = parser.left_complete_split(r+1, t);
-        double stop_weight = weights->predictTag(parser.eos(), 
+        Real stop_weight = weights->predictTag(parser.eos(), 
                 parser.tagContext(-1, t, prev_child)) + weights->predictWord(parser.eos(), 
                   parser.wordContext(-1, t, prev_child));
 
-        double w = parser.right_complete_weight(s, r)
+        Real w = parser.right_complete_weight(s, r)
                    + parser.left_complete_weight(r+1, t)
                    + right_weight
                    + stop_weight;
@@ -65,15 +65,15 @@ EisnerParser EisnerParseModel::parseSentence(const ParsedSentence& sent,
       parser.set_right_incomplete_weight(s, t, right_incomp_w);
       parser.set_right_incomplete_split(s, t, split);
 
-      double left_comp_w = L_MAX;
+      Real left_comp_w = L_MAX;
       split = -1;
       for (WordIndex r = s; r < t; ++r) {
         //r has no more left children
         WordIndex prev_child = parser.left_complete_split(s, r);
-        double stop_weight = weights->predictTag(parser.eos(), parser.tagContext(-1, r, 
+        Real stop_weight = weights->predictTag(parser.eos(), parser.tagContext(-1, r, 
                     prev_child)) + weights->predictWord(parser.eos(), parser.wordContext(-1, r, 
                         prev_child));      
-        double w = parser.left_complete_weight(s, r)
+        Real w = parser.left_complete_weight(s, r)
                    + parser.left_incomplete_weight(r, t)
                    + stop_weight;
         if (w < left_comp_w) {
@@ -84,12 +84,12 @@ EisnerParser EisnerParseModel::parseSentence(const ParsedSentence& sent,
       parser.set_left_complete_weight(s, t, left_comp_w);
       parser.set_left_complete_split(s, t, split);
 
-      double right_comp_w = L_MAX;
+      Real right_comp_w = L_MAX;
       split = -1;
       for (WordIndex r = s + 1; r <= t; ++r) {
         //r has no more right children
         WordIndex prev_child = parser.right_complete_split(r, t);
-        double stop_weight = weights->predictTag(parser.eos(), parser.tagContext(sent.size(), r, 
+        Real stop_weight = weights->predictTag(parser.eos(), parser.tagContext(sent.size(), r, 
                     prev_child)) + weights->predictWord(parser.eos(), 
                       parser.wordContext(sent.size(), r, prev_child));
 
@@ -99,7 +99,7 @@ EisnerParser EisnerParseModel::parseSentence(const ParsedSentence& sent,
               + weights->predictWord(parser.eos(), parser.wordContext(sent.size(), s, r));
         }
 
-        double w = parser.right_incomplete_weight(s, r)
+        Real w = parser.right_incomplete_weight(s, r)
              + parser.right_complete_weight(r, t)
              + stop_weight;
         if (w < right_comp_w) {
@@ -112,7 +112,7 @@ EisnerParser EisnerParseModel::parseSentence(const ParsedSentence& sent,
     }
   } 
  
-  double best_weight = parser.right_complete_weight(0, sent.size()-1);
+  Real best_weight = parser.right_complete_weight(0, sent.size()-1);
   std::cout << best_weight << " ";
 
   //recover and assign best parse
@@ -142,7 +142,7 @@ void EisnerParseModel::scoreSentence(EisnerParser* parser, const boost::shared_p
     else if (j < i)
       prev_child = parser->prev_right_child_at(i, j);
 
-    double weight = weights->predictTag(parser->tag_at(i), parser->tagContext(i, j, 
+    Real weight = weights->predictTag(parser->tag_at(i), parser->tagContext(i, j, 
                 prev_child)) + weights->predictWord(parser->word_at(i), 
                   parser->wordContext(i, j, prev_child));
     parser->add_weight(weight);
@@ -151,7 +151,7 @@ void EisnerParseModel::scoreSentence(EisnerParser* parser, const boost::shared_p
 
   for (WordIndex j = 0; (j < static_cast<int>(parser->size())); ++j) {
     WordIndex prev_child = parser->leftmost_child_at(j);
-    double weight;
+    Real weight;
     //root only generates right children
     if (j > 0) {
       weight = weights->predictTag(parser->eos(), parser->tagContext(-1, j, prev_child))
@@ -186,7 +186,7 @@ void EisnerParseModel::extractSentence(ParsedSentence& sent,
  //scoreSentence(&parse, weights);
 }
 
-double EisnerParseModel::evaluateSentence(const ParsedSentence& sent, 
+Real EisnerParseModel::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {

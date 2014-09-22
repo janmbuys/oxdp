@@ -7,11 +7,11 @@ namespace oxlm {
 
 class ParsedWeightsInterface: public WeightsInterface {
   public:
-  virtual double predictWord(int word, std::vector<int> context) const = 0;
+  virtual Real predictWord(int word, std::vector<int> context) const = 0;
 
-  virtual double predictTag(int tag, std::vector<int> context) const = 0;
+  virtual Real predictTag(int tag, std::vector<int> context) const = 0;
   
-  virtual double predictAction(int action, std::vector<int> context) const = 0;
+  virtual Real predictAction(int action, std::vector<int> context) const = 0;
 
   virtual int numWords() const = 0;
   

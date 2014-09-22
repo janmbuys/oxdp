@@ -32,7 +32,7 @@ void NGramModel::extract(const boost::shared_ptr<Corpus> corpus, int position,
   examples->addExample(DataPoint(word, context));  
 }
 
-double NGramModel::evaluate(const boost::shared_ptr<Corpus> corpus, int position, 
+Real NGramModel::evaluate(const boost::shared_ptr<Corpus> corpus, int position, 
           const boost::shared_ptr<WeightsInterface>& weights) {
   WordId word = corpus->at(position);
   Words context = extractContext(corpus, position);
@@ -51,9 +51,9 @@ void NGramModel::extractSentence(const Sentence& sent,
   }    
 }
 
-double NGramModel::evaluateSentence(const Sentence& sent, 
+Real NGramModel::evaluateSentence(const Sentence& sent, 
           const boost::shared_ptr<WeightsInterface>& weights) {
-  double weight = 0;
+  Real weight = 0;
   Words context(order_ -1, sos_);
   //eos is already at end of sentence
   for (int i = 0; i < static_cast<int>(sent.size()); ++i) {    
