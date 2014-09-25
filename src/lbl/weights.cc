@@ -48,6 +48,7 @@ Weights::Weights(
   cout << "  Output vocab size = " << config->vocab_size << endl;
   cout << "  Total parameters = " << numParameters() << endl;
   cout << "===============================" << endl;
+  //std::cerr << "W: " << W.norm() << std::endl;
 }
 
 Weights::Weights(const Weights& other)
@@ -210,8 +211,8 @@ MatrixReal Weights::getProbabilities(
     const MatrixReal& prediction_vectors) const {
   MatrixReal word_probs = R.transpose() * prediction_vectors 
                           + B * MatrixReal::Ones(1, examples->size());
-  for (size_t i = 0; i < examples->size(); ++i) {
-    word_probs.col(i) = softMax(word_probs.col(i));
+  for (size_t i = 0; i < examples->size(); ++i) {    
+    word_probs.col(i) = logSoftMax(word_probs.col(i));
   }
 
   return word_probs;
@@ -244,7 +245,7 @@ void Weights::getFullGradient(
     const boost::shared_ptr<Weights>& gradient,
     MinibatchWords& words) const {
   for (size_t i = 0; i < examples->size(); ++i) {
-    word_probs(examples->wordAt(i)) -= 1;
+    word_probs(examples->wordAt(i), i) -= 1;
   }
 
   for (size_t word_id = 0; word_id < config->vocab_size; ++word_id) {
@@ -291,6 +292,7 @@ bool Weights::checkGradient(
   MatrixReal word_probs;
 
   for (int i = 0; i < size; ++i) {
+    //cout << W.norm() << endl;
     W(i) += eps;
     Real objective_plus = getObjective(examples);
     W(i) -= eps;
@@ -301,7 +303,6 @@ bool Weights::checkGradient(
 
     double est_gradient = (objective_plus - objective_minus) / (2 * eps);
     if (fabs(gradient->W(i) - est_gradient) > eps) {
-      cout << i << " " << gradient->W(i) << " " << est_gradient << endl;
       return false;
     }
   }
@@ -327,31 +328,32 @@ Real Weights::getObjective(
     MatrixReal& word_probs) const {
   getContextVectors(examples, contexts, context_vectors);
   prediction_vectors = getPredictionVectors(examples->size(), context_vectors);
+  
   word_probs = getProbabilities(examples, prediction_vectors);
 
   Real objective = 0;
   for (size_t i = 0; i < examples->size(); ++i) {
-    objective -= log(word_probs(examples->wordAt(i)));
+    Real word_likelihood = -word_probs(examples->wordAt(i), i);    
+    objective += word_likelihood;
   }
+
+  for (size_t i = 0; i < examples->size(); ++i) {
+    word_probs.col(i).array() = word_probs.col(i).array().exp();
+  } 
 
   return objective;
 }
 
 vector<vector<int>> Weights::getNoiseWords(
     const boost::shared_ptr<DataSet>& examples) const {
+  if (!wordDists.get()) {
+    wordDists.reset(new WordDistributions(metadata->getUnigram()));
+  }
+    
   vector<vector<int>> noise_words(examples->size());
   for (size_t i = 0; i < examples->size(); ++i) {
     for (int j = 0; j < config->noise_samples; ++j) {
-      //sample word from the unigram distribution
-      //too slow...
-      /* Real ran = (rand() % config->vocab_size)/(static_cast<Real>(config->vocab_size));
-      WordId k = 0;
-      for (Real sum = 0; (k < (config->vocab_size - 1)) && (sum < ran); 
-           sum += metadata->getUnigram()(k))
-        ++k; */
-      //WordId k = (rand() % config->vocab_size);
-      WordId k = examples->wordAt(rand() % examples->size());
-      noise_words[i].push_back(k);
+      noise_words[i].push_back(wordDists->sample());
     }
   }
 
@@ -456,6 +458,8 @@ void Weights::syncUpdate(
 
   lock_guard<mutex> lock(*mutexB);
   B += gradient->B;
+
+  //std::cerr << "W: " << W.norm() << std::endl;
 }
 
 Block Weights::getBlock(int start, int size) const {
@@ -557,19 +561,24 @@ VectorReal Weights::getPredictionVector(const vector<int>& context) const {
   return config->sigmoid ? sigmoid(prediction_vector) : prediction_vector;
 }
 
+//now returning negative log likelihood
 Real Weights::predict(int word, vector<int> context) const {
   VectorReal prediction_vector = getPredictionVector(context);
+ // std::cout << prediction_vector.norm() << " ";
+  Real prob = 0;
 
   auto ret = normalizerCache.get(context);
   if (ret.second) {
-    return R.col(word).dot(prediction_vector) + B(word) - ret.first;
-  } else {
+    prob = R.col(word).dot(prediction_vector) + B(word) - ret.first;
+  } else { 
     Real normalizer = 0;
     VectorReal word_probs = logSoftMax(
         R.transpose() * prediction_vector + B, normalizer);
     normalizerCache.set(context, normalizer);
-    return word_probs(word);
+    prob = word_probs(word);
   }
+
+  return -prob;
 }
 
 int Weights::vocabSize() const {

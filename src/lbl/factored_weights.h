@@ -39,7 +39,7 @@ class FactoredWeights : public Weights {
       MinibatchWords& words) const;
 
   virtual Real getObjective(
-      const boost::shared_ptr<DataSet>& examples);
+      const boost::shared_ptr<DataSet>& examples) const;
 
   bool checkGradient(
       const boost::shared_ptr<DataSet>& examples,

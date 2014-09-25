@@ -89,7 +89,7 @@ void FactoredWeights::setModelParameters() {
 }
 
 Real FactoredWeights::getObjective(
-    const boost::shared_ptr<DataSet>& examples) {
+    const boost::shared_ptr<DataSet>& examples) const {
   vector<vector<int>> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
@@ -118,8 +118,13 @@ Real FactoredWeights::getObjective(
     int class_id = index->getClass(word_id);
     int word_class_id = index->getWordIndexInClass(word_id);
 
-    objective -= log(class_probs(class_id, i));
-    objective -= log(word_probs[i](word_class_id));
+    objective -= class_probs(class_id, i);
+    objective -= word_probs[i](word_class_id);
+  }
+
+  for (size_t i = 0; i < examples->size(); ++i) {
+    class_probs.col(i).array() = class_probs.col(i).array().exp();      
+    word_probs[i].array() = word_probs[i].array().exp();
   }
 
   return objective;
@@ -169,7 +174,7 @@ void FactoredWeights::getProbabilities(
   class_probs = S.transpose() * prediction_vectors 
                 + T * MatrixReal::Ones(1, examples->size());
   for (size_t i = 0; i < examples->size(); ++i) {
-    class_probs.col(i) = softMax(class_probs.col(i));
+    class_probs.col(i) = logSoftMax(class_probs.col(i));
   }
 
   for (size_t i = 0; i < examples->size(); ++i) {
@@ -178,7 +183,7 @@ void FactoredWeights::getProbabilities(
 
     VectorReal prediction_vector = prediction_vectors.col(i);
     VectorReal word_scores = classR(class_id).transpose() * prediction_vector + classB(class_id);
-    word_probs.push_back(softMax(word_scores));
+    word_probs.push_back(logSoftMax(word_scores));
   }
 }
 
@@ -478,7 +483,7 @@ Real FactoredWeights::predict(int word, vector<int> context) const {
   ret = classNormalizerCache.get(context);
   if (ret.second) {
     word_prob = R.col(word).dot(prediction_vector) + B(word) - ret.first;
-  } else {
+  } else { 
     Real normalizer = 0;
     VectorReal word_probs = logSoftMax(
         classR(class_id).transpose() * prediction_vector + classB(class_id),
@@ -487,7 +492,7 @@ Real FactoredWeights::predict(int word, vector<int> context) const {
     word_prob = word_probs(word_class_id);
   }
 
-  return class_prob + word_prob;
+  return -(class_prob + word_prob);
 }
 
 int FactoredWeights::vocabSize() const {

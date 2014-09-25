@@ -17,6 +17,9 @@ TEST_F(SGDTest, TestBasic) {
   test_corpus->readFile(config->test_file, dict, true);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
+  std::cout << "  Test Likelihood: " << log_likelihood 
+           << "  Test Size: " << test_corpus->numTokens() 
+           << "  Test Perplexity: " << perplexity(log_likelihood, test_corpus->numTokens()) << std::endl;
   EXPECT_NEAR(72.2445220, perplexity(log_likelihood, test_corpus->size()), EPS);
 }
 
@@ -30,7 +33,10 @@ TEST_F(SGDTest, TestNCE) {
   test_corpus->readFile(config->test_file, dict, true);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
-  EXPECT_NEAR(67.7361526, perplexity(log_likelihood, test_corpus->size()), EPS);
+  std::cout << "  Test Likelihood: " << log_likelihood 
+           << "  Test Size: " << test_corpus->numTokens() 
+           << "  Test Perplexity: " << perplexity(log_likelihood, test_corpus->numTokens()) << std::endl;
+  EXPECT_NEAR(66.8699874, perplexity(log_likelihood, test_corpus->size()), EPS); //67.7361526
 }
 
 } // namespace oxlm

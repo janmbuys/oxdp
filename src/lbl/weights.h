@@ -15,6 +15,7 @@
 #include "lbl/metadata.h"
 #include "lbl/minibatch_words.h"
 #include "lbl/utils.h"
+#include "lbl/word_distributions.h"
 
 namespace oxlm {
 
@@ -215,6 +216,8 @@ class Weights: public WeightsInterface {
   vector<Mutex> mutexesQ;
   vector<Mutex> mutexesR;
   Mutex mutexB;
+
+  mutable boost::thread_specific_ptr<WordDistributions> wordDists;
 };
 
 } // namespace oxlm

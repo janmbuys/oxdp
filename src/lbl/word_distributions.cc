@@ -15,8 +15,18 @@ WordDistributions::WordDistributions(
   }
 }
 
+WordDistributions::WordDistributions(
+    const VectorReal& unigram): 
+      gen(0),
+      dist(unigram.data(), unigram.data() + unigram.size()) {} 
+
 int WordDistributions::sample(int class_id) {
   return index->getClassMarker(class_id) + dists[class_id](gen);
+}
+
+
+int WordDistributions::sample() {
+  return dist(gen);
 }
 
 } // namespace oxlm

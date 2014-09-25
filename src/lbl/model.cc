@@ -76,7 +76,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
     Real log_likelihood = 0;
     evaluate(test_corpus, log_likelihood);
     cout << "Initial perplexity: "
-         << perplexity(log_likelihood, test_corpus->size()) << endl;
+         << perplexity(log_likelihood, test_corpus->numTokens()) << endl;
   }
 
   vector<int> indices(training_corpus->size());
@@ -139,6 +139,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         #pragma omp barrier
 
         Real objective = 0;
+        int num_examples = 0;
         MinibatchWords words;
         size_t task_start;
         while (true) {
@@ -158,6 +159,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
             // #pragma omp critical
             for (int j: task) 
               ngram_model->extract(training_corpus,  j, task_examples);
+            num_examples += task_examples->size();
 
             if (config->noise_samples > 0) {
               weights->estimateGradient(
@@ -171,6 +173,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
           }
         }
 
+        //std::cerr << num_examples << " examples " << minibatch.size() << std::endl;
         global_gradient->syncUpdate(words, gradient);
         #pragma omp critical
         {
@@ -195,6 +198,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         // Wait for all threads to finish making the model gradient update.
         #pragma omp barrier
 
+        //TODO check when changing to sentence level
         Real minibatch_factor =
             static_cast<Real>(end - start) / training_corpus->size();
         objective = regularize(global_gradient, minibatch_factor);
@@ -227,7 +231,10 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         Real iteration_time = get_duration(iteration_start, get_time());
         cout << "Iteration: " << iter << ", "
              << "Time: " << iteration_time << " seconds, "
-             << "Objective: " << global_objective / training_corpus->size()
+             << "  Likelihood: " << global_objective 
+             << "  Size: " << training_corpus->numTokens()
+             << "  Perplexity: " << perplexity(global_objective, training_corpus->numTokens())
+             << "  Objective: " << global_objective / training_corpus->numTokens()
              << endl;
         cout << endl;
       }
@@ -259,7 +266,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
   if (test_corpus != nullptr) {
     #pragma omp master
     {
-      cout << "Calculating perplexity for " << test_corpus->size()
+      cout << "Calculating perplexity for " << test_corpus->numTokens()
            << " tokens..." << endl;
       accumulator = 0;
     }
@@ -275,27 +282,26 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
       size_t end = min(start + config->minibatch_size, test_corpus->size());
       vector<int> minibatch(
           indices.begin() + start, min(indices.begin() + end, indices.end()));
-      //Real objective = weights->getObjective(test_corpus, minibatch);
       
+      minibatch = scatterMinibatch(minibatch);
+
       //option 1: computationally slightly more efficient
-      /*minibatch = scatterMinibatch(minibatch);
-      boost::shared_ptr<DataSet> minibatch_examples = boost::make_shared<DataSet>();
-      for (int j: task) 
+      
+      /* boost::shared_ptr<DataSet> minibatch_examples = boost::make_shared<DataSet>();
+      for (int j: minibatch) 
         ngram_model->extract(test_corpus,  j, minibatch_examples);
-      //Real objective = weights->getObjective(minibatch_examples); */
+      Real objective = weights->getObjective(minibatch_examples); */
       
       //option 2: more extendable
       Real objective = 0;
-      minibatch = scatterMinibatch(minibatch);
 
-        //will this be fine is parallel?
-      {
-        for (int j: minibatch)
-          objective += ngram_model->evaluate(test_corpus, j, weights);
-      }
-
+      for (int j: minibatch) {
+        Real likelihood = ngram_model->evaluate(test_corpus, j, weights);
+        objective += likelihood;
+      } 
+       
       #pragma omp critical
-      accumulator += objective;
+      accumulator += objective;  
 
       start = end;
     }
@@ -316,13 +322,13 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
 
     #pragma omp master
     {
-      Real test_perplexity = perplexity(log_likelihood, test_corpus->size());
+      Real test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
       Real iteration_time = get_duration(iteration_start, get_time());
       cout << "\tMinibatch " << minibatch_counter << ", "
            << "Time: " << get_duration(iteration_start, get_time()) << " seconds, "
-           << "Test Likelihood: " << log_likelihood << endl
-           << "Test Size: " << test_corpus->size() << endl
-           << "Test Perplexity: " << test_perplexity << endl;
+           << "  Test Likelihood: " << log_likelihood 
+           << "  Test Size: " << test_corpus->numTokens() 
+           << "  Test Perplexity: " << test_perplexity << endl;
 
       if (test_perplexity < best_perplexity) {
         best_perplexity = test_perplexity;

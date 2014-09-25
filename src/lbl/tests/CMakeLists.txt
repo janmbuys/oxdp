@@ -10,7 +10,6 @@ set(TESTS
     context_cache_test
     context_processor_test
     factored_metadata_test
-    factored_weights_test
     feature_approximate_filter_test
     feature_context_test
     feature_context_generator_test
@@ -18,7 +17,6 @@ set(TESTS
     feature_exact_filter_test
     feature_matcher_test
     feature_no_op_filter_test
-    global_factored_maxent_weights_test
     global_feature_indexes_pair_test
     metadata_test
     minibatch_feature_indexes_pair_test
@@ -37,9 +35,11 @@ set(TESTS
     word_context_hasher_test
     word_distributions_test
     word_to_class_index_test
+    factored_weights_test
     train_sgd_test
-    train_maxent_sgd_test
     train_factored_sgd_test)
+#    global_factored_maxent_weights_test
+#   train_maxent_sgd_test
 
 set(LIBRARIES murmurhash lbl corpus)
 

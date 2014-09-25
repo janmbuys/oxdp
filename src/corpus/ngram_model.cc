@@ -19,9 +19,11 @@ Words NGramModel::extractContext(const boost::shared_ptr<Corpus> corpus, int pos
     int index = context_start + i;
     sentence_start |= (index < 0 || corpus->at(index) == eos_);
     int word_id = sentence_start ? sos_: corpus->at(index);
+    //std::cout << word_id << " ";
     context.push_back(word_id);
   }
 
+  //std::cout << std::endl;
   return context;
 }
 
