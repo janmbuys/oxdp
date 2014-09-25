@@ -31,7 +31,7 @@ FactoredMetadata::FactoredMetadata(
     : Metadata(config, dict), index(index),
       classBias(VectorReal::Zero(index->getNumClasses())) {}
 
-void FactoredMetadata::initialize(const boost::shared_ptr<Corpus>& corpus) {
+void FactoredMetadata::initialize(const boost::shared_ptr<CorpusInterface>& corpus) {
   Metadata::initialize(corpus);
 }
 

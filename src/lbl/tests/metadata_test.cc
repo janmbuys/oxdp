@@ -4,6 +4,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/make_shared.hpp>
 
+#include "corpus/sentence_corpus.h"
 #include "lbl/metadata.h"
 #include "utils/constants.h"
 #include "utils/testing.h"
@@ -19,7 +20,7 @@ TEST(MetadataTest, TestUnigram) {
   Metadata metadata(config, dict);
 
   vector<int> data = {2, 3, 2, 4, 1};
-  boost::shared_ptr<Corpus> corpus = boost::make_shared<Corpus>(data);
+  boost::shared_ptr<SentenceCorpus> corpus = boost::make_shared<SentenceCorpus>(data);
   metadata.initialize(corpus);
   VectorReal expected_unigram = VectorReal::Zero(5);
   expected_unigram << 0, 0.2, 0.4, 0.2, 0.2;

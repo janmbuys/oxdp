@@ -17,20 +17,12 @@ class FactoredWeights : public Weights {
 
   FactoredWeights(
       const boost::shared_ptr<ModelData>& config,
-      const boost::shared_ptr<FactoredMetadata>& metadata);
-
-  FactoredWeights(
-      const boost::shared_ptr<ModelData>& config,
       const boost::shared_ptr<FactoredMetadata>& metadata,
-      const boost::shared_ptr<Corpus>& training_corpus);
+      bool init);
 
   FactoredWeights(const FactoredWeights& other);
 
   virtual size_t numParameters() const;
-
-  void init(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& minibatch);
 
   void getGradient(
       const boost::shared_ptr<DataSet>& examples,

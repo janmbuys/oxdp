@@ -33,6 +33,7 @@ class Corpus: public CorpusInterface {
 
   size_t numTokens() const override;
  
+  std::vector<int> unigramCounts() const override;
 
   friend class boost::serialization::access;
 
@@ -43,6 +44,7 @@ class Corpus: public CorpusInterface {
 
   private:
   Words corpus_;
+  int vocab_size_;
 
 };
 

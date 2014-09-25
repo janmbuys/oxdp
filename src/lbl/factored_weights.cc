@@ -13,31 +13,25 @@ FactoredWeights::FactoredWeights()
 
 FactoredWeights::FactoredWeights(
     const boost::shared_ptr<ModelData>& config,
-    const boost::shared_ptr<FactoredMetadata>& metadata)
-    : Weights(config, metadata), metadata(metadata),
-      index(metadata->getIndex()),
-      data(NULL), S(0, 0, 0), T(0, 0), FW(0, 0) {
-  allocate();
-  FW.setZero();
-}
-
-FactoredWeights::FactoredWeights(
-    const boost::shared_ptr<ModelData>& config,
     const boost::shared_ptr<FactoredMetadata>& metadata,
-    const boost::shared_ptr<Corpus>& training_corpus)
-    : Weights(config, metadata, training_corpus), metadata(metadata),
+    bool init)
+    : Weights(config, metadata, init), metadata(metadata),
       index(metadata->getIndex()),
       data(NULL), S(0, 0, 0), T(0, 0), FW(0, 0) {
   allocate();
 
-  // Initialize model weights randomly.
-  mt19937 gen(1);
-  normal_distribution<Real> gaussian(0, 0.1);
-  for (int i = 0; i < size; ++i) {
-    FW(i) = gaussian(gen);
-  }
+  if (init) {
+    // Initialize model weights randomly.
+    mt19937 gen(1);
+    normal_distribution<Real> gaussian(0, 0.1);
+    for (int i = 0; i < size; ++i) {
+      FW(i) = gaussian(gen);
+    }
 
-  T = metadata->getClassBias();
+    T = metadata->getClassBias();
+  } else {
+    FW.setZero();
+  }
 }
 
 FactoredWeights::FactoredWeights(const FactoredWeights& other)
@@ -50,12 +44,6 @@ FactoredWeights::FactoredWeights(const FactoredWeights& other)
 
 size_t FactoredWeights::numParameters() const {
   return Weights::numParameters() + size;
-}
-
-void FactoredWeights::init(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& minibatch) {
-  Weights::init(corpus, minibatch);
 }
 
 void FactoredWeights::allocate() {

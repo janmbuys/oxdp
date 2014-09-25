@@ -13,21 +13,14 @@ namespace oxlm {
 Weights::Weights() : data(NULL), Q(0, 0, 0), R(0, 0, 0), B(0, 0), W(0, 0) {}
 
 Weights::Weights(
-    const boost::shared_ptr<ModelData>& config, const boost::shared_ptr<Metadata>& metadata)
-    : config(config), metadata(metadata),
-      data(NULL), Q(0, 0, 0), R(0, 0, 0), B(0, 0), W(0, 0) {
-  allocate();
-  W.setZero();
-}
-
-Weights::Weights(
-    const boost::shared_ptr<ModelData>& config,
+    const boost::shared_ptr<ModelData>& config, 
     const boost::shared_ptr<Metadata>& metadata,
-    const boost::shared_ptr<Corpus>& training_corpus)
+    bool init)
     : config(config), metadata(metadata),
       data(NULL), Q(0, 0, 0), R(0, 0, 0), B(0, 0), W(0, 0) {
   allocate();
-
+  
+  if (init) {
   // Initialize model weights randomly.
   mt19937 gen(1);
   normal_distribution<Real> gaussian(0, 0.1);
@@ -36,11 +29,7 @@ Weights::Weights(
   }
 
   // Initialize bias with unigram probabilities.
-  VectorReal counts = VectorReal::Zero(config->vocab_size);
-  for (size_t i = 0; i < training_corpus->size(); ++i) {
-    counts(training_corpus->at(i)) += 1;
-  }
-  B = ((counts.array() + 1) / (counts.sum() + counts.size())).log();
+  B = metadata->getSmoothedUnigram().array().log();
 
   cout << "===============================" << endl;
   cout << " Model parameters: " << endl;
@@ -49,6 +38,9 @@ Weights::Weights(
   cout << "  Total parameters = " << numParameters() << endl;
   cout << "===============================" << endl;
   //std::cerr << "W: " << W.norm() << std::endl;
+  } else {
+    W.setZero();
+  }
 }
 
 Weights::Weights(const Weights& other)
@@ -118,10 +110,6 @@ void Weights::setModelParameters() {
 size_t Weights::numParameters() const {
   return size;
 }
-
-void Weights::init(
-    const boost::shared_ptr<Corpus>& corpus,
-    const vector<int>& minibatch) {}
 
 void Weights::getGradient(
     const boost::shared_ptr<DataSet>& examples,

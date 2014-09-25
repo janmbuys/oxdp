@@ -5,6 +5,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "corpus/dict.h"
+#include "corpus/corpus_interface.h"
+
 #include "lbl/config.h"
 #include "lbl/utils.h"
 #include "utils/serialization_helpers.h"
@@ -17,9 +19,11 @@ class Metadata {
 
   Metadata(const boost::shared_ptr<ModelData>& config, boost::shared_ptr<Dict>& dict);
 
-  void initialize(const boost::shared_ptr<Corpus>& corpus);
+  void initialize(const boost::shared_ptr<CorpusInterface>& corpus);
 
   VectorReal getUnigram() const;
+
+  VectorReal getSmoothedUnigram() const;
 
   bool operator==(const Metadata& other) const;
 
@@ -35,6 +39,7 @@ class Metadata {
  protected:
   boost::shared_ptr<ModelData> config;
   VectorReal unigram;
+  VectorReal smoothed_unigram;
 };
 
 } // namespace oxlm

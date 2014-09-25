@@ -5,6 +5,7 @@
 #include <boost/make_shared.hpp>
 
 #include "corpus/ngram_model.h"
+#include "corpus/sentence_corpus.h"
 #include "lbl/context_processor.h"
 #include "lbl/factored_weights.h"
 #include "utils/constants.h"
@@ -24,18 +25,17 @@ class FactoredWeightsTest : public testing::Test {
 
     vector<int> data = {2, 3, 4, 1};
     vector<int> classes = {0, 2, 4, 5};
-    corpus = boost::make_shared<Corpus>(data);
+    corpus = boost::make_shared<SentenceCorpus>(data);
     index = boost::make_shared<WordToClassIndex>(classes);
     dict = boost::make_shared<Dict>();
     metadata = boost::make_shared<FactoredMetadata>(config, dict, index);
+    metadata->initialize(corpus);
     ngram_model = boost::make_shared<NGramModel>(config->ngram_order, dict->sos(), dict->eos());
   }
 
   Real getPredictions(
       const boost::shared_ptr<FactoredWeights>& weights, const vector<int>& indices) const {
-    Real ret = 0;
-    for (int index: indices) 
-      ret += ngram_model->evaluate(corpus, index, weights);
+    Real ret = ngram_model->evaluateSentence(corpus->sentence_at(0), weights);
     return ret;
   }
 
@@ -43,21 +43,20 @@ class FactoredWeightsTest : public testing::Test {
   boost::shared_ptr<Dict> dict;
   boost::shared_ptr<WordToClassIndex> index;
   boost::shared_ptr<FactoredMetadata> metadata;
-  boost::shared_ptr<Corpus> corpus;
+  boost::shared_ptr<SentenceCorpus> corpus;
   boost::shared_ptr<NGramModel> ngram_model;
 };
 
 TEST_F(FactoredWeightsTest, TestCheckGradient) {
-  FactoredWeights weights(config, metadata, corpus);
+  FactoredWeights weights(config, metadata, true);
   vector<int> indices = {0, 1, 2, 3};
   Real objective;
   MinibatchWords words;
 
   boost::shared_ptr<FactoredWeights> gradient =
-      boost::make_shared<FactoredWeights>(config, metadata);
+      boost::make_shared<FactoredWeights>(config, metadata, false);
   boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
-  for (int j: indices) 
-    ngram_model->extract(corpus, j, examples);
+  ngram_model->extractSentence(corpus->sentence_at(0), examples);
 
   weights.getGradient(examples, gradient, objective, words);
   // See the comment in weights_test.cc if you suspect the gradient is not
@@ -67,15 +66,14 @@ TEST_F(FactoredWeightsTest, TestCheckGradient) {
 
 TEST_F(FactoredWeightsTest, TestCheckGradientDiagonal) {
   config->diagonal_contexts = true;
-  FactoredWeights weights(config, metadata, corpus);
+  FactoredWeights weights(config, metadata, true);
   vector<int> indices = {0, 1, 2, 3};
   Real objective;
   MinibatchWords words;
   boost::shared_ptr<FactoredWeights> gradient =
-      boost::make_shared<FactoredWeights>(config, metadata);
+      boost::make_shared<FactoredWeights>(config, metadata, false);
   boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
-  for (int j: indices) 
-    ngram_model->extract(corpus, j, examples);
+  ngram_model->extractSentence(corpus->sentence_at(0), examples);
   weights.getGradient(examples, gradient, objective, words);
 
   // See the comment in weights_test.cc if you suspect the gradient is not
@@ -84,11 +82,11 @@ TEST_F(FactoredWeightsTest, TestCheckGradientDiagonal) {
 }
 
 TEST_F(FactoredWeightsTest, TestPredict) {
-  boost::shared_ptr<FactoredWeights> weights = boost::make_shared<FactoredWeights>(config, metadata, corpus);
+  boost::shared_ptr<FactoredWeights> weights = boost::make_shared<FactoredWeights>(config, metadata, 
+           true);
   vector<int> indices = {0, 1, 2, 3};
   boost::shared_ptr<DataSet> examples = boost::make_shared<DataSet>();
-  for (int j: indices) 
-    ngram_model->extract(corpus, j, examples);
+  ngram_model->extractSentence(corpus->sentence_at(0), examples);
 
   Real objective = weights->getObjective(examples);
 
@@ -98,7 +96,7 @@ TEST_F(FactoredWeightsTest, TestPredict) {
 }
 
 TEST_F(FactoredWeightsTest, TestSerialization) {
-  FactoredWeights weights(config, metadata, corpus), weights_copy;
+  FactoredWeights weights(config, metadata, true), weights_copy;
 
   stringstream stream(ios_base::binary | ios_base::out | ios_base::in);
   ar::binary_oarchive oar(stream, ar::no_header);

@@ -27,6 +27,8 @@ void Corpus::readFile(const std::string& filename, const boost::shared_ptr<Dict>
     }
     corpus_.push_back(dict->eos());
   }
+
+  vocab_size_ = dict->size();
 }
 
 
@@ -36,6 +38,14 @@ size_t Corpus::size() const {
 
 size_t Corpus::numTokens() const {
   return size();
+}
+
+std::vector<int> Corpus::unigramCounts() const {
+    std::vector<int> counts(vocab_size_, 0);
+  for (size_t i = 0; i < size(); ++i)
+    counts[corpus_.at(i)] += 1;
+
+  return counts;
 }
 
 }

@@ -2,6 +2,7 @@
 
 #include "corpus/dict.h"
 #include "corpus/corpus.h"
+#include "corpus/ngram_model.h"
 
 #include "lbl/context_processor.h"
 #include "lbl/model.h"
@@ -13,27 +14,21 @@ using namespace std;
 
 template<class Model>
 void score(const string& model_file, const string& data_file) {
-  Model model;
-  model.load(model_file);
+  boost::shared_ptr<Model> model = boost::make_shared<Model>();
+  model->load(model_file);
 
-  boost::shared_ptr<ModelData> config = model.getConfig();
-  shared_ptr<Dict> dict = model.getDict();
+  boost::shared_ptr<ModelData> config = model->getConfig();
+  shared_ptr<Dict> dict = model->getDict();
+  NGramModel ngram_model(config->ngram_order, dict->sos(), dict->eos());
 
-  int eos = dict->convert("</s>", false);
-  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  boost::shared_ptr<SentenceCorpus> test_corpus = boost::make_shared<SentenceCorpus>();
   test_corpus->readFile(data_file, dict, true);
 
   double total = 0;
-  ContextProcessor processor(test_corpus, config->ngram_order - 1);
   for (size_t i = 0; i < test_corpus->size(); ++i) {
-    int word_id = test_corpus->at(i);
-    vector<int> context = processor.extract(i);
-    double log_prob = -model.predict(word_id, context);
+    double log_prob = ngram_model->evaluateSentence(test_corpus->sentence_at(i), model);
+    cout << "Prob: " << log_probs << endl;
     total += log_prob;
-    cout << "(" << dict->lookup(word_id) << " " << log_prob << ") ";
-    if (word_id == eos) {
-      cout << "Total: " << total << endl;
-      total = 0;
     }
   }
 }

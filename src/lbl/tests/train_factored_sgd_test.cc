@@ -13,11 +13,11 @@ TEST_F(FactoredSGDTest, TestTrainFactoredSGD) {
   model.learn();
   config->test_file = "test.txt";
   boost::shared_ptr<Dict> dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  boost::shared_ptr<SentenceCorpus> test_corpus = boost::make_shared<SentenceCorpus>();
   test_corpus->readFile(config->test_file, dict, true);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
-  EXPECT_NEAR(61.6428337,perplexity(log_likelihood, test_corpus->size()), EPS); // 61.6428031 
+  EXPECT_NEAR(61.6428337,perplexity(log_likelihood, test_corpus->numTokens()), EPS); // 61.6428031 
 }
 
 TEST_F(FactoredSGDTest, TestTrainFactoredNCE) {
@@ -26,11 +26,11 @@ TEST_F(FactoredSGDTest, TestTrainFactoredNCE) {
   model.learn();
   config->test_file = "test.txt";
   boost::shared_ptr<Dict> dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  boost::shared_ptr<SentenceCorpus> test_corpus = boost::make_shared<SentenceCorpus>();
   test_corpus->readFile(config->test_file, dict, true);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
-  EXPECT_NEAR(66.0728988, perplexity(log_likelihood, test_corpus->size()), EPS); //66.0725250
+  EXPECT_NEAR(66.0728988, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //66.0725250
 }
 
 } // namespace oxlm

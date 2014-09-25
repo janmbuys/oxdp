@@ -3,7 +3,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "corpus/dict.h"
-#include "corpus/corpus.h"
+#include "corpus/sentence_corpus.h"
 #include "corpus/data_set.h"
 #include "corpus/ngram_model.h"
 
@@ -46,7 +46,7 @@ class Model {
       Real minibatch_factor);
 
   void evaluate(
-      const boost::shared_ptr<Corpus>& corpus, Real& accumulator) const;
+      const boost::shared_ptr<SentenceCorpus>& corpus, Real& accumulator) const;
 
   Real predict(int word_id, const vector<int>& context) const;
 
@@ -63,7 +63,7 @@ class Model {
 
  private:
   void evaluate(
-      const boost::shared_ptr<Corpus>& corpus, const Time& iteration_start,
+      const boost::shared_ptr<SentenceCorpus>& corpus, const Time& iteration_start,
       int minibatch_counter, Real& objective, Real& best_perplexity) const;
 
   boost::shared_ptr<ModelData> config;

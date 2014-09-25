@@ -18,6 +18,8 @@ namespace oxlm {
 class SentenceCorpus: public CorpusInterface {
   public:
   SentenceCorpus();
+  
+  SentenceCorpus(Words sent);
 
   Words convertWhitespaceDelimitedLine(const std::string& line, const boost::shared_ptr<Dict>& dict, 
                                              bool frozen);
@@ -31,10 +33,12 @@ class SentenceCorpus: public CorpusInterface {
   size_t size() const override;
 
   size_t numTokens() const override;
+  
+  std::vector<int> unigramCounts() const override;
  
   private:
   std::vector<Sentence> sentences_;
-
+  int vocab_size_;
 
 };
 

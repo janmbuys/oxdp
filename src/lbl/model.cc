@@ -53,22 +53,21 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   // Initialize the dictionary now, if it hasn't been initialized when the
   // vocabulary was partitioned in classes.
   bool immutable_dict = config->classes > 0 || config->class_file.size();
-  boost::shared_ptr<Corpus> training_corpus = boost::make_shared<Corpus>();
+  boost::shared_ptr<SentenceCorpus> training_corpus = boost::make_shared<SentenceCorpus>();
   training_corpus->readFile(config->training_file, dict, immutable_dict);
   config->vocab_size = dict->size();
   cout << "Done reading training corpus..." << endl;
 
-  boost::shared_ptr<Corpus> test_corpus; 
+  boost::shared_ptr<SentenceCorpus> test_corpus; 
   if (config->test_file.size()) {
-    test_corpus = boost::make_shared<Corpus>();
+    test_corpus = boost::make_shared<SentenceCorpus>();
     test_corpus->readFile(config->test_file, dict, true);
     cout << "Done reading test corpus..." << endl;
   }
 
   if (config->model_input_file.size() == 0) {
     metadata->initialize(training_corpus);
-    weights = boost::make_shared<GlobalWeights>(
-        config, metadata, training_corpus);
+    weights = boost::make_shared<GlobalWeights>(config, metadata, true);
   } else {
     Real log_likelihood = 0;
     evaluate(test_corpus, log_likelihood);
@@ -82,9 +81,9 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   Real best_perplexity = numeric_limits<Real>::infinity();
   Real global_objective = 0, test_objective = 0;
   boost::shared_ptr<MinibatchWeights> global_gradient =
-      boost::make_shared<MinibatchWeights>(config, metadata);
+      boost::make_shared<MinibatchWeights>(config, metadata, false);
   boost::shared_ptr<GlobalWeights> adagrad =
-      boost::make_shared<GlobalWeights>(config, metadata);
+      boost::make_shared<GlobalWeights>(config, metadata, false);
   MinibatchWords global_words;
 
   int shared_index = 0;
@@ -97,7 +96,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
     int minibatch_counter = 1;
     int minibatch_size = config->minibatch_size;
     boost::shared_ptr<MinibatchWeights> gradient =
-        boost::make_shared<MinibatchWeights>(config, metadata);
+        boost::make_shared<MinibatchWeights>(config, metadata, false);
 
     for (int iter = 0; iter < config->iterations; ++iter) {
       auto iteration_start = get_time();
@@ -121,7 +120,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
             min(indices.begin() + end, indices.end()));
         
 
-        global_gradient->init(training_corpus, minibatch);
+        //global_gradient->init(training_corpus, minibatch);
         // Reset the set of minibatch words shared across all threads.
         #pragma omp master
         {
@@ -129,7 +128,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
           shared_index = 0;
         }
 
-        gradient->init(training_corpus, minibatch);
+        //gradient->init(training_corpus, minibatch);
 
         // Wait until the global gradient is initialized. Otherwise, some
         // gradient updates may be ignored.
@@ -155,7 +154,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
             
             // #pragma omp critical
             for (int j: task) 
-              ngram_model->extract(training_corpus,  j, task_examples);
+              ngram_model->extractSentence(training_corpus->sentence_at(j), task_examples);
             num_examples += task_examples->size();
 
             if (config->noise_samples > 0) {
@@ -259,7 +258,7 @@ Real Model<GlobalWeights, MinibatchWeights, Metadata>::regularize(
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
 void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
-    const boost::shared_ptr<Corpus>& test_corpus, Real& accumulator) const {
+    const boost::shared_ptr<SentenceCorpus>& test_corpus, Real& accumulator) const {
   if (test_corpus != nullptr) {
     #pragma omp master
     {
@@ -293,7 +292,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
       Real objective = 0;
 
       for (int j: minibatch) {
-        Real likelihood = ngram_model->evaluate(test_corpus, j, weights);
+        Real likelihood = ngram_model->evaluateSentence(test_corpus->sentence_at(j), weights);
         objective += likelihood;
       } 
        
@@ -312,7 +311,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
 void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
-    const boost::shared_ptr<Corpus>& test_corpus, const Time& iteration_start,
+    const boost::shared_ptr<SentenceCorpus>& test_corpus, const Time& iteration_start,
     int minibatch_counter, Real& log_likelihood, Real& best_perplexity) const {
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);

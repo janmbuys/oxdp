@@ -12,18 +12,18 @@ using namespace std;
 
 template<class Model>
 void evaluate(const string& model_file, const string& test_file, int num_threads) {
-  Model model;
-  model.load(model_file);
-  boost::shared_ptr<Dict> dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+    boost::shared_ptr<Model> model = boost::make_shared<Model>();
+  model->load(model_file);
+  boost::shared_ptr<Dict> dict = model->getDict();
+  boost::shared_ptr<SentenceCorpus> test_corpus = boost::make_shared<SentenceCorpus>();
   test_corpus->readFile(test_file, dict, true);
 
   Real accumulator = 0;
   #pragma omp parallel num_threads(num_threads)
-  model.evaluate(test_corpus, accumulator);
+  model->evaluate(test_corpus, accumulator);
 
   cout << "Test set perplexity: "
-       << perplexity(accumulator, test_corpus->size()) << endl;
+       << perplexity(accumulator, test_corpus->numTokens()) << endl;
 }
 
 int main(int argc, char** argv) {

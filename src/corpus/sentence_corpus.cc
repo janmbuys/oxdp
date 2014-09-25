@@ -7,6 +7,12 @@ SentenceCorpus::SentenceCorpus():
 {
 }
 
+SentenceCorpus::SentenceCorpus(Words sent):
+  sentences_(1, Sentence(sent))
+{
+}
+
+
 Words SentenceCorpus::convertWhitespaceDelimitedLine(const std::string& line, 
         const boost::shared_ptr<Dict>& dict, bool frozen) {
   Words out;
@@ -52,6 +58,7 @@ void SentenceCorpus::readFile(const std::string& filename, const boost::shared_p
     Words sents = convertWhitespaceDelimitedLine(line, dict, frozen);
     sentences_.push_back(Sentence(sents));
   }
+  vocab_size_ = dict->size();
 }
 
 
@@ -66,6 +73,17 @@ size_t SentenceCorpus::numTokens() const {
 
   return total;
 }
+
+std::vector<int> SentenceCorpus::unigramCounts() const {
+  std::vector<int> counts(vocab_size_, 0);
+  for (auto sent: sentences_) {
+    for (size_t j = 0; j < sent.size(); ++j)
+      counts[sent.word_at(j)] += 1;
+  }
+
+  return counts;
+}
+
 
 }
 

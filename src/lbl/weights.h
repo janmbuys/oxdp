@@ -33,20 +33,12 @@ class Weights: public WeightsInterface {
 
   Weights(
       const boost::shared_ptr<ModelData>& config,
-      const boost::shared_ptr<Metadata>& metadata);
-
-  Weights(
-      const boost::shared_ptr<ModelData>& config,
       const boost::shared_ptr<Metadata>& metadata,
-      const boost::shared_ptr<Corpus>& training_corpus);
+      bool init);
 
   Weights(const Weights& other);
 
   virtual size_t numParameters() const;
-
-  void init(
-      const boost::shared_ptr<Corpus>& corpus,
-      const vector<int>& minibatch);
 
   void getGradient(
       const boost::shared_ptr<DataSet>& examples,

@@ -89,8 +89,7 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
     }
   }
 
-  //for (int i = 0 ; i < sentences_.size(); ++i)
-  //  sentences_.at(i).print_arcs();
+  vocab_size_ = dict->size();
 }
 
 size_t ParsedCorpus::size() const {
@@ -103,6 +102,16 @@ size_t ParsedCorpus::numTokens() const {
     total += sent.size() - 1;
 
   return total;
+}
+
+std::vector<int> ParsedCorpus::unigramCounts() const {
+  std::vector<int> counts(vocab_size_, 0);
+  for (auto sent: sentences_) {
+    for (size_t j = 0; j < sent.size(); ++j)
+      counts[sent.word_at(j)] += 1;
+  }
+
+  return counts;
 }
 
 }

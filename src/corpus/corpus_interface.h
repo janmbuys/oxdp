@@ -11,6 +11,8 @@ class CorpusInterface {
 
   virtual size_t numTokens() const = 0;
 
+  virtual std::vector<int> unigramCounts() const = 0;
+
   virtual ~CorpusInterface() {}
 };
 

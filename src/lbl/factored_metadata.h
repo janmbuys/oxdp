@@ -20,7 +20,7 @@ class FactoredMetadata : public Metadata {
       const boost::shared_ptr<ModelData>& config, boost::shared_ptr<Dict>& dict,
       const boost::shared_ptr<WordToClassIndex>& index);
 
-  void initialize(const boost::shared_ptr<Corpus>& corpus);
+  void initialize(const boost::shared_ptr<CorpusInterface>& corpus);
 
   boost::shared_ptr<WordToClassIndex> getIndex() const;
 

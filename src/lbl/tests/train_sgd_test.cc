@@ -13,14 +13,14 @@ TEST_F(SGDTest, TestBasic) {
   model.learn();
   config->test_file = "test.txt";
   boost::shared_ptr<Dict> dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  boost::shared_ptr<SentenceCorpus> test_corpus = boost::make_shared<SentenceCorpus>();
   test_corpus->readFile(config->test_file, dict, true);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
   std::cout << "  Test Likelihood: " << log_likelihood 
            << "  Test Size: " << test_corpus->numTokens() 
            << "  Test Perplexity: " << perplexity(log_likelihood, test_corpus->numTokens()) << std::endl;
-  EXPECT_NEAR(72.2445220, perplexity(log_likelihood, test_corpus->size()), EPS);
+  EXPECT_NEAR(72.2445220, perplexity(log_likelihood, test_corpus->numTokens()), EPS);
 }
 
 TEST_F(SGDTest, TestNCE) {
@@ -29,14 +29,14 @@ TEST_F(SGDTest, TestNCE) {
   model.learn();
   config->test_file = "test.txt";
   boost::shared_ptr<Dict> dict = model.getDict();
-  boost::shared_ptr<Corpus> test_corpus = boost::make_shared<Corpus>();
+  boost::shared_ptr<SentenceCorpus> test_corpus = boost::make_shared<SentenceCorpus>();
   test_corpus->readFile(config->test_file, dict, true);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
   std::cout << "  Test Likelihood: " << log_likelihood 
            << "  Test Size: " << test_corpus->numTokens() 
            << "  Test Perplexity: " << perplexity(log_likelihood, test_corpus->numTokens()) << std::endl;
-  EXPECT_NEAR(66.8699874, perplexity(log_likelihood, test_corpus->size()), EPS); //67.7361526
+  EXPECT_NEAR(66.8699874, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //67.7361526
 }
 
 } // namespace oxlm
