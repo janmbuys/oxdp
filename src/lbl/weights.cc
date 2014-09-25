@@ -37,7 +37,7 @@ Weights::Weights(
   cout << "  Output vocab size = " << config->vocab_size << endl;
   cout << "  Total parameters = " << numParameters() << endl;
   cout << "===============================" << endl;
-  //std::cerr << "W: " << W.norm() << std::endl;
+  //std::cout << "W: " << W.norm() << std::endl;
   } else {
     W.setZero();
   }
@@ -116,6 +116,7 @@ void Weights::getGradient(
     const boost::shared_ptr<Weights>& gradient,
     Real& objective,
     MinibatchWords& words) const {
+  //std::cout << "g W: " << W.norm() << std::endl;
   vector<vector<int>> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
@@ -322,6 +323,7 @@ Real Weights::getObjective(
   Real objective = 0;
   for (size_t i = 0; i < examples->size(); ++i) {
     Real word_likelihood = -word_probs(examples->wordAt(i), i);    
+    //std::cout << word_likelihood << " ";
     objective += word_likelihood;
   }
 

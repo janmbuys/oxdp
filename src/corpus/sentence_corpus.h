@@ -19,7 +19,7 @@ class SentenceCorpus: public CorpusInterface {
   public:
   SentenceCorpus();
   
-  SentenceCorpus(Words sent);
+  SentenceCorpus(Words sent, int vocab_size);
 
   Words convertWhitespaceDelimitedLine(const std::string& line, const boost::shared_ptr<Dict>& dict, 
                                              bool frozen);

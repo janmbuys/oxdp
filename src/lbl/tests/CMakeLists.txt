@@ -6,12 +6,12 @@ set(TESTS
     metadata_test
     model_utils_test
     operators_test
-    train_factored_sgd_test
-    train_sgd_test
     utils_test
     weights_test
     word_distributions_test
-    word_to_class_index_test)
+    word_to_class_index_test
+    train_sgd_test
+    train_factored_sgd_test)
 
 set(LIBRARIES murmurhash corpus lbl)
 

@@ -20,7 +20,7 @@ TEST(MetadataTest, TestUnigram) {
   Metadata metadata(config, dict);
 
   vector<int> data = {2, 3, 2, 4, 1};
-  boost::shared_ptr<SentenceCorpus> corpus = boost::make_shared<SentenceCorpus>(data);
+  boost::shared_ptr<SentenceCorpus> corpus = boost::make_shared<SentenceCorpus>(data, config->vocab_size);
   metadata.initialize(corpus);
   VectorReal expected_unigram = VectorReal::Zero(5);
   expected_unigram << 0, 0.2, 0.4, 0.2, 0.2;

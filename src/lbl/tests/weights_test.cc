@@ -26,7 +26,7 @@ class TestWeights : public testing::Test {
     config->sigmoid = true;
 
     vector<int> data = {2, 3, 4, 1};
-    corpus = boost::make_shared<SentenceCorpus>(data);
+    corpus = boost::make_shared<SentenceCorpus>(data, config->vocab_size);
     boost::shared_ptr<Dict> dict = boost::make_shared<Dict>();
     metadata = boost::make_shared<Metadata>(config, dict);
     metadata->initialize(corpus);

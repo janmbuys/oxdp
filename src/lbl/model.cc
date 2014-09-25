@@ -88,7 +88,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 
   int shared_index = 0;
   // For no particular reason. It just looks like this works best.
-  int task_size = sqrt(config->minibatch_size);
+  int task_size = sqrt(config->minibatch_size) / 4; //to imitate word-level behaviour
 
   omp_set_num_threads(config->threads);
   #pragma omp parallel
@@ -112,17 +112,18 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
       #pragma omp barrier
 
       size_t start = 0;
+      std::cout << "training size: " << training_corpus->size() << "\n";
       while (start < training_corpus->size()) {
         size_t end = min(training_corpus->size(), start + minibatch_size);
 
         vector<int> minibatch(
             indices.begin() + start,
             min(indices.begin() + end, indices.end()));
-        
+        std::cout << "minibatch: " << minibatch.size() << " sentences\n";
 
         //global_gradient->init(training_corpus, minibatch);
         // Reset the set of minibatch words shared across all threads.
-        #pragma omp master
+        #pragma omp maste
         {
           global_words = MinibatchWords();
           shared_index = 0;
@@ -150,11 +151,13 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
             vector<int> task(
                 minibatch.begin() + task_start, minibatch.begin() + task_end);
             //collect the training examples for the minibatch
+            //std::cout << "  task " << task.size();
             boost::shared_ptr<DataSet> task_examples = boost::make_shared<DataSet>();
             
             // #pragma omp critical
             for (int j: task) 
               ngram_model->extractSentence(training_corpus->sentence_at(j), task_examples);
+            //std::cout << " (" << task_examples->size() << ") ";
             num_examples += task_examples->size();
 
             if (config->noise_samples > 0) {
@@ -169,7 +172,6 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
           }
         }
 
-        //std::cerr << num_examples << " examples " << minibatch.size() << std::endl;
         global_gradient->syncUpdate(words, gradient);
         #pragma omp critical
         {
@@ -188,7 +190,6 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         // Wait until the minibatch words are fully prepared for parallel
         // processing.
         #pragma omp barrier
-
         update(global_words, global_gradient, adagrad);
 
         // Wait for all threads to finish making the model gradient update.
@@ -196,7 +197,10 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 
         //TODO check when changing to sentence level
         Real minibatch_factor =
-            static_cast<Real>(end - start) / training_corpus->size();
+            static_cast<Real>(num_examples) / training_corpus->numTokens();
+            //static_cast<Real>(end - start) / training_corpus->size();
+        std::cout << "\n" << num_examples << " examples " 
+            << minibatch_factor << " minibatch factor" << std::endl;
         objective = regularize(global_gradient, minibatch_factor);
         #pragma omp critical
         global_objective += objective;

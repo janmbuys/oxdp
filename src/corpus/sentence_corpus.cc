@@ -7,8 +7,9 @@ SentenceCorpus::SentenceCorpus():
 {
 }
 
-SentenceCorpus::SentenceCorpus(Words sent):
-  sentences_(1, Sentence(sent))
+SentenceCorpus::SentenceCorpus(Words sent, int vocab_size):
+  sentences_(1, Sentence(sent)),
+  vocab_size_(vocab_size)
 {
 }
 

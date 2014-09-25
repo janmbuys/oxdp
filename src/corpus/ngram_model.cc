@@ -5,7 +5,9 @@ namespace oxlm {
 NGramModel::NGramModel(unsigned order, WordId sos, WordId eos):
     order_(order),
     sos_(sos), 
-    eos_(eos) {}
+    eos_(eos) {
+        std::cout << "constructed" << std::endl;
+    }
 
 Words NGramModel::extractContext(const boost::shared_ptr<Corpus> corpus, int position) {
   Words context;
@@ -47,7 +49,9 @@ void NGramModel::extractSentence(const Sentence& sent,
   //eos is already at end of sentence
   for (int i = 0; i < sent.size(); ++i) {    
     WordId word = sent.word_at(i);
-    DataPoint example(word, Words(context.begin() + i, context.begin() + i + order_ - 1));
+    Words ctx = Words(context.begin() + i, context.begin() + i + order_ - 1);
+    std::reverse(ctx.begin(), ctx.end());
+    DataPoint example(word, ctx); 
     examples->addExample(example);
     context.push_back(word);
   }    
@@ -60,7 +64,9 @@ Real NGramModel::evaluateSentence(const Sentence& sent,
   //eos is already at end of sentence
   for (int i = 0; i < static_cast<int>(sent.size()); ++i) {    
     WordId word = sent.word_at(i);
-    weight += weights->predict(word, Words(context.begin() + i, context.begin() + i + order_ - 1));
+    Words ctx = Words(context.begin() + i, context.begin() + i + order_ - 1);
+    std::reverse(ctx.begin(), ctx.end());
+    weight += weights->predict(word, ctx); 
     context.push_back(word);
   }  
 

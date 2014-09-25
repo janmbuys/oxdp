@@ -25,7 +25,7 @@ class FactoredWeightsTest : public testing::Test {
 
     vector<int> data = {2, 3, 4, 1};
     vector<int> classes = {0, 2, 4, 5};
-    corpus = boost::make_shared<SentenceCorpus>(data);
+    corpus = boost::make_shared<SentenceCorpus>(data, config->vocab_size);
     index = boost::make_shared<WordToClassIndex>(classes);
     dict = boost::make_shared<Dict>();
     metadata = boost::make_shared<FactoredMetadata>(config, dict, index);

@@ -14,7 +14,7 @@ class SGDTest : public ::testing::Test {
     config = boost::make_shared<ModelData>();
     config->training_file = "training.txt";
     config->iterations = 3;
-    config->minibatch_size = 10000;
+    config->minibatch_size = 380; //10000;
     config->ngram_order = 5;
     config->l2_lbl = 2;
     config->word_representation_size = 100;
