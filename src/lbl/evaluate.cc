@@ -58,9 +58,6 @@ int main(int argc, char** argv) {
     case FACTORED_NLM:
       evaluate<FactoredLM>(model_file, test_file, num_threads);
       return 0;
-    case FACTORED_MAXENT_NLM:
-      evaluate<FactoredMaxentLM>(model_file, test_file, num_threads);
-      return 0;
     default:
       cout << "Unknown model type" << endl;
       return 1;

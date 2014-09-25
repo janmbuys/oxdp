@@ -67,9 +67,6 @@ int main(int argc, char** argv) {
     case FACTORED_NLM:
       score<FactoredLM>(model_file, data_file);
       return 0;
-    case FACTORED_MAXENT_NLM:
-      score<FactoredMaxentLM>(model_file, data_file);
-      return 0;
     default:
       cout << "Unknown model type" << endl;
       return 1;

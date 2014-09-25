@@ -8,11 +8,8 @@
 #include <boost/serialization/shared_ptr.hpp>
 
 #include "lbl/factored_metadata.h"
-#include "lbl/factored_maxent_metadata.h"
 #include "lbl/factored_weights.h"
-#include "lbl/global_factored_maxent_weights.h"
 #include "lbl/metadata.h"
-#include "lbl/minibatch_factored_maxent_weights.h"
 #include "lbl/model_utils.h"
 #include "lbl/operators.h"
 #include "lbl/weights.h"
@@ -392,6 +389,5 @@ bool Model<GlobalWeights, MinibatchWeights, Metadata>::operator==(
 
 template class Model<Weights, Weights, Metadata>;
 template class Model<FactoredWeights, FactoredWeights, FactoredMetadata>;
-template class Model<GlobalFactoredMaxentWeights, MinibatchFactoredMaxentWeights, FactoredMaxentMetadata>;
 
 } // namespace oxlm

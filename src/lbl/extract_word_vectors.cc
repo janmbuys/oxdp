@@ -61,9 +61,6 @@ int main(int argc, char** argv) {
     case FACTORED_NLM:
       ExtractWordVectors<FactoredLM>(model_file, vocab_file, vectors_file);
       return 0;
-    case FACTORED_MAXENT_NLM:
-      ExtractWordVectors<FactoredMaxentLM>(model_file, vocab_file, vectors_file);
-      return 0;
     default:
       cout << "Unknown model type" << endl;
       return 1;

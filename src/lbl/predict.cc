@@ -85,9 +85,6 @@ int main(int argc, char** argv) {
     case FACTORED_NLM:
       predict<FactoredLM>(model_file, contexts_file);
       return 0;
-    case FACTORED_MAXENT_NLM:
-      predict<FactoredMaxentLM>(model_file, contexts_file);
-      return 0;
     default:
       cout << "Unknown model type" << endl;
       return 1;
