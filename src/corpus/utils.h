@@ -36,6 +36,7 @@ inline Real get_duration(const Time& start_time, const Time& stop_time) {
 
 inline Real perplexity(Real log_likelihood, size_t corpus_size) {
   return std::exp(log_likelihood / corpus_size);
+  //return std::exp((log_likelihood / std::log(2)) / corpus_size);
 }
 
 }

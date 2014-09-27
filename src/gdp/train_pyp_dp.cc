@@ -10,16 +10,18 @@ using namespace oxlm;
 
 int main(int argc, char** argv) {
   //TODO make configuration readable from command file
-  std::string training_file = "english-wsj/english_wsj_train.conll.txt";
-  std::string test_file = "english-wsj/english_wsj_dev.conll.txt";
+  std::string training_file = "english-wsj/english_wsj_train.conll";
+  std::string test_file = "english-wsj/english_wsj_dev.conll";
+  //std::string training_file = "english-wsj-stanford/english_wsj_train.conll";
+  //std::string test_file = "english-wsj-stanford/english_wsj_dev.conll";
   
   boost::shared_ptr<ModelConfig> config = boost::make_shared<ModelConfig>();
 
   config->training_file = training_file;
   config->test_file = test_file;
 
-  config->parser_type = ParserType::ngram; 
-  //config->parser_type = ParserType::arcstandard; 
+  //config->parser_type = ParserType::ngram; 
+  config->parser_type = ParserType::eisner; 
   //lexalization also influences context functions and sizes...
   config->lexicalised = false;
 
@@ -27,7 +29,8 @@ int main(int argc, char** argv) {
   config->iterations = 5;
   config->minibatch_size = 1;
 
-  config->beam_sizes = {1, 2, 4}; //, 8, 16, 32, 64};
+  //config->beam_sizes = {1, 2, 4, 8, 16}; //, 8, 16, 32, 64};
+  config->beam_sizes = {1}; //, 8, 16, 32, 64};
 
   if (config->parser_type == ParserType::ngram) {
     PypModel model(config); 

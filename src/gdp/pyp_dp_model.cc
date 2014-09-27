@@ -110,8 +110,8 @@ void PypDpModel::learn() {
        
       //critical loop
       for (auto j: minibatch) {
-        //std::cout << "Gold arcs: ";
-        //training_corpus->sentence_at(j).print_arcs();
+        std::cout << "Gold arcs: ";
+        training_corpus->sentence_at(j).print_arcs();
         if (iter > 0) {
           old_minibatch_examples->extend(examples_list.at(j));
         }            
@@ -160,7 +160,7 @@ void PypDpModel::evaluate() const {
   evaluate(test_corpus, log_likelihood);
     
   size_t test_size = test_corpus->numTokens(); //TODO should actually be number of examples
-  Real test_perplexity = std::exp(log_likelihood/test_size); //TODO use perplexity function
+  Real test_perplexity = perplexity(log_likelihood, test_size); //TODO use perplexity function
   std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
@@ -170,7 +170,7 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, in
     evaluate(test_corpus, log_likelihood);
     
     size_t test_size = test_corpus->numTokens(); //TODO should actually be number of examples
-    Real test_perplexity = std::exp(log_likelihood/test_size); //TODO use perplexity function
+    Real test_perplexity = perplexity(log_likelihood, test_size); //TODO use perplexity function
     std::cerr << "\tMinibatch " << minibatch_counter << ", "
          << "Test Perplexity: " << test_perplexity << std::endl;
 

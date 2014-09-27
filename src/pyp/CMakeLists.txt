@@ -12,3 +12,14 @@ add_libraries(pyp
 
 target_link_libs(pyp corpus)
 
+#############################################
+# Executables
+#############################################
+
+set(EXECUTABLES
+  pyplm_test
+)
+foreach(f ${EXECUTABLES})
+ add_executable(${f} ${f}.cc)
+ target_link_libraries(${f} corpus pyp)
+endforeach(f)

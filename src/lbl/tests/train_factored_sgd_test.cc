@@ -17,7 +17,9 @@ TEST_F(FactoredSGDTest, TestTrainFactoredSGD) {
   test_corpus->readFile(config->test_file, dict, true);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
-  EXPECT_NEAR(61.6428337,perplexity(log_likelihood, test_corpus->numTokens()), EPS); // 61.6428031 
+  EXPECT_NEAR(61.5424766, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //minibatch size
+    //numerical issue 61.6428337
+    //original 61.6428031 
 }
 
 TEST_F(FactoredSGDTest, TestTrainFactoredNCE) {
@@ -30,7 +32,9 @@ TEST_F(FactoredSGDTest, TestTrainFactoredNCE) {
   test_corpus->readFile(config->test_file, dict, true);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
-  EXPECT_NEAR(66.0728988, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //66.0725250
+  EXPECT_NEAR(65.9348297, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //minibatch size
+    //numerical issue 66.0728988
+    //original 66.0725250
 }
 
 } // namespace oxlm

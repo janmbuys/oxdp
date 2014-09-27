@@ -100,6 +100,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 
     for (int iter = 0; iter < config->iterations; ++iter) {
       auto iteration_start = get_time();
+      std::cout << "training size: " << training_corpus->size() << "\n";
 
       #pragma omp master
       {
@@ -112,18 +113,17 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
       #pragma omp barrier
 
       size_t start = 0;
-      std::cout << "training size: " << training_corpus->size() << "\n";
       while (start < training_corpus->size()) {
         size_t end = min(training_corpus->size(), start + minibatch_size);
 
         vector<int> minibatch(
             indices.begin() + start,
             min(indices.begin() + end, indices.end()));
-        std::cout << "minibatch: " << minibatch.size() << " sentences\n";
+       //std::cout << "minibatch: " << minibatch.size() << " sentences\n";
 
         //global_gradient->init(training_corpus, minibatch);
         // Reset the set of minibatch words shared across all threads.
-        #pragma omp maste
+        #pragma omp master
         {
           global_words = MinibatchWords();
           shared_index = 0;
