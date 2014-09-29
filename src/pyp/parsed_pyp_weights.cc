@@ -59,7 +59,7 @@ void ParsedPypWeights<tOrder, aOrder>::resampleHyperparameters(MT19937& eng) {
 template<unsigned tOrder, unsigned aOrder>
 void ParsedPypWeights<tOrder, aOrder>::updateInsert(const ParseDataSet& examples, MT19937& eng) {
   PypWeights<tOrder>::updateInsert(examples.tag_examples(), eng);
-  for (unsigned i = 0; i < examples.size(); ++i)
+  for (unsigned i = 0; i < examples.action_example_size(); ++i)
     action_lm_.increment(examples.action_at(i), examples.action_context_at(i), eng);
 }
 
@@ -67,7 +67,7 @@ void ParsedPypWeights<tOrder, aOrder>::updateInsert(const ParseDataSet& examples
 template<unsigned tOrder, unsigned aOrder>
 void ParsedPypWeights<tOrder, aOrder>::updateRemove(const ParseDataSet& examples, MT19937& eng) {
   PypWeights<tOrder>::updateRemove(examples.tag_examples(), eng);
-  for (unsigned i = 0; i < examples.size(); ++i)
+  for (unsigned i = 0; i < examples.action_example_size(); ++i)
     action_lm_.decrement(examples.action_at(i), examples.action_context_at(i), eng);
 }
 

@@ -90,7 +90,9 @@ void PypDpModel::learn() {
   for (int iter = 0; iter < config_->iterations; ++iter) {
     std::cerr << "Training iteration " << iter << std::endl;
     auto iteration_start = get_time(); 
+    int non_projective_count = 0;
 
+    //std::cout << indices.size() << " indices\n";
     if (config_->randomise)
       std::random_shuffle(indices.begin(), indices.end());
    
@@ -109,21 +111,26 @@ void PypDpModel::learn() {
       //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
        
       //critical loop
+      //std::cout << minibatch[0] << std::endl;
       for (auto j: minibatch) {
-        std::cout << "Gold arcs: ";
-        training_corpus->sentence_at(j).print_arcs();
+        //std::cout << j << " Gold arcs: " << std::endl;
+        //training_corpus->sentence_at(j).print_arcs();
         if (iter > 0) {
           old_minibatch_examples->extend(examples_list.at(j));
         }            
         examples_list.at(j)->clear();
         parse_model_->extractSentence(training_corpus->sentence_at(j), examples_list.at(j));
                                                                      //, weights_);
+        if (!training_corpus->sentence_at(j).is_projective_dependency())
+          ++non_projective_count;            
         minibatch_examples->extend(examples_list.at(j));
+        //std::cout << "done " << examples_list.at(j)->size() << std::endl;
         //parse_model_->extractSentence(training_corpus->sentence_at(j), minibatch_examples);
       }     
 
       weights_->updateRemove(*old_minibatch_examples, eng); 
       weights_->updateInsert(*minibatch_examples, eng); 
+      //std::cout << "updated weights" << std::endl;
 
       //for now, only evaluate at end of iteration
       /* if ((minibatch_counter % 1000 == 0 && minibatch_counter <= 10000) || 
@@ -140,6 +147,7 @@ void PypDpModel::learn() {
 
     std::cerr << "Iteration: " << iter << ", "
              << "Training Time: " << iteration_time << " seconds, "
+             << "Non-projective: " << (non_projective_count + 0.0) / training_corpus->size() << ", "
              << "Training Objective: " << weights_->likelihood() / training_corpus->numTokens() 
            << "\n\n";
     

@@ -170,7 +170,7 @@ void EisnerParseModel::scoreSentence(EisnerParser* parser, const boost::shared_p
 
 void EisnerParseModel::extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParseDataSet>& examples) {
-  EisnerParser parse(sent);
+  EisnerParser parse(static_cast<TaggedSentence>(sent));
   //add arcs
   for (unsigned i = 0; i < sent.size(); ++i)
     if (sent.arc_at(i) >= 0)

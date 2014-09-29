@@ -20,7 +20,7 @@ Words ParseDataSet::contextAt(unsigned i) const {
 }
 
 size_t ParseDataSet::size() const {
-  return word_examples_.size();
+  return tag_examples_.size();
 }
 
 }

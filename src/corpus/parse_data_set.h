@@ -33,11 +33,17 @@ class ParseDataSet: public DataSetInterface {
   }
 
   void extend(const boost::shared_ptr<ParseDataSet>& examples) {
-    for (unsigned i = 0; i < examples->size(); ++i) {
+    //std::cout << examples->size() << std::endl;
+    for (unsigned i = 0; i < examples->word_example_size(); ++i) 
       add_word_example(examples->word_example_at(i));
+    for (unsigned i = 0; i < examples->tag_example_size(); ++i) 
       add_tag_example(examples->tag_example_at(i));
+    for (unsigned i = 0; i < examples->action_example_size(); ++i) 
       add_action_example(examples->action_example_at(i));
-    }
+    
+    //std::cout << examples->word_example_size() << std::endl;
+    //std::cout << examples->tag_example_size() << std::endl;
+    //std::cout << examples->action_example_size() << std::endl;
   }
 
   void clear() {

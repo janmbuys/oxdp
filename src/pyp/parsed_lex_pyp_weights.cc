@@ -39,7 +39,7 @@ void ParsedLexPypWeights<wOrder, tOrder, aOrder>::resampleHyperparameters(MT1993
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateInsert(const ParseDataSet& examples, MT19937& eng) {
   ParsedPypWeights<tOrder, aOrder>::updateInsert(examples, eng);
-  for (unsigned i = 0; i < examples.size(); ++i)
+  for (unsigned i = 0; i < examples.word_example_size(); ++i)
     lex_lm_.increment(examples.word_at(i), examples.word_context_at(i), eng);
 }
 
@@ -47,7 +47,7 @@ void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateInsert(const ParseDataSe
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateRemove(const ParseDataSet& examples, MT19937& eng) {
   ParsedPypWeights<tOrder, aOrder>::updateRemove(examples, eng);
-  for (unsigned i = 0; i < examples.size(); ++i)
+  for (unsigned i = 0; i < examples.word_example_size(); ++i)
     lex_lm_.decrement(examples.word_at(i), examples.word_context_at(i), eng);
 }
 

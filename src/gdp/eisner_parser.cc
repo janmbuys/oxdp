@@ -76,6 +76,7 @@ void EisnerParser::recoverParseTree(WordIndex s, WordIndex t, bool complete,
 }
  
 Words EisnerParser::wordContext(WordIndex i, WordIndex j, WordIndex k) const {
+// return wordContext(i, j);
   Words ctx(5, 0);
   if (i >= 0 && i < static_cast<int>(size()))
     ctx[4] = tag_at(i);
@@ -88,20 +89,24 @@ Words EisnerParser::wordContext(WordIndex i, WordIndex j, WordIndex k) const {
   if (k > 0)
     ctx[0] = word_at(k);
 
-  return ctx;
+  return ctx; 
 }
   
 Words EisnerParser::wordContext(WordIndex i, WordIndex j) const {
   Words ctx(3, 0);
-  ctx[2] = tag_at(i);
-  ctx[1] = tag_at(j);
-  ctx[0] = word_at(j);
+  if (i >= 0)
+    ctx[2] = tag_at(i);
+  if (j >= 0) {
+    ctx[1] = tag_at(j);
+    ctx[0] = word_at(j);
+  }
 
   return ctx;
 }
 
 Words EisnerParser::tagContext(WordIndex i, WordIndex j, WordIndex k) const {
-  //similar to Eisner generative
+ // return tagContext(i, j);
+ //similar to Eisner generative
   Words ctx(6, 0);
   ctx[4] = tag_at(j);
   if (j > i) //if left arc
@@ -121,13 +126,14 @@ Words EisnerParser::tagContext(WordIndex i, WordIndex j, WordIndex k) const {
       ctx[0] = tag_at(i-1); 
   } 
 
-  return ctx;
+  return ctx; 
 }
 
 Words EisnerParser::tagContext(WordIndex i, WordIndex j) const {
   //for now, try to replicate Adhi's conditioning context
   Words ctx(7, 0);
-  ctx[6] = tag_at(j);
+  if (j >= 0)
+    ctx[6] = tag_at(j);
   if (j > i) //if left arc
     ctx[5] = 1;
   ctx[4] = std::min(10, std::abs(i - j));

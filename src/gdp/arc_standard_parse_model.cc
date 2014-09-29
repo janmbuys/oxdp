@@ -668,6 +668,9 @@ Real ArcStandardParseModel::evaluateSentence(const ParsedSentence& sent,
           size_t beam_size) {
   ArcStandardParser parse = beamParseSentence(sent, weights, beam_size);
   acc_counts->countAccuracy(parse, sent);
+  ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
+  
+  acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
   return parse.particle_weight();
 }
 
