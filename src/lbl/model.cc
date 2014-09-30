@@ -305,6 +305,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
 
       start = end;
     }
+    std::cout << std::endl;
 
     // Wait for all the threads to compute the perplexity for their slice of
     // test data.

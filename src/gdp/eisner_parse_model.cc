@@ -179,12 +179,21 @@ void EisnerParseModel::extractSentence(const ParsedSentence& sent,
   parse.extractExamples(examples);
 }
 
-void EisnerParseModel::extractSentence(ParsedSentence& sent, 
+void EisnerParseModel::extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
  extractSentence(sent, examples);
  //scoreSentence(&parse, weights);
 }
+
+void EisnerParseModel::extractSentenceUnsupervised(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples) {
+  //TODO sample a sentence
+  EisnerParser parse = parseSentence(sent, weights);
+  parse.extractExamples(examples);
+}
+
 
 Real EisnerParseModel::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 

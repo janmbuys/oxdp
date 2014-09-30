@@ -22,6 +22,8 @@ PypDpModel::PypDpModel(const boost::shared_ptr<ModelConfig>& config):
   }
 }
 
+//TODO learn_semi_supervised()
+
 void PypDpModel::learn() {
   MT19937 eng;
   //read training data

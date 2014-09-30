@@ -653,12 +653,23 @@ void ArcStandardParseModel::extractSentence(const ParsedSentence& sent,
   parse.extractExamples(examples);
 }
 
-void ArcStandardParseModel::extractSentence(ParsedSentence& sent, 
+void ArcStandardParseModel::extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
   ArcStandardParser parse = staticGoldParseSentence(sent, weights);
   //std::cout << "Gold actions: ";
   //parse.print_actions();
+  parse.extractExamples(examples);
+}
+
+void ArcStandardParseModel::extractSentenceUnsupervised(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          MT19937& eng,
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  unsigned num_particles = 1000;
+  bool resample = false;
+
+  ArcStandardParser parse = particleParseSentence(sent, weights, eng, num_particles, resample);
   parse.extractExamples(examples);
 }
 

@@ -669,10 +669,21 @@ void ArcEagerParseModel::extractSentence(const ParsedSentence& sent,
   parse.extractExamples(examples);
 }
 
-void ArcEagerParseModel::extractSentence(ParsedSentence& sent, 
+void ArcEagerParseModel::extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
   ArcEagerParser parse = staticGoldParseSentence(sent, weights);
+  parse.extractExamples(examples);
+}
+
+void ArcEagerParseModel::extractSentenceUnsupervised(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          MT19937& eng,
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  unsigned num_particles = 1000;
+  bool resample = false;
+
+  ArcEagerParser parse = particleParseSentence(sent, weights, eng, num_particles, resample);
   parse.extractExamples(examples);
 }
 

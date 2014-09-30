@@ -14,9 +14,13 @@ class ParseModelInterface {
   virtual void extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParseDataSet>& examples) = 0;
 
-  virtual void extractSentence(ParsedSentence& sent, 
+  virtual void extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) = 0;
+
+  virtual void extractSentenceUnsupervised(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples) = 0;
 
   //return likelihood
   virtual Real evaluateSentence(const ParsedSentence& sent, 

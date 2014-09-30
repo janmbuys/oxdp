@@ -35,9 +35,13 @@ class ArcEagerParseModel: public TransitionParseModelInterface<ArcEagerParser> {
   void extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParseDataSet>& examples) override;
 
-  void extractSentence(ParsedSentence& sent, 
+  void extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) override;
+
+  void extractSentenceUnsupervised(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples) override;
 
   Real evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
