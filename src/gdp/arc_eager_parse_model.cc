@@ -699,5 +699,18 @@ Real ArcEagerParseModel::evaluateSentence(const ParsedSentence& sent,
   return parse.particle_weight();
 }
 
+Real ArcEagerParseModel::evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          size_t beam_size) {
+  bool resample = false;
+  ArcEagerParser parse = particleParseSentence(sent, weights, eng, beam_size, resample);
+  acc_counts->countAccuracy(parse, sent);
+  ArcEagerParser gold_parse = staticGoldParseSentence(sent, weights);
+  
+  acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
+  return parse.particle_weight();
+}
+
 }
 

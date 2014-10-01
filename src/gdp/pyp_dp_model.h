@@ -33,6 +33,8 @@ class PypDpModel {
 
   PypDpModel(const boost::shared_ptr<ModelConfig>& config);
 
+  void learn_semi_supervised();
+
   void learn();
 
   void evaluate() const;

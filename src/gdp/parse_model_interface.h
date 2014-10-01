@@ -28,6 +28,11 @@ class ParseModelInterface {
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) = 0; 
 
+  virtual Real evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          size_t beam_size) = 0; 
+
   virtual ~ParseModelInterface() {}
           
 };

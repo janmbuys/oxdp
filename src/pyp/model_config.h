@@ -12,12 +12,14 @@ struct ModelConfig {
   ModelConfig();
   
   std::string training_file;
+  std::string training_file_unsup;
   std::string test_file;
   int iterations;
   int minibatch_size;
   bool randomise;
   ParserType parser_type;
   bool lexicalised;
+  bool semi_supervised;
   int vocab_size; 
   int num_tags;
   int num_actions;

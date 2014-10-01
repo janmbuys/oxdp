@@ -120,9 +120,9 @@ ArcStandardParser ArcStandardParseModel::beamParseSentence(const ParsedSentence&
   //print parses
   //add verbose option?
   for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
-    std::cout << beam_chart[n][i]->particle_weight() << " ";
-    beam_chart[n][i]->print_arcs();
-    beam_chart[n][i]->print_actions();
+    //std::cout << beam_chart[n][i]->particle_weight() << " ";
+    //beam_chart[n][i]->print_arcs();
+    //beam_chart[n][i]->print_actions();
 
     //can't do this now, but add if needed later
     //float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
@@ -678,6 +678,21 @@ Real ArcStandardParseModel::evaluateSentence(const ParsedSentence& sent,
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   ArcStandardParser parse = beamParseSentence(sent, weights, beam_size);
+  acc_counts->countAccuracy(parse, sent);
+  ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
+  
+  acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
+  return parse.particle_weight();
+}
+
+Real ArcStandardParseModel::evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          size_t beam_size) {
+  bool resample = true;
+
+  //eval with particle parse
+  ArcStandardParser parse = particleParseSentence(sent, weights, eng, beam_size, resample);
   acc_counts->countAccuracy(parse, sent);
   ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
   

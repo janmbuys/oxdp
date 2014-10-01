@@ -47,6 +47,11 @@ class ArcStandardParseModel: public TransitionParseModelInterface<ArcStandardPar
           const boost::shared_ptr<ParsedWeightsInterface>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) override; 
+
+  Real evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          size_t beam_size) override; 
 };
 
 }

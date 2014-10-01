@@ -204,4 +204,13 @@ Real EisnerParseModel::evaluateSentence(const ParsedSentence& sent,
   return parse.weight(); 
 }   
 
+Real EisnerParseModel::evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          size_t beam_size) {
+  //TODO sample a sentence
+  EisnerParser parse = parseSentence(sent, weights);
+  acc_counts->countAccuracy(parse, sent);
+  return parse.weight(); 
+}
 }

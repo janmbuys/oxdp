@@ -8,6 +8,7 @@ ModelConfig::ModelConfig():
     randomise(false), 
     parser_type(ParserType::arcstandard),
     lexicalised(false),
+    semi_supervised(false),
     vocab_size(1),
     num_tags(1),
     num_actions(1),
@@ -16,6 +17,7 @@ ModelConfig::ModelConfig():
 
 bool ModelConfig::operator==(const ModelConfig& other) const {
   return (training_file == other.training_file
+      && training_file_unsup == other.training_file_unsup
       && parser_type == other.parser_type
       && lexicalised == other.lexicalised);
 }
