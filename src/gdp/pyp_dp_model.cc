@@ -145,6 +145,8 @@ void PypDpModel::learn_semi_supervised() {
     start = 0;
     //loop over unsupervised minibatches
     while (start < unsup_training_corpus->size()) {
+      if (minibatch_counter % 10000 == 0)
+        std::cout << minibatch_counter << std::endl;
       size_t end = std::min(unsup_training_corpus->size(), start + minibatch_size);
       
       std::vector<int> minibatch(unsup_indices.begin() + start, unsup_indices.begin() + end);

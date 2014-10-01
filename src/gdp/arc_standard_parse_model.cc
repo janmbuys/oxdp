@@ -667,7 +667,7 @@ void ArcStandardParseModel::extractSentenceUnsupervised(const ParsedSentence& se
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
   unsigned num_particles = 1000;
-  bool resample = false;
+  bool resample = true;
 
   ArcStandardParser parse = particleParseSentence(sent, weights, eng, num_particles, resample);
   parse.extractExamples(examples);

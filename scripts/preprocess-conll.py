@@ -2,26 +2,26 @@
 import sys
 import math
 
-def process_conll_data(data_dir, out_dir, train_file_name, file_name):
+def process_conll_data(vocab_dir, data_dir, out_dir, vocab_file_name, data_file_name):
     #some options
     no_words = False
     unk_cutoff = 2
-    lower_case = True
+    lower_case = False
     part_lex = False
     lex_threshold = 100
     include_coarse_tags = True
     only_coarse_tags = False
-    unlabelled = True
+    unlabelled = False
     write_sentences = True
     write_dependencies = False
     print_stats = True
 
-    in_file = open(data_dir + file_name, 'r')
+    in_file = open(data_dir + data_file_name, 'r')
     conll = [[line.split('\t') for line in sent.split('\n')] 
                 for sent in in_file.read().split('\n\n')[:-1]]
     in_file.close() 
     
-    in_file = open(data_dir + train_file_name, 'r')
+    in_file = open(vocab_dir + vocab_file_name, 'r')
     conll_train = [[line.split('\t') for line in sent.split('\n')] 
                 for sent in in_file.read().split('\n\n')[:-1]]
     in_file.close() 
@@ -49,6 +49,7 @@ def process_conll_data(data_dir, out_dir, train_file_name, file_name):
     #perform modifications
     for sent in conll:
         for line in sent:
+            line[1] = line[1].replace("<", "'") #correct question bank
             if lower_case:
                 line[1] = line[1].lower()
 	    if (part_lex and word_count.has_key(line[1]) and (word_count[line[1]] >= lex_threshold)):
@@ -59,6 +60,14 @@ def process_conll_data(data_dir, out_dir, train_file_name, file_name):
                 line[1] = '<unk>'
             if unlabelled:
                 line[7] = 'ROOT'
+            #correct question bank 
+            if line[3]=='PRN':
+                line[3] = line[1]
+            if line[3]=="'":
+                line[3] = "''"	
+            if line[3]=="`":
+                line[3] = "``"	
+             
             #move fine-grained pos to standard column 
             line[4] = line[3]
             if include_coarse_tags:
@@ -68,14 +77,14 @@ def process_conll_data(data_dir, out_dir, train_file_name, file_name):
             #line[6] is head dependency
 	
     if write_sentences:
-        out_file = open(out_dir + file_name + '.txt', 'w')
+        out_file = open(out_dir + data_file_name + '.txt', 'w')
         for sent in conll: 
             for line in sent:
                 out_file.write(line[1] + ' ')
             out_file.write('\n')
         out_file.close()
     if write_dependencies:
-        out_file = open(out_dir + file_name + '.dep', 'w')
+        out_file = open(out_dir + data_file_name + '.dep', 'w')
         for sent in conll: 
             for line in sent:
                 out_file.write(line[6] + ' ')
@@ -83,7 +92,7 @@ def process_conll_data(data_dir, out_dir, train_file_name, file_name):
         out_file.close()
  
     #write out the modified file
-    out_file = open(out_dir + file_name, 'w')
+    out_file = open(out_dir + data_file_name, 'w')
     for i in range(len(conll)): 
         for line in conll[i]:
             out_file.write('\t'.join(line) + '\n')
@@ -98,12 +107,13 @@ def process_conll_data(data_dir, out_dir, train_file_name, file_name):
         print 'square root of size of vocabulary', int(math.sqrt(len(vocab)))
 
 if __name__=='__main__':
-    if (len(sys.argv)<>5):
-        print "incorrect number of arguments (4 expected)\n"
+    if (len(sys.argv)<>6):
+        print "incorrect number of arguments (5 expected)\n"
     else: 
         train_dir = sys.argv[1] + '/' #'depbank_conll07/'
         train_file = sys.argv[2] 
-        process_file = sys.argv[3] 
-        out_dir = sys.argv[4] + '/'  #'depbank_conll07_nowords_coarse/'
-        process_conll_data(train_dir, out_dir, train_file, process_file)
+        in_dir = sys.argv[3] + '/' #'depbank_conll07/'
+        process_file = sys.argv[4] 
+        out_dir = sys.argv[5] + '/'  #'depbank_conll07_nowords_coarse/'
+        process_conll_data(train_dir, in_dir, out_dir, train_file, process_file)
  

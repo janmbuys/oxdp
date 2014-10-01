@@ -14,8 +14,8 @@ int main(int argc, char** argv) {
   //std::string training_file = "question-bank-unk/qbank_train.conll";
   //std::string training_file = "question-bank-unk/wsj_qbank_train.conll";
   
-  std::string training_file_unsup = "question-bank-unk/qbank_train.conll";
-  //std::string training_file_unsup = "question-bank-unk/wikianswers_questions_100k.conll";
+  //std::string training_file_unsup = "question-bank-unk/qbank_train.conll";
+  std::string training_file_unsup = "question-bank-unk/wikianswers_questions_100k.conll";
   
   //std::string test_file = "english-wsj-stanford-unk/english_wsj_dev.conll";
   std::string test_file = "question-bank-unk/qbank_dev.conll";
@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
   config->semi_supervised = true;
 
   config->randomise = true;
-  config->iterations = 10;
+  config->iterations = 500;
   config->minibatch_size = 1;
 
   config->beam_sizes = {1, 2, 4, 8}; //1, 2, 4, 8, 16, 32, 64};
