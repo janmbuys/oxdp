@@ -13,6 +13,7 @@ add_libraries(lbl
   minibatch_words.cc
   model.cc
   model_utils.cc
+  parsed_factored_weights.cc
   weights.cc
   word_distributions.cc
   word_to_class_index.cc

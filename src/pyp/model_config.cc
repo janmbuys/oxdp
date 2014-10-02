@@ -19,7 +19,8 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
   return (training_file == other.training_file
       && training_file_unsup == other.training_file_unsup
       && parser_type == other.parser_type
-      && lexicalised == other.lexicalised);
+      && lexicalised == other.lexicalised
+      && semi_supervised == other.semi_supervised);
 }
 
 }

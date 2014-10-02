@@ -1,5 +1,5 @@
-#ifndef _PYP_UTILS_H_
-#define _PYP_UTILS_H_
+#ifndef _PYP_CONSTANTS_H_
+#define _PYP_CONSTANTS_H_
 
 namespace oxlm {
 
@@ -8,11 +8,11 @@ namespace oxlm {
 #define actionLMOrderAE 8
 
 #define wordLMOrderAS 6
-#define tagLMOrderAS 9
-#define actionLMOrderAS 10
+#define tagLMOrderAS 5
+#define actionLMOrderAS 6
 
-#define wordLMOrderE 6 //4
-#define tagLMOrderE 7 //8
+#define wordLMOrderE 6 
+#define tagLMOrderE 7 
 
 #define wordLMOrder 4
 }

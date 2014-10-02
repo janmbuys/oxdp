@@ -40,10 +40,13 @@ struct UnigramDistribution {
   bool empty() const { return prob_to_token.empty(); }
 };
 
+enum class ParserType {ngram, eisner, arcstandard, arceager};
+
 struct ModelData {
   ModelData();
 
   string      training_file;
+  string      training_file_unsup;
   string      test_file;
   int         iterations;
   int         minibatch_size;
@@ -81,6 +84,12 @@ struct ModelData {
   int         vocab_size;
   int         noise_samples;
   bool        sigmoid;
+  ParserType  parser_type;
+  bool        lexicalised;
+  bool        semi_supervised;
+  int         num_tags;
+  int         num_actions;
+  vector<unsigned> beam_sizes;
 
   bool operator==(const ModelData& other) const;
 
@@ -88,6 +97,7 @@ struct ModelData {
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version) {
     ar & training_file;
+    ar & training_file_unsup;
     ar & test_file;
     ar & iterations;
     ar & minibatch_size;
@@ -110,6 +120,11 @@ struct ModelData {
     ar & vocab_size;
     ar & noise_samples;
     ar & sigmoid;
+    ar & parser_type;
+    ar & lexicalised;
+    ar & semi_supervised;
+    ar & num_tags;
+    ar & beam_sizes;
   }
 };
 

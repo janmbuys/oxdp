@@ -68,6 +68,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   if (config->model_input_file.size() == 0) {
     metadata->initialize(training_corpus);
     weights = boost::make_shared<GlobalWeights>(config, metadata, true);
+    //std::cout << "initialized weights" << std::endl;
   } else {
     Real log_likelihood = 0;
     evaluate(test_corpus, log_likelihood);
@@ -89,7 +90,8 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   int shared_index = 0;
   // For no particular reason. It just looks like this works best.
   int task_size = sqrt(config->minibatch_size) / 4; //to imitate word-level behaviour
-
+  //std::cout << "initialized gradients" << std::endl;
+    
   omp_set_num_threads(config->threads);
   #pragma omp parallel
   {
@@ -100,7 +102,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 
     for (int iter = 0; iter < config->iterations; ++iter) {
       auto iteration_start = get_time();
-      std::cout << "training size: " << training_corpus->size() << "\n";
+      //std::cout << "training size: " << training_corpus->size() << std::endl;
 
       #pragma omp master
       {
@@ -199,8 +201,8 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         Real minibatch_factor =
             static_cast<Real>(num_examples) / training_corpus->numTokens();
             //static_cast<Real>(end - start) / training_corpus->size();
-        std::cout << "\n" << num_examples << " examples " 
-            << minibatch_factor << " minibatch factor" << std::endl;
+        //std::cout << "\n" << num_examples << " examples " 
+        //    << minibatch_factor << " minibatch factor" << std::endl;
         objective = regularize(global_gradient, minibatch_factor);
         #pragma omp critical
         global_objective += objective;
@@ -310,6 +312,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
     // Wait for all the threads to compute the perplexity for their slice of
     // test data.
     #pragma omp barrier
+    weights->clearCache();
   }
 }
 

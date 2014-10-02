@@ -457,8 +457,8 @@ Real FactoredWeights::predict(int word, vector<int> context) const {
   Real class_prob;
   auto ret = normalizerCache.get(context);
   if (ret.second) {
-    class_prob = S.col(class_id).dot(prediction_vector) + T(class_id) - ret.first;
-  } else {
+    class_prob = (S.col(class_id).dot(prediction_vector) + T(class_id) - ret.first);
+  } else { 
     Real normalizer = 0;
     VectorReal class_probs = logSoftMax(
         S.transpose() * prediction_vector + T, normalizer);
@@ -470,7 +470,7 @@ Real FactoredWeights::predict(int word, vector<int> context) const {
   Real word_prob;
   ret = classNormalizerCache.get(context);
   if (ret.second) {
-    word_prob = R.col(word).dot(prediction_vector) + B(word) - ret.first;
+    word_prob = (R.col(word).dot(prediction_vector) + B(word) - ret.first);
   } else { 
     Real normalizer = 0;
     VectorReal word_probs = logSoftMax(

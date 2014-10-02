@@ -559,8 +559,8 @@ Real Weights::predict(int word, vector<int> context) const {
 
   auto ret = normalizerCache.get(context);
   if (ret.second) {
-    prob = R.col(word).dot(prediction_vector) + B(word) - ret.first;
-  } else { 
+    prob = (R.col(word).dot(prediction_vector) + B(word) - ret.first);
+  } else {  
     Real normalizer = 0;
     VectorReal word_probs = logSoftMax(
         R.transpose() * prediction_vector + B, normalizer);

@@ -108,7 +108,7 @@ void PypDpModel::learn_semi_supervised() {
   for (int iter = 0; iter < config_->iterations; ++iter) {
     std::cerr << "Training iteration " << iter << std::endl;
     auto iteration_start = get_time(); 
-    int non_projective_count = 0;
+    //int non_projective_count = 0;
 
     //std::cout << indices.size() << " indices\n";
     if (config_->randomise) {
@@ -130,8 +130,10 @@ void PypDpModel::learn_semi_supervised() {
         if (iter > 0) {
           old_minibatch_examples->extend(sup_examples_list.at(j));
         }            
-        sup_examples_list.at(j)->clear();
-        parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
+        if (iter == 0) {  //this only cuts 1 sec per iteration
+          sup_examples_list.at(j)->clear();
+          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
+        }
         minibatch_examples->extend(sup_examples_list.at(j));
       }     
 
@@ -178,8 +180,9 @@ void PypDpModel::learn_semi_supervised() {
              << "Training Objective: " << weights_->likelihood() / 
              (sup_training_corpus->numTokens() + unsup_training_corpus->numTokens())
            << "\n\n";
-    
-    evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
+   
+    if (iter%10 == 0)
+      evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
   }
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;
@@ -200,6 +203,9 @@ void PypDpModel::learn() {
   std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
             << dict_->size() << " word types, " << dict_->tag_size() << " tags)\n";  
 
+  //print tags
+  //for (int i = 0; i < dict_->tag_size(); ++i)
+  //  std::cout << dict_->lookupTag(i) << "\n";
 
   //don't worry about working with an existing model now
 
@@ -256,7 +262,7 @@ void PypDpModel::learn() {
   for (int iter = 0; iter < config_->iterations; ++iter) {
     std::cerr << "Training iteration " << iter << std::endl;
     auto iteration_start = get_time(); 
-    int non_projective_count = 0;
+    //int non_projective_count = 0;
 
     //std::cout << indices.size() << " indices\n";
     if (config_->randomise)
@@ -284,11 +290,13 @@ void PypDpModel::learn() {
         if (iter > 0) {
           old_minibatch_examples->extend(examples_list.at(j));
         }            
-        examples_list.at(j)->clear();
-        parse_model_->extractSentence(training_corpus->sentence_at(j), examples_list.at(j));
+        if (iter == 0) {
+          examples_list.at(j)->clear();
+          parse_model_->extractSentence(training_corpus->sentence_at(j), examples_list.at(j));
+        }
                                                                      //, weights_);
-        if (!training_corpus->sentence_at(j).is_projective_dependency())
-          ++non_projective_count;            
+        //if (!training_corpus->sentence_at(j).is_projective_dependency())
+        //++non_projective_count;            
         minibatch_examples->extend(examples_list.at(j));
         //std::cout << "done " << examples_list.at(j)->size() << std::endl;
         //parse_model_->extractSentence(training_corpus->sentence_at(j), minibatch_examples);
@@ -313,11 +321,12 @@ void PypDpModel::learn() {
 
     std::cerr << "Iteration: " << iter << ", "
              << "Training Time: " << iteration_time << " seconds, "
-             << "Non-projective: " << (non_projective_count + 0.0) / training_corpus->size() << ", "
+      //       << "Non-projective: " << (non_projective_count + 0.0) / training_corpus->size() << ", "
              << "Training Objective: " << weights_->likelihood() / training_corpus->numTokens() 
            << "\n\n";
     
-    evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
+    if (iter%10 == 0)
+      evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
   }
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;

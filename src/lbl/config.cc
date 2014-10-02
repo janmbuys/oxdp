@@ -14,7 +14,8 @@ ModelData::ModelData()
       eta(0), multinomial_step_size(0), random_weights(false), hash_space(0),
       count_collisions(false), filter_contexts(false), filter_error_rate(0),
       max_ngrams(0), min_ngram_freq(0), vocab_size(0), noise_samples(0),
-      sigmoid(false) {}
+      sigmoid(false), parser_type(ParserType::arcstandard), lexicalised(false),
+      num_tags(1), num_actions(1), beam_sizes(1, 1) {}
 
 bool ModelData::operator==(const ModelData& other) const {
   if (fabs(l2_lbl - other.l2_lbl) > EPS ||
@@ -22,7 +23,7 @@ bool ModelData::operator==(const ModelData& other) const {
     cout << "Warning: Using different regularizers!" << endl;
   }
 
-  return training_file == other.training_file
+  return (training_file == other.training_file
       && ngram_order == other.ngram_order
       && feature_context_size == other.feature_context_size
       && word_representation_size == other.word_representation_size
@@ -32,7 +33,10 @@ bool ModelData::operator==(const ModelData& other) const {
       && hash_space == other.hash_space
       && filter_contexts == other.filter_contexts
       && fabs(filter_error_rate - other.filter_error_rate) < EPS
-      && sigmoid == other.sigmoid;
+      && sigmoid == other.sigmoid
+      && parser_type == other.parser_type
+      && lexicalised == other.lexicalised
+      && semi_supervised == other.semi_supervised);
 }
 
 } // namespace oxlm
