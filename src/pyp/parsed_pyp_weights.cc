@@ -52,18 +52,18 @@ void ParsedPypWeights<tOrder, aOrder>::resampleHyperparameters(MT19937& eng) {
 
 //update PYP model to insert new training examples 
 template<unsigned tOrder, unsigned aOrder>
-void ParsedPypWeights<tOrder, aOrder>::updateInsert(const ParseDataSet& examples, MT19937& eng) {
-  PypWeights<tOrder>::updateInsert(examples.tag_examples(), eng);
-  for (unsigned i = 0; i < examples.action_example_size(); ++i)
-    action_lm_.increment(examples.action_at(i), examples.action_context_at(i), eng);
+void ParsedPypWeights<tOrder, aOrder>::updateInsert(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
+  PypWeights<tOrder>::updateInsert(examples->tag_examples(), eng);
+  for (unsigned i = 0; i < examples->action_example_size(); ++i)
+    action_lm_.increment(examples->action_at(i), examples->action_context_at(i), eng);
 }
 
 //update PYP model to remove old training examples
 template<unsigned tOrder, unsigned aOrder>
-void ParsedPypWeights<tOrder, aOrder>::updateRemove(const ParseDataSet& examples, MT19937& eng) {
-  PypWeights<tOrder>::updateRemove(examples.tag_examples(), eng);
-  for (unsigned i = 0; i < examples.action_example_size(); ++i)
-    action_lm_.decrement(examples.action_at(i), examples.action_context_at(i), eng);
+void ParsedPypWeights<tOrder, aOrder>::updateRemove(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
+  PypWeights<tOrder>::updateRemove(examples->tag_examples(), eng);
+  for (unsigned i = 0; i < examples->action_example_size(); ++i)
+    action_lm_.decrement(examples->action_at(i), examples->action_context_at(i), eng);
 }
 
 template<unsigned tOrder, unsigned aOrder>

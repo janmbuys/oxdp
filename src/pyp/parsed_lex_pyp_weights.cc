@@ -37,18 +37,18 @@ void ParsedLexPypWeights<wOrder, tOrder, aOrder>::resampleHyperparameters(MT1993
 
 //update PYP model to insert new training examples 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateInsert(const ParseDataSet& examples, MT19937& eng) {
+void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateInsert(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
   ParsedPypWeights<tOrder, aOrder>::updateInsert(examples, eng);
-  for (unsigned i = 0; i < examples.word_example_size(); ++i)
-    lex_lm_.increment(examples.word_at(i), examples.word_context_at(i), eng);
+  for (unsigned i = 0; i < examples->word_example_size(); ++i)
+    lex_lm_.increment(examples->word_at(i), examples->word_context_at(i), eng);
 }
 
 //update PYP model to remove old training examples
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateRemove(const ParseDataSet& examples, MT19937& eng) {
+void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateRemove(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
   ParsedPypWeights<tOrder, aOrder>::updateRemove(examples, eng);
-  for (unsigned i = 0; i < examples.word_example_size(); ++i)
-    lex_lm_.decrement(examples.word_at(i), examples.word_context_at(i), eng);
+  for (unsigned i = 0; i < examples->word_example_size(); ++i)
+    lex_lm_.decrement(examples->word_at(i), examples->word_context_at(i), eng);
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>

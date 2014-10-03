@@ -22,7 +22,7 @@ class FactoredWeights : public Weights {
 
   FactoredWeights(const FactoredWeights& other);
 
-  virtual size_t numParameters() const;
+  size_t numParameters() const override;
 
   void getGradient(
       const boost::shared_ptr<DataSet>& examples,

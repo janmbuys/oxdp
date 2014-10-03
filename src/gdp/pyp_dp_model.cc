@@ -117,8 +117,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
         minibatch_examples->extend(sup_examples_list.at(j));
       }     
 
-      weights_->updateRemove(*old_minibatch_examples, eng); 
-      weights_->updateInsert(*minibatch_examples, eng); 
+      weights_->updateRemove(old_minibatch_examples, eng); 
+      weights_->updateInsert(minibatch_examples, eng); 
 
       ++minibatch_counter;
       start = end;
@@ -146,8 +146,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
         minibatch_examples->extend(unsup_examples_list.at(j));
       }     
 
-      weights_->updateRemove(*old_minibatch_examples, eng); 
-      weights_->updateInsert(*minibatch_examples, eng); 
+      weights_->updateRemove(old_minibatch_examples, eng); 
+      weights_->updateInsert(minibatch_examples, eng); 
 
       ++minibatch_counter;
       start = end;
@@ -287,8 +287,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
         //parse_model_->extractSentence(training_corpus->sentence_at(j), minibatch_examples);
       }     
 
-      weights_->updateRemove(*old_minibatch_examples, eng); 
-      weights_->updateInsert(*minibatch_examples, eng); 
+      weights_->updateRemove(old_minibatch_examples, eng); 
+      weights_->updateInsert(minibatch_examples, eng); 
       //std::cout << "updated weights" << std::endl;
 
       //for now, only evaluate at end of iteration

@@ -21,9 +21,9 @@ class PypWeights {
 
   virtual void resampleHyperparameters(MT19937& eng);
 
-  void updateInsert(const DataSet& examples, MT19937& eng);
+  void updateInsert(const boost::shared_ptr<DataSet>& examples, MT19937& eng);
   
-  void updateRemove(const DataSet& examples, MT19937& eng);
+  void updateRemove(const boost::shared_ptr<DataSet>& examples, MT19937& eng);
   
   void updateInsert(const DataPoint& example, MT19937& eng);
 

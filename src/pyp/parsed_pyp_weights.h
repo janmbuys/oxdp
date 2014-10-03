@@ -32,9 +32,9 @@ class ParsedPypWeights: public PypWeights<tOrder> {
 
   void resampleHyperparameters(MT19937& eng) override;
 
-  virtual void updateInsert(const ParseDataSet& examples, MT19937& eng);
+  virtual void updateInsert(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng);
 
-  virtual void updateRemove(const ParseDataSet& examples, MT19937& eng);
+  virtual void updateRemove(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng);
 
   virtual int numWords() const;
 

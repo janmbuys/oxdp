@@ -74,10 +74,10 @@ void PypModel::learn() {
 
       //update weights (can ||s)
       if (iter > 0) {
-        weights_->updateRemove(*minibatch_examples, eng); 
+        weights_->updateRemove(minibatch_examples, eng); 
       }            
 
-      weights_->updateInsert(*minibatch_examples, eng); 
+      weights_->updateInsert(minibatch_examples, eng); 
 
       //for now, only evaluate at end of iteration
       /* if ((minibatch_counter % 1000 == 0 && minibatch_counter <= 10000) || 

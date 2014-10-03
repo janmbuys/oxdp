@@ -22,9 +22,9 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
 
   void resampleHyperparameters(MT19937& eng) override;
 
-  void updateInsert(const ParseDataSet& examples, MT19937& eng) override;
+  void updateInsert(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) override;
 
-  void updateRemove(const ParseDataSet& examples, MT19937& eng) override;
+  void updateRemove(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) override;
   
   int numWords() const override;
 

@@ -81,4 +81,87 @@ int ParsedFactoredWeights::numActions() const {
   return 3;
 }
  
+void ParsedFactoredWeights::getGradient(
+    const boost::shared_ptr<ParseDataSet>& examples,
+    const boost::shared_ptr<FactoredWeights>& gradient,
+    Real& objective,
+    MinibatchWords& words) const {
+  FactoredWeights::getGradient(examples->word_examples(), gradient, objective, words);
+}
+
+Real ParsedFactoredWeights::getObjective(
+    const boost::shared_ptr<ParseDataSet>& examples) const {
+  FactoredWeights::getObjective(examples->word_examples());
+}
+
+bool ParsedFactoredWeights::checkGradient(
+    const boost::shared_ptr<ParseDataSet>& examples,
+    const boost::shared_ptr<FactoredWeights>& gradient,
+    double eps) {
+  FactoredWeights::checkGradient(examples->word_examples(), gradient, eps);
+}
+
+void ParsedFactoredWeights::estimateGradient(
+    const boost::shared_ptr<ParseDataSet>& examples,
+    const boost::shared_ptr<FactoredWeights>& gradient,
+    Real& objective,
+    MinibatchWords& words) const {
+  FactoredWeights::estimateGradient(examples->word_examples(), gradient, objective, words);
+}
+
+Real ParsedFactoredWeights::getObjective(
+    const boost::shared_ptr<ParseDataSet>& examples,
+    vector<vector<int>>& contexts,
+    vector<MatrixReal>& context_vectors,
+    MatrixReal& prediction_vectors,
+    MatrixReal& class_probs,
+    vector<VectorReal>& word_probs) const {
+  FactoredWeights::getObjective(examples->word_examples(), contexts, context_vectors, prediction_vectors, class_probs, word_probs);
+}
+
+void ParsedFactoredWeights::getProbabilities(
+    const boost::shared_ptr<ParseDataSet>& examples,
+    const vector<vector<int>>& contexts,
+    const MatrixReal& prediction_vectors,
+    MatrixReal& class_probs,
+    vector<VectorReal>& word_probs) const {
+  FactoredWeights::getProbabilities(examples->word_examples(), contexts, prediction_vectors, class_probs, word_probs);
+}
+
+MatrixReal ParsedFactoredWeights::getWeightedRepresentations(
+    const boost::shared_ptr<ParseDataSet>& examples,
+    const MatrixReal& prediction_vectors,
+    const MatrixReal& class_probs,
+    const vector<VectorReal>& word_probs) const {
+  FactoredWeights::getWeightedRepresentations(examples->word_examples(), prediction_vectors, class_probs, word_probs);
+}
+
+void ParsedFactoredWeights::getFullGradient(
+    const boost::shared_ptr<ParseDataSet>& examples,
+    const vector<vector<int>>& contexts,
+    const vector<MatrixReal>& context_vectors,
+    const MatrixReal& prediction_vectors,
+    const MatrixReal& weighted_representations,
+    MatrixReal& class_probs,
+    vector<VectorReal>& word_probs,
+    const boost::shared_ptr<FactoredWeights>& gradient,
+    MinibatchWords& words) const {
+  FactoredWeights::getFullGradient(examples->word_examples(), contexts, context_vectors, prediction_vectors, weighted_representations, class_probs, word_probs, gradient, words);
+}
+
+std::vector<Words> ParsedFactoredWeights::getNoiseWords(
+    const boost::shared_ptr<ParseDataSet>& examples) const {
+  FactoredWeights::getNoiseWords(examples->word_examples());
+}
+
+void ParsedFactoredWeights::estimateProjectionGradient(
+    const boost::shared_ptr<ParseDataSet>& examples,
+    const MatrixReal& prediction_vectors,
+    const boost::shared_ptr<FactoredWeights>& gradient,
+    MatrixReal& weighted_representations,
+    Real& objective,
+    MinibatchWords& words) const {
+  FactoredWeights::estimateProjectionGradient(examples->word_examples(), prediction_vectors, gradient, weighted_representations, objective, words);
+}
+
 } //namespace oxlm
