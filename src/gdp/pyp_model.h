@@ -10,12 +10,12 @@
 #include "corpus/dict.h"
 #include "corpus/sentence_corpus.h"
 #include "corpus/data_set.h"
-#include "corpus/ngram_model.h"
+#include "corpus/model_config.h"
 
-#include "pyp/utils.h"
-#include "pyp/pyp_weights_interface.h"
-#include "pyp/model_config.h"
+#include "pyp/constants.h"
 #include "pyp/pyp_weights.h"
+
+#include "gdp/ngram_model.h"
 
 namespace oxlm {
 
@@ -39,7 +39,7 @@ class PypModel {
   boost::shared_ptr<ModelConfig> config_;
   boost::shared_ptr<Dict> dict_;
   boost::shared_ptr<PypWeights<wordLMOrder>> weights_;
-  boost::shared_ptr<NGramModel> model_;
+  boost::shared_ptr<NGramModel<PypWeights<wordLMOrder>>> model_;
 };
 
 }

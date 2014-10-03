@@ -2,10 +2,9 @@
 
 #include "corpus/utils.h"
 #include "corpus/dict.h"
+#include "corpus/model_config.h"
 
-#include "pyp/model_config.h"
-#include "pyp/pyp_model.h"
-
+#include "gdp/pyp_model.h"
 #include "gdp/pyp_dp_model.h"
 
 using namespace boost::program_options;

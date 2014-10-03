@@ -13,7 +13,7 @@ set(TESTS
     train_sgd_test
     train_factored_sgd_test)
 
-set(LIBRARIES murmurhash corpus lbl)
+set(LIBRARIES murmurhash corpus lbl gdp)
 
 foreach(test ${TESTS})
     lbl_add_test(${test})

@@ -1,4 +1,4 @@
-#include "pyp/pyp_model.h"
+#include "gdp/pyp_model.h"
 
 namespace oxlm {
 
@@ -9,7 +9,7 @@ PypModel::PypModel() {
 PypModel::PypModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config) {
   dict_ = boost::make_shared<Dict>();
-  model_ = boost::make_shared<NGramModel>(wordLMOrder, dict_->sos(), dict_->eos());
+  model_ = boost::make_shared<NGramModel<PypWeights<wordLMOrder>>>(wordLMOrder, dict_->sos(), dict_->eos());
 }
 
 void PypModel::learn() {

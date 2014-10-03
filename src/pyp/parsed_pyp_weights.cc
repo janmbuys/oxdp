@@ -8,11 +8,6 @@ ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(size_t vocab_size, size_t num
   action_lm_(num_actions, 1, 1, 1, 1),
   num_actions_(num_actions) {}
 
-template<unsigned tOrder, unsigned aOrder> 
-Real ParsedPypWeights<tOrder, aOrder>::predict(WordId word, Words context) const {
-  return predictTag(word, context);
-}
-
 template<unsigned tOrder, unsigned aOrder>
 Real ParsedPypWeights<tOrder, aOrder>::predictWord(WordId word, Words context) const {
   return 0;
@@ -71,18 +66,6 @@ void ParsedPypWeights<tOrder, aOrder>::updateRemove(const ParseDataSet& examples
     action_lm_.decrement(examples.action_at(i), examples.action_context_at(i), eng);
 }
 
-//update PYP model to insert new training examples 
-template<unsigned tOrder, unsigned aOrder>
-void ParsedPypWeights<tOrder, aOrder>::updateInsert(const DataSet& examples, MT19937& eng) {
-  PypWeights<tOrder>::updateInsert(examples, eng);
-}
-
-//update PYP model to remove old training examples
-template<unsigned tOrder, unsigned aOrder>
-void ParsedPypWeights<tOrder, aOrder>::updateRemove(const DataSet& examples, MT19937& eng) {
-  PypWeights<tOrder>::updateRemove(examples, eng);
-}
-
 template<unsigned tOrder, unsigned aOrder>
 int ParsedPypWeights<tOrder, aOrder>::numWords() const {
   return 1;
@@ -96,11 +79,6 @@ int ParsedPypWeights<tOrder, aOrder>::numTags() const {
 template<unsigned tOrder, unsigned aOrder>
 int ParsedPypWeights<tOrder, aOrder>::numActions() const {
   return num_actions_;
-}
-
-template<unsigned tOrder, unsigned aOrder>
-int ParsedPypWeights<tOrder, aOrder>::vocabSize() const {
-  return numTags();
 }
 
 template class ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>;

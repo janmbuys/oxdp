@@ -12,20 +12,30 @@ add_libraries(gdp
   eisner_parse_model.cc
   arc_standard_parse_model.cc
   arc_eager_parse_model.cc
+  ngram_model.cc
+  pyp_model.cc
+  lbl_model.cc
   pyp_dp_model.cc
 )
 
-target_link_libs(gdp corpus pyp)
+target_link_libs(gdp utils corpus pyp lbl)
 
 #############################################
 # Executables
 #############################################
 
 set(EXECUTABLES
-  train_pyp_dp
+  extract_word_vectors
+  evaluate_lbl
+  predict_lbl
+  score_lbl
+  train_gibbs_dp
+  train_sgd
+  train_factored_sgd
 )
+
 foreach(f ${EXECUTABLES})
  add_executable(${f} ${f}.cc)
- target_link_libraries(${f} corpus pyp gdp)
+ target_link_libraries(${f} utils corpus pyp gdp lbl)
 endforeach(f)
 

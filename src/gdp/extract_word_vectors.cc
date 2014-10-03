@@ -3,7 +3,7 @@
 
 #include <boost/program_options.hpp>
 
-#include "lbl/model.h"
+#include "gdp/lbl_model.h"
 
 using namespace boost::program_options;
 using namespace oxlm;
@@ -56,10 +56,10 @@ int main(int argc, char** argv) {
 
   switch (model_type) {
     case NLM:
-      ExtractWordVectors<LM>(model_file, vocab_file, vectors_file);
+      ExtractWordVectors<LblLM>(model_file, vocab_file, vectors_file);
       return 0;
     case FACTORED_NLM:
-      ExtractWordVectors<FactoredLM>(model_file, vocab_file, vectors_file);
+      ExtractWordVectors<FactoredLblLM>(model_file, vocab_file, vectors_file);
       return 0;
     default:
       cout << "Unknown model type" << endl;

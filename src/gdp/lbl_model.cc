@@ -1,4 +1,4 @@
-#include "lbl/model.h"
+#include "gdp/lbl_model.h"
 
 #include <iomanip>
 
@@ -18,38 +18,38 @@
 namespace oxlm {
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-Model<GlobalWeights, MinibatchWeights, Metadata>::Model() {
+LblModel<GlobalWeights, MinibatchWeights, Metadata>::LblModel() {
   dict = boost::make_shared<Dict>();
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-Model<GlobalWeights, MinibatchWeights, Metadata>::Model(
-    const boost::shared_ptr<ModelData>& config)
+LblModel<GlobalWeights, MinibatchWeights, Metadata>::LblModel(
+    const boost::shared_ptr<ModelConfig>& config)
     : config(config) {
   dict = boost::make_shared<Dict>();
   metadata = boost::make_shared<Metadata>(config, dict);
-  ngram_model = boost::make_shared<NGramModel>(config->ngram_order, dict->sos(), dict->eos());
+  ngram_model = boost::make_shared<NGramModel<GlobalWeights>>(config->ngram_order, dict->sos(), dict->eos());
   srand(1);
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-boost::shared_ptr<Dict> Model<GlobalWeights, MinibatchWeights, Metadata>::getDict() const {
+boost::shared_ptr<Dict> LblModel<GlobalWeights, MinibatchWeights, Metadata>::getDict() const {
   return dict;
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-boost::shared_ptr<ModelData> Model<GlobalWeights, MinibatchWeights, Metadata>::getConfig() const {
+boost::shared_ptr<ModelConfig> LblModel<GlobalWeights, MinibatchWeights, Metadata>::getConfig() const {
   return config;
 }
 
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-MatrixReal Model<GlobalWeights, MinibatchWeights, Metadata>::getWordVectors() const {
+MatrixReal LblModel<GlobalWeights, MinibatchWeights, Metadata>::getWordVectors() const {
   return weights->getWordVectors();
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
+void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   // Initialize the dictionary now, if it hasn't been initialized when the
   // vocabulary was partitioned in classes.
   bool immutable_dict = config->classes > 0 || config->class_file.size();
@@ -247,7 +247,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-void Model<GlobalWeights, MinibatchWeights, Metadata>::update(
+void LblModel<GlobalWeights, MinibatchWeights, Metadata>::update(
     const MinibatchWords& global_words,
     const boost::shared_ptr<MinibatchWeights>& global_gradient,
     const boost::shared_ptr<GlobalWeights>& adagrad) {
@@ -256,14 +256,14 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::update(
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-Real Model<GlobalWeights, MinibatchWeights, Metadata>::regularize(
+Real LblModel<GlobalWeights, MinibatchWeights, Metadata>::regularize(
     const boost::shared_ptr<MinibatchWeights>& global_gradient,
     Real minibatch_factor) {
   return weights->regularizerUpdate(global_gradient, minibatch_factor);
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
+void LblModel<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
     const boost::shared_ptr<SentenceCorpus>& test_corpus, Real& accumulator) const {
   if (test_corpus != nullptr) {
     #pragma omp master
@@ -318,7 +318,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
 
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
+void LblModel<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
     const boost::shared_ptr<SentenceCorpus>& test_corpus, const Time& iteration_start,
     int minibatch_counter, Real& log_likelihood, Real& best_perplexity) const {
   if (test_corpus != nullptr) {
@@ -346,13 +346,13 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-Real Model<GlobalWeights, MinibatchWeights, Metadata>::predict(
+Real LblModel<GlobalWeights, MinibatchWeights, Metadata>::predict(
     int word_id, const vector<int>& context) const {
   return weights->predict(word_id, context);
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-void Model<GlobalWeights, MinibatchWeights, Metadata>::save() const {
+void LblModel<GlobalWeights, MinibatchWeights, Metadata>::save() const {
   if (config->model_output_file.size()) {
     cout << "Writing model to " << config->model_output_file << "..." << endl;
     ofstream fout(config->model_output_file);
@@ -366,7 +366,7 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::save() const {
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-void Model<GlobalWeights, MinibatchWeights, Metadata>::load(const string& filename) {
+void LblModel<GlobalWeights, MinibatchWeights, Metadata>::load(const string& filename) {
   if (filename.size() > 0) {
     auto start_time = get_time();
     cerr << "Loading model from " << filename << "..." << endl;
@@ -382,19 +382,20 @@ void Model<GlobalWeights, MinibatchWeights, Metadata>::load(const string& filena
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-void Model<GlobalWeights, MinibatchWeights, Metadata>::clearCache() {
+void LblModel<GlobalWeights, MinibatchWeights, Metadata>::clearCache() {
   weights->clearCache();
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-bool Model<GlobalWeights, MinibatchWeights, Metadata>::operator==(
-    const Model<GlobalWeights, MinibatchWeights, Metadata>& other) const {
+bool LblModel<GlobalWeights, MinibatchWeights, Metadata>::operator==(
+    const LblModel<GlobalWeights, MinibatchWeights, Metadata>& other) const {
   return *config == *other.config
       && *metadata == *other.metadata
       && *weights == *other.weights;
 }
 
-template class Model<Weights, Weights, Metadata>;
-template class Model<FactoredWeights, FactoredWeights, FactoredMetadata>;
+template class LblModel<Weights, Weights, Metadata>;
+template class LblModel<FactoredWeights, FactoredWeights, FactoredMetadata>;
 
 } // namespace oxlm
+

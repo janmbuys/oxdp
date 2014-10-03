@@ -1,9 +1,10 @@
 #include <boost/program_options.hpp>
 
-#include "lbl/factored_metadata.h"
-#include "lbl/factored_weights.h"
-#include "lbl/model.h"
+#include "lbl/metadata.h"
+#include "lbl/weights.h"
 #include "utils/git_revision.h"
+
+#include "gdp/lbl_model.h"
 
 using namespace boost::program_options;
 using namespace oxlm;
@@ -13,22 +14,20 @@ int main(int argc, char** argv) {
   cmdline_specific.add_options()
     ("help,h", "print help message")
     ("config,c", value<string>(),
-        "Config file specifying additional command line options");
+        "config file specifying additional command line options");
 
   options_description generic("Allowed options");
   generic.add_options()
-    ("input,i", value<string>()->required(),
+    ("input,i", value<string>()->default_value("data.txt"),
         "corpus of sentences, one per line")
     ("test-set", value<string>(),
-        "corpus of test sentences")
+        "corpus of test sentences to be evaluated at each iteration")
     ("iterations", value<int>()->default_value(10),
         "number of passes through the data")
     ("minibatch-size", value<int>()->default_value(10000),
         "number of sentences per minibatch")
     ("order,n", value<int>()->default_value(4),
         "ngram order")
-    ("model-in", value<string>(),
-        "Load initial model from this file")
     ("model-out,o", value<string>(),
         "base filename of model output files")
     ("lambda-lbl,r", value<float>()->default_value(7.0),
@@ -47,12 +46,7 @@ int main(int argc, char** argv) {
         "Apply a sigmoid non-linearity to the prediction (hidden) layer.")
     ("noise-samples", value<int>()->default_value(0),
         "Number of noise samples for noise contrastive estimation. "
-        "If zero, minibatch gradient descent is used instead.")
-    ("classes", value<int>()->default_value(100),
-        "Number of classes for factored output using frequency binning.")
-    ("class-file", value<string>(),
-        "File containing word to class mappings in the format "
-        "<class> <word> <frequence>.");
+        "If zero, minibatch gradient descent is used instead.");
   options_description config_options, cmdline_options;
   config_options.add(generic);
   cmdline_options.add(generic).add(cmdline_specific);
@@ -71,7 +65,7 @@ int main(int argc, char** argv) {
 
   notify(vm);
 
-  boost::shared_ptr<ModelData> config = boost::make_shared<ModelData>();
+  boost::shared_ptr<ModelConfig> config = boost::make_shared<ModelConfig>();
   config->training_file = vm["input"].as<string>();
   if (vm.count("test-set")) {
     config->test_file = vm["test-set"].as<string>();
@@ -79,10 +73,6 @@ int main(int argc, char** argv) {
   config->iterations = vm["iterations"].as<int>();
   config->minibatch_size = vm["minibatch-size"].as<int>();
   config->ngram_order = vm["order"].as<int>();
-
-  if (vm.count("model-in")) {
-    config->model_input_file = vm["model-in"].as<string>();
-  }
 
   if (vm.count("model-out")) {
     config->model_output_file = vm["model-out"].as<string>();
@@ -100,11 +90,6 @@ int main(int argc, char** argv) {
   config->sigmoid = vm["sigmoid"].as<bool>();
 
   config->noise_samples = vm["noise-samples"].as<int>();
-
-  config->classes = vm["classes"].as<int>();
-  if (vm.count("class-file")) {
-    config->class_file = vm["class-file"].as<string>();
-  }
 
   cout << "################################" << endl;
   if (strlen(GIT_REVISION) > 0) {
@@ -128,17 +113,8 @@ int main(int argc, char** argv) {
   cout << "# noise samples = " << config->noise_samples << endl;
   cout << "################################" << endl;
 
-  if (config->model_input_file.size() == 0) {
-    FactoredLM model(config);
-    model.learn();
-  } else {
-    FactoredLM model;
-    model.load(config->model_input_file);
-    boost::shared_ptr<ModelData> model_config = model.getConfig();
-    model_config->model_input_file = config->model_input_file;
-    assert(*config == *model_config);
-    model.learn();
-  }
+  LblModel<Weights, Weights, Metadata> model(config);
+  model.learn();
 
   return 0;
 }

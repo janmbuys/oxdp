@@ -13,7 +13,7 @@ add_libraries(corpus
   data_point.cc
   data_set.cc
   parse_data_set.cc
-  ngram_model.cc
+  model_config.cc
 )
 
 #target_link_libs(corpus)

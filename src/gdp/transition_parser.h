@@ -13,7 +13,6 @@
 #include "corpus/parse_data_set.h"
 #include "gdp/utils.h"
 #include "gdp/parser.h"
-#include "gdp/transition_parser_interface.h"
 
 namespace oxlm {
 

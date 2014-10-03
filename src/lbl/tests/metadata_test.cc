@@ -14,7 +14,7 @@ namespace ar = boost::archive;
 namespace oxlm {
 
 TEST(MetadataTest, TestUnigram) {
-  boost::shared_ptr<ModelData> config = boost::make_shared<ModelData>();
+  boost::shared_ptr<ModelConfig> config = boost::make_shared<ModelConfig>();
   config->vocab_size = 5;
   boost::shared_ptr<Dict> dict = boost::make_shared<Dict>();
   Metadata metadata(config, dict);
@@ -28,7 +28,7 @@ TEST(MetadataTest, TestUnigram) {
 }
 
 TEST(MetadataTest, TestSerialization) {
-  boost::shared_ptr<ModelData> config = boost::make_shared<ModelData>();
+  boost::shared_ptr<ModelConfig> config = boost::make_shared<ModelConfig>();
   boost::shared_ptr<Dict> dict = boost::make_shared<Dict>();
   Metadata metadata(config, dict), metadata_copy;
 

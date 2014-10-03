@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "lbl/model.h"
+#include "gdp/lbl_model.h"
 #include "lbl/model_utils.h"
 #include "lbl/weights.h"
 #include "lbl/tests/sgd_test.h"
@@ -9,7 +9,7 @@
 namespace oxlm {
 
 TEST_F(SGDTest, TestBasic) {
-  Model<Weights, Weights, Metadata> model(config);
+  LblModel<Weights, Weights, Metadata> model(config);
   model.learn();
   config->test_file = "test.txt";
   boost::shared_ptr<Dict> dict = model.getDict();
@@ -26,7 +26,7 @@ TEST_F(SGDTest, TestBasic) {
 
 TEST_F(SGDTest, TestNCE) {
   config->noise_samples = 10;
-  Model<Weights, Weights, Metadata> model(config);
+  LblModel<Weights, Weights, Metadata> model(config);
   model.learn();
   config->test_file = "test.txt";
   boost::shared_ptr<Dict> dict = model.getDict();

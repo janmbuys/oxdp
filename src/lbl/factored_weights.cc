@@ -12,7 +12,7 @@ FactoredWeights::FactoredWeights()
     : data(NULL), S(0, 0, 0), T(0, 0), FW(0, 0) {}
 
 FactoredWeights::FactoredWeights(
-    const boost::shared_ptr<ModelData>& config,
+    const boost::shared_ptr<ModelConfig>& config,
     const boost::shared_ptr<FactoredMetadata>& metadata,
     bool init)
     : Weights(config, metadata, init), metadata(metadata),
@@ -481,10 +481,6 @@ Real FactoredWeights::predict(int word, vector<int> context) const {
   }
 
   return -(class_prob + word_prob);
-}
-
-int FactoredWeights::vocabSize() const {
-  return Weights::vocabSize();
 }
 
 void FactoredWeights::clearCache() {

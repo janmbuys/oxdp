@@ -6,9 +6,10 @@
 
 #include "corpus/dict.h"
 #include "corpus/corpus_interface.h"
+#include "corpus/model_config.h"
 
-#include "lbl/config.h"
 #include "lbl/utils.h"
+#include "lbl/model_utils.h"
 #include "utils/serialization_helpers.h"
 
 namespace oxlm {
@@ -17,7 +18,7 @@ class Metadata {
  public:
   Metadata();
 
-  Metadata(const boost::shared_ptr<ModelData>& config, boost::shared_ptr<Dict>& dict);
+  Metadata(const boost::shared_ptr<ModelConfig>& config, boost::shared_ptr<Dict>& dict);
 
   void initialize(const boost::shared_ptr<CorpusInterface>& corpus);
 
@@ -37,7 +38,7 @@ class Metadata {
   }
 
  protected:
-  boost::shared_ptr<ModelData> config;
+  boost::shared_ptr<ModelConfig> config;
   VectorReal unigram;
   VectorReal smoothed_unigram;
 };

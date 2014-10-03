@@ -3,47 +3,34 @@
 
 #include "corpus/dict.h"
 #include "corpus/data_point.h"
-#include "corpus/data_set_interface.h"
+#include "corpus/data_set.h"
 
 namespace oxlm {
 
-class ParseDataSet: public DataSetInterface {
+class ParseDataSet {
   public:
 
-  void addExample(DataPoint example) override;
-
-  DataPoint exampleAt(unsigned i) const override;
-
-  WordId wordAt(unsigned i) const override;
-
-  Words contextAt(unsigned i) const override;
-
-  size_t size() const override;
+  ParseDataSet();
 
   void add_word_example(DataPoint example) {
-    word_examples_.push_back(example);
+    word_examples_.addExample(example);
   }
 
   void add_tag_example(DataPoint example) {
-    tag_examples_.push_back(example);
+    tag_examples_.addExample(example);
   }
 
   void add_action_example(DataPoint example) {
-    action_examples_.push_back(example);
+    action_examples_.addExample(example);
   }
 
   void extend(const boost::shared_ptr<ParseDataSet>& examples) {
-    //std::cout << examples->size() << std::endl;
     for (unsigned i = 0; i < examples->word_example_size(); ++i) 
       add_word_example(examples->word_example_at(i));
     for (unsigned i = 0; i < examples->tag_example_size(); ++i) 
       add_tag_example(examples->tag_example_at(i));
     for (unsigned i = 0; i < examples->action_example_size(); ++i) 
       add_action_example(examples->action_example_at(i));
-    
-    //std::cout << examples->word_example_size() << std::endl;
-    //std::cout << examples->tag_example_size() << std::endl;
-    //std::cout << examples->action_example_size() << std::endl;
   }
 
   void clear() {
@@ -53,50 +40,50 @@ class ParseDataSet: public DataSetInterface {
   }
 
   DataPoint word_example_at(unsigned i) const {
-    return word_examples_.at(i);
+    return word_examples_.exampleAt(i);
   }
 
   DataPoint tag_example_at(unsigned i) const {
-    return tag_examples_.at(i);
+    return tag_examples_.exampleAt(i);
   }
 
   DataPoint action_example_at(unsigned i) const {
-    return action_examples_.at(i);
+    return action_examples_.exampleAt(i);
   }
 
   WordId word_at(unsigned i) const {
-    return word_examples_.at(i).word;
+    return word_examples_.wordAt(i);
   }
 
   WordId tag_at(unsigned i) const {
-    return tag_examples_.at(i).word;
+    return tag_examples_.wordAt(i);
   }
 
   WordId action_at(unsigned i) const {
-    return action_examples_.at(i).word;
+    return action_examples_.wordAt(i);
   }
 
   Words word_context_at(unsigned i) const {
-    return word_examples_.at(i).context;
+    return word_examples_.contextAt(i);
   }
 
   Words tag_context_at(unsigned i) const {
-    return tag_examples_.at(i).context;
+    return tag_examples_.contextAt(i);
   }
 
   Words action_context_at(unsigned i) const {
-    return action_examples_.at(i).context;
+    return action_examples_.contextAt(i);
   }
 
-  DataPoints word_examples() const {
+  DataSet word_examples() const {
     return word_examples_;
   }
 
-  DataPoints tag_examples() const {
+  DataSet tag_examples() const {
     return tag_examples_;
   }
 
-  DataPoints action_examples() const {
+  DataSet action_examples() const {
     return action_examples_;
   }
 
@@ -113,9 +100,9 @@ class ParseDataSet: public DataSetInterface {
   }
 
   private:
-  DataPoints word_examples_;
-  DataPoints tag_examples_;
-  DataPoints action_examples_;
+  DataSet word_examples_;
+  DataSet tag_examples_;
+  DataSet action_examples_;
 };
 
 

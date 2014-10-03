@@ -9,15 +9,14 @@
 #include "lbl/word_distributions.h"
 #include "lbl/word_to_class_index.h"
 
-#include "corpus/parsed_weights_interface.h"
 namespace oxlm {
 
-class ParsedFactoredWeights : public FactoredWeights, public ParsedWeightsInterface {
+class ParsedFactoredWeights : public FactoredWeights {
  public:
   ParsedFactoredWeights();
 
   ParsedFactoredWeights(
-      const boost::shared_ptr<ModelData>& config,
+      const boost::shared_ptr<ModelConfig>& config,
       const boost::shared_ptr<FactoredMetadata>& metadata,
       bool init);
 
@@ -25,17 +24,17 @@ class ParsedFactoredWeights : public FactoredWeights, public ParsedWeightsInterf
 
   virtual size_t numParameters() const;
 
-  Real predictWord(int word, Words context) const override;
+  Real predictWord(int word, Words context) const;
 
-  Real predictTag(int tag, Words context) const override;
+  Real predictTag(int tag, Words context) const;
   
-  Real predictAction(int action, Words context) const override;
+  Real predictAction(int action, Words context) const;
 
-  int numWords() const override;
+  int numWords() const;
   
-  int numTags() const override;
+  int numTags() const;
 
-  int numActions() const override;
+  int numActions() const;
  
  private:
   void allocate();

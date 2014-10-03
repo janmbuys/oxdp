@@ -2,9 +2,10 @@
 
 #include <boost/program_options.hpp>
 
-#include "lbl/model.h"
 #include "lbl/model_utils.h"
 #include "lbl/utils.h"
+
+#include "gdp/lbl_model.h"
 
 using namespace boost::program_options;
 using namespace oxlm;
@@ -53,10 +54,10 @@ int main(int argc, char** argv) {
 
   switch (model_type) {
     case NLM:
-      evaluate<LM>(model_file, test_file, num_threads);
+      evaluate<LblLM>(model_file, test_file, num_threads);
       return 0;
     case FACTORED_NLM:
-      evaluate<FactoredLM>(model_file, test_file, num_threads);
+      evaluate<FactoredLblLM>(model_file, test_file, num_threads);
       return 0;
     default:
       cout << "Unknown model type" << endl;

@@ -2,11 +2,11 @@
 
 #include "corpus/dict.h"
 #include "corpus/corpus.h"
-#include "corpus/ngram_model.h"
 
 #include "lbl/context_processor.h"
-#include "lbl/model.h"
 #include "lbl/utils.h"
+
+#include "gdp/lbl_model.h"
 
 using namespace boost::program_options;
 using namespace oxlm;
@@ -17,20 +17,17 @@ void score(const string& model_file, const string& data_file) {
   boost::shared_ptr<Model> model = boost::make_shared<Model>();
   model->load(model_file);
 
-  boost::shared_ptr<ModelData> config = model->getConfig();
-  shared_ptr<Dict> dict = model->getDict();
-  NGramModel ngram_model(config->ngram_order, dict->sos(), dict->eos());
+  boost::shared_ptr<ModelConfig> config = model->getConfig();
+  boost::shared_ptr<Dict> dict = model->getDict();
+  //NGramModel<Model> ngram_model(config->ngram_order, dict->sos(), dict->eos());
 
   boost::shared_ptr<SentenceCorpus> test_corpus = boost::make_shared<SentenceCorpus>();
   test_corpus->readFile(data_file, dict, true);
 
-  double total = 0;
-  for (size_t i = 0; i < test_corpus->size(); ++i) {
-    double log_prob = ngram_model->evaluateSentence(test_corpus->sentence_at(i), model);
-    cout << "Prob: " << log_probs << endl;
-    total += log_prob;
-    }
-  }
+  Real total = 0;
+  model->evaluate(test_corpus, total);
+
+  cout << total << endl;
 }
 
 int main(int argc, char** argv) {
@@ -57,10 +54,10 @@ int main(int argc, char** argv) {
 
   switch (model_type) {
     case NLM:
-      score<LM>(model_file, data_file);
+      score<LblLM>(model_file, data_file);
       return 0;
     case FACTORED_NLM:
-      score<FactoredLM>(model_file, data_file);
+      score<FactoredLblLM>(model_file, data_file);
       return 0;
     default:
       cout << "Unknown model type" << endl;

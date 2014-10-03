@@ -4,13 +4,14 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/make_shared.hpp>
 
-#include "corpus/ngram_model.h"
 #include "corpus/sentence_corpus.h"
 #include "lbl/context_processor.h"
 #include "lbl/weights.h"
 
 #include "utils/constants.h"
 #include "utils/testing.h"
+
+#include "gdp/ngram_model.h"
 
 namespace ar = boost::archive;
 
@@ -19,7 +20,7 @@ namespace oxlm {
 class TestWeights : public testing::Test {
  protected:
   void SetUp() {
-    config = boost::make_shared<ModelData>();
+    config = boost::make_shared<ModelConfig>();
     config->word_representation_size = 3;
     config->vocab_size = 5;
     config->ngram_order = 3;
@@ -30,7 +31,7 @@ class TestWeights : public testing::Test {
     boost::shared_ptr<Dict> dict = boost::make_shared<Dict>();
     metadata = boost::make_shared<Metadata>(config, dict);
     metadata->initialize(corpus);
-    ngram_model = boost::make_shared<NGramModel>(config->ngram_order, dict->sos(), dict->eos());
+    ngram_model = boost::make_shared<NGramModel<Weights>>(config->ngram_order, dict->sos(), dict->eos());
   }
 
   Real getPredictions(
@@ -39,10 +40,10 @@ class TestWeights : public testing::Test {
     return ret;
   }
 
-  boost::shared_ptr<ModelData> config;
+  boost::shared_ptr<ModelConfig> config;
   boost::shared_ptr<Metadata> metadata;
   boost::shared_ptr<SentenceCorpus> corpus;
-  boost::shared_ptr<NGramModel> ngram_model;
+  boost::shared_ptr<NGramModel<Weights>> ngram_model;
 };
 
 TEST_F(TestWeights, TestGradientCheck) {

@@ -1,7 +1,7 @@
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "lbl/model.h"
+#include "gdp/lbl_model.h"
 
 using namespace boost::program_options;
 using namespace oxlm;
@@ -80,10 +80,10 @@ int main(int argc, char** argv) {
 
   switch (model_type) {
     case NLM:
-      predict<LM>(model_file, contexts_file);
+      predict<LblLM>(model_file, contexts_file);
       return 0;
     case FACTORED_NLM:
-      predict<FactoredLM>(model_file, contexts_file);
+      predict<FactoredLblLM>(model_file, contexts_file);
       return 0;
     default:
       cout << "Unknown model type" << endl;

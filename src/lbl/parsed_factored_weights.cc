@@ -12,7 +12,7 @@ ParsedFactoredWeights::ParsedFactoredWeights()
     : data(NULL) {}
 
 ParsedFactoredWeights::ParsedFactoredWeights(
-    const boost::shared_ptr<ModelData>& config,
+    const boost::shared_ptr<ModelConfig>& config,
     const boost::shared_ptr<FactoredMetadata>& metadata,
     bool init)
     : FactoredWeights(config, metadata, init), 

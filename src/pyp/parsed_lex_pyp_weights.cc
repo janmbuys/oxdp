@@ -51,18 +51,6 @@ void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateRemove(const ParseDataSe
     lex_lm_.decrement(examples.word_at(i), examples.word_context_at(i), eng);
 }
 
-//update PYP model to insert new training examples 
-template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateInsert(const DataSet& examples, MT19937& eng) {
-  ParsedPypWeights<tOrder, aOrder>::updateInsert(examples, eng);
-}
-
-//update PYP model to remove old training examples
-template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateRemove(const DataSet& examples, MT19937& eng) {
-  ParsedPypWeights<tOrder, aOrder>::updateRemove(examples, eng);
-}
-
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 int ParsedLexPypWeights<wOrder, tOrder, aOrder>::numWords() const {
   return lex_vocab_size_;

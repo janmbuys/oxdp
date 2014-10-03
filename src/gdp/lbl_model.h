@@ -5,9 +5,8 @@
 #include "corpus/dict.h"
 #include "corpus/sentence_corpus.h"
 #include "corpus/data_set.h"
-#include "corpus/ngram_model.h"
+#include "corpus/model_config.h"
 
-#include "lbl/config.h"
 #include "lbl/factored_metadata.h"
 #include "lbl/factored_weights.h"
 #include "lbl/metadata.h"
@@ -15,6 +14,8 @@
 #include "lbl/model_utils.h"
 #include "lbl/utils.h"
 #include "lbl/weights.h"
+
+#include "gdp/ngram_model.h"
 
 namespace oxlm {
 
@@ -24,15 +25,15 @@ enum ModelType {
 };
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
-class Model {
+class LblModel {
  public:
-  Model();
+  LblModel();
 
-  Model(const boost::shared_ptr<ModelData>& config);
+  LblModel(const boost::shared_ptr<ModelConfig>& config);
 
   boost::shared_ptr<Dict> getDict() const;
 
-  boost::shared_ptr<ModelData> getConfig() const;
+  boost::shared_ptr<ModelConfig> getConfig() const;
 
   void learn();
 
@@ -59,34 +60,34 @@ class Model {
   void clearCache();
 
   bool operator==(
-      const Model<GlobalWeights, MinibatchWeights, Metadata>& other) const;
+      const LblModel<GlobalWeights, MinibatchWeights, Metadata>& other) const;
 
  private:
   void evaluate(
       const boost::shared_ptr<SentenceCorpus>& corpus, const Time& iteration_start,
       int minibatch_counter, Real& objective, Real& best_perplexity) const;
 
-  boost::shared_ptr<ModelData> config;
+  boost::shared_ptr<ModelConfig> config;
   boost::shared_ptr<Dict> dict;
   boost::shared_ptr<Metadata> metadata;
   boost::shared_ptr<GlobalWeights> weights;
-  boost::shared_ptr<NGramModel> ngram_model;
+  boost::shared_ptr<NGramModel<GlobalWeights>> ngram_model;
 };
 
-class LM : public Model<Weights, Weights, Metadata> {
+class LblLM: public LblModel<Weights, Weights, Metadata> {
  public:
-  LM() : Model<Weights, Weights, Metadata>() {}
+  LblLM() : LblModel<Weights, Weights, Metadata>() {}
 
-  LM(const boost::shared_ptr<ModelData>& config)
-      : Model<Weights, Weights, Metadata>(config) {}
+  LblLM(const boost::shared_ptr<ModelConfig>& config)
+      : LblModel<Weights, Weights, Metadata>(config) {}
 };
 
-class FactoredLM: public Model<FactoredWeights, FactoredWeights, FactoredMetadata> {
+class FactoredLblLM: public LblModel<FactoredWeights, FactoredWeights, FactoredMetadata> {
  public:
-  FactoredLM() : Model<FactoredWeights, FactoredWeights, FactoredMetadata>() {}
+  FactoredLblLM() : LblModel<FactoredWeights, FactoredWeights, FactoredMetadata>() {}
 
-  FactoredLM(const boost::shared_ptr<ModelData>& config)
-      : Model<FactoredWeights, FactoredWeights, FactoredMetadata>(config) {}
+  FactoredLblLM(const boost::shared_ptr<ModelConfig>& config)
+      : LblModel<FactoredWeights, FactoredWeights, FactoredMetadata>(config) {}
 };
 
 } // namespace oxlm

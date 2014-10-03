@@ -3,22 +3,23 @@
 
 #include "corpus/data_point.h"
 #include "corpus/dict.h"
-#include "corpus/data_set_interface.h"
 
 namespace oxlm {
 
-class DataSet: public DataSetInterface {
+class DataSet {
   public:
 
-  void addExample(DataPoint example) override;
+  void addExample(DataPoint example);
 
-  DataPoint exampleAt(unsigned i) const override;
+  void clear();
 
-  WordId wordAt(unsigned i) const override;
+  DataPoint exampleAt(unsigned i) const;
 
-  Words contextAt(unsigned i) const override;
+  WordId wordAt(unsigned i) const;
 
-  size_t size() const override;
+  Words contextAt(unsigned i) const;
+
+  size_t size() const;
 
   private:
   std::vector<DataPoint> examples_;

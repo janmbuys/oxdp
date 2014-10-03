@@ -1,10 +1,10 @@
-#include "lbl/config.h"
+#include "corpus/model_config.h"
 
 #include "utils/constants.h"
 
 namespace oxlm {
 
-ModelData::ModelData()
+ModelConfig::ModelConfig()
     : iterations(0), minibatch_size(0), instances(0), ngram_order(0),
       feature_context_size(0), l2_lbl(0), l2_maxent(0),
       word_representation_size(0), threads(1), step_size(0), classes(0),
@@ -17,10 +17,10 @@ ModelData::ModelData()
       sigmoid(false), parser_type(ParserType::arcstandard), lexicalised(false),
       num_tags(1), num_actions(1), beam_sizes(1, 1) {}
 
-bool ModelData::operator==(const ModelData& other) const {
+bool ModelConfig::operator==(const ModelConfig& other) const {
   if (fabs(l2_lbl - other.l2_lbl) > EPS ||
       fabs(l2_maxent - other.l2_maxent) > EPS) {
-    cout << "Warning: Using different regularizers!" << endl;
+      std::cout << "Warning: Using different regularizers!" << std::endl;
   }
 
   return (training_file == other.training_file
@@ -39,4 +39,5 @@ bool ModelData::operator==(const ModelData& other) const {
       && semi_supervised == other.semi_supervised);
 }
 
-} // namespace oxlm
+} //namespace oxlm
+

@@ -41,20 +41,6 @@ void PypWeights<kOrder>::updateRemove(const DataSet& examples, MT19937& eng) {
     lm_.decrement(examples.wordAt(i), examples.contextAt(i), eng);
 }
 
-//update PYP model to insert new training examples 
-template<unsigned kOrder>
-void PypWeights<kOrder>::updateInsert(const DataPoints& examples, MT19937& eng) {
-  for (unsigned i = 0; i < examples.size(); ++i)
-    lm_.increment(examples.at(i).word, examples.at(i).context, eng);
-}
-
-//update PYP model to remove old training examples
-template<unsigned kOrder>
-void PypWeights<kOrder>::updateRemove(const DataPoints& examples, MT19937& eng) {
-  for (unsigned i = 0; i < examples.size(); ++i)
-    lm_.decrement(examples.at(i).word, examples.at(i).context, eng);
-}
-
 //update PYP model to insert one training example
 template<unsigned kOrder>
 void PypWeights<kOrder>::updateInsert(const DataPoint& example, MT19937& eng) {

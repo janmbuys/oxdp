@@ -1,67 +1,37 @@
-#pragma once
+#ifndef _CORPUS_MODEL_CONFIG_H_
+#define _CORPUS_MODEL_CONFIG_H_
 
-#include <fstream>
-#include <iostream>
-#include <map>
+#include <string>
+#include <vector>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/serialization/serialization.hpp>
 
-using namespace std;
-
 namespace oxlm {
-
-struct UnigramDistribution {
-  map<double, string> prob_to_token;
-  map<string, double> token_to_prob;
-
-  void read(const string& filename) {
-    ifstream file(filename.c_str());
-    cerr << "Reading unigram distribution from "
-      << filename.c_str() << "." << endl;
-
-    double sum=0;
-    string key, value;
-    while (file >> value >> key) {
-      double v = boost::lexical_cast<double>(value);
-      sum += v;
-      prob_to_token.insert(make_pair(sum, key));
-      token_to_prob.insert(make_pair(key, v));
-    }
-  }
-
-  double prob(const string& s) const {
-   map<string, double>::const_iterator it
-     = token_to_prob.find(s);
-   return it != token_to_prob.end() ? it->second : 0.0;
- }
-
-  bool empty() const { return prob_to_token.empty(); }
-};
 
 enum class ParserType {ngram, eisner, arcstandard, arceager};
 
-struct ModelData {
-  ModelData();
+struct ModelConfig {
+  ModelConfig();
 
-  string      training_file;
-  string      training_file_unsup;
-  string      test_file;
+  std::string      training_file;
+  std::string      training_file_unsup;
+  std::string      test_file;
   int         iterations;
   int         minibatch_size;
   int         instances;
   int         ngram_order;
   int         feature_context_size;
-  string      model_input_file;
-  string      model_output_file;
+  std::string      model_input_file;
+  std::string      model_output_file;
   float       l2_lbl;
   float       l2_maxent;
   int         word_representation_size;
   int         threads;
   float       step_size;
   int         classes;
-  string      class_file;
+  std::string      class_file;
   bool        randomise;
   bool        reclass;
   bool        diagonal_contexts;
@@ -89,9 +59,9 @@ struct ModelData {
   bool        semi_supervised;
   int         num_tags;
   int         num_actions;
-  vector<unsigned> beam_sizes;
+  std::vector<unsigned> beam_sizes;
 
-  bool operator==(const ModelData& other) const;
+  bool operator==(const ModelConfig& other) const;
 
   friend class boost::serialization::access;
   template<class Archive>
@@ -128,4 +98,6 @@ struct ModelData {
   }
 };
 
-} // namespace oxlm
+}
+
+#endif

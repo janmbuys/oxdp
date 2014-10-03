@@ -2,7 +2,6 @@
 #define _PYP_PARSE_LEX_WEIGHTS_H_
 
 #include "pyp/parsed_pyp_weights.h"
-#include "pyp/pyp_parsed_weights_interface.h"
 
 namespace oxlm {
 
@@ -26,10 +25,6 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
   void updateInsert(const ParseDataSet& examples, MT19937& eng) override;
 
   void updateRemove(const ParseDataSet& examples, MT19937& eng) override;
-
-  void updateInsert(const DataSet& examples, MT19937& eng) override;
-
-  void updateRemove(const DataSet& examples, MT19937& eng) override;
   
   int numWords() const override;
 

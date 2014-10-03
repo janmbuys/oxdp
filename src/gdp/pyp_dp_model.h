@@ -10,15 +10,13 @@
 #include "corpus/dict.h"
 #include "corpus/parsed_corpus.h"
 #include "corpus/parse_data_set.h"
+#include "corpus/model_config.h"
 
-#include "pyp/utils.h"
-#include "pyp/pyp_parsed_weights_interface.h"
-#include "pyp/model_config.h"
+#include "pyp/constants.h"
 #include "pyp/parsed_pyp_weights.h"
 #include "pyp/parsed_lex_pyp_weights.h"
 
 #include "gdp/transition_parser.h"
-#include "gdp/transition_parse_model_interface.h"
 #include "gdp/arc_standard_parse_model.h"
 #include "gdp/arc_eager_parse_model.h"
 #include "gdp/eisner_parse_model.h"

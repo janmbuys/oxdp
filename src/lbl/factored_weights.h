@@ -16,7 +16,7 @@ class FactoredWeights : public Weights {
   FactoredWeights();
 
   FactoredWeights(
-      const boost::shared_ptr<ModelData>& config,
+      const boost::shared_ptr<ModelConfig>& config,
       const boost::shared_ptr<FactoredMetadata>& metadata,
       bool init);
 
@@ -64,8 +64,6 @@ class FactoredWeights : public Weights {
   void clear(const MinibatchWords& words, bool parallel_update);
 
   Real predict(int word, vector<int> context) const;
-
-  int vocabSize() const override;
 
   void clearCache();
 

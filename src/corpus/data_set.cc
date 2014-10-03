@@ -6,6 +6,10 @@ void  DataSet::addExample(DataPoint example) {
   examples_.push_back(example);
 }
 
+void DataSet::clear() {
+  examples_.clear();
+}
+
 DataPoint DataSet::exampleAt(unsigned i) const {
   return examples_.at(i);
 }

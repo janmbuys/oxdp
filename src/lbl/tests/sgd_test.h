@@ -3,7 +3,7 @@
 #include <boost/make_shared.hpp>
 
 #include "corpus/dict.h"
-#include "lbl/config.h"
+#include "corpus/model_config.h"
 #include "lbl/utils.h"
 
 namespace oxlm {
@@ -11,7 +11,7 @@ namespace oxlm {
 class SGDTest : public ::testing::Test {
  protected:
   virtual void SetUp() {
-    config = boost::make_shared<ModelData>();
+    config = boost::make_shared<ModelConfig>();
     config->training_file = "training.txt";
     config->iterations = 3;
     config->minibatch_size = 380; //10000;
@@ -23,7 +23,7 @@ class SGDTest : public ::testing::Test {
     config->sigmoid = true;
   }
 
-  boost::shared_ptr<ModelData> config;
+  boost::shared_ptr<ModelConfig> config;
 };
 
 class FactoredSGDTest : public SGDTest {

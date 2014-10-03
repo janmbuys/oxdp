@@ -3,37 +3,33 @@
 
 #include "corpus/dict.h"
 #include "corpus/data_point.h"
-#include "pyp/pyp_weights_interface.h"
+#include "corpus/data_set.h"
 #include "pyp/pyplm.h"
-#include "pyp/utils.h"
+#include "pyp/constants.h"
 
 namespace oxlm {
 
 template<unsigned kOrder>
-class PypWeights: public PypWeightsInterface {
+class PypWeights {
 
   public:
   PypWeights(size_t vocab_size);
 
-  Real predict(WordId word, Words context) const override;
+  virtual Real predict(WordId word, Words context) const;
 
-  Real likelihood() const override;
+  virtual Real likelihood() const;
 
-  void resampleHyperparameters(MT19937& eng) override;
+  virtual void resampleHyperparameters(MT19937& eng);
 
-  void updateInsert(const DataSet& examples, MT19937& eng) override;
+  void updateInsert(const DataSet& examples, MT19937& eng);
   
-  void updateRemove(const DataSet& examples, MT19937& eng) override;
- 
-  void updateInsert(const DataPoints& examples, MT19937& eng);
-  
-  void updateRemove(const DataPoints& examples, MT19937& eng);
+  void updateRemove(const DataSet& examples, MT19937& eng);
   
   void updateInsert(const DataPoint& example, MT19937& eng);
 
   void updateRemove(const DataPoint& example, MT19937& eng);
 
-  int vocabSize() const override;
+  virtual int vocabSize() const;
 
   private:
   PYPLM<kOrder> lm_;

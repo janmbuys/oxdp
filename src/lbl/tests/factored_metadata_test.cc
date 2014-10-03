@@ -12,7 +12,7 @@ namespace ar = boost::archive;
 namespace oxlm {
 
 TEST(FactoredMetadataTest, TestBasic) {
-  boost::shared_ptr<ModelData> config = boost::make_shared<ModelData>();
+  boost::shared_ptr<ModelConfig> config = boost::make_shared<ModelConfig>();
   config->training_file = "training.txt";
   config->class_file = "classes.txt";
   boost::shared_ptr<Dict> dict = boost::make_shared<Dict>();
@@ -23,7 +23,7 @@ TEST(FactoredMetadataTest, TestBasic) {
 }
 
 TEST(FactoredMetadataTest, TestSerialization) {
-  boost::shared_ptr<ModelData> config = boost::make_shared<ModelData>();
+  boost::shared_ptr<ModelConfig> config = boost::make_shared<ModelConfig>();
   config->training_file = "training.txt";
   config->class_file = "classes.txt";
   boost::shared_ptr<Dict> dict = boost::make_shared<Dict>();

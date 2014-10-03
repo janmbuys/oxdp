@@ -2,14 +2,12 @@
 #define GDP_TRAN_PARSE_MODEL_H_
 
 #include "corpus/parsed_sentence.h"
-#include "corpus/parsed_weights_interface.h"
-#include "gdp/parse_model_interface.h"
 #include "gdp/transition_parser.h"
 
 namespace oxlm {
 
 template <class TParser, class ParsedWeights>
-class TransitionParseModelInterface: public ParseModelInterface<ParsedWeights> {
+class TransitionParseModelInterface {
   public:
   virtual TParser beamParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) = 0;

@@ -3,10 +3,9 @@
 
 #include "utils/random.h"
 #include "corpus/utils.h"
-#include "corpus/parsed_weights_interface.h"
 
-#include "gdp/parse_model_interface.h"
 #include "gdp/eisner_parser.h"
+#include "gdp/accuracy_counts.h"
 
 #include "pyp/parsed_pyp_weights.h"
 #include "pyp/parsed_lex_pyp_weights.h"
@@ -14,7 +13,7 @@
 namespace oxlm {
 
 template<class ParsedWeights>
-class EisnerParseModel: public ParseModelInterface<ParsedWeights> {
+class EisnerParseModel {
   public:
 
   EisnerParser parseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights);
@@ -22,25 +21,25 @@ class EisnerParseModel: public ParseModelInterface<ParsedWeights> {
   void scoreSentence(EisnerParser* parser, const boost::shared_ptr<ParsedWeights>& weights);
   
   void extractSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParseDataSet>& examples) override;
+          const boost::shared_ptr<ParseDataSet>& examples);
 
   void extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
-          const boost::shared_ptr<ParseDataSet>& examples) override;
+          const boost::shared_ptr<ParseDataSet>& examples);
 
   void extractSentenceUnsupervised(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
-          MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples) override;
+          MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples);
 
   Real evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
-          size_t beam_size) override; 
+          size_t beam_size); 
 
   Real evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
-          size_t beam_size) override; 
+          size_t beam_size); 
 };
 
 }

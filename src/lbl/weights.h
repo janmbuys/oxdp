@@ -9,7 +9,6 @@
 #include <boost/thread/tss.hpp>
 
 #include "corpus/data_set.h"
-#include "corpus/weights_interface.h"
 
 #include "lbl/context_cache.h"
 #include "lbl/metadata.h"
@@ -27,12 +26,12 @@ typedef Eigen::Map<VectorReal> WeightsType;
 typedef boost::shared_ptr<mutex> Mutex;
 typedef pair<size_t, size_t> Block;
 
-class Weights: public WeightsInterface {
+class Weights {
  public:
   Weights();
 
   Weights(
-      const boost::shared_ptr<ModelData>& config,
+      const boost::shared_ptr<ModelConfig>& config,
       const boost::shared_ptr<Metadata>& metadata,
       bool init);
 
@@ -79,9 +78,9 @@ class Weights: public WeightsInterface {
 
   void clear(const MinibatchWords& words, bool parallel_update);
 
-  Real predict(int word, vector<int> context) const override;
+  Real predict(int word, vector<int> context) const;
 
-  int vocabSize() const override;
+  int vocabSize() const;
 
   void clearCache();
 
@@ -190,7 +189,7 @@ class Weights: public WeightsInterface {
   BOOST_SERIALIZATION_SPLIT_MEMBER();
 
  protected:
-  boost::shared_ptr<ModelData> config;
+  boost::shared_ptr<ModelConfig> config;
   boost::shared_ptr<Metadata> metadata;
 
   ContextTransformsType C;

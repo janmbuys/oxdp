@@ -1,9 +1,9 @@
 #ifndef _GDP_AE_PARSE_MODEL_H_
 #define _GDP_AE_PARSE_MODEL_H_
 
+#include "gdp/accuracy_counts.h"
 #include "gdp/arc_eager_parser.h"
 #include "gdp/transition_parse_model_interface.h"
-#include "corpus/parsed_weights_interface.h"
 
 #include "pyp/parsed_pyp_weights.h"
 #include "pyp/parsed_lex_pyp_weights.h"
@@ -37,25 +37,25 @@ class ArcEagerParseModel: public TransitionParseModelInterface<ArcEagerParser, P
   ArcEagerParser generateSentence(const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng) override;
 
   void extractSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParseDataSet>& examples) override;
+          const boost::shared_ptr<ParseDataSet>& examples);
 
   void extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
-          const boost::shared_ptr<ParseDataSet>& examples) override;
+          const boost::shared_ptr<ParseDataSet>& examples);
 
   void extractSentenceUnsupervised(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
-          MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples) override;
+          MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples);
 
   Real evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
-          size_t beam_size) override; 
+          size_t beam_size); 
 
   Real evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
-          size_t beam_size) override; 
+          size_t beam_size); 
 };
 
 }

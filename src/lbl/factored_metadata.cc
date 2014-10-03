@@ -9,7 +9,7 @@ namespace oxlm {
 FactoredMetadata::FactoredMetadata() {}
 
 FactoredMetadata::FactoredMetadata(
-    const boost::shared_ptr<ModelData>& config, boost::shared_ptr<Dict>& dict)
+    const boost::shared_ptr<ModelConfig>& config, boost::shared_ptr<Dict>& dict)
     : Metadata(config, dict) {
   vector<int> classes;
   if (config->class_file.size()) {
@@ -26,7 +26,7 @@ FactoredMetadata::FactoredMetadata(
 }
 
 FactoredMetadata::FactoredMetadata(
-    const boost::shared_ptr<ModelData>& config, boost::shared_ptr<Dict>& dict,
+    const boost::shared_ptr<ModelConfig>& config, boost::shared_ptr<Dict>& dict,
     const boost::shared_ptr<WordToClassIndex>& index)
     : Metadata(config, dict), index(index),
       classBias(VectorReal::Zero(index->getNumClasses())) {}

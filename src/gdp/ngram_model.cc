@@ -1,15 +1,17 @@
-#include "corpus/ngram_model.h"
+#include "gdp/ngram_model.h"
 
 namespace oxlm {
 
-NGramModel::NGramModel(unsigned order, WordId sos, WordId eos):
+template<class Weights>
+NGramModel<Weights>::NGramModel(unsigned order, WordId sos, WordId eos):
     order_(order),
     sos_(sos), 
     eos_(eos) {
         std::cout << "constructed" << std::endl;
     }
 
-Words NGramModel::extractContext(const boost::shared_ptr<Corpus> corpus, int position) {
+template<class Weights>
+Words NGramModel<Weights>::extractContext(const boost::shared_ptr<Corpus> corpus, int position) {
   Words context;
 
   // The context is constructed starting from the most recent word:
@@ -29,21 +31,24 @@ Words NGramModel::extractContext(const boost::shared_ptr<Corpus> corpus, int pos
   return context;
 }
 
-void NGramModel::extract(const boost::shared_ptr<Corpus> corpus, int position,
+template<class Weights>
+void NGramModel<Weights>::extract(const boost::shared_ptr<Corpus> corpus, int position,
     const boost::shared_ptr<DataSet>& examples) {
   WordId word = corpus->at(position);
   Words context = extractContext(corpus, position);
   examples->addExample(DataPoint(word, context));  
 }
 
-Real NGramModel::evaluate(const boost::shared_ptr<Corpus> corpus, int position, 
-          const boost::shared_ptr<WeightsInterface>& weights) {
+template<class Weights>
+Real NGramModel<Weights>::evaluate(const boost::shared_ptr<Corpus> corpus, int position, 
+          const boost::shared_ptr<Weights>& weights) {
   WordId word = corpus->at(position);
   Words context = extractContext(corpus, position);
   return weights->predict(word, context);
 }
 
-void NGramModel::extractSentence(const Sentence& sent, 
+template<class Weights>
+void NGramModel<Weights>::extractSentence(const Sentence& sent, 
           const boost::shared_ptr<DataSet>& examples) {
   Words context(order_ - 1, sos_);
   //eos is already at end of sentence
@@ -57,8 +62,9 @@ void NGramModel::extractSentence(const Sentence& sent,
   }    
 }
 
-Real NGramModel::evaluateSentence(const Sentence& sent, 
-          const boost::shared_ptr<WeightsInterface>& weights) {
+template<class Weights>
+Real NGramModel<Weights>::evaluateSentence(const Sentence& sent, 
+          const boost::shared_ptr<Weights>& weights) {
   Real weight = 0;
   Words context(order_ -1, sos_);
   //eos is already at end of sentence
@@ -74,5 +80,9 @@ Real NGramModel::evaluateSentence(const Sentence& sent,
 
   return weight;
 }
+
+template class NGramModel<PypWeights<wordLMOrder>>;
+template class NGramModel<Weights>;
+template class NGramModel<FactoredWeights>;
 
 }
