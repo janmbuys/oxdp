@@ -3,7 +3,7 @@
 namespace oxlm {
 
 template<unsigned tOrder, unsigned aOrder>
-ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(size_t num_tags, size_t num_actions):
+ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(size_t vocab_size, size_t num_tags, size_t num_actions):
   PypWeights<tOrder>(num_tags),    
   action_lm_(num_actions, 1, 1, 1, 1),
   num_actions_(num_actions) {}

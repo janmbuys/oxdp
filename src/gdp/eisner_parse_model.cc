@@ -2,8 +2,9 @@
 
 namespace oxlm {
 
-EisnerParser EisnerParseModel::parseSentence(const ParsedSentence& sent, 
-        const boost::shared_ptr<ParsedWeightsInterface>& weights) {
+template<class ParsedWeights>
+EisnerParser EisnerParseModel<ParsedWeights>::parseSentence(const ParsedSentence& sent, 
+        const boost::shared_ptr<ParsedWeights>& weights) {
   EisnerParser parser(sent); 
 
   for (WordIndex k = 1; k < sent.size(); ++k) {
@@ -128,7 +129,8 @@ EisnerParser EisnerParseModel::parseSentence(const ParsedSentence& sent,
   return parser;
 }
 
-void EisnerParseModel::scoreSentence(EisnerParser* parser, const boost::shared_ptr<ParsedWeightsInterface>& weights) {
+template<class ParsedWeights>
+void EisnerParseModel<ParsedWeights>::scoreSentence(EisnerParser* parser, const boost::shared_ptr<ParsedWeights>& weights) {
   parser->reset_weight();
 
   for (WordIndex i = 1; (i < static_cast<int>(parser->size())); ++i) {
@@ -168,7 +170,8 @@ void EisnerParseModel::scoreSentence(EisnerParser* parser, const boost::shared_p
   //std::cout << parser->weight() << std::endl;
 } 
 
-void EisnerParseModel::extractSentence(const ParsedSentence& sent, 
+template<class ParsedWeights>
+void EisnerParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParseDataSet>& examples) {
   EisnerParser parse(static_cast<TaggedSentence>(sent));
   //add arcs
@@ -179,15 +182,17 @@ void EisnerParseModel::extractSentence(const ParsedSentence& sent,
   parse.extractExamples(examples);
 }
 
-void EisnerParseModel::extractSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+template<class ParsedWeights>
+void EisnerParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
  extractSentence(sent, examples);
  //scoreSentence(&parse, weights);
 }
 
-void EisnerParseModel::extractSentenceUnsupervised(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+template<class ParsedWeights>
+void EisnerParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples) {
   //TODO sample a sentence
   EisnerParser parse = parseSentence(sent, weights);
@@ -195,8 +200,9 @@ void EisnerParseModel::extractSentenceUnsupervised(const ParsedSentence& sent,
 }
 
 
-Real EisnerParseModel::evaluateSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+template<class ParsedWeights>
+Real EisnerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   EisnerParser parse = parseSentence(sent, weights);
@@ -204,8 +210,9 @@ Real EisnerParseModel::evaluateSentence(const ParsedSentence& sent,
   return parse.weight(); 
 }   
 
-Real EisnerParseModel::evaluateSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+template<class ParsedWeights>
+Real EisnerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   //TODO sample a sentence
@@ -213,4 +220,8 @@ Real EisnerParseModel::evaluateSentence(const ParsedSentence& sent,
   acc_counts->countAccuracy(parse, sent);
   return parse.weight(); 
 }
+
+template class EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>;
+template class EisnerParseModel<ParsedPypWeights<tagLMOrderE, 1>>;
+
 }

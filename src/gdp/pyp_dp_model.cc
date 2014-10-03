@@ -2,27 +2,29 @@
 
 namespace oxlm {
 
-PypDpModel::PypDpModel() {
+template<class ParseModel, class ParsedWeights>
+PypDpModel<ParseModel, ParsedWeights>::PypDpModel() {
   dict_ = boost::make_shared<Dict>(true, false);
 } 
 
-PypDpModel::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
+template<class ParseModel, class ParsedWeights>
+PypDpModel<ParseModel, ParsedWeights>::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config) {
   dict_ = boost::make_shared<Dict>(true, config->parser_type==ParserType::arceager);
+  parse_model_ = boost::make_shared<ParseModel>();
+  
   if (config->parser_type == ParserType::arcstandard) {
-    parse_model_ = boost::make_shared<ArcStandardParseModel>();
     config_->num_actions = 3;
   } else if (config->parser_type == ParserType::arceager) {
-    parse_model_ = boost::make_shared<ArcEagerParseModel>();
     config_->num_actions = 4;
   } else {
-    parse_model_ = boost::make_shared<EisnerParseModel>();
     config_->num_actions = 1;
     dict_->convert("STOP", false);
   }
 }
 
-void PypDpModel::learn_semi_supervised() {
+template<class ParseModel, class ParsedWeights>
+void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
   MT19937 eng;
   //read training data
   
@@ -59,29 +61,7 @@ void PypDpModel::learn_semi_supervised() {
   }
 
   //instantiate weights
-
-  if (config_->lexicalised) {
-    if (config_->parser_type == ParserType::arcstandard)
-      weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(
-            dict_->size(), dict_->tag_size(), config_->num_actions);
-    else if (config_->parser_type == ParserType::arceager)
-      weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>(
-            dict_->size(), dict_->tag_size(), config_->num_actions);
-    else
-      weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>(
-            dict_->size(), dict_->tag_size(), config_->num_actions);
-
-  } else {
-    if (config_->parser_type == ParserType::arcstandard)
-      weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(dict_->tag_size(), 
-            config_->num_actions);
-    else if (config_->parser_type == ParserType::arceager)
-      weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>(dict_->tag_size(), 
-            config_->num_actions);
-    else
-      weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderE, 1>>(dict_->tag_size(), 
-            config_->num_actions);
-  }
+  weights_ = boost::make_shared<ParsedWeights>(dict_->size(), dict_->tag_size(), config_->num_actions);
 
   std::vector<int> sup_indices(sup_training_corpus->size());
   std::iota(sup_indices.begin(), sup_indices.end(), 0);
@@ -191,7 +171,8 @@ void PypDpModel::learn_semi_supervised() {
 
 
 
-void PypDpModel::learn() {
+template<class ParseModel, class ParsedWeights>
+void PypDpModel<ParseModel, ParsedWeights>::learn() {
   MT19937 eng;
   //read training data
   std::cerr << "Reading training corpus...\n";
@@ -219,6 +200,10 @@ void PypDpModel::learn() {
 
   //instantiate weights
 
+  //instantiate weights
+  weights_ = boost::make_shared<ParsedWeights>(dict_->size(), dict_->tag_size(), config_->num_actions);
+
+  /*
   if (config_->lexicalised) {
     if (config_->parser_type == ParserType::arcstandard)
       weights_ = boost::make_shared<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(
@@ -240,7 +225,7 @@ void PypDpModel::learn() {
     else
       weights_ = boost::make_shared<ParsedPypWeights<tagLMOrderE, 1>>(dict_->tag_size(), 
             config_->num_actions);
-  }
+  }  */
 
   std::vector<int> indices(training_corpus->size());
   std::iota(indices.begin(), indices.end(), 0);
@@ -333,7 +318,8 @@ void PypDpModel::learn() {
   
 }
 
-void PypDpModel::evaluate() const {
+template<class ParseModel, class ParsedWeights>
+void PypDpModel<ParseModel, ParsedWeights>::evaluate() const {
  //read test data 
   boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
   test_corpus->readFile(config_->test_file, dict_, true);
@@ -347,7 +333,8 @@ void PypDpModel::evaluate() const {
   std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
-void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, int minibatch_counter, 
+template<class ParseModel, class ParsedWeights>
+void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, int minibatch_counter, 
                    Real& log_likelihood, Real& best_perplexity) const {
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);
@@ -362,7 +349,8 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, in
   }
 }
 
-void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) 
+template<class ParseModel, class ParsedWeights>
+void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) 
     const {
   MT19937 eng; //should not actually redefine, but it should be ok
   if (test_corpus != nullptr) {
@@ -402,5 +390,13 @@ void PypDpModel::evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, Re
   }
 }
 
-}
+template class PypDpModel<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
+template class PypDpModel<ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>, ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>;
+template class PypDpModel<EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>, ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>;
+
+template class PypDpModel<ArcStandardParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>;
+template class PypDpModel<ArcEagerParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>, ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>;
+template class PypDpModel<EisnerParseModel<ParsedPypWeights<tagLMOrderE, 1>>, ParsedPypWeights<tagLMOrderE, 1>>;
+
+} //namespace oxlm
 

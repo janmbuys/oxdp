@@ -11,6 +11,19 @@
 using namespace boost::program_options;
 using namespace oxlm;
 
+template<class ParseModel, class ParsedWeights>
+void train(const boost::shared_ptr<ModelConfig>& config) {
+  PypDpModel<ParseModel, ParsedWeights> model(config);
+
+  //learn
+  if (config->semi_supervised)
+    model.learn_semi_supervised();
+  else
+    model.learn();
+  if (config->iterations > 1)
+    model.evaluate();
+}
+
 int main(int argc, char** argv) {
  options_description cmdline_specific("Command line specific options");
   cmdline_specific.add_options()
@@ -94,28 +107,26 @@ int main(int argc, char** argv) {
   config->beam_sizes = {1};
   for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
     config->beam_sizes.push_back(i);
-
-  //std::string training_file = "english-wsj-stanford-unk/english_wsj_train.conll";
-  //std::string training_file = "question-bank-unk/qbank_train.conll";
-  std::string training_file = "question-bank-unk/wsj_qbank_train.conll";
   
-  //std::string training_file_unsup = "question-bank-unk/qbank_train.conll";
-  std::string training_file_unsup = "question-bank-unk/wikianswers_questions_100k.conll";
-  
-  //std::string test_file = "english-wsj-stanford-unk/english_wsj_dev.conll";
-  std::string test_file = "question-bank-unk/qbank_dev.conll";
-
   if (config->parser_type == ParserType::ngram) {
     PypModel model(config); 
     model.learn();
   } else {
-    PypDpModel model(config); 
-    if (config->semi_supervised)
-      model.learn_semi_supervised();
-    else
-      model.learn();
-    if (config->iterations > 1)
-      model.evaluate();
+    if (config->lexicalised) {
+      if (config->parser_type == ParserType::arcstandard)
+        train<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
+      else if (config->parser_type == ParserType::arceager)
+        train<ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>, ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>(config);
+      else
+        train<EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>, ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>(config);
+    } else {
+      if (config->parser_type == ParserType::arcstandard)
+        train<ArcStandardParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(config);
+      else if (config->parser_type == ParserType::arceager)
+        train<ArcEagerParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>, ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>(config);
+      else
+        train<EisnerParseModel<ParsedPypWeights<tagLMOrderE, 1>>, ParsedPypWeights<tagLMOrderE, 1>>(config);
+    }
   }
 
   return 0;

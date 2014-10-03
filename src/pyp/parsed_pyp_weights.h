@@ -14,7 +14,7 @@ template<unsigned tOrder, unsigned aOrder>
 class ParsedPypWeights: public PypWeights<tOrder>, public PypParsedWeightsInterface {
 
   public:
-  ParsedPypWeights(size_t num_tags, size_t num_actions);
+  ParsedPypWeights(size_t vocab_size, size_t num_tags, size_t num_actions);
 
   Real predict(WordId word, Words context) const override;
 

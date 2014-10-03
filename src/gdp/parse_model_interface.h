@@ -8,6 +8,7 @@
 
 namespace oxlm {
 
+template<class ParsedWeights>
 class ParseModelInterface {
   public:
 
@@ -15,21 +16,21 @@ class ParseModelInterface {
           const boost::shared_ptr<ParseDataSet>& examples) = 0;
 
   virtual void extractSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) = 0;
 
   virtual void extractSentenceUnsupervised(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples) = 0;
 
   //return likelihood
   virtual Real evaluateSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) = 0; 
 
   virtual Real evaluateSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) = 0; 
 

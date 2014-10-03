@@ -2,7 +2,8 @@
 
 namespace oxlm {
 
-void ArcEagerParseModel::resampleParticles(AeParserList* beam_stack, MT19937& eng,
+template<class ParsedWeights>
+void ArcEagerParseModel<ParsedWeights>::resampleParticles(AeParserList* beam_stack, MT19937& eng,
         unsigned num_particles) {
   //assume (beam_stack->at(pi)->num_particles() > 0)
   std::vector<double> importance_w(beam_stack->size(), L_MAX); 
@@ -24,8 +25,9 @@ void ArcEagerParseModel::resampleParticles(AeParserList* beam_stack, MT19937& en
   }
 }
 
-ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent, 
-                           const boost::shared_ptr<ParsedWeightsInterface>& weights, unsigned beam_size) {
+template<class ParsedWeights>
+ArcEagerParser ArcEagerParseModel<ParsedWeights>::beamParseSentence(const ParsedSentence& sent, 
+                           const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) {
   //index in beam_chart is depth-of-stack - 1
   std::vector<AeParserList> beam_chart; 
   beam_chart.push_back(AeParserList());
@@ -188,8 +190,9 @@ ArcEagerParser ArcEagerParseModel::beamParseSentence(const ParsedSentence& sent,
   }
 }
 
-ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& sent, 
-        const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, unsigned num_particles,
+template<class ParsedWeights>
+ArcEagerParser ArcEagerParseModel<ParsedWeights>::particleParseSentence(const ParsedSentence& sent, 
+        const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
         bool resample) {
 //TODO
   //Follow approach similar to per-word beam-search, but also keep track of number of particles that is equal to given state
@@ -362,8 +365,9 @@ ArcEagerParser ArcEagerParseModel::particleParseSentence(const ParsedSentence& s
 }
 
 //4-way decisions
-ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentence& sent, 
-        const boost::shared_ptr<ParsedWeightsInterface>& weights, MT19937& eng, 
+template<class ParsedWeights>
+ArcEagerParser ArcEagerParseModel<ParsedWeights>::particleGoldParseSentence(const ParsedSentence& sent, 
+        const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, 
           unsigned num_particles, bool resample) {
   //TODO
   //Follow approach similar to per-word beam-search, but also keep track of number of particles that is equal to given state
@@ -526,8 +530,9 @@ ArcEagerParser ArcEagerParseModel::particleGoldParseSentence(const ParsedSentenc
   return ArcEagerParser(static_cast<TaggedSentence>(sent));  
 }
 
-ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent,
-                                        const boost::shared_ptr<ParsedWeightsInterface>& weights) {
+template<class ParsedWeights>
+ArcEagerParser ArcEagerParseModel<ParsedWeights>::staticGoldParseSentence(const ParsedSentence& sent,
+                                        const boost::shared_ptr<ParsedWeights>& weights) {
   ArcEagerParser parser(static_cast<TaggedSentence>(sent));
 
   kAction a = kAction::sh;
@@ -552,7 +557,8 @@ ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence&
   return parser;
 }
 
-ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence& sent) {
+template<class ParsedWeights>
+ArcEagerParser ArcEagerParseModel<ParsedWeights>::staticGoldParseSentence(const ParsedSentence& sent) {
   ArcEagerParser parser(static_cast<TaggedSentence>(sent));
 
   kAction a = kAction::sh;
@@ -565,7 +571,8 @@ ArcEagerParser ArcEagerParseModel::staticGoldParseSentence(const ParsedSentence&
   return parser;
 }
 
-ArcEagerParser ArcEagerParseModel::generateSentence(const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+template<class ParsedWeights>
+ArcEagerParser ArcEagerParseModel<ParsedWeights>::generateSentence(const boost::shared_ptr<ParsedWeights>& weights, 
         MT19937& eng) {
   ArcEagerParser parser;
   unsigned sent_limit = 100;
@@ -663,21 +670,24 @@ ArcEagerParser ArcEagerParseModel::generateSentence(const boost::shared_ptr<Pars
   return parser;
 }
 
-void ArcEagerParseModel::extractSentence(const ParsedSentence& sent, 
+template<class ParsedWeights>
+void ArcEagerParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParseDataSet>& examples) {
   ArcEagerParser parse = staticGoldParseSentence(sent); 
   parse.extractExamples(examples);
 }
 
-void ArcEagerParseModel::extractSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+template<class ParsedWeights>
+void ArcEagerParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
   ArcEagerParser parse = staticGoldParseSentence(sent, weights);
   parse.extractExamples(examples);
 }
 
-void ArcEagerParseModel::extractSentenceUnsupervised(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+template<class ParsedWeights>
+void ArcEagerParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
   unsigned num_particles = 1000;
@@ -687,8 +697,9 @@ void ArcEagerParseModel::extractSentenceUnsupervised(const ParsedSentence& sent,
   parse.extractExamples(examples);
 }
 
-Real ArcEagerParseModel::evaluateSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+template<class ParsedWeights>
+Real ArcEagerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   ArcEagerParser parse = beamParseSentence(sent, weights, beam_size);
@@ -699,8 +710,9 @@ Real ArcEagerParseModel::evaluateSentence(const ParsedSentence& sent,
   return parse.particle_weight();
 }
 
-Real ArcEagerParseModel::evaluateSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeightsInterface>& weights, 
+template<class ParsedWeights>
+Real ArcEagerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   bool resample = false;
@@ -711,6 +723,9 @@ Real ArcEagerParseModel::evaluateSentence(const ParsedSentence& sent,
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
   return parse.particle_weight();
 }
+
+template class ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>;
+template class ArcEagerParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>;
 
 }
 

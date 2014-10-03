@@ -38,7 +38,7 @@ class PypModel {
   private:
   boost::shared_ptr<ModelConfig> config_;
   boost::shared_ptr<Dict> dict_;
-  boost::shared_ptr<PypWeightsInterface> weights_;
+  boost::shared_ptr<PypWeights<wordLMOrder>> weights_;
   boost::shared_ptr<NGramModel> model_;
 };
 

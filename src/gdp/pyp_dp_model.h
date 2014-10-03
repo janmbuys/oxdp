@@ -26,7 +26,7 @@
 
 namespace oxlm {
 
-//identity more abstractions later
+template<class ParseModel, class ParsedWeights>
 class PypDpModel {
   public:
   PypDpModel();
@@ -47,8 +47,8 @@ class PypDpModel {
   private:
   boost::shared_ptr<ModelConfig> config_;
   boost::shared_ptr<Dict> dict_;
-  boost::shared_ptr<PypParsedWeightsInterface> weights_;
-  boost::shared_ptr<ParseModelInterface> parse_model_;
+  boost::shared_ptr<ParsedWeights> weights_;
+  boost::shared_ptr<ParseModel> parse_model_;
 };
 
 }
