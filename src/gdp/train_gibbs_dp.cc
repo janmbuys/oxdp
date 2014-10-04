@@ -43,6 +43,8 @@ int main(int argc, char** argv) {
         "number of passes through the data")
     ("minibatch-size", value<int>()->default_value(1),
         "number of sentences per minibatch")
+    ("minibatch-size-unsup", value<int>()->default_value(1),
+        "number of sentences per minibatch, unsupervised training")
     ("randomise", value<bool>()->default_value(true),
         "Visit the training tokens in random order.")
     ("parser-type", value<std::string>()->default_value("arceager"),
@@ -87,6 +89,7 @@ int main(int argc, char** argv) {
 
   config->iterations = vm["iterations"].as<int>();
   config->minibatch_size = vm["minibatch-size"].as<int>();
+  config->minibatch_size_unsup = vm["minibatch-size-unsup"].as<int>();
   config->randomise = vm["randomise"].as<bool>();
 
   std::string parser_type_str = vm["parser-type"].as<std::string>();

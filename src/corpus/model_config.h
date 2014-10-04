@@ -20,6 +20,7 @@ struct ModelConfig {
   std::string      test_file;
   int         iterations;
   int         minibatch_size;
+  int         minibatch_size_unsup;
   int         instances;
   int         ngram_order;
   int         feature_context_size;
@@ -71,6 +72,7 @@ struct ModelConfig {
     ar & test_file;
     ar & iterations;
     ar & minibatch_size;
+    ar & minibatch_size_unsup;
     ar & instances;
     ar & ngram_order;
     ar & feature_context_size;
