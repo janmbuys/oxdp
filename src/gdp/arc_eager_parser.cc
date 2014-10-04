@@ -179,8 +179,8 @@ bool ArcEagerParser::executeAction(kAction a) {
 }
 
 Words ArcEagerParser::wordContext() const {
-  return word_children_distance_context(); //lbl model (order 8)
-  //return word_tag_next_children_context();  //(order 6)
+  //return word_children_distance_context(); //lbl model (order 8)
+  return word_tag_next_children_context();  //(order 6)
   //return word_tag_next_context();
 }
 
@@ -201,11 +201,11 @@ Words ArcEagerParser::tagContext(kAction a) const {
 }
 
 Words ArcEagerParser::actionContext() const {
-  return word_children_distance_context(); //lbl model (order 8)
+  //return word_children_distance_context(); //lbl model (order 8)
   //return tag_next_children_word_distance_context(); //lexicalized, smaller context (order 8)
-  //return tag_next_children_distance_some_context(); //smaller context
-  //return tag_next_children_distance_context(); //full
-  //return tag_next_children_word_context(); //lexicalized, full context (?)
+  return tag_next_children_distance_some_context(); //smaller context (order 5)
+  //return tag_next_children_distance_context(); //full (order 8)
+  //return tag_next_children_word_context(); //lexicalized, full context (order 8)
 }
 
 void ArcEagerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {

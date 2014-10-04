@@ -34,12 +34,12 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
   beam_chart.push_back(AsParserList());
   beam_chart[0].push_back(boost::make_shared<ArcStandardParser>(static_cast<TaggedSentence>(sent))); 
 
-  std::cout << "gold arcs: ";
-  sent.print_arcs();
+  //std::cout << "gold arcs: ";
+  //sent.print_arcs();
 
   //shift ROOT symbol (probability 1)
   beam_chart[0][0]->shift(); 
-  std::cout << "shifted" << std::endl;
+  //std::cout << "shifted" << std::endl;
 
   //add reduce actions, then shift word k (expect for last iteration) 
   for (unsigned k = 1; k <= sent.size(); ++k) {
@@ -58,7 +58,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
       for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
         Real reduceleftarcp = weights->predictAction(static_cast<WordId>(kAction::la), beam_chart[i][j]->actionContext());
         Real reducerightarcp = weights->predictAction(static_cast<WordId>(kAction::ra), beam_chart[i][j]->actionContext());
-        std::cout << j << " (la: " << reduceleftarcp << ", ra: " << reducerightarcp << ")" << " ";
+        //std::cout << j << " (la: " << reduceleftarcp << ", ra: " << reducerightarcp << ")" << " ";
         Real reducep = neg_log_sum_exp(reduceleftarcp, reducerightarcp);
        
         //TODO so adding both to the same list is giving an issue
@@ -112,7 +112,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
       //insert new beam_chart[0] to increment indexes
       beam_chart.insert(beam_chart.begin(), AsParserList());
     } 
-    std::cout << std::endl; 
+    //std::cout << std::endl; 
   }
  
   //TODO sum over identical parses in final beam 
@@ -138,7 +138,6 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
   } else
     return ArcStandardParser(*beam_chart[n][0]); 
 }
-
 
 template<class ParsedWeights>
 ArcStandardParser ArcStandardParseModel<ParsedWeights>::particleParseSentence(const ParsedSentence& sent, 
@@ -677,7 +676,7 @@ void ArcStandardParseModel<ParsedWeights>::extractSentenceUnsupervised(const Par
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
-  unsigned num_particles = 1000;
+  unsigned num_particles = 100;
   bool resample = true;
 
   ArcStandardParser parse = particleParseSentence(sent, weights, eng, num_particles, resample);

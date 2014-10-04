@@ -117,7 +117,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
       //THEN add new examples
       for (auto j: minibatch) {
         if (iter == 0) {  //this only takes 1 sec per iteration
-          //sup_examples_list.at(j)->clear();
+          sup_examples_list.at(j)->clear();
           parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
         }
         minibatch_examples->extend(sup_examples_list.at(j));
@@ -143,8 +143,11 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
       //critical loops
       //FIRST remove old examples
       if (iter > 0) {
-        for (auto j: minibatch) 
+        for (auto j: minibatch) {
           old_minibatch_examples->extend(unsup_examples_list.at(j));
+          std::cout << j << " ";
+        }
+        std::cout << std::endl;
         weights_->updateRemove(old_minibatch_examples, eng); 
       }
 
@@ -288,10 +291,11 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
         weights_->updateRemove(old_minibatch_examples, eng); 
       }
 
+      std::cout << start << std::endl;
       //THEN add new examples
       for (auto j: minibatch) {
         if (iter == 0) {  //this only takes 1 sec per iteration
-          //examples_list.at(j)->clear();
+          examples_list.at(j)->clear();
           parse_model_->extractSentence(training_corpus->sentence_at(j),examples_list.at(j));
         }
         minibatch_examples->extend(examples_list.at(j));
