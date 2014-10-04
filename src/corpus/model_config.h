@@ -31,6 +31,7 @@ struct ModelConfig {
   int         word_representation_size;
   int         threads;
   float       step_size;
+  bool        factored;
   int         classes;
   std::string      class_file;
   bool        randomise;
@@ -82,6 +83,7 @@ struct ModelConfig {
     ar & l2_maxent;
     ar & word_representation_size;
     ar & step_size;
+    ar & factored;
     ar & classes;
     ar & class_file;
     ar & randomise;

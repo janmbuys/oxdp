@@ -28,17 +28,18 @@ void ArcStandardParseModel<ParsedWeights>::resampleParticles(AsParserList* beam_
 template<class ParsedWeights>
 ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const ParsedSentence& sent, 
                                const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) {
-  bool direction_deterministic = true;
+  bool direction_deterministic = false;
     
   std::vector<AsParserList> beam_chart; 
   beam_chart.push_back(AsParserList());
   beam_chart[0].push_back(boost::make_shared<ArcStandardParser>(static_cast<TaggedSentence>(sent))); 
 
-  //std::cout << "gold arcs: ";
-  //sent.print_arcs();
+  std::cout << "gold arcs: ";
+  sent.print_arcs();
 
   //shift ROOT symbol (probability 1)
   beam_chart[0][0]->shift(); 
+  std::cout << "shifted" << std::endl;
 
   //add reduce actions, then shift word k (expect for last iteration) 
   for (unsigned k = 1; k <= sent.size(); ++k) {
@@ -52,12 +53,12 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
         for (unsigned j = beam_chart[i].size(); j > beam_size; --j)
           beam_chart[i].pop_back();
       }
-
+      std::cout << i << std::endl;
       //for every item in the list, add valid reduce actions to list i - 1 
       for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
         Real reduceleftarcp = weights->predictAction(static_cast<WordId>(kAction::la), beam_chart[i][j]->actionContext());
         Real reducerightarcp = weights->predictAction(static_cast<WordId>(kAction::ra), beam_chart[i][j]->actionContext());
-        //std::cout << "(la: " << reduceleftarcp << ", ra: " << reducerightarcp << ")" << " ";
+        std::cout << j << " (la: " << reduceleftarcp << ", ra: " << reducerightarcp << ")" << " ";
         Real reducep = neg_log_sum_exp(reduceleftarcp, reducerightarcp);
        
         //TODO so adding both to the same list is giving an issue
@@ -111,7 +112,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
       //insert new beam_chart[0] to increment indexes
       beam_chart.insert(beam_chart.begin(), AsParserList());
     } 
-    //std::cout << std::endl; 
+    std::cout << std::endl; 
   }
  
   //TODO sum over identical parses in final beam 
@@ -688,9 +689,15 @@ Real ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
+  Words ctx(7, 0);
+  std::cout << "parsing " << std::endl;
+  sent.print_arcs();
   ArcStandardParser parse = beamParseSentence(sent, weights, beam_size);
+  std::cout << "done parsing" << std::endl;
   acc_counts->countAccuracy(parse, sent);
+  std::cout << "done counting acc" << std::endl;
   ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
+  std::cout << "done gold parsing" << std::endl;
   
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
   return parse.particle_weight();
@@ -714,6 +721,7 @@ Real ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence
 
 template class ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
 template class ArcStandardParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>;
+template class ArcStandardParseModel<ParsedFactoredWeights>;
 
 }
 

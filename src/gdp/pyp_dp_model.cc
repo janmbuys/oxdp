@@ -357,13 +357,13 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
     const {
   MT19937 eng; //should not actually redefine, but it should be ok
   if (test_corpus != nullptr) {
-    accumulator = 0;
     
     std::vector<int> indices(test_corpus->size());
     std::iota(indices.begin(), indices.end(), 0);
    
     for (unsigned beam_size: config_->beam_sizes) {
       std::cerr << "parsing with beam size " << beam_size << ":\n";
+      accumulator = 0;
       auto beam_start = get_time();
       boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>();
 

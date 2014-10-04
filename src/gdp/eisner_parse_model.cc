@@ -223,5 +223,6 @@ Real EisnerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sen
 
 template class EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>;
 template class EisnerParseModel<ParsedPypWeights<tagLMOrderE, 1>>;
+template class EisnerParseModel<ParsedFactoredWeights>;
 
 }

@@ -74,92 +74,17 @@ void EisnerParser::recoverParseTree(WordIndex s, WordIndex t, bool complete,
     }
   }
 }
- 
+
 Words EisnerParser::wordContext(WordIndex i, WordIndex j, WordIndex k) const {
-// return wordContext(i, j);
-  Words ctx(5, 0);
-  if (i >= 0 && i < static_cast<int>(size()))
-    ctx[4] = tag_at(i);
-  else
-    ctx[4] = eos(); //stop word
-  ctx[3] = tag_at(j);
-  if (k > 0)
-    ctx[2] = tag_at(k);
-  ctx[1] = word_at(j);
-  if (k > 0)
-    ctx[0] = word_at(k);
-
-  return ctx; 
-}
-  
-Words EisnerParser::wordContext(WordIndex i, WordIndex j) const {
-  Words ctx(3, 0);
-  if (i >= 0)
-    ctx[2] = tag_at(i);
-  if (j >= 0) {
-    ctx[1] = tag_at(j);
-    ctx[0] = word_at(j);
-  }
-
-  return ctx;
+  return word_only_context(i, j, k); //order 6
+  //return word_tag_context(i, j, k); //order 6
+  //return word_tag_context(i, j); //order 4
 }
 
 Words EisnerParser::tagContext(WordIndex i, WordIndex j, WordIndex k) const {
- // return tagContext(i, j);
- //similar to Eisner generative
-  Words ctx(6, 0);
-  ctx[4] = tag_at(j);
-  if (j > i) //if left arc
-    ctx[5] = 1;
-  //previous child k
-  if (((k > i) && (k < j)) || ((k > j) && (k < i)))
-    ctx[3] = tag_at(k);
-  ctx[2] = std::min(10, std::abs(i - j));
-
-  if (j > (i+1)) {
-    ctx[1] = tag_at(j-1); 
-    if (j > (i+2))
-      ctx[0] = tag_at(i+1); 
-  } else if (i > (j+1)) {
-    ctx[1] = tag_at(j+1); 
-    if (i > (j+2))
-      ctx[0] = tag_at(i-1); 
-  } 
-
-  return ctx; 
+  return tag_only_context(i, j, k); //order 7
+  //return tag_only_context(i, j); //order 8
 }
-
-Words EisnerParser::tagContext(WordIndex i, WordIndex j) const {
-  //for now, try to replicate Adhi's conditioning context
-  Words ctx(7, 0);
-  if (j >= 0)
-    ctx[6] = tag_at(j);
-  if (j > i) //if left arc
-    ctx[5] = 1;
-  ctx[4] = std::min(10, std::abs(i - j));
-  if (j > (i+1)) {
-    ctx[2] = tag_at(j-1); 
-    ctx[1] = tag_at(i+1); 
-  } else if (i > (j+1)) {
-    ctx[0] = tag_at(i-1); 
-    ctx[3] = tag_at(j+1); 
-  }
-
-  if (i < j) {
-    if (j+1 < static_cast<int>(size()))
-      ctx[3] = tag_at(j+1);
-    if (i-1 >= 0)
-      ctx[0] = tag_at(i-1);
-  } else {
-    if (j-1 >= 0)
-      ctx[2] = tag_at(j-1);
-    if (i+1 < static_cast<int>(size()))
-      ctx[1] = tag_at(i+1);
-  } 
-
-  return ctx;
-} 
-
 
 void EisnerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
   //we should actually extract training examples in the same order as generation,

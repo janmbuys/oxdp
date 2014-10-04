@@ -452,6 +452,7 @@ void FactoredWeights::clear(const MinibatchWords& words, bool parallel_update) {
 Real FactoredWeights::predict(int word, vector<int> context) const {
   int class_id = index->getClass(word);
   int word_class_id = index->getWordIndexInClass(word);
+  std::cout << "getting predict vector" << std::endl;
   VectorReal prediction_vector = getPredictionVector(context);
 
   Real class_prob;

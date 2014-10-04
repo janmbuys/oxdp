@@ -57,16 +57,18 @@ void ParsedFactoredWeights::setModelParameters() {
 }
 
 Real ParsedFactoredWeights::predictWord(int word, Words context) const {
+  std::cout << "context: " << std::endl;
+  std::cout << context.size() << std::endl;
   return FactoredWeights::predict(word, context);
 }
 
 Real ParsedFactoredWeights::predictTag(int tag, Words context) const {
-  return 1.0;
+  return 0.0;
 }
   
 Real ParsedFactoredWeights::predictAction(int action, Words context) const {
   //TODO
-  return 1.0/numActions();
+  return -std::log(1.0/numActions());
 }
 
 int ParsedFactoredWeights::numWords() const {

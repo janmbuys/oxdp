@@ -375,6 +375,36 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
+  Words word_children_distance_context() const {
+    Words ctx(7, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+
+      ctx[0] = word_at(stack_.at(stack_.size()-1));
+      if (l1 > 0)
+        ctx[1] = word_at(l1); 
+      if (r1 > 0)
+        ctx[2] = word_at(r1);
+    }
+    if (stack_.size() >= 2) {
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+
+      ctx[3] = word_at(stack_.at(stack_.size()-2));
+      if (l2 > 0)
+        ctx[4] = word_at(l2);
+      if (r2 > 0)
+        ctx[5] = word_at(r2); //
+
+      WordIndex i = stack_.rbegin()[1];
+      WordIndex j = stack_.rbegin()[0];
+      ctx[6] = std::min(j - i, 5); //distance
+    }
+    
+    return ctx;
+  }
+
   Words word_tag_some_children_distance_context() const {
     Words ctx(7, 0);
     if (stack_.size() >= 1) { 

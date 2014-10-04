@@ -538,16 +538,23 @@ void Weights::clear(const MinibatchWords& words, bool parallel_update) {
 VectorReal Weights::getPredictionVector(const vector<int>& context) const {
   int context_width = config->ngram_order - 1;
   int word_width = config->word_representation_size;
+  std::cout << context_width << std::endl;
 
   VectorReal prediction_vector = VectorReal::Zero(word_width);
   for (int i = 0; i < context_width; ++i) {
+    std::cout << "getting" << std::endl;
+    std::cout << i << " " << C[i].size() << " " << std::endl;
+    std::cout << i << " " << Q.col(context[i]).size() << " " << std::endl;
+
     if (config->diagonal_contexts) {
       prediction_vector += C[i].asDiagonal() * Q.col(context[i]);
     } else {
       prediction_vector += C[i] * Q.col(context[i]);
     }
+    std::cout << "gotton" << std::endl;
   }
 
+  std::cout << "has vector" << std::endl;
   return config->sigmoid ? sigmoid(prediction_vector) : prediction_vector;
 }
 

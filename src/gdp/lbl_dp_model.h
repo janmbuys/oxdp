@@ -12,6 +12,7 @@
 #include "lbl/metadata.h"
 #include "lbl/minibatch_words.h"
 #include "lbl/model_utils.h"
+#include "lbl/parsed_factored_weights.h"
 #include "lbl/utils.h"
 #include "lbl/weights.h"
 
@@ -54,6 +55,8 @@ class LblDpModel {
       const boost::shared_ptr<ParsedWeights>& global_gradient,
       Real minibatch_factor);
 
+  void evaluate() const;
+
   void evaluate(
       const boost::shared_ptr<ParsedCorpus>& corpus, Real& accumulator) const;
 
@@ -79,7 +82,7 @@ class LblDpModel {
   boost::shared_ptr<Dict> dict;
   boost::shared_ptr<Metadata> metadata;
   boost::shared_ptr<ParsedWeights> weights;
-  boost::shared_ptr<ParseModel> ngram_model;
+  boost::shared_ptr<ParseModel> parse_model;
 };
 
 } // namespace oxlm

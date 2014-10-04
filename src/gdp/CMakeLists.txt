@@ -16,6 +16,7 @@ add_libraries(gdp
   pyp_model.cc
   lbl_model.cc
   pyp_dp_model.cc
+  lbl_dp_model.cc
 )
 
 target_link_libs(gdp utils corpus pyp lbl)
@@ -29,9 +30,8 @@ set(EXECUTABLES
   evaluate_lbl
   predict_lbl
   score_lbl
-  train_gibbs_dp
   train_sgd
-  train_factored_sgd
+  train_gibbs
 )
 
 foreach(f ${EXECUTABLES})

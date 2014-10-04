@@ -1,5 +1,3 @@
-#include "gdp/lbl_model.h"
-
 #include <iomanip>
 
 #include <boost/make_shared.hpp>
@@ -15,20 +13,42 @@
 #include "lbl/weights.h"
 #include "utils/conditional_omp.h"
 
+#include "gdp/lbl_dp_model.h"
+
 namespace oxlm {
 
 template<class ParseModel, class ParsedWeights, class Metadata>
 LblDpModel<ParseModel, ParsedWeights, Metadata>::LblDpModel() {
-  dict = boost::make_shared<Dict>();
+  dict = boost::make_shared<Dict>(true, false);
+  
+  //not sure if this is necessary
+  if (config->parser_type == ParserType::arcstandard) {
+    config->num_actions = 3;
+  } else if (config->parser_type == ParserType::arceager) {
+    config->num_actions = 4;
+  } else {
+    config->num_actions = 1;
+    dict->convert("STOP", false);
+  }
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
 LblDpModel<ParseModel, ParsedWeights, Metadata>::LblDpModel(
     const boost::shared_ptr<ModelConfig>& config)
     : config(config) {
-  dict = boost::make_shared<Dict>();
+  dict = boost::make_shared<Dict>(true, config->parser_type==ParserType::arceager);
+  parse_model = boost::make_shared<ParseModel>();
+  
+  if (config->parser_type == ParserType::arcstandard) {
+    config->num_actions = 3;
+  } else if (config->parser_type == ParserType::arceager) {
+    config->num_actions = 4;
+  } else {
+    config->num_actions = 1;
+    dict->convert("STOP", false);
+  }
+
   metadata = boost::make_shared<Metadata>(config, dict);
-  ngram_model = boost::make_shared<NGramModel<ParsedWeights>>(config->ngram_order, dict->sos(), dict->eos());
   srand(1);
 }
 
@@ -53,14 +73,15 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   // Initialize the dictionary now, if it hasn't been initialized when the
   // vocabulary was partitioned in classes.
   bool immutable_dict = config->classes > 0 || config->class_file.size();
-  boost::shared_ptr<SentenceCorpus> training_corpus = boost::make_shared<SentenceCorpus>();
+  boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>();
   training_corpus->readFile(config->training_file, dict, immutable_dict);
   config->vocab_size = dict->size();
+  config->num_tags = dict->tag_size();
   cout << "Done reading training corpus..." << endl;
 
-  boost::shared_ptr<SentenceCorpus> test_corpus; 
+  boost::shared_ptr<ParsedCorpus> test_corpus; 
   if (config->test_file.size()) {
-    test_corpus = boost::make_shared<SentenceCorpus>();
+    test_corpus = boost::make_shared<ParsedCorpus>();
     test_corpus->readFile(config->test_file, dict, true);
     cout << "Done reading test corpus..." << endl;
   }
@@ -154,13 +175,13 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
                 minibatch.begin() + task_start, minibatch.begin() + task_end);
             //collect the training examples for the minibatch
             //std::cout << "  task " << task.size();
-            boost::shared_ptr<DataSet> task_examples = boost::make_shared<DataSet>();
+            boost::shared_ptr<ParseDataSet> task_examples = boost::make_shared<ParseDataSet>();
             
             // #pragma omp critical
             for (int j: task) 
-              ngram_model->extractSentence(training_corpus->sentence_at(j), task_examples);
+              parse_model->extractSentence(training_corpus->sentence_at(j), task_examples);
             //std::cout << " (" << task_examples->size() << ") ";
-            num_examples += task_examples->size();
+            num_examples += task_examples->word_example_size();
 
             if (config->noise_samples > 0) {
               weights->estimateGradient(
@@ -196,11 +217,11 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
         // Wait for all threads to finish making the model gradient update.
         #pragma omp barrier
-
-        //TODO check when changing to sentence level
         Real minibatch_factor =
             static_cast<Real>(num_examples) / training_corpus->numTokens();
-            //static_cast<Real>(end - start) / training_corpus->size();
+        //for now, weight in terms of number of words predicted
+        //should actually be total number of predictions, but if the ratio is
+        //the same, it should be fine
         //std::cout << "\n" << num_examples << " examples " 
         //    << minibatch_factor << " minibatch factor" << std::endl;
         objective = regularize(global_gradient, minibatch_factor);
@@ -226,8 +247,6 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         start = end;
       }
 
-      evaluate(test_corpus, iteration_start, minibatch_counter,
-               test_objective, best_perplexity);
       #pragma omp master
       {
         Real iteration_time = get_duration(iteration_start, get_time());
@@ -240,6 +259,9 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
              << endl;
         cout << endl;
       }
+      if (iter%10 == 0)
+        evaluate(test_corpus, iteration_start, minibatch_counter,
+               test_objective, best_perplexity);
     }
   }
 
@@ -263,63 +285,83 @@ Real LblDpModel<ParseModel, ParsedWeights, Metadata>::regularize(
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
+void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate() const {
+ //read test data 
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
+  test_corpus->readFile(config->test_file, dict, true);
+  std::cerr << "Done reading test corpus..." << std::endl;
+  
+  Real log_likelihood = 0;
+  evaluate(test_corpus, log_likelihood);
+    
+  size_t test_size = test_corpus->numTokens(); //TODO should actually be number of examples
+  Real test_perplexity = perplexity(log_likelihood, test_size); //TODO use perplexity function
+  std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
+}
+
+template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
-    const boost::shared_ptr<SentenceCorpus>& test_corpus, Real& accumulator) const {
+    const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) const {
   if (test_corpus != nullptr) {
-    #pragma omp master
-    {
-      cout << "Calculating perplexity for " << test_corpus->numTokens()
-           << " tokens..." << endl;
-      accumulator = 0;
-    }
-
-    // Each thread must wait until the perplexity is set to 0.
-    // Otherwise, partial results might get overwritten.
-    #pragma omp barrier
-
-    vector<int> indices(test_corpus->size());
+        vector<int> indices(test_corpus->size());
     iota(indices.begin(), indices.end(), 0);
-    size_t start = 0;
-    while (start < test_corpus->size()) {
-      size_t end = min(start + config->minibatch_size, test_corpus->size());
-      vector<int> minibatch(
-          indices.begin() + start, min(indices.begin() + end, indices.end()));
-      
-      minibatch = scatterMinibatch(minibatch);
+    
+    for (unsigned beam_size: config->beam_sizes) {
+      #pragma omp master
+      {
+        std::cerr << "parsing with beam size " << beam_size << ":\n";
+        accumulator = 0;
+      }
 
-      //option 1: computationally slightly more efficient
+      // Each thread must wait until the perplexity is set to 0.
+      // Otherwise, partial results might get overwritten.
+      #pragma omp barrier
       
-      /* boost::shared_ptr<DataSet> minibatch_examples = boost::make_shared<DataSet>();
-      for (int j: minibatch) 
-        ngram_model->extract(test_corpus,  j, minibatch_examples);
-      Real objective = weights->getObjective(minibatch_examples); */
-      
-      //option 2: more extendable
-      Real objective = 0;
+      auto beam_start = get_time();
+      boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>();
 
-      for (int j: minibatch) {
-        Real likelihood = ngram_model->evaluateSentence(test_corpus->sentence_at(j), weights);
-        objective += likelihood;
+      size_t start = 0;
+      while (start < test_corpus->size()) {
+        size_t end = std::min(start + config->minibatch_size, test_corpus->size());
+
+        //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
+        std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
+        
+        //minibatch = scatterMinibatch(minibatch);
+
+        Real objective = 0;
+        for (auto j: minibatch) {
+          objective += parse_model->evaluateSentence(test_corpus->sentence_at(j), 
+                  weights, acc_counts, beam_size);
+        }
+
+        #pragma omp critical
+        accumulator += objective;
+        start = end;
       } 
-       
-      #pragma omp critical
-      accumulator += objective;  
+    
+      // Wait for all the threads to compute the perplexity for their slice of
+      // test data.
+      // do we need both a barrier and a master?
+      #pragma omp barrier
 
-      start = end;
+      #pragma omp master
+      {
+        Real beam_time = get_duration(beam_start, get_time());
+        Real sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
+        std::cerr << "(" << static_cast<int>(sents_per_sec) << " sentences per second)\n"; 
+        acc_counts->printAccuracy();
+      }
     }
-    std::cout << std::endl;
-
-    // Wait for all the threads to compute the perplexity for their slice of
-    // test data.
-    #pragma omp barrier
+    
+    #pragma omp master
     weights->clearCache();
   }
 }
 
-
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
-    const boost::shared_ptr<SentenceCorpus>& test_corpus, const Time& iteration_start,
+    const boost::shared_ptr<ParsedCorpus>& test_corpus, const Time& iteration_start,
     int minibatch_counter, Real& log_likelihood, Real& best_perplexity) const {
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);
@@ -394,8 +436,9 @@ bool LblDpModel<ParseModel, ParsedWeights, Metadata>::operator==(
       && *weights == *other.weights;
 }
 
-template class LblDpModel<Weights, Weights, Metadata>;
-template class LblDpModel<FactoredWeights, FactoredWeights, FactoredMetadata>;
+template class LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
+template class LblDpModel<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
+template class LblDpModel<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
 
 } // namespace oxlm
 
