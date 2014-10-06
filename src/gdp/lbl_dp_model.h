@@ -85,4 +85,14 @@ class LblDpModel {
   boost::shared_ptr<ParseModel> parse_model;
 };
 
+class ASParsedFactoredLblLM: public LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata> {
+ public:
+  ASParsedFactoredLblLM() : LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>() {}
+
+  ASParsedFactoredLblLM(const boost::shared_ptr<ModelConfig>& config)
+     : LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config) {}
+};
+
+
+
 } // namespace oxlm

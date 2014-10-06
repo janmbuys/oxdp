@@ -19,17 +19,7 @@ namespace oxlm {
 
 template<class ParseModel, class ParsedWeights, class Metadata>
 LblDpModel<ParseModel, ParsedWeights, Metadata>::LblDpModel() {
-  dict = boost::make_shared<Dict>(true, false);
-  
-  //not sure if this is necessary
-  if (config->parser_type == ParserType::arcstandard) {
-    config->num_actions = 3;
-  } else if (config->parser_type == ParserType::arceager) {
-    config->num_actions = 4;
-  } else {
-    config->num_actions = 1;
-    dict->convert("STOP", false);
-  }
+  parse_model = boost::make_shared<ParseModel>();
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
@@ -324,10 +314,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
       while (start < test_corpus->size()) {
         size_t end = std::min(start + config->minibatch_size, test_corpus->size());
 
-        //std::vector<int> minibatch = scatterMinibatch(start, end, indices);
         std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
-        
-        //minibatch = scatterMinibatch(minibatch);
+        minibatch = scatterMinibatch(minibatch);
 
         Real objective = 0;
         for (auto j: minibatch) {

@@ -53,7 +53,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
         for (unsigned j = beam_chart[i].size(); j > beam_size; --j)
           beam_chart[i].pop_back();
       }
-      std::cout << i << std::endl;
+      //std::cout << i << std::endl;
       //for every item in the list, add valid reduce actions to list i - 1 
       for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
         Real reduceleftarcp = weights->predictAction(static_cast<WordId>(kAction::la), beam_chart[i][j]->actionContext());
@@ -676,8 +676,8 @@ void ArcStandardParseModel<ParsedWeights>::extractSentenceUnsupervised(const Par
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
-  unsigned num_particles = 100;
-  bool resample = true;
+  unsigned num_particles = 1000;
+  bool resample = false;
 
   ArcStandardParser parse = particleParseSentence(sent, weights, eng, num_particles, resample);
   parse.extractExamples(examples);
@@ -689,14 +689,14 @@ Real ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   Words ctx(7, 0);
-  std::cout << "parsing " << std::endl;
-  sent.print_arcs();
+  //std::cout << "parsing " << std::endl;
+  //sent.print_arcs();
   ArcStandardParser parse = beamParseSentence(sent, weights, beam_size);
-  std::cout << "done parsing" << std::endl;
+  //std::cout << "done parsing" << std::endl;
   acc_counts->countAccuracy(parse, sent);
-  std::cout << "done counting acc" << std::endl;
+  //std::cout << "done counting acc" << std::endl;
   ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
-  std::cout << "done gold parsing" << std::endl;
+  //std::cout << "done gold parsing" << std::endl;
   
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
   return parse.particle_weight();

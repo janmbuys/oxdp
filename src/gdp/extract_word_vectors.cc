@@ -4,6 +4,7 @@
 #include <boost/program_options.hpp>
 
 #include "gdp/lbl_model.h"
+#include "gdp/lbl_dp_model.h"
 
 using namespace boost::program_options;
 using namespace oxlm;
@@ -60,6 +61,9 @@ int main(int argc, char** argv) {
       return 0;
     case FACTORED_NLM:
       ExtractWordVectors<FactoredLblLM>(model_file, vocab_file, vectors_file);
+      return 0;
+    case AS_PARSE_NLM:
+      ExtractWordVectors<ASParsedFactoredLblLM>(model_file, vocab_file, vectors_file);
       return 0;
     default:
       cout << "Unknown model type" << endl;

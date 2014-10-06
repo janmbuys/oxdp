@@ -164,9 +164,9 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
       ++minibatch_counter;
       start = end;
 
-      /*if (minibatch_counter % 1000 == 0) {
+      if ((iter == 0) && (minibatch_counter % 10000 == 0)) {
         evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
-      } */
+      } 
     }
 
     Real iteration_time = get_duration(iteration_start, get_time());

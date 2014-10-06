@@ -9,15 +9,17 @@
 namespace oxlm {
 
 ParsedFactoredWeights::ParsedFactoredWeights()
-    : data(NULL) {}
+//    : data(NULL) 
+{}
 
 ParsedFactoredWeights::ParsedFactoredWeights(
     const boost::shared_ptr<ModelConfig>& config,
     const boost::shared_ptr<FactoredMetadata>& metadata,
     bool init)
-    : FactoredWeights(config, metadata, init), 
+    : FactoredWeights(config, metadata, init) 
  //   metadata(metadata), index(metadata->getIndex()),  //for now, don't have own metadata and index
-      data(NULL) {
+//      data(NULL) 
+{
   allocate();
 
   if (init) {
@@ -28,10 +30,11 @@ ParsedFactoredWeights::ParsedFactoredWeights(
 }
 
 ParsedFactoredWeights::ParsedFactoredWeights(const ParsedFactoredWeights& other)
-    : FactoredWeights(other), data(NULL) {
+    : FactoredWeights(other) //, data(NULL) 
+{
   allocate();
-  if (size > 0)
-    memcpy(data, other.data, size * sizeof(Real));  
+  //if (size > 0)
+  //  memcpy(data, other.data, size * sizeof(Real));  
 }
 
 size_t ParsedFactoredWeights::numParameters() const {
@@ -42,8 +45,8 @@ void ParsedFactoredWeights::allocate() {
   //set vector sizes
   
   size = 0;
-  if (size > 0)
-    data = new Real[size]; 
+  //if (size > 0)
+  //  data = new Real[size]; 
 
   for (int i = 0; i < config->threads; ++i) {
     mutexes.push_back(boost::make_shared<mutex>());
@@ -57,7 +60,7 @@ void ParsedFactoredWeights::setModelParameters() {
 }
 
 Real ParsedFactoredWeights::predictWord(int word, Words context) const {
-  std::cout << "context: " << std::endl;
+  //std::cout << "context: " << std::endl;
   std::cout << context.size() << std::endl;
   return FactoredWeights::predict(word, context);
 }

@@ -118,7 +118,7 @@ class ParsedFactoredWeights : public FactoredWeights {
     ar << index;
 
     ar << size;
-    ar << boost::serialization::make_array(data, size);
+    //ar << boost::serialization::make_array(data, size);
   }
 
   template<class Archive>
@@ -130,8 +130,8 @@ class ParsedFactoredWeights : public FactoredWeights {
     ar >> index;
 
     ar >> size;
-    data = new Real[size];
-    ar >> boost::serialization::make_array(data, size);
+    //data = new Real[size];
+    //ar >> boost::serialization::make_array(data, size);
 
     setModelParameters();
   }
@@ -140,7 +140,7 @@ class ParsedFactoredWeights : public FactoredWeights {
 
  private:
   int size;
-  Real* data;
+  //Real* data;
   vector<Mutex> mutexes;
 };
 

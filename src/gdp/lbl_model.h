@@ -22,6 +22,7 @@ namespace oxlm {
 enum ModelType {
   NLM = 1,
   FACTORED_NLM = 2,
+  AS_PARSE_NLM = 3,
 };
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
