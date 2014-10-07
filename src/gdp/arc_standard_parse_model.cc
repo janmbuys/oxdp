@@ -115,14 +115,32 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
     //std::cout << std::endl; 
   }
  
-  //TODO sum over identical parses in final beam 
   unsigned n = 0; //index to final beam
-  for (unsigned i = 0; (i < beam_chart[n].size()); ++i) 
-    beam_chart[n][0]->add_beam_weight(beam_chart[n][i]->particle_weight());
+
+  //sum over identical parses in final beam 
+  vector<bool> duplicate(beam_chart[n].size(), false);
+  for (unsigned i = 0; (i < beam_chart[n].size()-1); ++i) {
+    if (!duplicate[i])
+      for (unsigned j = i + 1; (j < beam_chart[n].size()); ++j) {
+        if (ParsedSentence::eq_arcs(beam_chart[n][i], beam_chart[n][j])) {
+          beam_chart[n][i]->add_log_particle_weight(beam_chart[n][j]->particle_weight());          
+          duplicate[j] = true;
+        }
+      }
+  } 
+
+  std::sort(beam_chart[n].begin(), beam_chart[n].end(), TransitionParser::cmp_particle_weights); 
+  //for (unsigned i = 0; i < duplicate.size(); ++i)
+  //  std::cout << duplicate[i] << " ";
+  //std::cout << std::endl;
+
+  for (unsigned i = 0; (i < beam_chart[n].size()); ++i)
+    if (!duplicate[i])
+      beam_chart[n][0]->add_beam_weight(beam_chart[n][i]->particle_weight());
 
   //print parses
   //add verbose option?
-  for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
+  //for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
     //std::cout << beam_chart[n][i]->particle_weight() << " ";
     //beam_chart[n][i]->print_arcs();
     //beam_chart[n][i]->print_actions();
@@ -130,7 +148,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
     //can't do this now, but add if needed later
     //float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
     //std::cout << "  Dir Accuracy: " << dir_acc;
-  } 
+  //} 
 
   if (beam_chart[n].size()==0) {
     std::cout << "no parse found" << std::endl;

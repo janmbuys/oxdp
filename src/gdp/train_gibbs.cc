@@ -109,7 +109,19 @@ int main(int argc, char** argv) {
   config->beam_sizes = {1};
   for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
     config->beam_sizes.push_back(i);
-  
+ 
+  std::cout << "################################" << std::endl;
+  std::cout << "# Config Summary" << std::endl;
+  std::cout << "# training set = " << config->training_file << std::endl;
+  std::cout << "# minibatch size = " << config->minibatch_size << std::endl;
+  std::cout << "# iterations = " << config->iterations << std::endl;
+  std::cout << "# randomise = " << config->randomise << std::endl;
+  std::cout << "# parser type = " << parser_type_str << std::endl;
+  std::cout << "# lexicalised = " << config->lexicalised << std::endl;
+  std::cout << "# semi-supervised = " << config->semi_supervised << std::endl;
+
+  std::cout << "################################" << std::endl;
+
   if (config->parser_type == ParserType::ngram) {
     PypModel model(config); 
     model.learn();

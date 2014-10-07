@@ -171,9 +171,9 @@ ArcEagerParser ArcEagerParseModel<ParsedWeights>::beamParseSentence(const Parsed
     beam_chart[n][0]->add_beam_weight(beam_chart[n][i]->particle_weight());
 
   for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
-    std::cout << beam_chart[n][i]->particle_weight() << " ";
-    beam_chart[n][i]->print_arcs();
-    beam_chart[n][i]->print_actions();
+    //std::cout << beam_chart[n][i]->particle_weight() << " ";
+    //beam_chart[n][i]->print_arcs();
+    //beam_chart[n][i]->print_actions();
 
     //float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
     //std::cout << "  Dir Accuracy: " << dir_acc;
@@ -520,7 +520,7 @@ ArcEagerParser ArcEagerParseModel<ParsedWeights>::particleGoldParseSentence(cons
       //beam_stack[i]->print_arcs();
       //float dir_acc = (beam_stack[i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
       //std::cout << "  Dir Accuracy: " << dir_acc;
-      std::cout << "  Sample weight: " << (beam_stack[i]->particle_weight()) << std::endl;
+      //std::cout << "  Sample weight: " << (beam_stack[i]->particle_weight()) << std::endl;
 
       return ArcEagerParser(*beam_stack[i]); 
     }

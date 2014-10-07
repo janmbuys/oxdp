@@ -78,6 +78,13 @@ class TransitionParser: public Parser {
     add_weight(w);
   }
 
+  void add_log_particle_weight(Real w) {
+    if (weight()==0)
+      set_weight(w);
+    else
+      set_weight(neg_log_sum_exp(weight(), w)); //add in log space
+  }
+
   void add_beam_weight(Real w) {
     if (beam_weight_==0)
       beam_weight_ = w;

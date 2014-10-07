@@ -42,6 +42,16 @@ class ParsedSentence: public TaggedSentence {
     return (arcs_[i] == j);
   }
 
+  static bool eq_arcs(const boost::shared_ptr<ParsedSentence>& p1, 
+                          const boost::shared_ptr<ParsedSentence>& p2) {
+    if (p1->size() != p2->size())
+      return false;
+    for (int i = 0; i < p1->size(); ++i) 
+      if (p1->arc_at(i) != p2->arc_at(i))
+        return false;  
+    return true;
+  }
+
   bool is_projective_dependency() const {
     for (int i = 0; i < (size() - 1); ++i)
       for (int j = i + 1; (j < size()); ++j)

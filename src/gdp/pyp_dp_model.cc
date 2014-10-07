@@ -145,9 +145,9 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
       if (iter > 0) {
         for (auto j: minibatch) {
           old_minibatch_examples->extend(unsup_examples_list.at(j));
-          std::cout << j << " ";
+          //std::cout << j << " ";
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
         weights_->updateRemove(old_minibatch_examples, eng); 
       }
 
@@ -291,7 +291,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
         weights_->updateRemove(old_minibatch_examples, eng); 
       }
 
-      std::cout << start << std::endl;
+      //std::cout << start << std::endl;
       //THEN add new examples
       for (auto j: minibatch) {
         if (iter == 0) {  //this only takes 1 sec per iteration
@@ -308,6 +308,9 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       start = end;
     }     
     //std::cout << std::endl;
+   
+    if ((iter > 0) && (iter % 5 == 0))
+      weights_->resampleHyperparameters(eng);
 
     Real iteration_time = get_duration(iteration_start, get_time());
 
@@ -317,7 +320,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
              << "Training Objective: " << weights_->likelihood() / training_corpus->numTokens() 
            << "\n\n";
     
-    if (iter%10 == 0)
+    if (iter%5 == 0)
       evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
   }
 
