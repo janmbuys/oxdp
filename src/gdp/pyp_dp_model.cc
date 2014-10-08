@@ -116,10 +116,9 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
 
       //THEN add new examples
       for (auto j: minibatch) {
-        if (iter == 0) {  //this only takes 1 sec per iteration
-          sup_examples_list.at(j)->clear();
-          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
-        }
+        sup_examples_list.at(j)->clear();
+        parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
+        //TODO if (iter > 0) alternatively sample from distribution
         minibatch_examples->extend(sup_examples_list.at(j));
       }     
 
@@ -154,7 +153,11 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
       //THEN add new examples
       for (auto j: minibatch) {
         unsup_examples_list.at(j)->clear();
-        parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
+        if (iter == 0)
+          parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
+                            weights_, unsup_examples_list.at(j));
+        else 
+          parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
                             weights_, eng, unsup_examples_list.at(j));
         minibatch_examples->extend(unsup_examples_list.at(j));
       }     
@@ -164,10 +167,13 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
       ++minibatch_counter;
       start = end;
 
-      if ((iter == 0) && (minibatch_counter % 10000 == 0)) {
+      /*if ((iter == 0) && (minibatch_counter % 10000 == 0)) {
         evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
-      } 
+      } */
     }
+
+    if ((iter > 0) && (iter % 5 == 0))
+      weights_->resampleHyperparameters(eng);
 
     Real iteration_time = get_duration(iteration_start, get_time());
 

@@ -681,7 +681,8 @@ template<class ParsedWeights>
 void ArcEagerParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
-  ArcEagerParser parse = staticGoldParseSentence(sent, weights);
+  unsigned beam_size = 16;
+  ArcEagerParser parse = beamParseSentence(sent, weights, beam_size);
   parse.extractExamples(examples);
 }
 
@@ -690,10 +691,18 @@ void ArcEagerParseModel<ParsedWeights>::extractSentenceUnsupervised(const Parsed
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
-  unsigned num_particles = 1000;
-  bool resample = false;
-
+  unsigned num_particles = 100;
+  bool resample = true;
   ArcEagerParser parse = particleParseSentence(sent, weights, eng, num_particles, resample);
+  parse.extractExamples(examples);
+}
+
+template<class ParsedWeights>
+void ArcEagerParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  unsigned beam_size = 1; //for unsup questions
+  ArcEagerParser parse = beamParseSentence(sent, weights, beam_size);
   parse.extractExamples(examples);
 }
 

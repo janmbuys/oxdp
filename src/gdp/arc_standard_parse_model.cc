@@ -683,7 +683,9 @@ template<class ParsedWeights>
 void ArcStandardParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
-  ArcStandardParser parse = staticGoldParseSentence(sent, weights);
+  unsigned beam_size = 8;
+  //ArcStandardParser parse = staticGoldParseSentence(sent, weights);
+  ArcStandardParser parse = beamParseSentence(sent, weights, beam_size);
   //std::cout << "Gold actions: ";
   //parse.print_actions();
   parse.extractExamples(examples);
@@ -694,10 +696,19 @@ void ArcStandardParseModel<ParsedWeights>::extractSentenceUnsupervised(const Par
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
-  unsigned num_particles = 1000;
-  bool resample = false;
+  unsigned num_particles = 100;
+  bool resample = true;
 
   ArcStandardParser parse = particleParseSentence(sent, weights, eng, num_particles, resample);
+  parse.extractExamples(examples);
+}
+
+template<class ParsedWeights>
+void ArcStandardParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  unsigned beam_size = 8;
+  ArcStandardParser parse = beamParseSentence(sent, weights, beam_size);
   parse.extractExamples(examples);
 }
 
@@ -707,14 +718,9 @@ Real ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   Words ctx(7, 0);
-  //std::cout << "parsing " << std::endl;
-  //sent.print_arcs();
   ArcStandardParser parse = beamParseSentence(sent, weights, beam_size);
-  //std::cout << "done parsing" << std::endl;
   acc_counts->countAccuracy(parse, sent);
-  //std::cout << "done counting acc" << std::endl;
   ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
-  //std::cout << "done gold parsing" << std::endl;
   
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
   return parse.particle_weight();

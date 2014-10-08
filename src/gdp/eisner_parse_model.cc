@@ -199,6 +199,13 @@ void EisnerParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSe
   parse.extractExamples(examples);
 }
 
+template<class ParsedWeights>
+void EisnerParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  EisnerParser parse = parseSentence(sent, weights);
+  parse.extractExamples(examples);
+}
 
 template<class ParsedWeights>
 Real EisnerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
