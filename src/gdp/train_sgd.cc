@@ -63,9 +63,13 @@ int main(int argc, char** argv) {
     ("randomise", value<bool>()->default_value(true),
         "Visit the training tokens in random order.")
     ("parser-type", value<std::string>()->default_value("arcstandard"),
-        "Parsing strategy.")
+        "Parsing strategy.")    
     ("max-beam-size", value<int>()->default_value(8),
         "Maximum beam size for decoding (in powers of 2).")
+    ("direction-det", value<bool>()->default_value(false),
+        "Arc direction always deterministic in beam search.")
+    ("sum-over-beam", value<bool>()->default_value(false),
+        "Sum over likelihoods of identical parses in final beam.")
     ("diagonal-contexts", value<bool>()->default_value(true),
         "Use diagonal context matrices (usually faster).")
     ("sigmoid", value<bool>()->default_value(true),
@@ -131,6 +135,9 @@ int main(int argc, char** argv) {
   } else {
     config->parser_type = ParserType::ngram; 
   }
+
+  config->direction_deterministic = vm["direction-det"].as<bool>();
+  config->sum_over_beam = vm["sum-over-beam"].as<bool>();
 
   config->beam_sizes = {1};
   for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)

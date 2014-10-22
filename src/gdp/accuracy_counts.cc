@@ -2,7 +2,8 @@
 
 namespace oxlm {
 
-AccuracyCounts::AccuracyCounts(): 
+AccuracyCounts::AccuracyCounts(boost::shared_ptr<Dict> dict): 
+  dict_(dict),
   likelihood_{0},
   beam_likelihood_{0},
   importance_likelihood_{0},
@@ -13,23 +14,31 @@ AccuracyCounts::AccuracyCounts():
   shift_gold_{0},
   final_reduce_error_count_{0},
   total_length_{0},
+  total_length_nopunc_{0},
   directed_count_{0},
+  directed_count_nopunc_{0},
   undirected_count_{0}, 
+  undirected_count_nopunc_{0}, 
   root_count_{0},
   gold_more_likely_count_{0},
   num_actions_{0},
   complete_sentences_{0},
+  complete_sentences_nopunc_{0},
   num_sentences_{0}
   {
   }
 
 void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSentence& gold_parse) {
+  //TODO labelled accuracy
+    
   //sentence level
   inc_num_sentences();
-  if (prop_parse.has_equal_arcs(gold_parse))
+  if (prop_parse.has_equal_arcs(gold_parse)) {
     inc_complete_sentences();
+  }
   add_total_length(gold_parse.size() - 1);
-  
+  bool punc_complete = true;
+
   //maybe change this again later ...
   add_likelihood(prop_parse.weight());
   /* add_gold_likelihood(gold_parse.weight());
@@ -41,14 +50,31 @@ void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSe
     if (prop_parse.arc_at(j)==gold_parse.arc_at(j)) {
       inc_directed_count();
       inc_undirected_count(); 
+      if (!dict_->punctTag(prop_parse.tag_at(j))) {
+        inc_directed_count_nopunc();
+        inc_undirected_count_nopunc(); 
+      } 
+
     } else if (prop_parse.has_parent_at(j) && 
               (gold_parse.arc_at(prop_parse.arc_at(j))==j)) {
       inc_undirected_count(); 
+      if (!dict_->punctTag(prop_parse.tag_at(j))) 
+        inc_undirected_count_nopunc(); 
+
     }
-      
+
     if (prop_parse.has_arc(j, 0) && gold_parse.has_arc(j, 0)) 
       inc_root_count();
+      
+    if (!dict_->punctTag(prop_parse.tag_at(j))) {
+      inc_total_length_nopunc();
+      if (prop_parse.arc_at(j)!=gold_parse.arc_at(j))
+        punc_complete = false;
+    }
   }
+
+  if (punc_complete)
+    inc_complete_sentences_nopunc();
 }
 
 void AccuracyCounts::transitionCountAccuracy(const TransitionParser& prop_parse, 
@@ -131,15 +157,20 @@ void AccuracyCounts::countLikelihood(Real parse_l, Real gold_l) {
 }
 
 void AccuracyCounts::printAccuracy() const {
+  std::cerr << "Directed Accuracy No Punct: " << directed_accuracy_nopunc() << std::endl;
+  std::cerr << "Undirected Accuracy No Punct: " << undirected_accuracy_nopunc() << std::endl;
   std::cerr << "Directed Accuracy: " << directed_accuracy() << std::endl;
   std::cerr << "Undirected Accuracy: " << undirected_accuracy() << std::endl;
   std::cerr << "Final reduce error rate: " << final_reduce_error_rate() << std::endl;
   std::cerr << "Completely correct: " << complete_accuracy() << std::endl;
+  std::cerr << "Completely correct No Punct: " << complete_accuracy_nopunc() << std::endl;
   std::cerr << "Root correct: " << root_accuracy() << std::endl;
   std::cerr << "ArcDirection Precision: " << arc_dir_precision() << std::endl;
+  std::cerr << "ArcDirection Precision No Punct: " << arc_dir_precision_nopunc() << std::endl;
   std::cerr << "Shift recall: " << shift_recall() << std::endl;
   std::cerr << "Reduce recall: " << reduce_recall() << std::endl;   
   std::cerr << "Total length: " << total_length() << std::endl;   
+  std::cerr << "Total length no punct: " << total_length_nopunc() << std::endl;   
   std::cerr << "Gold Log likelihood: " << gold_likelihood() << std::endl;   
   std::cerr << "Gold Cross entropy: " << gold_cross_entropy() << std::endl;   
   std::cerr << "Gold Perplexity: " << gold_perplexity() << std::endl;   

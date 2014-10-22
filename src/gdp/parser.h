@@ -19,6 +19,8 @@ class Parser: public ParsedSentence {
   
   Parser(Words sent, Words tags, Indices arcs);
 
+  Parser(Words sent, Words tags, Indices arcs, Words labels);
+
   //Parse(const Parse& parse);
   Parser(const TaggedSentence& parse);
 

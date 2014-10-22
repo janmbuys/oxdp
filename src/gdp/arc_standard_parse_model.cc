@@ -2,6 +2,13 @@
 
 namespace oxlm {
 
+
+template<class ParsedWeights>
+ArcStandardParseModel<ParsedWeights>::ArcStandardParseModel(boost::shared_ptr<ModelConfig> config):
+  config_(config)
+{
+}
+
 template<class ParsedWeights>
 void ArcStandardParseModel<ParsedWeights>::resampleParticles(AsParserList* beam_stack, MT19937& eng,
         unsigned num_particles) {
@@ -28,7 +35,7 @@ void ArcStandardParseModel<ParsedWeights>::resampleParticles(AsParserList* beam_
 template<class ParsedWeights>
 ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const ParsedSentence& sent, 
                                const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) {
-  bool direction_deterministic = false;
+  //bool direction_deterministic = false;
     
   std::vector<AsParserList> beam_chart; 
   beam_chart.push_back(AsParserList());
@@ -64,7 +71,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
         //TODO so adding both to the same list is giving an issue
 
         //left arc only invalid when stack size is 2 **
-        if ((i > 1) && (!direction_deterministic || (reduceleftarcp < reducerightarcp))) { 
+        if ((i > 1) && (!config_->direction_deterministic || (reduceleftarcp < reducerightarcp))) { 
           beam_chart[i-1].push_back(boost::make_shared<ArcStandardParser>(*beam_chart[i][j]));
           beam_chart[i-1].back()->leftArc();
           beam_chart[i-1].back()->add_particle_weight(reduceleftarcp);
@@ -73,7 +80,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
         } 
         
         //right arc 
-        if ((i==1) || (!direction_deterministic || (reducerightarcp <= reduceleftarcp))) {
+        if ((i==1) || (!config_->direction_deterministic || (reducerightarcp <= reduceleftarcp))) {
           beam_chart[i-1].push_back(boost::make_shared<ArcStandardParser>(*beam_chart[i][j]));
           beam_chart[i-1].back()->rightArc();
           beam_chart[i-1].back()->add_particle_weight(reducerightarcp); 
@@ -119,24 +126,28 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const 
 
   //sum over identical parses in final beam 
   vector<bool> duplicate(beam_chart[n].size(), false);
-  for (unsigned i = 0; (i < beam_chart[n].size()-1); ++i) {
-    if (!duplicate[i])
-      for (unsigned j = i + 1; (j < beam_chart[n].size()); ++j) {
-        if (ParsedSentence::eq_arcs(beam_chart[n][i], beam_chart[n][j])) {
-          beam_chart[n][i]->add_log_particle_weight(beam_chart[n][j]->particle_weight());          
-          duplicate[j] = true;
-        }
-      }
-  } 
 
-  std::sort(beam_chart[n].begin(), beam_chart[n].end(), TransitionParser::cmp_particle_weights); 
-  //for (unsigned i = 0; i < duplicate.size(); ++i)
-  //  std::cout << duplicate[i] << " ";
-  //std::cout << std::endl;
+  if (config_->sum_over_beam) {
+    for (unsigned i = 0; (i < beam_chart[n].size()-1); ++i) {
+      if (!duplicate[i])
+        for (unsigned j = i + 1; (j < beam_chart[n].size()); ++j) {
+          if (ParsedSentence::eq_arcs(beam_chart[n][i], beam_chart[n][j])) {
+            beam_chart[n][i]->add_log_particle_weight(beam_chart[n][j]->particle_weight());          
+            duplicate[j] = true;
+          }
+        }
+    } 
+  
+
+    std::sort(beam_chart[n].begin(), beam_chart[n].end(), TransitionParser::cmp_particle_weights); 
+    //for (unsigned i = 0; i < duplicate.size(); ++i)
+    //  std::cout << duplicate[i] << " ";
+    //std::cout << std::endl; 
+  }
 
   for (unsigned i = 0; (i < beam_chart[n].size()); ++i)
     if (!duplicate[i])
-      beam_chart[n][0]->add_beam_weight(beam_chart[n][i]->particle_weight());
+      beam_chart[n][0]->add_beam_weight(beam_chart[n][i]->particle_weight()); 
 
   //print parses
   //add verbose option?
@@ -692,14 +703,26 @@ void ArcStandardParseModel<ParsedWeights>::extractSentence(const ParsedSentence&
 }
 
 template<class ParsedWeights>
+void ArcStandardParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
+          MT19937& eng,
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  //unsigned num_particles = 100;
+  //bool resample = true;
+
+  ArcStandardParser parse = particleGoldParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
+  parse.extractExamples(examples);
+}
+
+template<class ParsedWeights>
 void ArcStandardParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
-  unsigned num_particles = 100;
-  bool resample = true;
+  //unsigned num_particles = 100;
+  //bool resample = true;
 
-  ArcStandardParser parse = particleParseSentence(sent, weights, eng, num_particles, resample);
+  ArcStandardParser parse = particleParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
   parse.extractExamples(examples);
 }
 

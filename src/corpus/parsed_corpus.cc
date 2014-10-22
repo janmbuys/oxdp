@@ -9,7 +9,7 @@ ParsedCorpus::ParsedCorpus():
 }
 
 void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line, 
-      const boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, Indices* arcs_out, bool frozen) {
+      const boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, Indices* arcs_out, Words* labels_out, bool frozen) {
   size_t cur = 0;
   size_t last = 0;
   int state = 0;
@@ -23,8 +23,10 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
         sent_out->push_back(dict->convert(line.substr(last, cur - last - 1), frozen));
       else if (col_num == 4) //4 - postag (3 - course postag)
         tags_out->push_back(dict->convertTag(line.substr(last, cur - last - 1), frozen));
-      else if (col_num == 6)
+      else if (col_num == 6) //arc head
         arcs_out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
+      else if (col_num == 7) //label
+        labels_out->push_back(dict->convertLabel(line.substr(last, cur - last - 1), frozen));
        ++col_num;
       state = 0;
     } else {
@@ -44,6 +46,7 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
   Words sent;
   Words tags;
   Indices arcs;
+  Words labels;
  
   std::cerr << "Reading from " << filename << std::endl;
   std::ifstream in(filename);
@@ -62,9 +65,11 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         sent.push_back(dict->eos()); 
         tags.push_back(dict->eos()); 
         arcs.push_back(-1);
+        labels.push_back(-1);
       }
 
-      sentences_.push_back(ParsedSentence(sent, tags, arcs)); 
+      //could make storing the label optional
+      sentences_.push_back(ParsedSentence(sent, tags, arcs, labels)); 
       //add arcs seperately
       //for (unsigned i = 1; i < sent.size(); ++i)
       //  sentences_.back().set_arc(i, arcs.at(i));
@@ -77,15 +82,17 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         sent.clear();
         tags.clear();
         arcs.clear();
+        labels.clear();
 
         //add start of sentence symbol
         sent.push_back(dict->sos()); 
         tags.push_back(dict->sos());
         arcs.push_back(-1);
+        labels.push_back(-1);
         state = 0;
       }
 
-      convertWhitespaceDelimitedConllLine(line, dict, &sent, &tags, &arcs, frozen); 
+      convertWhitespaceDelimitedConllLine(line, dict, &sent, &tags, &arcs, &labels, frozen); 
     }
   }
 

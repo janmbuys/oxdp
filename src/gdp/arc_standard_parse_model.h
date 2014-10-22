@@ -17,6 +17,8 @@ template<class ParsedWeights>
 class ArcStandardParseModel: public TransitionParseModelInterface<ArcStandardParser, ParsedWeights> {
   public:
 
+  ArcStandardParseModel(boost::shared_ptr<ModelConfig> config);
+
   void resampleParticles(AsParserList* beam_stack, MT19937& eng, unsigned num_particles);
 
   ArcStandardParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
@@ -44,6 +46,10 @@ class ArcStandardParseModel: public TransitionParseModelInterface<ArcStandardPar
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples);
 
+  void extractSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
+          MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples);
+
   void extractSentenceUnsupervised(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples);
@@ -61,6 +67,9 @@ class ArcStandardParseModel: public TransitionParseModelInterface<ArcStandardPar
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size); 
+
+  private:
+  boost::shared_ptr<ModelConfig> config_;
 };
 
 }

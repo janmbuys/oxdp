@@ -10,7 +10,7 @@ namespace oxlm {
 class AccuracyCounts {
 
 public:
-  AccuracyCounts();
+  AccuracyCounts(boost::shared_ptr<Dict> dict);
    
   void inc_reduce_count() {
     ++reduce_count_;
@@ -36,6 +36,10 @@ public:
     ++complete_sentences_;
   }
 
+  void inc_complete_sentences_nopunc() {
+    ++complete_sentences_nopunc_;
+  }
+
   void inc_gold_more_likely_count() {
     ++gold_more_likely_count_;
   }
@@ -48,12 +52,24 @@ public:
     ++directed_count_;
   }
 
+  void inc_directed_count_nopunc() {
+    ++directed_count_nopunc_;
+  }
+
   void inc_undirected_count() {
     ++undirected_count_;
   }
 
+  void inc_undirected_count_nopunc() {
+    ++undirected_count_nopunc_;
+  }
+
   void inc_num_sentences() {
     ++num_sentences_;
+  }
+
+  void inc_total_length_nopunc() {
+    ++total_length_nopunc_; 
   }
 
   void add_likelihood(Real l) {
@@ -84,8 +100,16 @@ public:
     directed_count_ += l; 
   }
 
+  void add_directed_count_nopunc(int l) {
+    directed_count_nopunc_ += l; 
+  }
+
   void add_undirected_count(int l) {
     undirected_count_ += l; 
+  }
+ 
+  void add_undirected_count_nopunc(int l) {
+    undirected_count_nopunc_ += l; 
   }
   
   void parseCountAccuracy(const Parser& prop_parse, const ParsedSentence& gold_parse); 
@@ -106,12 +130,24 @@ public:
     return (directed_count_ + 0.0)/total_length_;
   }
 
+  Real directed_accuracy_nopunc() const {
+    return (directed_count_nopunc_ + 0.0)/total_length_nopunc_;
+  }
+
   Real undirected_accuracy() const {
     return (undirected_count_ + 0.0)/total_length_;
   }
 
+  Real undirected_accuracy_nopunc() const {
+    return (undirected_count_nopunc_ + 0.0)/total_length_nopunc_;
+  }
+
   Real complete_accuracy() const {
     return (complete_sentences_ + 0.0)/num_sentences_;
+  }
+
+  Real complete_accuracy_nopunc() const {
+    return (complete_sentences_nopunc_ + 0.0)/num_sentences_;
   }
 
   Real root_accuracy() const {
@@ -124,6 +160,10 @@ public:
 
   Real arc_dir_precision() const {
     return (directed_count_ + 0.0)/undirected_count_;
+  }
+
+  Real arc_dir_precision_nopunc() const {
+    return (directed_count_nopunc_ + 0.0)/undirected_count_nopunc_;
   }
 
   Real reduce_recall() const {
@@ -152,6 +192,10 @@ public:
 
   int total_length() const {
     return total_length_;
+  }
+
+  int total_length_nopunc() const {
+    return total_length_nopunc_;
   }
 
   Real final_reduce_error_rate() const {
@@ -194,6 +238,7 @@ public:
   }
 
 private:
+    boost::shared_ptr<Dict> dict_;
     Real likelihood_;  
     Real beam_likelihood_;  
     Real importance_likelihood_;  
@@ -204,12 +249,16 @@ private:
     int shift_gold_;
     int final_reduce_error_count_;
     int total_length_;
+    int total_length_nopunc_;
     int directed_count_;
+    int directed_count_nopunc_;
     int undirected_count_;
+    int undirected_count_nopunc_;
     int root_count_;
     int gold_more_likely_count_;
     int num_actions_;
     int complete_sentences_;
+    int complete_sentences_nopunc_;
     int num_sentences_;
 };
 

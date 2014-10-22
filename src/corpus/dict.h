@@ -35,10 +35,16 @@ public:
  
   WordId convertTag(const Word& tag, bool frozen);
 
+  WordId convertLabel(const Word& label, bool frozen);
+
   Word lookup(WordId id) const;
 
   Word lookupTag(WordId id) const;
+
+  Word lookupLabel(WordId id) const;
  
+  bool punctTag(WordId id) const;
+
   WordId min() const {
     return 0;
   }
@@ -61,6 +67,10 @@ public:
 
   size_t tag_size() const {
     return tags_.size();
+  }
+
+  size_t label_size() const {
+    return labels_.size();
   }
 
   std::vector<Word> get_vocab() const {
@@ -87,6 +97,8 @@ public:
     ar & d_;
     ar & tags_;
     ar & tag_d_;
+    ar & labels_;
+    ar & label_d_;
   }
 
 private:
@@ -98,6 +110,8 @@ private:
   std::map<std::string, WordId> d_;
   std::vector<Word> tags_;
   std::map<std::string, WordId> tag_d_;
+  std::vector<Word> labels_;
+  std::map<std::string, WordId> label_d_;
 };
 
 }

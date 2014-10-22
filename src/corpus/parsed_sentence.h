@@ -17,6 +17,8 @@ class ParsedSentence: public TaggedSentence {
 
   ParsedSentence(Words sent, Words tags, Indices arcs);
 
+  ParsedSentence(Words sent, Words tags, Indices arcs, Words labels);
+
   ParsedSentence(const TaggedSentence& parse);
 
   void print_arcs() const {
@@ -25,17 +27,32 @@ class ParsedSentence: public TaggedSentence {
     std::cout << std::endl;   
   }
 
+  void print_labels(Dict& dict) const {
+    for (auto lab: labels_)
+      std::cout << dict.lookupLabel(lab) << " ";
+    std::cout << std::endl;   
+  }
+
   virtual void set_arc(WordIndex i, WordIndex j) {
     if ((j >=0) && (j < size()))
       arcs_[i] = j;
   }
 
+  void set_label(WordIndex i, WordId l) {
+    labels_[i] = l; 
+  }
+
   virtual void push_arc() {
     arcs_.push_back(-1);
+    labels_.push_back(-1);
   }
 
   WordIndex arc_at(WordIndex i) const {
     return arcs_.at(i);
+  }
+
+  WordId label_at(WordIndex i) const {
+    return labels_.at(i);
   }
 
   bool has_arc(WordIndex i, WordIndex j) const {
@@ -46,9 +63,23 @@ class ParsedSentence: public TaggedSentence {
                           const boost::shared_ptr<ParsedSentence>& p2) {
     if (p1->size() != p2->size())
       return false;
-    for (int i = 0; i < p1->size(); ++i) 
+    for (int i = 0; i < p1->size(); ++i) {
       if (p1->arc_at(i) != p2->arc_at(i))
         return false;  
+    }
+    return true;
+  }
+
+  static bool eq_lab_arcs(const boost::shared_ptr<ParsedSentence>& p1, 
+                          const boost::shared_ptr<ParsedSentence>& p2) {
+    if (p1->size() != p2->size())
+      return false;
+    for (int i = 0; i < p1->size(); ++i) {
+      if (p1->arc_at(i) != p2->arc_at(i))
+        return false;  
+      if (p1->label_at(i) != p2->label_at(i))
+        return false;  
+    }
     return true;
   }
 
@@ -66,8 +97,8 @@ class ParsedSentence: public TaggedSentence {
   }
 
   private:
-  Words arcs_;
-
+  Indices arcs_;
+  Words labels_;
 };
 
 

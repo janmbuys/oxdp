@@ -4,31 +4,43 @@ namespace oxlm {
 
 ParsedSentence::ParsedSentence():
   TaggedSentence(), 
-  arcs_()
+  arcs_(),
+  labels_()
   {
   }
 
 ParsedSentence::ParsedSentence(Words tags):
   TaggedSentence(tags), 
-  arcs_(tags.size(), -1)
+  arcs_(tags.size(), -1),
+  labels_(tags.size(), -1)
   {
   }
 
 ParsedSentence::ParsedSentence(Words sent, Words tags):
   TaggedSentence(sent, tags), 
-  arcs_(tags.size(), -1)
+  arcs_(tags.size(), -1),
+  labels_(tags.size(), -1)
   {
   }
 
 ParsedSentence::ParsedSentence(Words sent, Words tags, Indices arcs):
   TaggedSentence(sent, tags), 
-  arcs_(arcs)
+  arcs_(arcs),
+  labels_(tags.size(), -1)
+  {
+  }
+
+ParsedSentence::ParsedSentence(Words sent, Words tags, Indices arcs, Words labels):
+  TaggedSentence(sent, tags), 
+  arcs_(arcs),
+  labels_(labels) 
   {
   }
 
 ParsedSentence::ParsedSentence(const TaggedSentence& parse):
   TaggedSentence(parse),
-  arcs_(parse.size(), -1)
+  arcs_(parse.size(), -1),
+  labels_(parse.size(), -1)
   {
   }
 

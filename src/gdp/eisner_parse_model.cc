@@ -3,6 +3,12 @@
 namespace oxlm {
 
 template<class ParsedWeights>
+EisnerParseModel<ParsedWeights>::EisnerParseModel(boost::shared_ptr<ModelConfig> config):
+  config_(config)
+{
+}
+
+template<class ParsedWeights>
 EisnerParser EisnerParseModel<ParsedWeights>::parseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights) {
   EisnerParser parser(sent); 
@@ -188,6 +194,14 @@ void EisnerParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent
           const boost::shared_ptr<ParseDataSet>& examples) {
  extractSentence(sent, examples);
  //scoreSentence(&parse, weights);
+}
+
+template<class ParsedWeights>
+void EisnerParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
+          MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples) {
+  //sampling not appropriate here
+  extractSentence(sent, examples);
 }
 
 template<class ParsedWeights>

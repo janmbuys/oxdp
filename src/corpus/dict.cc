@@ -92,6 +92,31 @@ WordId Dict::convertTag(const Word& tag, bool frozen) {
   }
 }
 
+WordId Dict::convertLabel(const Word& label, bool frozen) {
+  auto i = label_d_.find(label);
+  if (i == label_d_.end()) {
+    if (frozen) //may need a default label instead
+      return bad0_id_;
+    labels_.push_back(label);
+    label_d_[label] = labels_.size()-1;
+    return labels_.size()-1;
+  } else {
+    return i->second;
+  }
+}
+
+bool Dict::punctTag(WordId id) const {
+  std::vector<Word> punct = {".", ",", "?", "!", ":", "''", "``", 
+                                   "(", ")", "-LRB-", "-RRB-", "#", "$"};
+  Word word = lookupTag(id);
+  for (auto punc: punct) {
+    if (word == punc)
+      return true;
+  }
+ 
+  return false;
+}
+
 Word Dict::lookup(WordId id) const {
   if (!valid(id)) 
     return b0_;
@@ -102,6 +127,12 @@ Word Dict::lookupTag(WordId id) const {
   if (!valid(id)) 
     return b0_;
   return tags_[id];
+}
+ 
+Word Dict::lookupLabel(WordId id) const {
+  if (!valid(id)) 
+    return b0_;
+  return labels_[id];
 }
  
 }

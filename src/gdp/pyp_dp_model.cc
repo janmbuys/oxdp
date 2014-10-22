@@ -11,7 +11,7 @@ template<class ParseModel, class ParsedWeights>
 PypDpModel<ParseModel, ParsedWeights>::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config) {
   dict_ = boost::make_shared<Dict>(true, config->parser_type==ParserType::arceager);
-  parse_model_ = boost::make_shared<ParseModel>();
+  parse_model_ = boost::make_shared<ParseModel>(config);
   
   if (config->parser_type == ParserType::arcstandard) {
     config_->num_actions = 3;
@@ -269,7 +269,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   for (int iter = 0; iter < config_->iterations; ++iter) {
     std::cerr << "Training iteration " << iter << std::endl;
     auto iteration_start = get_time(); 
-    //int non_projective_count = 0;
+    int non_projective_count = 0;
 
     //std::cout << indices.size() << " indices\n";
     if (config_->randomise)
@@ -300,10 +300,13 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       //std::cout << start << std::endl;
       //THEN add new examples
       for (auto j: minibatch) {
-        if (iter == 0) {  //this only takes 1 sec per iteration
+        //if (iter == 0) {  //this only takes 1 sec per iteration
           examples_list.at(j)->clear();
-          parse_model_->extractSentence(training_corpus->sentence_at(j),examples_list.at(j));
-        }
+          //parse_model_->extractSentence(training_corpus->sentence_at(j), examples_list.at(j));
+          parse_model_->extractSentence(training_corpus->sentence_at(j), weights_, eng, examples_list.at(j));
+          if (!training_corpus->sentence_at(j).is_projective_dependency())
+            ++non_projective_count;
+        //}
         minibatch_examples->extend(examples_list.at(j));
       }     
 
@@ -322,7 +325,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
 
     std::cerr << "Iteration: " << iter << ", "
              << "Training Time: " << iteration_time << " seconds, "
-      //       << "Non-projective: " << (non_projective_count + 0.0) / training_corpus->size() << ", "
+             << "Non-projective: " << (non_projective_count + 0.0) / training_corpus->size() << ", "
              << "Training Objective: " << weights_->likelihood() / training_corpus->numTokens() 
            << "\n\n";
     
@@ -378,7 +381,7 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
       std::cerr << "parsing with beam size " << beam_size << ":\n";
       accumulator = 0;
       auto beam_start = get_time();
-      boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>();
+      boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>(dict_);
 
       size_t start = 0;
       while (start < test_corpus->size()) {

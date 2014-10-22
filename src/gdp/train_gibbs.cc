@@ -55,6 +55,14 @@ int main(int argc, char** argv) {
         "Use additional, unlabelled training data.")
     ("max-beam-size", value<int>()->default_value(8),
         "Maximum beam size for decoding (in powers of 2).")
+    ("direction-det", value<bool>()->default_value(false),
+        "Arc direction always deterministic in beam search.")
+    ("sum-over-beam", value<bool>()->default_value(false),
+        "Sum over likelihoods of identical parses in final beam.")
+    ("particle-resample", value<bool>()->default_value(false),
+        "Resample after generating each word in particle filter sampling.")
+    ("num-particles", value<int>()->default_value(100),
+        "Number of particles in particle filter.")
     ("model-out,o", value<std::string>(),  //not used now
         "base filename of model output files")
     ("threads", value<int>()->default_value(1), //not used now
@@ -104,6 +112,10 @@ int main(int argc, char** argv) {
 
   config->lexicalised = vm["lexicalised"].as<bool>();
   config->semi_supervised = vm["semi-supervised"].as<bool>();
+  config->direction_deterministic = vm["direction-det"].as<bool>();
+  config->sum_over_beam = vm["sum-over-beam"].as<bool>();
+  config->resample = vm["particle-resample"].as<bool>();
+  config->num_particles = vm["num-particles"].as<int>();
 
   //otherwise override manually
   config->beam_sizes = {1};

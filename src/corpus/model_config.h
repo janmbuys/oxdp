@@ -59,6 +59,10 @@ struct ModelConfig {
   ParserType  parser_type;
   bool        lexicalised;
   bool        semi_supervised;
+  bool        direction_deterministic;
+  bool        sum_over_beam;
+  bool        resample;
+  int         num_particles;
   int         num_tags;
   int         num_actions;
   std::vector<unsigned> beam_sizes;
@@ -97,6 +101,10 @@ struct ModelConfig {
     ar & parser_type;
     ar & lexicalised;
     ar & semi_supervised;
+    ar & direction_deterministic;
+    ar & sum_over_beam;
+    ar & resample;
+    ar & num_particles;
     ar & num_tags;
     ar & beam_sizes;
   }

@@ -3,6 +3,12 @@
 namespace oxlm {
 
 template<class ParsedWeights>
+ArcEagerParseModel<ParsedWeights>::ArcEagerParseModel(boost::shared_ptr<ModelConfig> config):
+  config_(config)
+{  
+}
+
+template<class ParsedWeights>
 void ArcEagerParseModel<ParsedWeights>::resampleParticles(AeParserList* beam_stack, MT19937& eng,
         unsigned num_particles) {
   //assume (beam_stack->at(pi)->num_particles() > 0)
@@ -687,13 +693,24 @@ void ArcEagerParseModel<ParsedWeights>::extractSentence(const ParsedSentence& se
 }
 
 template<class ParsedWeights>
+void ArcEagerParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, 
+          MT19937& eng,
+          const boost::shared_ptr<ParseDataSet>& examples) {
+  //unsigned num_particles = 100;
+  //bool resample = true;
+  ArcEagerParser parse = particleGoldParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
+  parse.extractExamples(examples);
+}
+
+template<class ParsedWeights>
 void ArcEagerParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
-  unsigned num_particles = 100;
-  bool resample = true;
-  ArcEagerParser parse = particleParseSentence(sent, weights, eng, num_particles, resample);
+  //unsigned num_particles = 100;
+  //bool resample = true;
+  ArcEagerParser parse = particleParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
   parse.extractExamples(examples);
 }
 

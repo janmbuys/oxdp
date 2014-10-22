@@ -21,7 +21,7 @@ class ParsedCorpus: public CorpusInterface {
   ParsedCorpus();
 
   void convertWhitespaceDelimitedConllLine(const std::string& line, 
-      const boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, Indices* arcs_out, bool frozen);
+      const boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, Indices* arcs_out, Words* labels_out, bool frozen);
 
   void readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) override;
 
