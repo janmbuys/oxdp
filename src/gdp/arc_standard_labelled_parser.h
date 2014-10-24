@@ -7,41 +7,48 @@
 
 namespace oxlm {
 
-class ArcStandardLabelledParser : public TransitionParser, public TransitionParserInterface {
+      // not implementing      public TransitionParserInterface
+class ArcStandardLabelledParser : public TransitionParser {
   public:
 
-  ArcStandardLabelledParser();
+  ArcStandardLabelledParser(int num_labels);
 
-  ArcStandardLabelledParser(Words sent);
+  ArcStandardLabelledParser(Words sent, int num_labels);
 
-  ArcStandardLabelledParser(Words sent, Words tags);
+  ArcStandardLabelledParser(Words sent, Words tags, int num_labels);
 
-  ArcStandardLabelledParser(Words sent, Words tags, int num_particles);
+  ArcStandardLabelledParser(Words sent, Words tags, int num_particles, int num_labels);
 
-  ArcStandardLabelledParser(const TaggedSentence& parse);
+  ArcStandardLabelledParser(const TaggedSentence& parse, int num_labels);
   
-  ArcStandardLabelledParser(const TaggedSentence& parse, int num_particles);
+  ArcStandardLabelledParser(const TaggedSentence& parse, int num_particles, int num_labels);
 
-  bool shift() override;
+  bool shift();
 
   bool shift(WordId w);
 
-  bool leftArc(WordId l) override;
+  bool leftArc(WordId l); //not overriding any more
 
-  bool rightArc(WordId l) override;
+  bool rightArc(WordId l); //not overriding any more
   
-  kAction oracleNext(const ParsedSentence& gold_parse) const override;
+  kAction oracleNext(const ParsedSentence& gold_parse) const;
   
-  bool inTerminalConfiguration() const override;
+  bool inTerminalConfiguration() const;
 
-  bool executeAction(kAction a) override;
+  bool executeAction(kAction a, WordId l); //not overriding any more
  
-  Words wordContext() const override;
+  Words wordContext() const;
 
-  Words tagContext() const override;
+  Words tagContext() const;
  
-  Words actionContext() const override;
+  Words actionContext() const;
  
+  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
+
+  void append_action_label(WordId l) {
+    action_labels_.push_back(l);
+  }
+
   bool left_arc_valid() const {
     if (stack_depth() < 2)
       return false;
@@ -49,23 +56,46 @@ class ArcStandardLabelledParser : public TransitionParser, public TransitionPars
     return (i != 0);
   }
 
-  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const override;
-
-  //just in case this might help
-  //but this should be static...
-  /*
-  size_t reduce_context_size() const {
-    return reduce_context().size();
+  WordId action_label_at(int i) const {
+    return action_labels_[i];
   }
 
-  size_t shift_context_size() const {
-    return shift_context().size();
+  WordId convert_action(kAction a, WordId l) const {
+    if (a == kAction::sh)
+      return 0;
+    else if (a == kAction::la)
+      return l + 1;
+    else if (a == kAction::ra)
+      return num_labels_ + l + 1;
+    else 
+      return -1;
   }
 
-  size_t tag_context_size() const {
-    return tag_context().size();
-  }  */
+  kAction lookup_action(WordId la) const {
+    if (la == 0)
+      return kAction::sh;
+    else if (la <= num_labels_)
+      return kAction::la;
+    else if (la <= num_labels_*2)
+      return kAction::ra;
+    else
+      return kAction::re;
+  }
 
+  WordId lookup_label(WordId la) const {
+    if (la == 0)
+      return -1;
+    else if (la <= num_labels_)
+      return la - 1;
+    else if (la <= num_labels_*2)
+      return la - num_labels_ - 1;
+    else
+      return -1;
+  }
+
+  private:
+  int num_labels_;
+  Words action_labels_;  
 };
 
 }

@@ -1,34 +1,46 @@
-#include "arc_standard_parser.h"
+#include "arc_standard_labelled_parser.h"
 
 namespace oxlm {
 
-ArcStandardLabelledParser::ArcStandardLabelledParser():
-  TransitionParser() 
+ArcStandardLabelledParser::ArcStandardLabelledParser(int num_labels):
+  TransitionParser(),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
-ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent):
-  TransitionParser(sent) 
+ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, int num_labels):
+  TransitionParser(sent),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
-ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, Words tags):
-  TransitionParser(sent, tags) 
+ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, Words tags, int num_labels):
+  TransitionParser(sent, tags),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
-ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, Words tags, int num_particles):
-  TransitionParser(sent, tags, num_particles) 
+ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, Words tags, int num_particles, int num_labels):
+  TransitionParser(sent, tags, num_particles),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
-ArcStandardLabelledParser::ArcStandardLabelledParser(const TaggedSentence& parse):
-  TransitionParser(parse) 
+ArcStandardLabelledParser::ArcStandardLabelledParser(const TaggedSentence& parse, int num_labels):
+  TransitionParser(parse),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
-ArcStandardLabelledParser::ArcStandardLabelledParser(const TaggedSentence& parse, int num_particles):
-  TransitionParser(parse, num_particles) 
+ArcStandardLabelledParser::ArcStandardLabelledParser(const TaggedSentence& parse, int num_particles, int num_labels):
+  TransitionParser(parse, num_particles),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
@@ -37,6 +49,7 @@ bool ArcStandardLabelledParser::shift() {
   pop_buffer();
   push_stack(i);
   append_action(kAction::sh);
+  append_action_label(-1);
   return true;
 }
 
@@ -49,6 +62,7 @@ bool ArcStandardLabelledParser::shift(WordId w) {
     pop_buffer();
   push_stack(i);
   append_action(kAction::sh);
+  append_action_label(-1);
   return true;
 }
 
@@ -64,6 +78,7 @@ bool ArcStandardLabelledParser::leftArc(WordId l) {
   set_arc(i, j);
   set_label(j, l);
   append_action(kAction::la);
+  append_action_label(l);
   return true;
 }
 
@@ -74,6 +89,7 @@ bool ArcStandardLabelledParser::rightArc(WordId l) {
   set_arc(j, i);
   set_label(i, l);
   append_action(kAction::ra);
+  append_action_label(l);
   return true;
 }
  
@@ -119,19 +135,21 @@ bool ArcStandardLabelledParser::inTerminalConfiguration() const {
   return (buffer_empty() && (stack_depth() == 1));
 }
 
-bool ArcStandardLabelledParser::executeAction(kAction a) {
+bool ArcStandardLabelledParser::executeAction(kAction a, WordId l) {
   switch(a) {
   case kAction::sh:
     return shift();
   case kAction::la:
-    return leftArc();
+    return leftArc(l);
   case kAction::ra:
-    return rightArc();
+    return rightArc(l);
   default: 
     std::cerr << "action not implemented" << std::endl;
     return false;
   }
 } 
+
+//TODO update contexts for labelled case
 
 //(ideally would assert length of order)
 Words ArcStandardLabelledParser::wordContext() const {
@@ -156,10 +174,13 @@ Words ArcStandardLabelledParser::actionContext() const {
 }
 
 void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
-  ArcStandardLabelledParser parser(static_cast<TaggedSentence>(*this)); 
+  ArcStandardLabelledParser parser(static_cast<TaggedSentence>(*this), num_labels_); 
  
   //note that we are extracting the initial shift as an example
-  for (kAction& a: actions()) {
+  for (unsigned i = 0; i < actions().size(); ++i) {
+    kAction a = actions().at(i);
+    WordId lab = action_label_at(i);
+
     if (a == kAction::sh) {
       DataPoint point(parser.next_tag(), parser.tagContext());
 
@@ -171,9 +192,11 @@ void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDat
       examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
     }  
 
-    //action prediction
-    examples->add_action_example(DataPoint(static_cast<WordId>(a), parser.actionContext()));
-    parser.executeAction(a);
+    //labelled action prediction 
+    WordId lab_act = convert_action(a, lab);
+
+    examples->add_action_example(DataPoint(lab_act, parser.actionContext()));
+    parser.executeAction(a, lab);
   }
 } 
 

@@ -65,6 +65,7 @@ struct ModelConfig {
   int         num_particles;
   int         num_tags;
   int         num_actions;
+  int         num_labels;
   std::vector<unsigned> beam_sizes;
 
   bool operator==(const ModelConfig& other) const;
@@ -106,6 +107,8 @@ struct ModelConfig {
     ar & resample;
     ar & num_particles;
     ar & num_tags;
+    ar & num_actions;
+    ar & num_labels;
     ar & beam_sizes;
   }
 };
