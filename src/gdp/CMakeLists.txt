@@ -8,7 +8,6 @@ add_libraries(gdp
   transition_parser.cc  
   arc_eager_parser.cc
   arc_standard_parser.cc
-  arc_standard_labelled_parser.cc
   accuracy_counts.cc
   eisner_parse_model.cc
   arc_standard_parse_model.cc
@@ -19,6 +18,7 @@ add_libraries(gdp
   lbl_model.cc
   pyp_dp_model.cc
   lbl_dp_model.cc
+  arc_standard_labelled_parser.cc
 )
 
 target_link_libs(gdp utils corpus pyp lbl)

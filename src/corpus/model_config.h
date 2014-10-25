@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>

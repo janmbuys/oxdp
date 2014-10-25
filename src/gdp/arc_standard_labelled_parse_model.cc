@@ -39,7 +39,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPars
     
   std::vector<AsParserList> beam_chart; 
   beam_chart.push_back(AsParserList());
-  beam_chart[0].push_back(boost::make_shared<ArcStandardLabelledParser>(static_cast<TaggedSentence>(sent), model_config_->num_labels)); 
+  beam_chart[0].push_back(boost::make_shared<ArcStandardLabelledParser>(static_cast<TaggedSentence>(sent), config_->num_labels)); 
 
   //std::cout << "gold arcs: ";
   //sent.print_arcs();
@@ -63,12 +63,13 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPars
       //std::cout << i << std::endl;
       //for every item in the list, add valid reduce actions to list i - 1 
       for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
+	  //TODO find max labelled action
+
         Real reduceleftarcp = weights->predictAction(static_cast<WordId>(kAction::la), beam_chart[i][j]->actionContext());
         Real reducerightarcp = weights->predictAction(static_cast<WordId>(kAction::ra), beam_chart[i][j]->actionContext());
         //std::cout << j << " (la: " << reduceleftarcp << ", ra: " << reducerightarcp << ")" << " ";
         Real reducep = neg_log_sum_exp(reduceleftarcp, reducerightarcp);
        
-        //TODO so adding both to the same list is giving an issue
 
         //left arc only invalid when stack size is 2 **
         if ((i > 1) && (!config_->direction_deterministic || (reduceleftarcp < reducerightarcp))) { 
@@ -163,7 +164,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPars
 
   if (beam_chart[n].size()==0) {
     std::cout << "no parse found" << std::endl;
-    return ArcStandardLabelledParser(static_cast<TaggedSentence>(sent));  
+    return ArcStandardLabelledParser(static_cast<TaggedSentence>(sent), config_->num_labels);  
   } else
     return ArcStandardLabelledParser(*beam_chart[n][0]); 
 }
@@ -176,7 +177,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
   //perform sampling and resampling to update these counts, and remove 0 count states
 
   AsParserList beam_stack; 
-  beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(static_cast<TaggedSentence>(sent), static_cast<int>(num_particles))); 
+  beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(static_cast<TaggedSentence>(sent), static_cast<int>(num_particles, config_->num_labels))); 
 
   //shift ROOT symbol (probability 1)
   beam_stack[0]->shift(); 
@@ -375,7 +376,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
   }
 
   std::cout << "no parse found" << std::endl;
-  return ArcStandardLabelledParser(static_cast<TaggedSentence>(sent));  
+  return ArcStandardLabelledParser(static_cast<TaggedSentence>(sent), config_->num_labels);  
 }
 
 //sample a derivation for the gold parse, given the current model
@@ -387,7 +388,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
   //perform sampling and resampling to update these counts, and remove 0 count states
   
   AsParserList beam_stack; 
-  beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(static_cast<TaggedSentence>(sent), static_cast<int>(num_particles))); 
+  beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(static_cast<TaggedSentence>(sent), static_cast<int>(num_particles), config_->num_labels)); 
 
   //shift ROOT symbol (probability 1)
   beam_stack[0]->shift(); 
@@ -552,14 +553,14 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
   }
 
   std::cout << "no parse found" << std::endl;
-  return ArcStandardLabelledParser(static_cast<TaggedSentence>(sent));  
+  return ArcStandardLabelledParser(static_cast<TaggedSentence>(sent), config_->num_labels);  
 }
 
 
 template<class ParsedWeights>
 ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::staticGoldParseSentence(const ParsedSentence& sent, 
                                     const boost::shared_ptr<ParsedWeights>& weights) {
-  ArcStandardLabelledParser parser(static_cast<TaggedSentence>(sent));
+  ArcStandardLabelledParser parser(static_cast<TaggedSentence>(sent), config_->num_labels);
   
   kAction a = kAction::sh;
   while (!parser.inTerminalConfiguration() && (a != kAction::re)) {
@@ -585,7 +586,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::staticGo
     
 template<class ParsedWeights>
 ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::staticGoldParseSentence(const ParsedSentence& sent) {
-  ArcStandardLabelledParser parser(static_cast<TaggedSentence>(sent));
+  ArcStandardLabelledParser parser(static_cast<TaggedSentence>(sent), config_->num_labels);
   
   kAction a = kAction::sh;
   while (!parser.inTerminalConfiguration() && (a != kAction::re)) {
@@ -602,7 +603,7 @@ template<class ParsedWeights>
 ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::generateSentence(const boost::shared_ptr<ParsedWeights>& weights, 
         MT19937& eng) {
   unsigned sent_limit = 100;
-  ArcStandardLabelledParser parser;
+  ArcStandardLabelledParser parser(config_->num_labels);
   bool terminate_shift = false;
   parser.push_tag(0);
   parser.shift(0);
