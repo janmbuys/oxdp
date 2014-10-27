@@ -58,6 +58,7 @@ struct ModelConfig {
   int         noise_samples;
   bool        sigmoid;
   ParserType  parser_type;
+  bool        labelled_parser;
   bool        lexicalised;
   bool        semi_supervised;
   bool        direction_deterministic;
@@ -101,6 +102,7 @@ struct ModelConfig {
     ar & noise_samples;
     ar & sigmoid;
     ar & parser_type;
+    ar & labelled_parser;
     ar & lexicalised;
     ar & semi_supervised;
     ar & direction_deterministic;

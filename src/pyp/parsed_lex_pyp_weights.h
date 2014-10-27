@@ -14,7 +14,11 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
 
   Real predict(WordId word, Words context) const override;
 
+  Reals predict(Words context) const override;
+
   Real predictWord(WordId word, Words context) const override;
+  
+  Reals predictWord(Words context) const override;
   
   Real likelihood() const override;
 

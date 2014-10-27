@@ -1,5 +1,5 @@
-#ifndef _GDP_AS_PARSER_H
-#define _GDP_AS_PARSER_H
+#ifndef _GDP_AS_LAB_PARSER_H
+#define _GDP_AS_LAB_PARSER_H
 
 #include "corpus/parse_data_set.h"
 #include "gdp/transition_parser.h"
@@ -33,6 +33,8 @@ class ArcStandardLabelledParser : public TransitionParser {
   
   kAction oracleNext(const ParsedSentence& gold_parse) const;
   
+  WordId oracleNextLabel(const ParsedSentence& gold_parse) const;
+
   bool inTerminalConfiguration() const;
 
   bool executeAction(kAction a, WordId l); //not overriding any more

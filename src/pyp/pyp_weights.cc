@@ -17,6 +17,14 @@ Real PypWeights<kOrder>::predict(WordId word, Words context) const {
 }
 
 template<unsigned kOrder>
+Reals PypWeights<kOrder>::predict(Words context) const {
+  Reals weights(vocab_size_, 0);
+  for (int i = 0; i < vocab_size_; ++i)
+    weights[i] = predict(i, context);
+  return weights;
+}
+
+template<unsigned kOrder>
 Real PypWeights<kOrder>::likelihood() const {
   return -lm_.log_likelihood();
 }

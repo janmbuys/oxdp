@@ -64,6 +64,8 @@ int main(int argc, char** argv) {
         "Visit the training tokens in random order.")
     ("parser-type", value<std::string>()->default_value("arcstandard"),
         "Parsing strategy.")    
+    ("labelled-parser", value<bool>()->default_value(false),
+        "Predict arc labels.")
     ("max-beam-size", value<int>()->default_value(8),
         "Maximum beam size for decoding (in powers of 2).")
     ("direction-det", value<bool>()->default_value(false),
@@ -136,6 +138,7 @@ int main(int argc, char** argv) {
     config->parser_type = ParserType::ngram; 
   }
 
+  config->labelled_parser = vm["labelled-parser"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
 
@@ -199,7 +202,9 @@ int main(int argc, char** argv) {
       model.learn();
     }
   } else {
-    if (config->parser_type == ParserType::arcstandard) {
+    if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser) {
+      train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config);
+    else if (config->parser_type == ParserType::arcstandard) {
       train_dp<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config);
     } else if (config->parser_type == ParserType::arceager) {
       train_dp<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config);

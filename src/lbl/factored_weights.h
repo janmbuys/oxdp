@@ -65,6 +65,8 @@ class FactoredWeights : public Weights {
 
   Real predict(int word, Words context) const;
 
+  Reals predict(Words context) const;
+
   void clearCache();
 
   bool operator==(const FactoredWeights& other) const;

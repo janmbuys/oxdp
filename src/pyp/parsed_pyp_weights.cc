@@ -14,13 +14,36 @@ Real ParsedPypWeights<tOrder, aOrder>::predictWord(WordId word, Words context) c
 }
 
 template<unsigned tOrder, unsigned aOrder>
+Reals ParsedPypWeights<tOrder, aOrder>::predictWord(Words context) const {
+  return Reals(numWords(), 0);
+}
+
+template<unsigned tOrder, unsigned aOrder>
 Real ParsedPypWeights<tOrder, aOrder>::predictTag(WordId tag, Words context) const {
   return PypWeights<tOrder>::predict(tag, context);
+}
+
+
+template<unsigned tOrder, unsigned aOrder>
+Reals ParsedPypWeights<tOrder, aOrder>::predictTag(Words context) const {
+  Reals weights(numTags(), 0);
+  for (int i = 0; i < numTags(); ++i)
+    weights[i] = predictTag(i, context);
+  return weights;
 }
 
 template<unsigned tOrder, unsigned aOrder>
 Real ParsedPypWeights<tOrder, aOrder>::predictAction(WordId action, Words context) const {
   return -std::log(action_lm_.prob(action, context));
+}
+
+
+template<unsigned tOrder, unsigned aOrder>
+Reals ParsedPypWeights<tOrder, aOrder>::predictAction(Words context) const {
+  Reals weights(num_actions_, 0);
+  for (int i = 0; i < num_actions_; ++i)
+    weights[i] = predictAction(i, context);
+  return weights;
 }
 
 template<unsigned tOrder, unsigned aOrder>

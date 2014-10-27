@@ -15,24 +15,27 @@ add_libraries(gdp
   arc_eager_parse_model.cc
   ngram_model.cc
   pyp_model.cc
-  lbl_model.cc
   pyp_dp_model.cc
-  lbl_dp_model.cc
   arc_standard_labelled_parser.cc
 )
 
-target_link_libs(gdp utils corpus pyp lbl)
+  #lbl_model.cc
+  #lbl_dp_model.cc
+
+target_link_libs(gdp utils corpus pyp) 
+# lbl)
 
 #############################################
 # Executables
 #############################################
 
+    #extract_word_vectors
+    #evaluate_lbl
+    #predict_lbl
+    #score_lbl
+    #train_sgd
+
 set(EXECUTABLES
-  extract_word_vectors
-  evaluate_lbl
-  predict_lbl
-  score_lbl
-  train_sgd
   train_gibbs
 )
 

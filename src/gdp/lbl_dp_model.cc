@@ -67,6 +67,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   training_corpus->readFile(config->training_file, dict, immutable_dict);
   config->vocab_size = dict->size();
   config->num_tags = dict->tag_size();
+  if (config->labelled_parser)
+    config->num_actions += 2*(dict->label_size()-1); //add labelled actions
   cout << "Done reading training corpus..." << endl;
 
   boost::shared_ptr<ParsedCorpus> test_corpus; 

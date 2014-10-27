@@ -484,6 +484,17 @@ Real FactoredWeights::predict(int word, Words context) const {
   return -(class_prob + word_prob);
 }
 
+
+Reals FactoredWeights::predict(Words context) const {
+  //this is inefficient, but I may not need this in practice
+
+  Reals probs(vocabSize(), 0);
+  for (int i = 0; i < vocabSize(); ++i)
+    probs[i] = predict(i, context);
+
+  return probs;
+}
+
 void FactoredWeights::clearCache() {
   Weights::clearCache();
   classNormalizerCache.clear();

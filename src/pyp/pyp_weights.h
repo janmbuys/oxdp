@@ -17,6 +17,8 @@ class PypWeights {
 
   virtual Real predict(WordId word, Words context) const;
 
+  virtual Reals predict(Words context) const;
+  
   virtual Real likelihood() const;
 
   virtual void resampleHyperparameters(MT19937& eng);

@@ -93,6 +93,26 @@ bool ArcStandardLabelledParser::rightArc(WordId l) {
   return true;
 }
  
+//Give the label for reduce action, if at all valid 
+WordId ArcStandardLabelledParser::oracleNextLabel(const ParsedSentence& gold_parse) const {
+  WordId lab = -1;
+
+  //assume not in terminal configuration 
+  if (stack_depth() >= 2) {
+    WordIndex i = stack_top_second();
+    WordIndex j = stack_top();
+
+    if (gold_parse.has_arc(i, j)) {
+      lab = label_at(j);
+    }
+    else if (gold_parse.has_arc(j, i)) {
+      lab = label_at(i);
+    }
+  }
+    
+  return lab;
+}
+
 //predict the next action according to the oracle
 kAction ArcStandardLabelledParser::oracleNext(const ParsedSentence& gold_parse) const {
   kAction a = kAction::re;

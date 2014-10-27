@@ -583,6 +583,21 @@ Real Weights::predict(int word, vector<int> context) const {
   return -prob;
 }
 
+Reals Weights::predict(vector<int> context) const {
+  VectorReal prediction_vector = getPredictionVector(context);
+ // std::cout << prediction_vector.norm() << " ";
+  Reals probs(vocabSize(), 0);
+
+  Real normalizer = 0;
+  VectorReal word_probs = logSoftMax(
+      R.transpose() * prediction_vector + B, normalizer);
+  normalizerCache.set(context, normalizer);
+  for (int i = 0; i < vocabSize(); ++i)
+    prob[i] = word_probs(i);
+  
+  return probs;
+}
+
 int Weights::vocabSize() const {
   return config->vocab_size;
 }

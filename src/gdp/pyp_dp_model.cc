@@ -11,7 +11,6 @@ template<class ParseModel, class ParsedWeights>
 PypDpModel<ParseModel, ParsedWeights>::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config) {
   dict_ = boost::make_shared<Dict>(true, config->parser_type==ParserType::arceager);
-  parse_model_ = boost::make_shared<ParseModel>(config);
   
   if (config->parser_type == ParserType::arcstandard) {
     config_->num_actions = 3;
@@ -21,6 +20,8 @@ PypDpModel<ParseModel, ParsedWeights>::PypDpModel(const boost::shared_ptr<ModelC
     config_->num_actions = 1;
     dict_->convert("STOP", false);
   }
+
+  parse_model_ = boost::make_shared<ParseModel>(config);
 }
 
 template<class ParseModel, class ParsedWeights>
@@ -35,7 +36,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
     std::cerr << "Reading supervised training corpus...\n";
     sup_training_corpus->readFile(config_->training_file, dict_, false);
      std::cerr << "Corpus size: " << sup_training_corpus->size() << " sentences\t (" 
-              << dict_->size() << " word types, " << dict_->tag_size() << " tags)\n";  
+              << dict_->size() << " word types, " << dict_->tag_size() << " tags, " 
+	      << dict->label_size() << " label)\n";  
   } else {
     std::cerr << "No supervised training corpus.\n";
   } 
@@ -44,13 +46,16 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
     std::cerr << "Reading unsupervised training corpus...\n";
     unsup_training_corpus->readFile(config_->training_file_unsup, dict_, false);
      std::cerr << "Corpus size: " << unsup_training_corpus->size() << " sentences\t (" 
-              << dict_->size() << " word types, " << dict_->tag_size() << " tags)\n";  
+              << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
+	      << dict->label_size() << " label)\n";  
   } else {
     std::cerr << "No unsupervised training corpus.\n";
   }
 
   config_->vocab_size = dict_->size();
   config_->num_tags = dict_->tag_size();
+  if (config->labelled_parser)
+    config->num_actions += 2*(dict->label_size()-1); //add labelled actions
 
   //read test data 
   std::cerr << "Reading test corpus...\n";
@@ -202,9 +207,12 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   training_corpus->readFile(config_->training_file, dict_, false);
   config_->vocab_size = dict_->size();
   config_->num_tags = dict_->tag_size();
+  if (config->labelled_parser)
+    config->num_actions += 2*(dict->label_size()-1); //add labelled actions
 
   std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
-            << dict_->size() << " word types, " << dict_->tag_size() << " tags)\n";  
+            << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
+	    << dict->label_size() << " label)\n";  
 
   //print tags
   //for (int i = 0; i < dict_->tag_size(); ++i)

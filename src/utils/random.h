@@ -47,6 +47,10 @@ inline unsigned sample_bernoulli(const F a, const F b, Engine& eng) {
   return static_cast<unsigned>(sample_uniform01<F>(eng) > (a / z));
 }
 
+inline double log_one_min(const double a) {
+  return -std::log(1 - std::exp(-a));
+}
+
 inline double log_sum_exp(const double a, const double b) {
   if (a <= b)
     return a + std::log(1 + std::exp(b - a));

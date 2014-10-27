@@ -49,6 +49,8 @@ int main(int argc, char** argv) {
         "Visit the training tokens in random order.")
     ("parser-type", value<std::string>()->default_value("arcstandard"),
         "Parsing strategy.")
+    ("labelled-parser", value<bool>()->default_value(false),
+        "Predict arc labels.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
     ("semi-supervised", value<bool>()->default_value(false),
@@ -110,6 +112,7 @@ int main(int argc, char** argv) {
   else
     config->parser_type = ParserType::ngram; 
 
+  config->labelled_parser = vm["labelled-parser"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
   config->semi_supervised = vm["semi-supervised"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
@@ -139,14 +142,18 @@ int main(int argc, char** argv) {
     model.learn();
   } else {
     if (config->lexicalised) {
-      if (config->parser_type == ParserType::arcstandard)
+      if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser)
+        train_dp<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
+      else if (config->parser_type == ParserType::arcstandard)
         train_dp<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
       else if (config->parser_type == ParserType::arceager)
         train_dp<ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>, ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>(config);
       else
         train_dp<EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>, ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>(config);
     } else {
-      if (config->parser_type == ParserType::arcstandard)
+      if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser)
+        train_dp<ArcStandardLabelledParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(config);
+      else if (config->parser_type == ParserType::arcstandard)
         train_dp<ArcStandardParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(config);
       else if (config->parser_type == ParserType::arceager)
         train_dp<ArcEagerParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>, ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>(config);

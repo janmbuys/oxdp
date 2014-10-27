@@ -1,8 +1,8 @@
-#ifndef _GDP_AS_PARSE_MODEL_H_
-#define _GDP_AS_PARSE_MODEL_H_
+#ifndef _GDP_AS_LAB_PARSE_MODEL_H_
+#define _GDP_AS_LAB_PARSE_MODEL_H_
 
 #include "gdp/accuracy_counts.h"
-#include "gdp/arc_standard_parser.h"
+#include "gdp/arc_standard_labelled_parser.h"
 #include "gdp/transition_parse_model_interface.h"
 
 #include "pyp/parsed_pyp_weights.h"

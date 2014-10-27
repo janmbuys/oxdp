@@ -80,6 +80,8 @@ class Weights {
 
   Real predict(int word, vector<int> context) const;
 
+  Reals predict(vector<int> context) const;
+
   int vocabSize() const;
 
   void clearCache();
