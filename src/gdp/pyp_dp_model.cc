@@ -10,11 +10,11 @@ PypDpModel<ParseModel, ParsedWeights>::PypDpModel() {
 template<class ParseModel, class ParsedWeights>
 PypDpModel<ParseModel, ParsedWeights>::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config) {
-  dict_ = boost::make_shared<Dict>(true, config->parser_type==ParserType::arceager);
+  dict_ = boost::make_shared<Dict>(true, config_->parser_type==ParserType::arceager);
   
-  if (config->parser_type == ParserType::arcstandard) {
+  if (config_->parser_type == ParserType::arcstandard) {
     config_->num_actions = 3;
-  } else if (config->parser_type == ParserType::arceager) {
+  } else if (config_->parser_type == ParserType::arceager) {
     config_->num_actions = 4;
   } else {
     config_->num_actions = 1;
@@ -37,7 +37,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
     sup_training_corpus->readFile(config_->training_file, dict_, false);
      std::cerr << "Corpus size: " << sup_training_corpus->size() << " sentences\t (" 
               << dict_->size() << " word types, " << dict_->tag_size() << " tags, " 
-	      << dict->label_size() << " label)\n";  
+	      << dict_->label_size() << " label)\n";  
   } else {
     std::cerr << "No supervised training corpus.\n";
   } 
@@ -47,15 +47,15 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
     unsup_training_corpus->readFile(config_->training_file_unsup, dict_, false);
      std::cerr << "Corpus size: " << unsup_training_corpus->size() << " sentences\t (" 
               << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
-	      << dict->label_size() << " label)\n";  
+	      << dict_->label_size() << " label)\n";  
   } else {
     std::cerr << "No unsupervised training corpus.\n";
   }
 
   config_->vocab_size = dict_->size();
   config_->num_tags = dict_->tag_size();
-  if (config->labelled_parser)
-    config->num_actions += 2*(dict->label_size()-1); //add labelled actions
+  if (config_->labelled_parser)
+    config_->num_actions += 2*(dict_->label_size()-1); //add labelled actions
 
   //read test data 
   std::cerr << "Reading test corpus...\n";
@@ -207,12 +207,12 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   training_corpus->readFile(config_->training_file, dict_, false);
   config_->vocab_size = dict_->size();
   config_->num_tags = dict_->tag_size();
-  if (config->labelled_parser)
-    config->num_actions += 2*(dict->label_size()-1); //add labelled actions
+  if (config_->labelled_parser)
+    config_->num_actions += 2*(dict_->label_size()-1); //add labelled actions
 
   std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
             << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
-	    << dict->label_size() << " label)\n";  
+	    << dict_->label_size() << " label)\n";  
 
   //print tags
   //for (int i = 0; i < dict_->tag_size(); ++i)
@@ -418,10 +418,12 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
 }
 
 template class PypDpModel<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
+template class PypDpModel<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
 template class PypDpModel<ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>, ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>;
 template class PypDpModel<EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>, ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>;
 
 template class PypDpModel<ArcStandardParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>;
+template class PypDpModel<ArcStandardLabelledParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>;
 template class PypDpModel<ArcEagerParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>, ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>;
 template class PypDpModel<EisnerParseModel<ParsedPypWeights<tagLMOrderE, 1>>, ParsedPypWeights<tagLMOrderE, 1>>;
 

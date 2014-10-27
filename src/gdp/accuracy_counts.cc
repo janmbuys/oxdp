@@ -35,9 +35,13 @@ void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSe
   inc_num_sentences();
   if (prop_parse.has_equal_arcs(gold_parse)) {
     inc_complete_sentences();
+    if (prop_parse.has_equal_labels(gold_parse))
+      inc_complete_sentences_lab();
   }
+
   add_total_length(gold_parse.size() - 1);
   bool punc_complete = true;
+  bool lab_punc_complete = true;
 
   //maybe change this again later ...
   add_likelihood(prop_parse.weight());
@@ -50,9 +54,14 @@ void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSe
     if (prop_parse.arc_at(j)==gold_parse.arc_at(j)) {
       inc_directed_count();
       inc_undirected_count(); 
+      if (prop_parse.label_at(j)==gold_parse.label_at(j)) 
+        inc_directed_count_lab();
+
       if (!dict_->punctTag(prop_parse.tag_at(j))) {
         inc_directed_count_nopunc();
         inc_undirected_count_nopunc(); 
+        if (prop_parse.label_at(j)==gold_parse.label_at(j)) 
+          inc_directed_count_lab_nopunc();
       } 
 
     } else if (prop_parse.has_parent_at(j) && 
@@ -60,7 +69,6 @@ void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSe
       inc_undirected_count(); 
       if (!dict_->punctTag(prop_parse.tag_at(j))) 
         inc_undirected_count_nopunc(); 
-
     }
 
     if (prop_parse.has_arc(j, 0) && gold_parse.has_arc(j, 0)) 
@@ -68,13 +76,19 @@ void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSe
       
     if (!dict_->punctTag(prop_parse.tag_at(j))) {
       inc_total_length_nopunc();
-      if (prop_parse.arc_at(j)!=gold_parse.arc_at(j))
+      if (prop_parse.arc_at(j)!=gold_parse.arc_at(j)) {
         punc_complete = false;
+        lab_punc_complete = false;
+      } else if (prop_parse.label_at(j)!=gold_parse.label_at(j)) {
+        lab_punc_complete = false;
+      } 
     }
   }
 
   if (punc_complete)
     inc_complete_sentences_nopunc();
+  if (lab_punc_complete)
+    inc_complete_sentences_lab_nopunc();
 }
 
 void AccuracyCounts::transitionCountAccuracy(const TransitionParser& prop_parse, 
@@ -124,6 +138,40 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse,
   }
 }
 
+void AccuracyCounts::countAccuracy(const ArcStandardLabelledParser& prop_parse, 
+                                   const ParsedSentence& gold_parse) {
+  //parent method
+  transitionCountAccuracy(prop_parse, gold_parse); 
+  
+  //resimulate the computation of the proposed action sequence to compute accuracy  
+  ArcStandardLabelledParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.num_labels()); //need sentence and tags
+
+  for (unsigned i = 0; i < prop_parse.actions().size(); ++i) {
+    kAction a = prop_parse.actions().at(i);
+    WordId alab = prop_parse.action_label_at(i);
+
+    kAction next = simul.oracleNext(gold_parse);
+    WordId nextLabel = simul.oracleNextLabel(gold_parse);
+
+    //TODO labelled accuracy
+    //count when shifted/reduced when it should have shifted/reduced
+    if (next==kAction::sh) {
+      inc_shift_gold();
+      if (a==kAction::sh)
+        inc_shift_count();
+    } else if (next==kAction::la || next==kAction::ra) {
+      inc_reduce_gold();
+      if (a==kAction::la || a==kAction::ra) //counts either direction
+        inc_reduce_count();
+    } 
+  
+    if (simul.buffer_empty() && next==kAction::re)
+      inc_final_reduce_error_count();
+    
+    simul.executeAction(a, alab);
+  }
+}
+
 void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse) {
   //parent method
   transitionCountAccuracy(prop_parse, gold_parse); 
@@ -159,11 +207,15 @@ void AccuracyCounts::countLikelihood(Real parse_l, Real gold_l) {
 void AccuracyCounts::printAccuracy() const {
   std::cerr << "Directed Accuracy No Punct: " << directed_accuracy_nopunc() << std::endl;
   std::cerr << "Undirected Accuracy No Punct: " << undirected_accuracy_nopunc() << std::endl;
+  std::cerr << "Labelled Directed Accuracy No Punct: " << directed_accuracy_lab_nopunc() << std::endl;
   std::cerr << "Directed Accuracy: " << directed_accuracy() << std::endl;
   std::cerr << "Undirected Accuracy: " << undirected_accuracy() << std::endl;
+  std::cerr << "Labelled Directed Accuracy: " << directed_accuracy_lab() << std::endl;
   std::cerr << "Final reduce error rate: " << final_reduce_error_rate() << std::endl;
   std::cerr << "Completely correct: " << complete_accuracy() << std::endl;
+  std::cerr << "Labelled Completely correct: " << complete_accuracy_lab() << std::endl;
   std::cerr << "Completely correct No Punct: " << complete_accuracy_nopunc() << std::endl;
+  std::cerr << "Labelled Completely correct No Punct: " << complete_accuracy_lab_nopunc() << std::endl;
   std::cerr << "Root correct: " << root_accuracy() << std::endl;
   std::cerr << "ArcDirection Precision: " << arc_dir_precision() << std::endl;
   std::cerr << "ArcDirection Precision No Punct: " << arc_dir_precision_nopunc() << std::endl;

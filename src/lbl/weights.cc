@@ -593,7 +593,7 @@ Reals Weights::predict(vector<int> context) const {
       R.transpose() * prediction_vector + B, normalizer);
   normalizerCache.set(context, normalizer);
   for (int i = 0; i < vocabSize(); ++i)
-    prob[i] = word_probs(i);
+    probs[i] = word_probs(i);
   
   return probs;
 }

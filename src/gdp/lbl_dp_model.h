@@ -27,6 +27,7 @@
 
 #include "gdp/transition_parser.h"
 #include "gdp/arc_standard_parse_model.h"
+#include "gdp/arc_standard_labelled_parse_model.h"
 #include "gdp/arc_eager_parse_model.h"
 #include "gdp/eisner_parse_model.h"
 #include "gdp/accuracy_counts.h"

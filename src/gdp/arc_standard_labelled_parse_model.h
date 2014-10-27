@@ -11,7 +11,7 @@
 
 namespace oxlm {
 
-typedef std::vector<boost::shared_ptr<ArcStandardLabelledParser>> AsParserList;
+typedef std::vector<boost::shared_ptr<ArcStandardLabelledParser>> AslParserList;
 
 template<class ParsedWeights>
 class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcStandardLabelledParser, ParsedWeights> {
@@ -19,7 +19,7 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
 
   ArcStandardLabelledParseModel(boost::shared_ptr<ModelConfig> config);
 
-  void resampleParticles(AsParserList* beam_stack, MT19937& eng, unsigned num_particles);
+  void resampleParticles(AslParserList* beam_stack, MT19937& eng, unsigned num_particles);
 
   ArcStandardLabelledParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
                 unsigned beam_size) override;

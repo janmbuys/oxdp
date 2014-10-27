@@ -65,13 +65,26 @@ Real ParsedFactoredWeights::predictWord(int word, Words context) const {
   return FactoredWeights::predict(word, context);
 }
 
+Reals ParsedFactoredWeights::predictWord(Words context) const {
+  return FactoredWeights::predict(context);
+}
+
 Real ParsedFactoredWeights::predictTag(int tag, Words context) const {
   return 0.0;
+}
+ 
+Reals ParsedFactoredWeights::predictTag(Words context) const {
+  return Reals(numTags(), 0.0);
 }
   
 Real ParsedFactoredWeights::predictAction(int action, Words context) const {
   //TODO
   return -std::log(1.0/numActions());
+}
+
+Reals ParsedFactoredWeights::predictAction(Words context) const {
+  //TODO
+  return Reals(numActions(), -std::log(1.0/numActions()));
 }
 
 int ParsedFactoredWeights::numWords() const {
@@ -83,7 +96,7 @@ int ParsedFactoredWeights::numTags() const {
 }
 
 int ParsedFactoredWeights::numActions() const {
-  return 3;
+  return config->num_actions;
 }
  
 void ParsedFactoredWeights::getGradient(

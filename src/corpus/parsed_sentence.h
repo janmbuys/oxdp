@@ -63,7 +63,7 @@ class ParsedSentence: public TaggedSentence {
                           const boost::shared_ptr<ParsedSentence>& p2) {
     if (p1->size() != p2->size())
       return false;
-    for (int i = 0; i < p1->size(); ++i) {
+    for (int i = 1; i < p1->size(); ++i) {
       if (p1->arc_at(i) != p2->arc_at(i))
         return false;  
     }
@@ -74,7 +74,7 @@ class ParsedSentence: public TaggedSentence {
                           const boost::shared_ptr<ParsedSentence>& p2) {
     if (p1->size() != p2->size())
       return false;
-    for (int i = 0; i < p1->size(); ++i) {
+    for (int i = 1; i < p1->size(); ++i) {
       if (p1->arc_at(i) != p2->arc_at(i))
         return false;  
       if (p1->label_at(i) != p2->label_at(i))

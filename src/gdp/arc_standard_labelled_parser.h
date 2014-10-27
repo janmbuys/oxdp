@@ -95,6 +95,10 @@ class ArcStandardLabelledParser : public TransitionParser {
       return -1;
   }
 
+  int num_labels() const {
+    return num_labels_;
+  }
+
   private:
   int num_labels_;
   Words action_labels_;  

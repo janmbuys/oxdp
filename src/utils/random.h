@@ -100,8 +100,9 @@ struct multinomial_distribution {
 };
 
 //multinomial distribution parametarized with unnormalized negative log (natural base) probabilities
+template <typename F>
 struct multinomial_distribution_log {
-  multinomial_distribution_log(const std::vector<double>& v) : 
+  multinomial_distribution_log(const std::vector<F>& v) : 
         probs(v), 
         sum(std::accumulate(probs.begin()+1, probs.end(), probs.at(0), neg_log_sum_exp)) {}
 
@@ -109,10 +110,10 @@ struct multinomial_distribution_log {
   unsigned operator()(Engine& eng) const {
     //assert(!probs.empty());
     if (probs.size() <= 1) return 0;
-    const double random = sum - std::log(sample_uniform01<double>(eng)); // random number between -log( [0 and sum) )
+    const F random = sum - std::log(sample_uniform01<double>(eng)); // random number between -log( [0 and sum) )
     unsigned position = 1;
     //std::cout << sum << ": [";
-    double t = probs.at(0);
+    F t = probs.at(0);
     for (; position < probs.size() && t > random; ++position) {
       t = neg_log_sum_exp(t, probs.at(position)); // - sum)
       //std::cout << t << " ";
@@ -121,8 +122,8 @@ struct multinomial_distribution_log {
     //std::cout << " (" << random << ", " << t << ", " << std::exp(-t) <<  ") ";
     return position - 1;
   }
-  const std::vector<double>& probs;
-  const double sum;
+  const std::vector<F>& probs;
+  const F sum;
 };
 
 

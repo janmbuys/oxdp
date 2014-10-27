@@ -2,6 +2,7 @@
 #define _GDP_ACC_COUNTS_H_
 
 #include "arc_standard_parser.h"
+#include "arc_standard_labelled_parser.h"
 #include "arc_eager_parser.h"
 #include "eisner_parser.h"
 
@@ -36,8 +37,16 @@ public:
     ++complete_sentences_;
   }
 
+  void inc_complete_sentences_lab() {
+    ++complete_sentences_lab_;
+  }
+
   void inc_complete_sentences_nopunc() {
     ++complete_sentences_nopunc_;
+  }
+
+  void inc_complete_sentences_lab_nopunc() {
+    ++complete_sentences_lab_nopunc_;
   }
 
   void inc_gold_more_likely_count() {
@@ -52,8 +61,16 @@ public:
     ++directed_count_;
   }
 
+  void inc_directed_count_lab() {
+    ++directed_count_lab_;
+  }
+
   void inc_directed_count_nopunc() {
     ++directed_count_nopunc_;
+  }
+
+  void inc_directed_count_lab_nopunc() {
+    ++directed_count_lab_nopunc_;
   }
 
   void inc_undirected_count() {
@@ -120,6 +137,8 @@ public:
 
   void countAccuracy(const ArcStandardParser& prop_parse, const ParsedSentence& gold_parse); 
 
+  void countAccuracy(const ArcStandardLabelledParser& prop_parse, const ParsedSentence& gold_parse); 
+
   void countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse); 
 
   void countLikelihood(Real parse_l, Real gold_l);
@@ -130,8 +149,16 @@ public:
     return (directed_count_ + 0.0)/total_length_;
   }
 
+  Real directed_accuracy_lab() const {
+    return (directed_count_lab_ + 0.0)/total_length_;
+  }
+
   Real directed_accuracy_nopunc() const {
     return (directed_count_nopunc_ + 0.0)/total_length_nopunc_;
+  }
+
+  Real directed_accuracy_lab_nopunc() const {
+    return (directed_count_lab_nopunc_ + 0.0)/total_length_nopunc_;
   }
 
   Real undirected_accuracy() const {
@@ -146,8 +173,16 @@ public:
     return (complete_sentences_ + 0.0)/num_sentences_;
   }
 
+  Real complete_accuracy_lab() const {
+    return (complete_sentences_lab_ + 0.0)/num_sentences_;
+  }
+
   Real complete_accuracy_nopunc() const {
     return (complete_sentences_nopunc_ + 0.0)/num_sentences_;
+  }
+
+  Real complete_accuracy_lab_nopunc() const {
+    return (complete_sentences_lab_nopunc_ + 0.0)/num_sentences_;
   }
 
   Real root_accuracy() const {
@@ -251,14 +286,18 @@ private:
     int total_length_;
     int total_length_nopunc_;
     int directed_count_;
+    int directed_count_lab_;
     int directed_count_nopunc_;
+    int directed_count_lab_nopunc_;
     int undirected_count_;
     int undirected_count_nopunc_;
     int root_count_;
     int gold_more_likely_count_;
     int num_actions_;
     int complete_sentences_;
+    int complete_sentences_lab_;
     int complete_sentences_nopunc_;
+    int complete_sentences_lab_nopunc_;
     int num_sentences_;
 };
 

@@ -12,12 +12,12 @@ template<class ParsedWeights>
 void ArcEagerParseModel<ParsedWeights>::resampleParticles(AeParserList* beam_stack, MT19937& eng,
         unsigned num_particles) {
   //assume (beam_stack->at(pi)->num_particles() > 0)
-  std::vector<double> importance_w(beam_stack->size(), L_MAX); 
+  std::vector<Real> importance_w(beam_stack->size(), L_MAX); 
   for (unsigned i = 0; i < importance_w.size(); ++i) 
     importance_w[i] = beam_stack->at(i)->weighted_importance_weight();
 
   //resample according to importance weight
-  multinomial_distribution_log part_mult(importance_w); 
+  multinomial_distribution_log<Real> part_mult(importance_w); 
   std::vector<int> sample_counts(beam_stack->size(), 0);
   for (unsigned i = 0; i < num_particles;) {
     unsigned pi = part_mult(eng);
@@ -236,8 +236,8 @@ ArcEagerParser ArcEagerParseModel<ParsedWeights>::particleParseSentence(const Pa
       if (!beam_stack[j]->reduce_valid())
         reducep = L_MAX;
 
-      std::vector<double> distr = {shiftp, leftarcreducep, rightarcshiftp, reducep};
-      multinomial_distribution_log mult(distr); 
+      std::vector<Real> distr = {shiftp, leftarcreducep, rightarcshiftp, reducep};
+      multinomial_distribution_log<Real> mult(distr); 
       for (int k = 0; k < num_samples; k++) {
         WordId act = mult(eng);
         ++sample_counts[act];
@@ -426,8 +426,8 @@ ArcEagerParser ArcEagerParseModel<ParsedWeights>::particleGoldParseSentence(cons
         if (oracle_next==kAction::re) {
           //enforce at least 1 particle to reduce
           std::vector<int> sample_counts = {0, 1}; //shift, reduce
-          std::vector<double> distr = {shiftp, reducep};
-          multinomial_distribution_log mult(distr); 
+          std::vector<Real> distr = {shiftp, reducep};
+          multinomial_distribution_log<Real> mult(distr); 
           for (int k = 1; k < num_samples; k++) {
             WordId act = mult(eng);
             ++sample_counts[act];
@@ -610,8 +610,8 @@ ArcEagerParser ArcEagerParseModel<ParsedWeights>::generateSentence(const boost::
       //  std::cout << "[ra:" << rightarcshiftp << " sh:" << shiftp << "] ";
 
       //sample an action
-      std::vector<double> distr = {shiftp, leftarcreducep, rightarcshiftp, reducep};
-      multinomial_distribution_log mult(distr); 
+      std::vector<Real> distr = {shiftp, leftarcreducep, rightarcshiftp, reducep};
+      multinomial_distribution_log<Real> mult(distr); 
       WordId act = mult(eng);
       //std::cout << "(" << parser.stack_depth() << ") ";
       //std::cout << act << " ";
@@ -635,10 +635,10 @@ ArcEagerParser ArcEagerParseModel<ParsedWeights>::generateSentence(const boost::
       //need_shift = false;
       //sample a tag - disallow root tag
       Words t_ctx = parser.tagContext(a);
-      std::vector<double> t_distr(weights->numTags() - 1, L_MAX);
+      std::vector<Real> t_distr(weights->numTags() - 1, L_MAX);
       for (WordId w = 1; w < weights->numTags(); ++w) 
         t_distr[w-1] = weights->predictTag(w, t_ctx); 
-      multinomial_distribution_log t_mult(t_distr);
+      multinomial_distribution_log<Real> t_mult(t_distr);
       WordId tag = t_mult(eng) + 1;
 
       Real tagp = weights->predictTag(tag, t_ctx); 
@@ -647,12 +647,12 @@ ArcEagerParser ArcEagerParseModel<ParsedWeights>::generateSentence(const boost::
 
       //sample a word 
       Words w_ctx = parser.wordContext();
-      std::vector<double> w_distr(weights->numWords(), 0);
+      std::vector<Real> w_distr(weights->numWords(), 0);
 
       w_distr[0] = weights->predictWord(-1, w_ctx); //unk probability
       for (WordId w = 1; w < weights->numWords(); ++w) 
         w_distr[w] = weights->predictWord(w, w_ctx); 
-      multinomial_distribution_log w_mult(w_distr);
+      multinomial_distribution_log<Real> w_mult(w_distr);
       WordId word = w_mult(eng);
       if (word==0)
         word = -1;

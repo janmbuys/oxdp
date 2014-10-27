@@ -103,10 +103,10 @@ WordId ArcStandardLabelledParser::oracleNextLabel(const ParsedSentence& gold_par
     WordIndex j = stack_top();
 
     if (gold_parse.has_arc(i, j)) {
-      lab = label_at(j);
+      lab = gold_parse.label_at(j);
     }
     else if (gold_parse.has_arc(j, i)) {
-      lab = label_at(i);
+      lab = gold_parse.label_at(i);
     }
   }
     

@@ -204,7 +204,7 @@ int main(int argc, char** argv) {
   } else {
     if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser) {
       train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config);
-    else if (config->parser_type == ParserType::arcstandard) {
+    } else if (config->parser_type == ParserType::arcstandard) {
       train_dp<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config);
     } else if (config->parser_type == ParserType::arceager) {
       train_dp<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config);

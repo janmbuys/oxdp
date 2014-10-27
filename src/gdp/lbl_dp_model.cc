@@ -427,6 +427,7 @@ bool LblDpModel<ParseModel, ParsedWeights, Metadata>::operator==(
 }
 
 template class LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
+template class LblDpModel<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
 template class LblDpModel<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
 template class LblDpModel<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
 

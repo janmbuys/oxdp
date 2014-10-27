@@ -13,12 +13,12 @@ template<class ParsedWeights>
 void ArcStandardParseModel<ParsedWeights>::resampleParticles(AsParserList* beam_stack, MT19937& eng,
         unsigned num_particles) {
   //assume (beam_stack->at(pi)->num_particles() > 0)
-  std::vector<double> importance_w(beam_stack->size(), L_MAX); 
+  std::vector<Real> importance_w(beam_stack->size(), L_MAX); 
   for (unsigned i = 0; i < importance_w.size(); ++i) 
     importance_w[i] = beam_stack->at(i)->weighted_importance_weight();
 
   //resample according to importance weight
-  multinomial_distribution_log part_mult(importance_w); 
+  multinomial_distribution_log<Real> part_mult(importance_w); 
   std::vector<int> sample_counts(beam_stack->size(), 0);
   for (unsigned i = 0; i < num_particles;) {
     unsigned pi = part_mult(eng);
@@ -208,8 +208,8 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::particleParseSentence(co
           reducerightarcp = reducep;
         }
 
-        std::vector<double> distr = {shiftp, reduceleftarcp, reducerightarcp};
-        multinomial_distribution_log mult(distr); 
+        std::vector<Real> distr = {shiftp, reduceleftarcp, reducerightarcp};
+        multinomial_distribution_log<Real> mult(distr); 
         for (int k = 0; k < num_samples; k++) {
           WordId act = mult(eng);
           ++sample_counts[act];
@@ -296,8 +296,8 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::particleParseSentence(co
           //only allow right arc
           sample_counts[1] = num_samples;
         } else {
-          std::vector<double> distr = {reduceleftarcp, reducerightarcp};
-          multinomial_distribution_log mult(distr); 
+          std::vector<Real> distr = {reduceleftarcp, reducerightarcp};
+          multinomial_distribution_log<Real> mult(distr); 
           for (int k = 0; k < num_samples; k++) {
             WordId act = mult(eng);
             ++sample_counts[act];
@@ -417,7 +417,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::particleGoldParseSentenc
           beam_stack[j]->add_importance_weight(shiftp);  
       } else {
         //enforce at least one particle to reduce
-        std::vector<double> distr; //= {shiftp, reduceleftarcp, reducerightarcp};
+        std::vector<Real> distr; //= {shiftp, reduceleftarcp, reducerightarcp};
         if (oracle_next==kAction::la) {
           distr = {shiftp, reducep, L_MAX};
           sample_counts[1] =  1;            
@@ -427,7 +427,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::particleGoldParseSentenc
           sample_counts[2] =  1;            
         }
 
-        multinomial_distribution_log mult(distr); 
+        multinomial_distribution_log<Real> mult(distr); 
         for (int k = 1; k < num_samples; k++) {
           WordId act = mult(eng);
           ++sample_counts[act];
@@ -438,13 +438,13 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::particleGoldParseSentenc
         beam_stack.push_back(boost::make_shared<ArcStandardParser>(*beam_stack[j]));
         beam_stack.back()->rightArc();
         beam_stack.back()->add_particle_weight(reducerightarcp); 
-        beam_stack.back()->add_importance_weight(reducerightarcp - reducep); 
+        beam_stack.back()->add_importance_weight(reducep - reducerightarcp); 
         beam_stack.back()->set_num_particles(sample_counts[2]); 
       } else if (sample_counts[1] > 0) {
         beam_stack.push_back(boost::make_shared<ArcStandardParser>(*beam_stack[j]));
         beam_stack.back()->leftArc();
         beam_stack.back()->add_particle_weight(reduceleftarcp); 
-        beam_stack.back()->add_importance_weight(reduceleftarcp - reducep); 
+        beam_stack.back()->add_importance_weight(reducep - reduceleftarcp); 
         beam_stack.back()->set_num_particles(sample_counts[1]); 
       }
 
@@ -629,8 +629,8 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::generateSentence(const b
         leftarcreducep = L_MAX;
 
       //sample an action
-      std::vector<double> distr = {shiftp, leftarcreducep, rightarcreducep};
-      multinomial_distribution_log mult(distr); 
+      Reals distr = {shiftp, leftarcreducep, rightarcreducep};
+      multinomial_distribution_log<Real> mult(distr); 
       WordId act = mult(eng);
       //std::cout << "(" << parser.stack_depth() << ") ";
       //std::cout << act << " ";
@@ -650,10 +650,10 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::generateSentence(const b
     if (a == kAction::sh) {
       //sample a tag - disallow root tag
       Words t_ctx = parser.tagContext();
-      std::vector<double> t_distr(weights->numTags() - 1, L_MAX);
+      std::vector<Real> t_distr(weights->numTags() - 1, L_MAX);
       for (WordId w = 1; w < weights->numTags(); ++w) 
         t_distr[w-1] = weights->predictTag(w, t_ctx); 
-      multinomial_distribution_log t_mult(t_distr);
+      multinomial_distribution_log<Real> t_mult(t_distr);
       WordId tag = t_mult(eng) + 1;
 
       Real tagp = weights->predictTag(tag, t_ctx); 
@@ -662,12 +662,12 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::generateSentence(const b
 
       //sample a word 
       Words w_ctx = parser.wordContext();
-      std::vector<double> w_distr(weights->numWords(), 0);
+      std::vector<Real> w_distr(weights->numWords(), 0);
 
       w_distr[0] = weights->predictWord(-1, w_ctx); //unk probability
       for (WordId w = 1; w < weights->numWords(); ++w) 
         w_distr[w] = weights->predictWord(w, w_ctx); 
-      multinomial_distribution_log w_mult(w_distr);
+      multinomial_distribution_log<Real> w_mult(w_distr);
       WordId word = w_mult(eng);
       if (word==0)
         word = -1;

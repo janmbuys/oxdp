@@ -146,6 +146,15 @@ class Parser: public ParsedSentence {
     return true;
   }
 
+  bool has_equal_labels(const ParsedSentence& parse) const {
+    for (WordIndex j = 1; j < size(); ++j) {
+      if (label_at(j) != parse.label_at(j))
+        return false;
+    }
+
+    return true;
+  } 
+
   bool complete_parse() const {
     for (WordIndex i = 1; i < size(); ++i) 
       if (!has_parent_at(i) && ((i < (size() - 1)) || (tag_at(i) != 1)))
