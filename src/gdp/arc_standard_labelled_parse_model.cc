@@ -64,13 +64,16 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPars
       //for every item in the list, add valid reduce actions to list i - 1 
       for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
 	  //TODO find max labelled action
+        //std::cerr << "predicting action" << std::endl;
         Reals action_probs = weights->predictAction(beam_chart[i][j]->actionContext());
-        WordId reduce_pred = std::max_element(action_probs.begin() + 1, action_probs.end()) - action_probs.begin();
-	std::cout << reduce_pred << " ";
+        WordIndex reduce_pred = arg_min(action_probs, 1);
+        //std::max_element(action_probs.begin() + 1, action_probs.end()) - action_probs.begin();
         //left arc invalid for stack size 2
-	if (i == 1) 
-          reduce_pred = std::max_element(action_probs.begin() + config_->num_labels + 1, action_probs.end()) - action_probs.begin();
+	    if (i == 1) 
+          reduce_pred = arg_min(action_probs, config_->num_labels + 1);
+	    //std::cerr << reduce_pred << std::endl;
         Real reducep = action_probs[reduce_pred];
+	    //std::cerr << reducep << std::endl;
         kAction re_act = beam_chart[i][j]->lookup_action(reduce_pred);
         WordId re_label = beam_chart[i][j]->lookup_label(reduce_pred);
 
@@ -559,14 +562,16 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::staticGo
 template<class ParsedWeights>
 ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::staticGoldParseSentence(const ParsedSentence& sent) {
   ArcStandardLabelledParser parser(static_cast<TaggedSentence>(sent), config_->num_labels);
-  
+  //std::cout << "Oracle: "; 
   kAction a = kAction::sh;
   while (!parser.inTerminalConfiguration() && (a != kAction::re)) {
     a = parser.oracleNext(sent);  
     WordId lab = parser.oracleNextLabel(sent);
+    //std::cout << static_cast<WordId>(a) << "," << lab << " ";
     if (a != kAction::re) 
       parser.executeAction(a, lab);
   }
+  //std::cout << std::endl;
 
   return parser;
 }
@@ -705,7 +710,9 @@ Real ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Parsed
   ArcStandardLabelledParser parse = beamParseSentence(sent, weights, beam_size);
   acc_counts->countAccuracy(parse, sent);
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
-  
+  parse.print_arcs();
+  parse.print_labels();
+
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
   return parse.particle_weight();
 }

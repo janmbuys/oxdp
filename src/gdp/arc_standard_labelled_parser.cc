@@ -76,7 +76,7 @@ bool ArcStandardLabelledParser::leftArc(WordId l) {
   pop_stack();
   push_stack(j);
   set_arc(i, j);
-  set_label(j, l);
+  set_label(i, l);
   append_action(kAction::la);
   append_action_label(l);
   return true;
@@ -87,7 +87,7 @@ bool ArcStandardLabelledParser::rightArc(WordId l) {
   pop_stack();
   WordIndex i = stack_top();
   set_arc(j, i);
-  set_label(i, l);
+  set_label(j, l);
   append_action(kAction::ra);
   append_action_label(l);
   return true;
@@ -103,10 +103,10 @@ WordId ArcStandardLabelledParser::oracleNextLabel(const ParsedSentence& gold_par
     WordIndex j = stack_top();
 
     if (gold_parse.has_arc(i, j)) {
-      lab = gold_parse.label_at(j);
+      lab = gold_parse.label_at(i);
     }
     else if (gold_parse.has_arc(j, i)) {
-      lab = gold_parse.label_at(i);
+      lab = gold_parse.label_at(j);
     }
   }
     
@@ -210,14 +210,16 @@ void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDat
       //word prediction
       //if (!(word_examples == nullptr))  //do we want to do this?
       examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
-    }  
+    } 
 
     //labelled action prediction 
     WordId lab_act = convert_action(a, lab);
-
+    //std::cout << static_cast<WordId>(a) << "," << lab << "," << lab_act << " ";
     examples->add_action_example(DataPoint(lab_act, parser.actionContext()));
     parser.executeAction(a, lab);
   }
+
+  //std::cout << std::endl;
 } 
 
 }

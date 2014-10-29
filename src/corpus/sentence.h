@@ -18,9 +18,9 @@ class Sentence {
    sentence_.push_back(w);
   }
 
-  void print_sentence(Dict& dict) const {
+  void print_sentence(const boost::shared_ptr<Dict>& dict) const {
     for (auto word: sentence_)
-      std::cout << dict.lookup(word) << " ";
+      std::cout << dict->lookup(word) << " ";
     std::cout << std::endl;
   }
 

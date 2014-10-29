@@ -27,9 +27,15 @@ class ParsedSentence: public TaggedSentence {
     std::cout << std::endl;   
   }
 
-  void print_labels(Dict& dict) const {
+  void print_labels() const {
     for (auto lab: labels_)
-      std::cout << dict.lookupLabel(lab) << " ";
+      std::cout << lab << " ";
+    std::cout << std::endl;   
+  }
+
+  void print_labels(const boost::shared_ptr<Dict>& dict) const {
+    for (auto lab: labels_)
+      std::cout << dict->lookupLabel(lab) << " ";
     std::cout << std::endl;   
   }
 

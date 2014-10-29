@@ -37,7 +37,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
     sup_training_corpus->readFile(config_->training_file, dict_, false);
      std::cerr << "Corpus size: " << sup_training_corpus->size() << " sentences\t (" 
               << dict_->size() << " word types, " << dict_->tag_size() << " tags, " 
-	      << dict_->label_size() << " label)\n";  
+	      << dict_->label_size() << " labels)\n";  
   } else {
     std::cerr << "No supervised training corpus.\n";
   } 
@@ -47,15 +47,17 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised() {
     unsup_training_corpus->readFile(config_->training_file_unsup, dict_, false);
      std::cerr << "Corpus size: " << unsup_training_corpus->size() << " sentences\t (" 
               << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
-	      << dict_->label_size() << " label)\n";  
+	      << dict_->label_size() << " labels)\n";  
   } else {
     std::cerr << "No unsupervised training corpus.\n";
   }
 
   config_->vocab_size = dict_->size();
   config_->num_tags = dict_->tag_size();
-  if (config_->labelled_parser)
+  if (config_->labelled_parser) {
+    config_->num_labels = dict_->label_size();
     config_->num_actions += 2*(dict_->label_size()-1); //add labelled actions
+  }
 
   //read test data 
   std::cerr << "Reading test corpus...\n";
@@ -207,12 +209,14 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   training_corpus->readFile(config_->training_file, dict_, false);
   config_->vocab_size = dict_->size();
   config_->num_tags = dict_->tag_size();
-  if (config_->labelled_parser)
+  if (config_->labelled_parser) {
+    config_->num_labels = dict_->label_size();
     config_->num_actions += 2*(dict_->label_size()-1); //add labelled actions
+  }
 
   std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
             << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
-	    << dict_->label_size() << " label)\n";  
+	    << dict_->label_size() << " labels)\n";  
 
   //print tags
   //for (int i = 0; i < dict_->tag_size(); ++i)
@@ -310,8 +314,11 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       for (auto j: minibatch) {
         //if (iter == 0) {  //this only takes 1 sec per iteration
           examples_list.at(j)->clear();
-          //parse_model_->extractSentence(training_corpus->sentence_at(j), examples_list.at(j));
-          parse_model_->extractSentence(training_corpus->sentence_at(j), weights_, eng, examples_list.at(j));
+          //print labels
+          training_corpus->sentence_at(j).print_arcs();
+          training_corpus->sentence_at(j).print_labels();
+          parse_model_->extractSentence(training_corpus->sentence_at(j), examples_list.at(j));
+          //parse_model_->extractSentence(training_corpus->sentence_at(j), weights_, eng, examples_list.at(j));
           if (!training_corpus->sentence_at(j).is_projective_dependency())
             ++non_projective_count;
         //}
@@ -319,7 +326,6 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       }     
 
       weights_->updateInsert(minibatch_examples, eng); 
-
      
       ++minibatch_counter;
       start = end;
