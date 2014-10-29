@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
   config->num_particles = vm["num-particles"].as<int>();
 
   //otherwise override manually
-  config->beam_sizes = {1};
+  config->beam_sizes = {0, 1};
   for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
     config->beam_sizes.push_back(i);
  

@@ -21,6 +21,8 @@ class ArcEagerParseModel: public TransitionParseModelInterface<ArcEagerParser, P
 
   void resampleParticles(AeParserList* beam_stack, MT19937& eng, unsigned num_particles);
 
+  ArcEagerParser greedyParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights) override;
+
   ArcEagerParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
           unsigned beam_size) override;
 
@@ -58,12 +60,12 @@ class ArcEagerParseModel: public TransitionParseModelInterface<ArcEagerParser, P
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples);
 
-  Real evaluateSentence(const ParsedSentence& sent, 
+  Parser evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size); 
 
-  Real evaluateSentence(const ParsedSentence& sent, 
+  Parser evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size); 

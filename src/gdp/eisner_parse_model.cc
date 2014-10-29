@@ -222,24 +222,24 @@ void EisnerParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSe
 }
 
 template<class ParsedWeights>
-Real EisnerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+Parser EisnerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   EisnerParser parse = parseSentence(sent, weights);
   acc_counts->countAccuracy(parse, sent);
-  return parse.weight(); 
+  return parse; 
 }   
 
 template<class ParsedWeights>
-Real EisnerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+Parser EisnerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   //TODO sample a sentence
   EisnerParser parse = parseSentence(sent, weights);
   acc_counts->countAccuracy(parse, sent);
-  return parse.weight(); 
+  return parse; 
 }
 
 template class EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>;

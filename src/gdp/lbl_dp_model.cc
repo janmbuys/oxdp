@@ -291,6 +291,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate() const {
   std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
+//not sure if I should thread this...
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) const {
@@ -312,6 +313,9 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
       auto beam_start = get_time();
       boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>(dict);
 
+      std::ofstream outs;
+      outs.open(config->test_file + ".system");
+
       size_t start = 0;
       while (start < test_corpus->size()) {
         size_t end = std::min(start + config->minibatch_size, test_corpus->size());
@@ -321,8 +325,16 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
 
         Real objective = 0;
         for (auto j: minibatch) {
-          objective += parse_model->evaluateSentence(test_corpus->sentence_at(j), 
-                  weights, acc_counts, beam_size);
+          Parser parse = parse_model->evaluateSentence(test_corpus->sentence_at(j), weights, acc_counts, beam_size);
+          objective += parse.weight();
+
+          //write output to conll-format file: may need a lock
+          for (unsigned i = 1; i < parse.size(); ++i) { 
+            outs << i << "\t" << dict->lookup(parse.word_at(i)) << "\t_\t_\t" 
+                 << dict->lookupTag(parse.tag_at(i)) << "\t_\t" << parse.arc_at(i) << "\t"
+                 << dict->lookupLabel(parse.label_at(i)) << "\t_\t_\n";
+          }
+          outs << "\n";
         }
 
         #pragma omp critical
@@ -337,6 +349,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
 
       #pragma omp master
       {
+        outs.close();
         Real beam_time = get_duration(beam_start, get_time());
         Real sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
         std::cerr << "(" << static_cast<int>(sents_per_sec) << " sentences per second)\n"; 

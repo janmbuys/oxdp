@@ -33,6 +33,48 @@ void ArcStandardLabelledParseModel<ParsedWeights>::resampleParticles(AslParserLi
 }
 
 template<class ParsedWeights>
+ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::greedyParseSentence(const ParsedSentence& sent, 
+                               const boost::shared_ptr<ParsedWeights>& weights) {
+  ArcStandardLabelledParser parser(static_cast<TaggedSentence>(sent), config_->num_labels);
+  
+  parser.shift(); 
+
+  for (unsigned k = 1; k <= sent.size(); ++k) {
+    Reals action_probs = weights->predictAction(parser.actionContext());
+    WordIndex pred = arg_min(action_probs, 0);
+    if (parser.stack_depth() < 2)
+      pred = 0;
+    
+    //reduce until shift action is chosen
+    while (pred > 0) {
+      kAction re_act = parser.lookup_action(pred);
+      WordId re_label = parser.lookup_label(pred);
+      if (re_act == kAction::la) 
+        parser.leftArc(re_label);
+	  else
+        parser.rightArc(re_label);
+      parser.add_particle_weight(action_probs[pred]);
+
+      action_probs = weights->predictAction(parser.actionContext());
+      pred = arg_min(action_probs, 0);
+      if (parser.stack_depth() < 2) //covers terminal configuration
+        pred = 0;
+    }
+    
+    //shift    
+    if (k < sent.size()) {
+      Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext());
+      Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
+      parser.shift();
+      parser.add_particle_weight(tagp);
+      parser.add_particle_weight(wordp);
+    }
+  }
+
+  return parser;
+}
+
+template<class ParsedWeights>
 ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamParseSentence(const ParsedSentence& sent, 
                                const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) {
   //bool direction_deterministic = false;
@@ -702,23 +744,29 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentenceUnsupervised(c
 }
 
 template<class ParsedWeights>
-Real ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   Words ctx(7, 0);
-  ArcStandardLabelledParser parse = beamParseSentence(sent, weights, beam_size);
+  
+  //ArcStandardLabelledParser parse = greedyParseSentence(sent, weights);
+  ArcStandardLabelledParser parse(config_->num_labels);
+  if (beam_size == 0)
+    parse = greedyParseSentence(sent, weights);
+  else
+    parse = beamParseSentence(sent, weights, beam_size);
   acc_counts->countAccuracy(parse, sent);
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
   parse.print_arcs();
   parse.print_labels();
 
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
-  return parse.particle_weight();
+  return parse;
 }
 
 template<class ParsedWeights>
-Real ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
@@ -730,7 +778,7 @@ Real ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Parsed
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
   
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
-  return parse.particle_weight();
+  return parse;
 }
 
 template class ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;

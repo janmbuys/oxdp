@@ -25,7 +25,9 @@ AccuracyCounts::AccuracyCounts(boost::shared_ptr<Dict> dict):
   gold_more_likely_count_{0},
   num_actions_{0},
   complete_sentences_{0},
+  complete_sentences_lab_{0},
   complete_sentences_nopunc_{0},
+  complete_sentences_lab_nopunc_{0},
   num_sentences_{0}
   {
   }

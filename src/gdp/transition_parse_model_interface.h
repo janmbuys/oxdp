@@ -9,6 +9,9 @@ namespace oxlm {
 template <class TParser, class ParsedWeights>
 class TransitionParseModelInterface {
   public:
+  virtual TParser greedyParseSentence(const ParsedSentence& sent, 
+        const boost::shared_ptr<ParsedWeights>& weights) = 0;
+
   virtual TParser beamParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) = 0;
 

@@ -32,6 +32,13 @@ void ArcEagerParseModel<ParsedWeights>::resampleParticles(AeParserList* beam_sta
 }
 
 template<class ParsedWeights>
+ArcEagerParser ArcEagerParseModel<ParsedWeights>::greedyParseSentence(const ParsedSentence& sent, 
+                           const boost::shared_ptr<ParsedWeights>& weights) {
+  //implement properly later
+  return beamParseSentence(sent, weights, 1);        
+}
+
+template<class ParsedWeights>
 ArcEagerParser ArcEagerParseModel<ParsedWeights>::beamParseSentence(const ParsedSentence& sent, 
                            const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) {
   //index in beam_chart is depth-of-stack - 1
@@ -724,7 +731,7 @@ void ArcEagerParseModel<ParsedWeights>::extractSentenceUnsupervised(const Parsed
 }
 
 template<class ParsedWeights>
-Real ArcEagerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+Parser ArcEagerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
@@ -733,11 +740,11 @@ Real ArcEagerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& s
   ArcEagerParser gold_parse = staticGoldParseSentence(sent, weights);
   
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
-  return parse.particle_weight();
+  return parse;
 }
 
 template<class ParsedWeights>
-Real ArcEagerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+Parser ArcEagerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
@@ -747,7 +754,7 @@ Real ArcEagerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& s
   ArcEagerParser gold_parse = staticGoldParseSentence(sent, weights);
   
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
-  return parse.particle_weight();
+  return parse;
 }
 
 template class ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>;

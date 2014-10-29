@@ -33,6 +33,47 @@ void ArcStandardParseModel<ParsedWeights>::resampleParticles(AsParserList* beam_
 }
 
 template<class ParsedWeights>
+ArcStandardParser ArcStandardParseModel<ParsedWeights>::greedyParseSentence(const ParsedSentence& sent, 
+                               const boost::shared_ptr<ParsedWeights>& weights) {
+  ArcStandardParser parser(static_cast<TaggedSentence>(sent), config_->num_labels);
+  
+  parser.shift(); 
+
+  for (unsigned k = 1; k <= sent.size(); ++k) {
+    Reals action_probs = weights->predictAction(parser.actionContext());
+    WordIndex pred = arg_min(action_probs, 0);
+    if (parser.stack_depth() < 2)
+      pred = 0;
+    
+    //reduce until shift action is chosen
+    while (pred > 0) {
+      if (pred == 1) 
+        parser.leftArc();
+	  else
+        parser.rightArc();
+      parser.add_particle_weight(action_probs[pred]);
+
+      action_probs = weights->predictAction(parser.actionContext());
+      pred = arg_min(action_probs, 0);
+      if (parser.stack_depth() < 2) //covers terminal configuration
+        pred = 0;
+    }
+    
+    //shift    
+    if (k < sent.size()) {
+      Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext());
+      Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
+      parser.add_particle_weight(tagp);
+      parser.add_particle_weight(wordp);
+    }
+  }
+
+  return parser;
+}
+
+
+
+template<class ParsedWeights>
 ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const ParsedSentence& sent, 
                                const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) {
   //bool direction_deterministic = false;
@@ -736,7 +777,7 @@ void ArcStandardParseModel<ParsedWeights>::extractSentenceUnsupervised(const Par
 }
 
 template<class ParsedWeights>
-Real ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+Parser ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
@@ -746,11 +787,11 @@ Real ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence
   ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
   
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
-  return parse.particle_weight();
+  return parse;
 }
 
 template<class ParsedWeights>
-Real ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
+Parser ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
@@ -762,7 +803,7 @@ Real ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence
   ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
   
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
-  return parse.particle_weight();
+  return parse;
 }
 
 template class ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;

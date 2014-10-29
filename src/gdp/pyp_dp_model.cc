@@ -317,8 +317,10 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
           //print labels
           training_corpus->sentence_at(j).print_arcs();
           training_corpus->sentence_at(j).print_labels();
+          //if (iter == 0)
           parse_model_->extractSentence(training_corpus->sentence_at(j), examples_list.at(j));
-          //parse_model_->extractSentence(training_corpus->sentence_at(j), weights_, eng, examples_list.at(j));
+          //else
+          //  parse_model_->extractSentence(training_corpus->sentence_at(j), weights_, eng, examples_list.at(j));
           if (!training_corpus->sentence_at(j).is_projective_dependency())
             ++non_projective_count;
         //}
@@ -390,7 +392,10 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
     
     std::vector<int> indices(test_corpus->size());
     std::iota(indices.begin(), indices.end(), 0);
-   
+  
+    std::ofstream outs;
+    outs.open(config_->test_file + ".system");
+
     for (unsigned beam_size: config_->beam_sizes) {
       std::cerr << "parsing with beam size " << beam_size << ":\n";
       accumulator = 0;
@@ -407,14 +412,23 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
             
         //TODO parallize, maybe move
         for (auto j: minibatch) {
-          objective += parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, 
-                                                     beam_size);
+          Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, beam_size);
+          objective += parse.weight();
+
+          //write output to conll-format file
+          for (unsigned i = 1; i < parse.size(); ++i) { 
+            outs << i << "\t" << dict_->lookup(parse.word_at(i)) << "\t_\t_\t" 
+                 << dict_->lookupTag(parse.tag_at(i)) << "\t_\t" << parse.arc_at(i) << "\t"
+                 << dict_->lookupLabel(parse.label_at(i)) << "\t_\t_\n";
+          }
+          outs << "\n";
         }
 
         accumulator += objective;
         start = end;
       } 
 
+      outs.close();
       Real beam_time = get_duration(beam_start, get_time());
       Real sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
       std::cerr << "(" << static_cast<int>(sents_per_sec) << " sentences per second)\n"; 
