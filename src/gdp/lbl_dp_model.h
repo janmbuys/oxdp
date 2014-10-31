@@ -86,12 +86,12 @@ class LblDpModel {
   boost::shared_ptr<ParseModel> parse_model;
 };
 
-class ASParsedFactoredLblLM: public LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata> {
+class ASParsedFactoredLblLM: public LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata> {
  public:
-  ASParsedFactoredLblLM() : LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>() {}
+  ASParsedFactoredLblLM() : LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>() {}
 
   ASParsedFactoredLblLM(const boost::shared_ptr<ModelConfig>& config)
-     : LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config) {}
+     : LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config) {}
 };
 
 

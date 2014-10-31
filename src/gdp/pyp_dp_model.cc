@@ -209,8 +209,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   training_corpus->readFile(config_->training_file, dict_, false);
   config_->vocab_size = dict_->size();
   config_->num_tags = dict_->tag_size();
+  config_->num_labels = dict_->label_size();
   if (config_->labelled_parser) {
-    config_->num_labels = dict_->label_size();
     config_->num_actions += 2*(dict_->label_size()-1); //add labelled actions
   }
 

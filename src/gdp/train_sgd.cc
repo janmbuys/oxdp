@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
 
-  config->beam_sizes = {1};
+  config->beam_sizes = {0, 1};
   for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
     config->beam_sizes.push_back(i);
 
@@ -203,13 +203,13 @@ int main(int argc, char** argv) {
     }
   } else {
     if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser) {
-      train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config);
+      train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else if (config->parser_type == ParserType::arcstandard) {
-      train_dp<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config);
+      train_dp<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else if (config->parser_type == ParserType::arceager) {
-      train_dp<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config);
+      train_dp<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else {
-      train_dp<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>(config);
+      train_dp<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     }
   }
 

@@ -177,6 +177,7 @@ class FactoredWeights : public Weights {
   Real* data;
   vector<Mutex> mutexes;
 
+  //this is for noise-contrastive estimation, leave for later
   mutable boost::thread_specific_ptr<ClassDistribution> classDist;
   mutable boost::thread_specific_ptr<WordDistributions> wordDists;
 };

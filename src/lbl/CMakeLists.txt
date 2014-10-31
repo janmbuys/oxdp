@@ -11,6 +11,7 @@ add_libraries(lbl
   metadata.cc
   minibatch_words.cc
   model_utils.cc
+  parsed_factored_metadata.cc
   parsed_factored_weights.cc
   weights.cc
   word_distributions.cc

@@ -25,7 +25,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
         tags_out->push_back(dict->convertTag(line.substr(last, cur - last - 1), frozen));
       else if (col_num == 6) //arc head
         arcs_out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
-      else if (col_num == 7) //label
+      else if (col_num == 7) //label 
         labels_out->push_back(dict->convertLabel(line.substr(last, cur - last - 1), frozen));
        ++col_num;
       state = 0;
@@ -93,10 +93,13 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
       }
 
       convertWhitespaceDelimitedConllLine(line, dict, &sent, &tags, &arcs, &labels, frozen); 
+      //std::cout << labels[1] << " ";
     }
   }
 
   vocab_size_ = dict->size();
+  //std::cout << dict->size() << " dict labels: " << dict->label_size() << std::endl;
+  num_labels_ = dict->label_size();
 }
 
 size_t ParsedCorpus::size() const {
@@ -116,6 +119,28 @@ std::vector<int> ParsedCorpus::unigramCounts() const {
   for (auto sent: sentences_) {
     for (size_t j = 0; j < sent.size(); ++j)
       counts[sent.word_at(j)] += 1;
+  }
+
+  return counts;
+}
+
+std::vector<int> ParsedCorpus::actionCounts() const {
+  //this is labelled, for arc-standard, but can't really compute it directly for arc-eager
+    
+  std::vector<int> counts(num_labels_*2+1, 0);
+  for (auto sent: sentences_) {
+    for (size_t j = 1; j < sent.size(); ++j) {
+      WordId lab = sent.label_at(j);
+      if (sent.arc_at(j) < j) {
+        //left arc
+        ++counts[lab+1];
+      } else {
+        //right arc 
+        ++counts[lab+num_labels_ + 1];
+      }
+        
+    }
+    counts[0] += sent.size() - 1;
   }
 
   return counts;

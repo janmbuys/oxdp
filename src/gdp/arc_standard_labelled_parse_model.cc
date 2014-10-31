@@ -758,8 +758,8 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
     parse = beamParseSentence(sent, weights, beam_size);
   acc_counts->countAccuracy(parse, sent);
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
-  parse.print_arcs();
-  parse.print_labels();
+  //parse.print_arcs();
+  //parse.print_labels();
 
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
   return parse;

@@ -35,9 +35,12 @@ class ParsedCorpus: public CorpusInterface {
 
   std::vector<int> unigramCounts() const override;
 
+  std::vector<int> actionCounts() const;
+
   private:
   std::vector<ParsedSentence> sentences_;
   int vocab_size_;
+  int num_labels_;
 
 };
 

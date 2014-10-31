@@ -61,15 +61,21 @@ MatrixReal LblDpModel<ParseModel, ParsedWeights, Metadata>::getWordVectors() con
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   // Initialize the dictionary now, if it hasn't been initialized when the
-  // vocabulary was partitioned in classes.
-  bool immutable_dict = config->classes > 0 || config->class_file.size();
+  // vocabulary was partitioned in classes. - allways initialize, else miss tags etc
+  //bool immutable_dict = config->classes > 0 || config->class_file.size();
   boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>();
-  training_corpus->readFile(config->training_file, dict, immutable_dict);
+  training_corpus->readFile(config->training_file, dict, false);
   config->vocab_size = dict->size();
   config->num_tags = dict->tag_size();
-  if (config->labelled_parser)
+  config->num_labels = dict->label_size();
+  if (config->labelled_parser) {
     config->num_actions += 2*(dict->label_size()-1); //add labelled actions
+  }
   cout << "Done reading training corpus..." << endl;
+
+  std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
+            << dict->size() << " word types, " << dict->tag_size() << " tags, "  
+	    << dict->label_size() << " labels)\n";  
 
   boost::shared_ptr<ParsedCorpus> test_corpus; 
   if (config->test_file.size()) {
@@ -251,7 +257,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
              << endl;
         cout << endl;
       }
-      if (iter%10 == 0)
+      if (iter%5 == 0)
         evaluate(test_corpus, iteration_start, minibatch_counter,
                test_objective, best_perplexity);
     }
@@ -291,7 +297,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate() const {
   std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
-//not sure if I should thread this...
+//not sure if I should thread this: disable for now
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) const {
@@ -300,7 +306,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     iota(indices.begin(), indices.end(), 0);
     
     for (unsigned beam_size: config->beam_sizes) {
-      #pragma omp master
+//      #pragma omp master
       {
         std::cerr << "parsing with beam size " << beam_size << ":\n";
         accumulator = 0;
@@ -308,7 +314,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
 
       // Each thread must wait until the perplexity is set to 0.
       // Otherwise, partial results might get overwritten.
-      #pragma omp barrier
+//      #pragma omp barrier
       
       auto beam_start = get_time();
       boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>(dict);
@@ -337,7 +343,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
           outs << "\n";
         }
 
-        #pragma omp critical
+  //      #pragma omp critical
         accumulator += objective;
         start = end;
       } 
@@ -345,9 +351,9 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
       // Wait for all the threads to compute the perplexity for their slice of
       // test data.
       // do we need both a barrier and a master?
-      #pragma omp barrier
+    //  #pragma omp barrier
 
-      #pragma omp master
+//      #pragma omp master
       {
         outs.close();
         Real beam_time = get_duration(beam_start, get_time());
@@ -357,7 +363,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
       }
     }
     
-    #pragma omp master
+//    #pragma omp master
     weights->clearCache();
   }
 }
@@ -439,10 +445,10 @@ bool LblDpModel<ParseModel, ParsedWeights, Metadata>::operator==(
       && *weights == *other.weights;
 }
 
-template class LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
-template class LblDpModel<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
-template class LblDpModel<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
-template class LblDpModel<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, FactoredMetadata>;
+template class LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
+template class LblDpModel<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
+template class LblDpModel<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
+template class LblDpModel<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 
 } // namespace oxlm
 
