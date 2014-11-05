@@ -36,17 +36,18 @@ template<class ParsedWeights>
 ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::greedyParseSentence(const ParsedSentence& sent, 
                                const boost::shared_ptr<ParsedWeights>& weights) {
   ArcStandardLabelledParser parser(static_cast<TaggedSentence>(sent), config_->num_labels);
-  
   parser.shift(); 
 
-  for (unsigned k = 1; k <= sent.size(); ++k) {
+  //if greedy, we are effectively ignoring word predictions
+  for (unsigned k = 1; k < sent.size(); ++k) {
     Reals action_probs = weights->predictAction(parser.actionContext());
     WordIndex pred = arg_min(action_probs, 0);
-    if (parser.stack_depth() < 2)
+    if (parser.stack_depth() <= 2) //don't want to add root before the end
       pred = 0;
     
     //reduce until shift action is chosen
     while (pred > 0) {
+      std::cout << "re ";
       kAction re_act = parser.lookup_action(pred);
       WordId re_label = parser.lookup_label(pred);
       if (re_act == kAction::la) 
@@ -57,19 +58,39 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::greedyPa
 
       action_probs = weights->predictAction(parser.actionContext());
       pred = arg_min(action_probs, 0);
-      if (parser.stack_depth() < 2) //covers terminal configuration
+      if (parser.stack_depth() <= 2) 
         pred = 0;
     }
     
     //shift    
     if (k < sent.size()) {
-      Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext());
-      Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
+      std::cout << "sh ";
+      //Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext());
+      //Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
       parser.shift();
-      parser.add_particle_weight(tagp);
-      parser.add_particle_weight(wordp);
+      //parser.add_particle_weight(tagp);
+      //parser.add_particle_weight(wordp);
     }
   }
+
+  //completion
+  while (!parser.inTerminalConfiguration()) {
+    std::cout << "re ";
+    Reals action_probs = weights->predictAction(parser.actionContext());
+    WordIndex pred = arg_min(action_probs, 1);
+    if (parser.stack_depth() == 2) 
+      pred = arg_min(action_probs, config_->num_labels + 1);
+    kAction re_act = parser.lookup_action(pred);
+    WordId re_label = parser.lookup_label(pred);
+    
+    if (re_act == kAction::la) 
+      parser.leftArc(re_label);
+	else
+      parser.rightArc(re_label);
+    parser.add_particle_weight(action_probs[pred]);
+  }
+  
+  std::cout << std::endl;
 
   return parser;
 }
@@ -750,7 +771,6 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
           size_t beam_size) {
   Words ctx(7, 0);
   
-  //ArcStandardLabelledParser parse = greedyParseSentence(sent, weights);
   ArcStandardLabelledParser parse(config_->num_labels);
   if (beam_size == 0)
     parse = greedyParseSentence(sent, weights);

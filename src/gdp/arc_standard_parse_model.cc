@@ -39,15 +39,17 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::greedyParseSentence(cons
   
   parser.shift(); 
 
-  for (unsigned k = 1; k <= sent.size(); ++k) {
+  //if greedy, we are effectively ignoring word predictions
+  for (unsigned k = 1; k < sent.size(); ++k) {
     Reals action_probs = weights->predictAction(parser.actionContext());
     WordIndex pred = arg_min(action_probs, 0);
-    if (parser.stack_depth() < 2)
+    if (parser.stack_depth() <= 2) //don't want to add root before the end
       pred = 0;
     
     //reduce until shift action is chosen
     while (pred > 0) {
-      if (pred == 1) 
+      std::cout << "re ";
+      if (pred == 1)
         parser.leftArc();
 	  else
         parser.rightArc();
@@ -55,23 +57,40 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::greedyParseSentence(cons
 
       action_probs = weights->predictAction(parser.actionContext());
       pred = arg_min(action_probs, 0);
-      if (parser.stack_depth() < 2) //covers terminal configuration
+      if (parser.stack_depth() <= 2) 
         pred = 0;
     }
     
     //shift    
     if (k < sent.size()) {
-      Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext());
-      Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
-      parser.add_particle_weight(tagp);
-      parser.add_particle_weight(wordp);
+      std::cout << "sh ";
+      //Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext());
+      //Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
+      parser.shift();
+      //parser.add_particle_weight(tagp);
+      //parser.add_particle_weight(wordp);
     }
   }
 
+  //completion
+  while (!parser.inTerminalConfiguration()) {
+    std::cout << "re ";
+    Reals action_probs = weights->predictAction(parser.actionContext());
+    WordIndex pred = arg_min(action_probs, 1);
+    if (parser.stack_depth() == 2) 
+      pred = 2; 
+    
+    if (pred == 1) 
+      parser.leftArc();
+	else
+      parser.rightArc();
+    parser.add_particle_weight(action_probs[pred]);
+  }
+  
+  std::cout << std::endl;
+
   return parser;
 }
-
-
 
 template<class ParsedWeights>
 ArcStandardParser ArcStandardParseModel<ParsedWeights>::beamParseSentence(const ParsedSentence& sent, 
@@ -782,7 +801,11 @@ Parser ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSenten
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
   Words ctx(7, 0);
-  ArcStandardParser parse = beamParseSentence(sent, weights, beam_size);
+  ArcStandardParser parse;
+  if (beam_size == 0)
+    parse = greedyParseSentence(sent, weights);
+  else
+    parse = beamParseSentence(sent, weights, beam_size);
   acc_counts->countAccuracy(parse, sent);
   ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
   

@@ -315,8 +315,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
         //if (iter == 0) {  //this only takes 1 sec per iteration
           examples_list.at(j)->clear();
           //print labels
-          training_corpus->sentence_at(j).print_arcs();
-          training_corpus->sentence_at(j).print_labels();
+          //training_corpus->sentence_at(j).print_arcs();
+          //training_corpus->sentence_at(j).print_labels();
           //if (iter == 0)
           parse_model_->extractSentence(training_corpus->sentence_at(j), examples_list.at(j));
           //else
@@ -393,10 +393,10 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
     std::vector<int> indices(test_corpus->size());
     std::iota(indices.begin(), indices.end(), 0);
   
-    std::ofstream outs;
-    outs.open(config_->test_file + ".system");
-
     for (unsigned beam_size: config_->beam_sizes) {
+      std::ofstream outs;
+      outs.open("system.out" + std::to_string(beam_size)); //config_->test_file
+
       std::cerr << "parsing with beam size " << beam_size << ":\n";
       accumulator = 0;
       auto beam_start = get_time();
@@ -431,7 +431,10 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
       outs.close();
       Real beam_time = get_duration(beam_start, get_time());
       Real sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
-      std::cerr << "(" << static_cast<int>(sents_per_sec) << " sentences per second)\n"; 
+      Real tokens_per_sec = static_cast<int>(test_corpus->numTokens())/beam_time;
+      std::cerr << "(" << beam_time << "s, " <<
+                   static_cast<int>(sents_per_sec) << " sentences per second, " <<
+                   static_cast<int>(tokens_per_sec) << " tokens per second)\n";
       acc_counts->printAccuracy();
     }
   }
