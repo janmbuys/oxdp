@@ -52,6 +52,7 @@ void ParsedFactoredWeights::allocate() {
   int K_size = num_actions * word_width;
   int L_size = num_actions;
 
+  std::cout << "alllocating size " << size << std::endl;
   size = K_size + L_size;
   data = new Real[size]; 
 
@@ -98,16 +99,17 @@ Real ParsedFactoredWeights::predictAction(WordId action, Words context) const {
   VectorReal prediction_vector = getPredictionVector(context);
   Real prob = 0;
 
-  auto ret = actionNormalizerCache.get(context);
-  if (ret.second) {
-    prob = (K.col(action).dot(prediction_vector) + L(action) - ret.first);
-  } else {  
+  //TODO bug in cache
+  //auto ret = actionNormalizerCache.get(context);
+  //if (ret.second) {
+  //  prob = (K.col(action).dot(prediction_vector) + L(action) - ret.first);
+  //} else {  
     Real normalizer = 0;
     VectorReal action_probs = logSoftMax(
         K.transpose() * prediction_vector + L, normalizer);
-    actionNormalizerCache.set(context, normalizer);
+    //actionNormalizerCache.set(context, normalizer);
     prob = action_probs(action);
-  }
+  //}
 
   return -prob;
   //return -std::log(1.0/numActions());
@@ -120,9 +122,9 @@ Reals ParsedFactoredWeights::predictAction(Words context) const {
   Real normalizer = 0;
   VectorReal action_probs = logSoftMax(
       K.transpose() * prediction_vector + L, normalizer);
-  actionNormalizerCache.set(context, normalizer);
+  //actionNormalizerCache.set(context, normalizer);
   for (int i = 0; i < numActions(); ++i) //this might slow things down
-    probs[i] = action_probs(i);
+    probs[i] = -action_probs(i);  //check the sign
   
   return probs;
   //return Reals(numActions(), -std::log(1.0/numActions()));
@@ -181,6 +183,7 @@ if (!FactoredWeights::checkGradient(examples->word_examples(), gradient, eps)) {
     return false;
   }
 
+  std::cout << size << std::endl;
   for (int i = 0; i < size; ++i) {
     PW(i) += eps;
     Real objective_plus = getObjective(examples);
@@ -236,6 +239,7 @@ Real ParsedFactoredWeights::getObjective(
     MatrixReal& action_probs) const {
   //it is somewhat double work to compute these twice, but else need a more complicated example 
   //representation
+    //std::cout << "preparing to get compute objective" << std::endl;
   getContextVectors(examples->word_examples(), word_contexts, word_context_vectors);
   getContextVectors(examples->action_examples(), action_contexts, action_context_vectors);
   word_prediction_vectors = getPredictionVectors(examples->word_example_size(), word_context_vectors); 
@@ -245,6 +249,7 @@ Real ParsedFactoredWeights::getObjective(
       examples, word_contexts, action_contexts, word_prediction_vectors, action_prediction_vectors,
       class_probs, word_probs, action_probs);
 
+  //std::cout << "computing objective" << std::endl;
   Real objective = 0;
   for (size_t i = 0; i < examples->word_example_size(); ++i) {
     int word_id = examples->word_at(i);

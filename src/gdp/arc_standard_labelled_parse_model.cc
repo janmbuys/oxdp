@@ -44,10 +44,11 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::greedyPa
     WordIndex pred = arg_min(action_probs, 0);
     if (parser.stack_depth() <= 2) //don't want to add root before the end
       pred = 0;
+    std::cout << pred << "," << action_probs[pred] << " ";
     
     //reduce until shift action is chosen
     while (pred > 0) {
-      std::cout << "re ";
+      //std::cout << "re ";
       kAction re_act = parser.lookup_action(pred);
       WordId re_label = parser.lookup_label(pred);
       if (re_act == kAction::la) 
@@ -60,11 +61,12 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::greedyPa
       pred = arg_min(action_probs, 0);
       if (parser.stack_depth() <= 2) 
         pred = 0;
+      std::cout << pred << "," << action_probs[pred] << " ";
     }
     
     //shift    
     if (k < sent.size()) {
-      std::cout << "sh ";
+      //std::cout << "sh ";
       //Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext());
       //Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
       parser.shift();
@@ -75,11 +77,12 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::greedyPa
 
   //completion
   while (!parser.inTerminalConfiguration()) {
-    std::cout << "re ";
+    //std::cout << "re ";
     Reals action_probs = weights->predictAction(parser.actionContext());
     WordIndex pred = arg_min(action_probs, 1);
     if (parser.stack_depth() == 2) 
       pred = arg_min(action_probs, config_->num_labels + 1);
+    std::cout << pred << "," << action_probs[pred] << " ";
     kAction re_act = parser.lookup_action(pred);
     WordId re_label = parser.lookup_label(pred);
     
@@ -90,7 +93,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::greedyPa
     parser.add_particle_weight(action_probs[pred]);
   }
   
-  std::cout << std::endl;
+  //std::cout << std::endl;
 
   return parser;
 }
@@ -778,8 +781,9 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
     parse = beamParseSentence(sent, weights, beam_size);
   acc_counts->countAccuracy(parse, sent);
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
-  //parse.print_arcs();
-  //parse.print_labels();
+  parse.print_actions();
+  parse.print_arcs();
+  parse.print_labels();
 
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
   return parse;

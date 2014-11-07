@@ -179,7 +179,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             for (int j: task) 
               parse_model->extractSentence(training_corpus->sentence_at(j), task_examples);
             //std::cout << " (" << task_examples->size() << ") ";
-            num_examples += task_examples->word_example_size();
+            num_examples += task_examples->word_example_size() + task_examples->action_example_size();
 
             if (config->noise_samples > 0) {
               weights->estimateGradient(
@@ -187,6 +187,9 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             } else {
               weights->getGradient(
                   task_examples, gradient, objective, words);
+              //std::cout << minibatch_counter << " " << minibatch.size() << " " << task_start << std::endl;               
+              //if (!weights->checkGradient(task_examples, global_gradient, EPS))
+              //  std::cout << "gradient check failed" << std::endl;
             }
           } else {
             break;
@@ -216,12 +219,12 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         // Wait for all threads to finish making the model gradient update.
         #pragma omp barrier
         Real minibatch_factor =
-            static_cast<Real>(num_examples) / training_corpus->numTokens();
+            static_cast<Real>(num_examples) / (3*training_corpus->numTokens());
         //for now, weight in terms of number of words predicted
         //should actually be total number of predictions, but if the ratio is
         //the same, it should be fine
-        //std::cout << "\n" << num_examples << " examples " 
-        //    << minibatch_factor << " minibatch factor" << std::endl;
+        std::cout << "\n" << num_examples << " examples " 
+            << minibatch_factor << " minibatch factor" << std::endl;
         objective = regularize(global_gradient, minibatch_factor);
         #pragma omp critical
         global_objective += objective;
@@ -306,7 +309,9 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     iota(indices.begin(), indices.end(), 0);
     
     for (unsigned beam_size: config->beam_sizes) {
-//      #pragma omp master
+      std::ofstream outs;
+      outs.open("system.out" + std::to_string(beam_size));
+//    #pragma omp master
       {
         std::cerr << "parsing with beam size " << beam_size << ":\n";
         accumulator = 0;
@@ -319,9 +324,6 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
       auto beam_start = get_time();
       boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>(dict);
 
-      std::ofstream outs;
-      outs.open(config->test_file + ".system");
-
       size_t start = 0;
       while (start < test_corpus->size()) {
         size_t end = std::min(start + config->minibatch_size, test_corpus->size());
@@ -333,6 +335,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
         for (auto j: minibatch) {
           Parser parse = parse_model->evaluateSentence(test_corpus->sentence_at(j), weights, acc_counts, beam_size);
           objective += parse.weight();
+          //parse.print_actions();
+          //parse.print_arcs();
 
           //write output to conll-format file: may need a lock
           for (unsigned i = 1; i < parse.size(); ++i) { 

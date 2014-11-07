@@ -48,7 +48,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::greedyParseSentence(cons
     
     //reduce until shift action is chosen
     while (pred > 0) {
-      std::cout << "re ";
+      //std::cout << "re ";
       if (pred == 1)
         parser.leftArc();
 	  else
@@ -63,7 +63,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::greedyParseSentence(cons
     
     //shift    
     if (k < sent.size()) {
-      std::cout << "sh ";
+      //std::cout << "sh ";
       //Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext());
       //Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
       parser.shift();
@@ -74,7 +74,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::greedyParseSentence(cons
 
   //completion
   while (!parser.inTerminalConfiguration()) {
-    std::cout << "re ";
+    //std::cout << "re ";
     Reals action_probs = weights->predictAction(parser.actionContext());
     WordIndex pred = arg_min(action_probs, 1);
     if (parser.stack_depth() == 2) 
@@ -87,7 +87,7 @@ ArcStandardParser ArcStandardParseModel<ParsedWeights>::greedyParseSentence(cons
     parser.add_particle_weight(action_probs[pred]);
   }
   
-  std::cout << std::endl;
+  //std::cout << std::endl;
 
   return parser;
 }
