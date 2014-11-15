@@ -84,7 +84,7 @@ class Parser: public ParsedSentence {
       }
     }
 
-    return 0;
+    return -1;
   }
 
   //child i > head j
@@ -96,7 +96,7 @@ class Parser: public ParsedSentence {
       }
     }
 
-    return 0;
+    return -1;
   }
   
   WordIndex leftmost_child_at(WordIndex j) const {

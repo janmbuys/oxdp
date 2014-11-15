@@ -53,6 +53,10 @@ public:
     return words_.size()-1;
   }
 
+  WordId null() {
+    return convert(null_, true);
+  }
+
   WordId sos() {
     return convert(sos_, true);
   }
@@ -90,6 +94,7 @@ public:
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version) {
     ar & b0_;
+    ar & null_;
     ar & sos_;
     ar & eos_;
     ar & bad0_id_;
@@ -103,6 +108,7 @@ public:
 
 private:
   Word b0_;
+  Word null_;
   Word sos_;
   Word eos_;
   WordId bad0_id_;

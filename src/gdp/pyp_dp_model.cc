@@ -18,7 +18,7 @@ PypDpModel<ParseModel, ParsedWeights>::PypDpModel(const boost::shared_ptr<ModelC
     config_->num_actions = 4;
   } else {
     config_->num_actions = 1;
-    dict_->convert("STOP", false);
+    dict_->convert("<stop>", false);
   }
 
   parse_model_ = boost::make_shared<ParseModel>(config);

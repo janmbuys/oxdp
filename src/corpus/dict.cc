@@ -3,7 +3,7 @@
 namespace oxlm {
 
 Dict::Dict(): 
-  b0_("<bad0>"), 
+  b0_("<unk>"), 
   sos_("<s>"), 
   eos_("</s>"), 
   bad0_id_(-1) 
@@ -14,7 +14,7 @@ Dict::Dict():
 }
 
 Dict::Dict(Word sos, Word eos): 
-  b0_("<bad0>"), 
+  b0_("<unk>"), 
   sos_(sos), 
   eos_(eos), 
   bad0_id_(-1)
@@ -30,19 +30,24 @@ Dict::Dict(Word sos, Word eos):
  
 //for parsing 
 Dict::Dict(bool sos, bool eos): 
-  b0_("<bad0>"), 
+  b0_("<unk>"), 
+  null_("<null>"), 
   sos_(""), 
   eos_(""), 
   bad0_id_(-1)
 {
   words_.reserve(1000);
+  //let null be 0
+  convert(null_, false);
+  convertTag(null_, false);
+  convertLabel(null_, false);
   if (sos) {
-    sos_ = "ROOT";
+    sos_ = "<root>";
     convert(sos_, false);
     convertTag(sos_, false);
   }
   if (eos) {
-    eos_ = "STOP";
+    eos_ = "<stop>";
     convert(eos_, false);
     convertTag(eos_, false);
   }
@@ -51,21 +56,6 @@ Dict::Dict(bool sos, bool eos):
 WordId Dict::convert(const Word& word, bool frozen) {
   if (word == "")
     return bad0_id_;
-
-  //remove special treatment for sos_ (root)
-  /*if (words_.size()==0 && !frozen) {
-    words_.push_back(word);
-    d_[word] = 0;
-    return 0;
-  } else if (word == sos_) {
-    return 0;
-  } else if (word == eos_ && !frozen) {
-    words_.push_back(word);
-    d_[word] = 1;
-    return 1;
-  } else if (word == eos_) {
-    return 1;
-  } */
 
   auto i = d_.find(word);
   if (i == d_.end()) {
@@ -95,7 +85,7 @@ WordId Dict::convertTag(const Word& tag, bool frozen) {
 WordId Dict::convertLabel(const Word& label, bool frozen) {
   auto i = label_d_.find(label);
   if (i == label_d_.end()) {
-    if (frozen) //may need a default label instead
+    if (frozen) 
       return bad0_id_;
     labels_.push_back(label);
     label_d_[label] = labels_.size()-1;

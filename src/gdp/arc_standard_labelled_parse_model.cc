@@ -132,28 +132,57 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPars
 	  //TODO find max labelled action
         //std::cerr << "predicting action" << std::endl;
         Reals action_probs = weights->predictAction(beam_chart[i][j]->actionContext());
-        WordIndex reduce_pred = arg_min(action_probs, 1);
-        //std::max_element(action_probs.begin() + 1, action_probs.end()) - action_probs.begin();
-        //left arc invalid for stack size 2
-	    if (i == 1) 
-          reduce_pred = arg_min(action_probs, config_->num_labels + 1);
-	    //std::cerr << reduce_pred << std::endl;
-        Real reducep = action_probs[reduce_pred];
-	    //std::cerr << reducep << std::endl;
-        kAction re_act = beam_chart[i][j]->lookup_action(reduce_pred);
-        WordId re_label = beam_chart[i][j]->lookup_label(reduce_pred);
-
         Real tot_reducep = log_one_min(action_probs.at(0));
-        //for now only take the best reduce action
-       
-        beam_chart[i-1].push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_chart[i][j]));
-        if (re_act == kAction::la) 
-          beam_chart[i-1].back()->leftArc(re_label);
-	else
-          beam_chart[i-1].back()->rightArc(re_label);
-        beam_chart[i-1].back()->add_particle_weight(reducep);
-        if (k == sent.size())   
-          beam_chart[i-1].back()->add_importance_weight(tot_reducep); 
+        
+        if (config_->direction_deterministic) {
+          WordIndex reduce_pred = arg_min(action_probs, 1);
+          //left arc invalid for stack size 2
+	      if (i == 1) 
+            reduce_pred = arg_min(action_probs, config_->num_labels + 1);
+
+          Real reducep = action_probs[reduce_pred];
+          kAction re_act = beam_chart[i][j]->lookup_action(reduce_pred);
+          WordId re_label = beam_chart[i][j]->lookup_label(reduce_pred);
+      
+          //take best reduce action 
+          beam_chart[i-1].push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_chart[i][j]));
+          if (re_act == kAction::la) 
+            beam_chart[i-1].back()->leftArc(re_label);
+	      else
+            beam_chart[i-1].back()->rightArc(re_label);
+          beam_chart[i-1].back()->add_particle_weight(reducep);
+          if (k == sent.size())   
+            beam_chart[i-1].back()->add_importance_weight(tot_reducep); 
+        } else {
+          //sort to find n-best reduce actions
+          std::vector<int> indices(action_probs.size()-1);
+          std::iota(indices.begin(), indices.end(), 1);
+          //left arc invalid for stack size 2
+          if (i == 1) {
+            indices.resize(config_->num_labels);
+            std::iota(indices.begin(), indices.end(), config_->num_labels + 1);
+          }
+          
+          std::sort(indices.begin(), indices.end(), [&action_probs](const int i, const int j) 
+                  {return (action_probs[i] < action_probs[j]);});
+          for (unsigned l = 0; ((l < beam_size) && (l < 4)); ++l) {
+            WordIndex reduce_pred = indices[l];
+
+            Real reducep = action_probs[reduce_pred];
+            kAction re_act = beam_chart[i][j]->lookup_action(reduce_pred);
+            WordId re_label = beam_chart[i][j]->lookup_label(reduce_pred);
+    
+            //add action
+            beam_chart[i-1].push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_chart[i][j]));
+            if (re_act == kAction::la) 
+              beam_chart[i-1].back()->leftArc(re_label);
+	        else
+              beam_chart[i-1].back()->rightArc(re_label);
+            beam_chart[i-1].back()->add_particle_weight(reducep);
+            if (k == sent.size())   
+              beam_chart[i-1].back()->add_importance_weight(tot_reducep); 
+          }
+        }
       }
     }
 

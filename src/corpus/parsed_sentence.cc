@@ -12,21 +12,21 @@ ParsedSentence::ParsedSentence():
 ParsedSentence::ParsedSentence(Words tags):
   TaggedSentence(tags), 
   arcs_(tags.size(), -1),
-  labels_(tags.size(), -1)
+  labels_(tags.size(), 0)
   {
   }
 
 ParsedSentence::ParsedSentence(Words sent, Words tags):
   TaggedSentence(sent, tags), 
   arcs_(tags.size(), -1),
-  labels_(tags.size(), -1)
+  labels_(tags.size(), 0)
   {
   }
 
 ParsedSentence::ParsedSentence(Words sent, Words tags, Indices arcs):
   TaggedSentence(sent, tags), 
   arcs_(arcs),
-  labels_(tags.size(), -1)
+  labels_(tags.size(), 0)
   {
   }
 
@@ -40,7 +40,7 @@ ParsedSentence::ParsedSentence(Words sent, Words tags, Indices arcs, Words label
 ParsedSentence::ParsedSentence(const TaggedSentence& parse):
   TaggedSentence(parse),
   arcs_(parse.size(), -1),
-  labels_(parse.size(), -1)
+  labels_(parse.size(), 0)
   {
   }
 

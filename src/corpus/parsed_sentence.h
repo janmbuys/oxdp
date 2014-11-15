@@ -54,14 +54,20 @@ class ParsedSentence: public TaggedSentence {
   }
 
   WordIndex arc_at(WordIndex i) const {
+    if (i < 0)
+      return -1;
     return arcs_.at(i);
   }
 
   WordId label_at(WordIndex i) const {
+    if (i < 0)
+      return 0;
     return labels_.at(i);
   }
 
   bool has_arc(WordIndex i, WordIndex j) const {
+    if (i < 0 || j < 0)
+      return false;
     return (arcs_[i] == j);
   }
 

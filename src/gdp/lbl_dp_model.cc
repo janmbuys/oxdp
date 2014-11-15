@@ -35,7 +35,7 @@ LblDpModel<ParseModel, ParsedWeights, Metadata>::LblDpModel(
     config->num_actions = 4;
   } else {
     config->num_actions = 1;
-    dict->convert("STOP", false);
+    dict->convert("<stop>", false);
   }
 
   metadata = boost::make_shared<Metadata>(config, dict);
