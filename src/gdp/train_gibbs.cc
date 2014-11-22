@@ -15,10 +15,10 @@ void train_dp(const boost::shared_ptr<ModelConfig>& config) {
   PypDpModel<ParseModel, ParsedWeights> model(config);
 
   //learn
-  if (config->semi_supervised)
-    model.learn_semi_supervised();
-  else
-    model.learn();
+  //if (config->semi_supervised)
+  //  model.learn_semi_supervised();
+  //else
+  model.learn();
   if (config->iterations > 1)
     model.evaluate();
 }
@@ -35,10 +35,12 @@ int main(int argc, char** argv) {
     ("training-set,i", 
         value<std::string>()->default_value("english-wsj-stanford-unk/english_wsj_train.conll"),
         "corpus of parsed sentences for training, conll format")
-    ("training-set-unsup,i", value<std::string>(),
+    ("training-set-unsup,u", value<std::string>(),
         "corpus of unparsed sentences for semi-supervised training, conll format")
-    ("test-set", value<std::string>()->default_value("english-wsj-stanford-unk/english_wsj_dev.conll"),
+    ("test-set,t", value<std::string>()->default_value("english-wsj-stanford-unk/english_wsj_dev.conll"),
         "corpus of test sentences to be evaluated at each iteration")
+    ("test-out-file,o", value<std::string>()->default_value("system.out.conll"),
+        "conll output file for system parsing the test set")
     ("iterations", value<int>()->default_value(1),
         "number of passes through the data")
     ("minibatch-size", value<int>()->default_value(1),
@@ -65,7 +67,7 @@ int main(int argc, char** argv) {
         "Resample after generating each word in particle filter sampling.")
     ("num-particles", value<int>()->default_value(100),
         "Number of particles in particle filter.")
-    ("model-out,o", value<std::string>(),  //not used now
+    ("model-out,m", value<std::string>(),  //not used now
         "base filename of model output files")
     ("threads", value<int>()->default_value(1), //not used now
         "number of worker threads.");
@@ -95,6 +97,9 @@ int main(int argc, char** argv) {
   }
   if (vm.count("test-set")) {
     config->test_file = vm["test-set"].as<std::string>();
+  }
+  if (vm.count("test-out-file")) {
+    config->test_output_file = vm["test-out-file"].as<std::string>();
   }
 
   config->iterations = vm["iterations"].as<int>();

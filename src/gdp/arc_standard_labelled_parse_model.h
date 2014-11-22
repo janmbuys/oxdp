@@ -20,15 +20,26 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
   ArcStandardLabelledParseModel(boost::shared_ptr<ModelConfig> config);
 
   void resampleParticles(AslParserList* beam_stack, MT19937& eng, unsigned num_particles);
+  
+  void resampleParticleParticles(AslParserList* beam_stack, MT19937& eng, unsigned num_particles);
 
   ArcStandardLabelledParser greedyParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights) override;
 
   ArcStandardLabelledParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
                 unsigned beam_size) override;
 
+  ArcStandardLabelledParser beamLinearParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
+                unsigned beam_size);
+
+  ArcStandardLabelledParser beamDiscriminativeParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
+                unsigned beam_size);
+
   ArcStandardLabelledParser particleParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
         bool resample) override;
+
+  ArcStandardLabelledParser particleMaxParseSentence(const ParsedSentence& sent, 
+        const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles);
 
   ArcStandardLabelledParser particleGoldParseSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, 

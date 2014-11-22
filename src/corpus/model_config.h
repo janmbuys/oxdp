@@ -19,6 +19,7 @@ struct ModelConfig {
   std::string      training_file;
   std::string      training_file_unsup;
   std::string      test_file;
+  std::string      test_output_file;
   int         iterations;
   int         minibatch_size;
   int         minibatch_size_unsup;
@@ -78,6 +79,7 @@ struct ModelConfig {
     ar & training_file;
     ar & training_file_unsup;
     ar & test_file;
+    ar & test_output_file;
     ar & iterations;
     ar & minibatch_size;
     ar & minibatch_size_unsup;
