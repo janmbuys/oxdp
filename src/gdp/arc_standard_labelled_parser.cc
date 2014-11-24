@@ -187,6 +187,8 @@ Words ArcStandardLabelledParser::tagContext() const {
 }
 
 Words ArcStandardLabelledParser::actionContext() const {
+  //return word_children_lookahead_context(); //discriminative (order 11)
+  //return tag_children_pure_lookahead_context(); //discriminative (order 11)
   //return word_children_distance_context(); //lbl model (order 8)
   //return tag_children_lookahead_context(); //lookahead context (order 9)
   return word_tag_children_context(); //best full context, lexicalized (order 10)

@@ -1258,10 +1258,11 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
   //eval with particle parse
   //ArcStandardLabelledParser parse = particleParseSentence(sent, weights, eng, beam_size, resample);
   ArcStandardLabelledParser parse(config_->num_labels);
-  if (beam_size > 0) {
-    ArcStandardLabelledParser parse = particleMaxParseSentence(sent, weights, eng, beam_size);
-    acc_counts->countAccuracy(parse, sent);
-  }
+  if (beam_size == 0)
+    parse = greedyParseSentence(sent, weights);
+  else 
+    parse = particleMaxParseSentence(sent, weights, eng, beam_size);
+  acc_counts->countAccuracy(parse, sent);
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
   
   acc_counts->countLikelihood(parse.weight(), gold_parse.weight());

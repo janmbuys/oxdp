@@ -66,6 +66,70 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
     std::cerr << "Done reading test corpus..." << std::endl;
   }
 
+  bool write_data = false;
+
+  if (write_data) {
+    std::ofstream outs;
+    //write vocabularies
+    outs.open("conll-dataset/words.list"); 
+    for (int i = 0; i < dict_->size(); ++i)
+     outs << i << " " << dict_->lookup(i) << "\n";
+    outs.close();
+    outs.open("conll-dataset/pos.list"); 
+    for (int i = 0; i < dict_->tag_size(); ++i)
+     outs << i << " " << dict_->lookupTag(i) << "\n";
+    outs.close();
+    outs.open("conll-dataset/labels.list"); 
+    for (int i = 0; i < dict_->label_size(); ++i)
+     outs << i << " " << dict_->lookupLabel(i) << "\n";
+    outs.close(); 
+
+    //extract sup training data
+    outs.open("conll-dataset/conll.train.data"); 
+    for (int j = 0; j < sup_training_corpus->size(); ++j) {
+      for (int i = 0; i < sup_training_corpus->sentence_at(j).size(); ++i)
+        outs << sup_training_corpus->sentence_at(j).word_at(i) << " ";
+        //outs << sup_training_corpus->sentence_at(j).tag_at(i) << " ";
+      outs << "\n";
+      for (int i = 0; i < sup_training_corpus->sentence_at(j).size(); ++i)
+        outs << sup_training_corpus->sentence_at(j).arc_at(i) << " ";
+      outs << "\n";
+      for (int i = 0; i < sup_training_corpus->sentence_at(j).size(); ++i)
+        outs << sup_training_corpus->sentence_at(j).label_at(i) << " ";
+      outs << "\n";
+
+      boost::shared_ptr<ParseDataSet> examples = boost::make_shared<ParseDataSet>(); 
+      parse_model_->extractSentence(sup_training_corpus->sentence_at(j), examples);
+      for (int i = 0; i < examples->action_example_size(); ++i) {
+        outs << examples->action_at(i) << "\t";
+        for (WordId cw: examples->action_context_at(i)) 
+          outs << cw << " ";
+        outs << "\n";
+      }
+      outs << "\n"; 
+    }
+    outs.close(); 
+
+    //extract dev training data
+    outs.open("conll-dataset/conll.dev.data"); 
+    for (int j = 0; j < test_corpus->size(); ++j) {
+      for (int i = 0; i < test_corpus->sentence_at(j).size(); ++i)
+        outs << test_corpus->sentence_at(j).word_at(i) << " ";
+        //outs << test_corpus->sentence_at(j).tag_at(i) << " ";
+      outs << "\n";
+      for (int i = 0; i < test_corpus->sentence_at(j).size(); ++i)
+        outs << test_corpus->sentence_at(j).arc_at(i) << " ";
+      outs << "\n";
+      for (int i = 0; i < test_corpus->sentence_at(j).size(); ++i)
+        outs << test_corpus->sentence_at(j).label_at(i) << " ";
+      outs << "\n";
+      outs << "\n"; 
+    }
+
+    outs.close();
+  }
+
+
   //instantiate weights
   weights_ = boost::make_shared<ParsedWeights>(dict_->size(), dict_->tag_size(), config_->num_actions);
 
@@ -383,8 +447,8 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
             
         //TODO parallize, maybe move
         for (auto j: minibatch) {
-          //Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, eng, acc_counts, beam_size); //for particle max
-          Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, beam_size); 
+          Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, eng, acc_counts, beam_size); //for particle max
+          //Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, beam_size); 
           objective += parse.weight();
 
           //write output to conll-format file

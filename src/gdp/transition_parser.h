@@ -382,6 +382,89 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
+  Words tag_children_pure_lookahead_context() const {
+    Words ctx(10, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+
+      ctx[0] = tag_at(stack_.at(stack_.size()-1));
+      if (l1 >= 0)
+        ctx[1] = tag_at(l1); 
+      if (r1 >= 0)
+        ctx[2] = tag_at(r1);
+    }
+    if (stack_.size() >= 2) {
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+
+      ctx[3] = tag_at(stack_.at(stack_.size()-2));
+      if (l2 >= 0)
+        ctx[4] = tag_at(l2);
+      if (r2 >= 0)
+        ctx[5] = tag_at(r2); 
+    }
+ 
+    if (stack_.size() >= 3) {
+      ctx[6] = tag_at(stack_.at(stack_.size()-3));
+    }
+    if (stack_.size() >= 4) {
+      ctx[7] = tag_at(stack_.at(stack_.size()-4));
+    } 
+  
+    if (!buffer_empty()) {
+      ctx[8] = tag_at(buffer_next_);
+    }
+
+    if ((buffer_next_ + 1) < static_cast<int>(size())) {
+      ctx[9] = tag_at(buffer_next_ + 1);
+    }
+
+    return ctx;
+  }
+
+  Words word_children_lookahead_context() const {
+    Words ctx(10, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+
+      ctx[0] = word_at(stack_.at(stack_.size()-1));
+      if (l1 >= 0)
+        ctx[1] = word_at(l1); 
+      if (r1 >= 0)
+        ctx[2] = word_at(r1);
+    }
+    if (stack_.size() >= 2) {
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+
+      ctx[3] = word_at(stack_.at(stack_.size()-2));
+      if (l2 >= 0)
+        ctx[4] = word_at(l2);
+      if (r2 >= 0)
+        ctx[5] = word_at(r2); 
+    }
+ 
+    if (stack_.size() >= 3) {
+      ctx[6] = word_at(stack_.at(stack_.size()-3));
+    }
+    if (stack_.size() >= 4) {
+      ctx[7] = word_at(stack_.at(stack_.size()-4));
+    } 
+  
+    if (!buffer_empty()) {
+      ctx[8] = word_at(buffer_next_);
+    }
+
+    if ((buffer_next_ + 1) < static_cast<int>(size())) {
+      ctx[9] = word_at(buffer_next_ + 1);
+    }
+
+    return ctx;
+  }
+
+
   Words word_children_distance_context() const {
     Words ctx(7, 0);
     if (stack_.size() >= 1) { 
