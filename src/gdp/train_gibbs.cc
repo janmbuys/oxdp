@@ -32,12 +32,11 @@ int main(int argc, char** argv) {
 
   options_description generic("Allowed options");
   generic.add_options()
-    ("training-set,i", 
-        value<std::string>()->default_value("english-wsj-stanford-unk/english_wsj_train.conll"),
+    ("training-set,i", value<std::string>(),
         "corpus of parsed sentences for training, conll format")
     ("training-set-unsup,u", value<std::string>(),
         "corpus of unparsed sentences for semi-supervised training, conll format")
-    ("test-set,t", value<std::string>()->default_value("english-wsj-stanford-unk/english_wsj_dev.conll"),
+    ("test-set,t", value<std::string>(),
         "corpus of test sentences to be evaluated at each iteration")
     ("test-out-file,o", value<std::string>()->default_value("system.out.conll"),
         "conll output file for system parsing the test set")
@@ -91,7 +90,9 @@ int main(int argc, char** argv) {
   
   boost::shared_ptr<ModelConfig> config = boost::make_shared<ModelConfig>();
  
-  config->training_file = vm["training-set"].as<std::string>();
+  if (vm.count("training-set")) {
+    config->training_file = vm["training-set"].as<std::string>();
+  }
   if (vm.count("training-set-unsup")) {
     config->training_file_unsup = vm["training-set-unsup"].as<std::string>();
   }

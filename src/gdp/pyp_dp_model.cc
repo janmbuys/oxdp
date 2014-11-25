@@ -181,10 +181,10 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       //THEN add new examples
       for (auto j: minibatch) {
         sup_examples_list.at(j)->clear();
-        //if (iter == 0)
-        parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
-        //else
-        //  parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, examples_list.at(j));
+        if (iter == 0)
+          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
+        else
+          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, sup_examples_list.at(j));
         if (!sup_training_corpus->sentence_at(j).is_projective_dependency())
           ++non_projective_count;
         minibatch_examples->extend(sup_examples_list.at(j));
@@ -200,7 +200,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
     //loop over unsupervised minibatches
     while (start < unsup_training_corpus->size()) {
       if (minibatch_counter % 5000 == 0)
-        std::cout << minibatch_counter << std::endl;
+        std::cerr << minibatch_counter << std::endl;
       size_t end = std::min(unsup_training_corpus->size(), start + minibatch_size_unsup);
       
       std::vector<int> minibatch(unsup_indices.begin() + start, unsup_indices.begin() + end);
@@ -219,7 +219,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       //THEN add new examples
       for (auto j: minibatch) {
         unsup_examples_list.at(j)->clear();
-        if (iter < 2)
+        if (iter == 0)
           parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
                             weights_, unsup_examples_list.at(j));
         else 
@@ -238,7 +238,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       } 
     }
 
-    if ((iter > 0) && (iter % 5 == 0))
+    //if ((iter > 0) && (iter % 5 == 0))
     if (iter % 5 == 0)
       weights_->resampleHyperparameters(eng);
 
@@ -251,7 +251,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
              (sup_training_corpus->numTokens() + unsup_training_corpus->numTokens())
            << "\n\n";
    
-    if (iter%5 == 0)
+    if (iter%10 == 0)
       evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
   }
 
