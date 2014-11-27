@@ -1264,7 +1264,8 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
   if (beam_size == 0)
     parse = greedyParseSentence(sent, weights);
   else
-    parse = beamParseSentence(sent, weights, beam_size);
+    //parse = beamParseSentence(sent, weights, beam_size);
+    parse = beamDiscriminativeParseSentence(sent, weights, beam_size);
     //parse = beamLinearParseSentence(sent, weights, beam_size);
 
   acc_counts->countAccuracy(parse, sent);

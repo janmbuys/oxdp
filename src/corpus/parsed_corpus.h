@@ -29,6 +29,10 @@ class ParsedCorpus: public CorpusInterface {
     return sentences_.at(i);
   }
 
+  void add_sentence(ParsedSentence sent) {
+    sentences_.push_back(sent);
+  }
+
   size_t size() const override;
 
   size_t numTokens() const override;

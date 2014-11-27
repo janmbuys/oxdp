@@ -15,9 +15,9 @@ void train_dp(const boost::shared_ptr<ModelConfig>& config) {
   PypDpModel<ParseModel, ParsedWeights> model(config);
 
   //learn
-  //if (config->semi_supervised)
-  //  model.learn_semi_supervised();
-  //else
+  if (config->semi_supervised)
+    model.learn_semi_supervised_ques();
+  else
   model.learn();
   if (config->iterations > 1)
     model.evaluate();
@@ -36,6 +36,8 @@ int main(int argc, char** argv) {
         "corpus of parsed sentences for training, conll format")
     ("training-set-unsup,u", value<std::string>(),
         "corpus of unparsed sentences for semi-supervised training, conll format")
+    ("training-set-ques,q", value<std::string>(),
+        "corpus of parsed questions for semi-supervised training, conll format")
     ("test-set,t", value<std::string>(),
         "corpus of test sentences to be evaluated at each iteration")
     ("test-out-file,o", value<std::string>()->default_value("system.out.conll"),
@@ -95,6 +97,9 @@ int main(int argc, char** argv) {
   }
   if (vm.count("training-set-unsup")) {
     config->training_file_unsup = vm["training-set-unsup"].as<std::string>();
+  }
+  if (vm.count("training-set-ques")) {
+    config->training_file_ques = vm["training-set-ques"].as<std::string>();
   }
   if (vm.count("test-set")) {
     config->test_file = vm["test-set"].as<std::string>();

@@ -18,6 +18,7 @@ struct ModelConfig {
 
   std::string      training_file;
   std::string      training_file_unsup;
+  std::string      training_file_ques;
   std::string      test_file;
   std::string      test_output_file;
   int         iterations;
@@ -78,6 +79,7 @@ struct ModelConfig {
   void serialize(Archive & ar, const unsigned int version) {
     ar & training_file;
     ar & training_file_unsup;
+    ar & training_file_ques;
     ar & test_file;
     ar & test_output_file;
     ar & iterations;
