@@ -673,9 +673,11 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
   std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_particle_weights); 
 
   for (unsigned i = 0; (i < beam_stack.size()); ++i)
-    if (!duplicate[i])
+    if (!duplicate[i] && (beam_stack[i]->num_particles() > 0)) 
       beam_stack[0]->add_beam_weight(beam_stack[i]->particle_weight()); 
   
+  //std::cout << beam_stack[0]->size() << " " << beam_stack[0]->particle_weight() << " " << beam_stack[0]->beam_weight() << std::endl;
+
   if (beam_stack.size()==0) {
     std::cout << "no parse found" << std::endl;
     return ArcStandardLabelledParser(static_cast<TaggedSentence>(sent), config_->num_labels);  
@@ -1135,23 +1137,22 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::generate
   ArcStandardLabelledParser parser(config_->num_labels);
   bool terminate_shift = false;
   parser.push_tag(0);
-  parser.shift(0);
+  parser.shift(1);
     
   do {
-    kAction a = kAction::sh; //placeholder action
+    WordId pred = 0; //placeholder action (shift)
     //std::cerr << "arcs: " << parser.arcs().size() << std::endl;
     
-    if (parser.stack_depth() < 2) {
-      a = kAction::sh;
-    } else if (parser.size() >= sent_limit) {
-        // check to upper bound sentence length
-        //if (!terminate_shift)
-        //  std::cout << " LENGTH LIMITED ";
+    if (parser.stack_depth() >= 2) {
+      if (parser.size() == sent_limit) {
+        std::cout << "  LL ";
         terminate_shift = true;
-        a = kAction::re;
-    } else {
-      Reals action_probs = weights->predictAction(parser.actionContext());
+      }
 
+      Reals action_probs = weights->predictAction(parser.actionContext());
+  
+      if (terminate_shift)
+         action_probs[0] = L_MAX;
       if (parser.stack_depth() == 2) {
         for (int k = 0; k < config_->num_labels; ++k)
           action_probs[k+1] = L_MAX;
@@ -1159,42 +1160,52 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::generate
 
       //sample an action
       multinomial_distribution_log<Real> mult(action_probs); 
-      WordId pred = mult(eng);
-      //std::cout << "(" << parser.stack_depth() << ") ";
-      //std::cout << act << " ";
+      pred = mult(eng);
       parser.add_particle_weight(action_probs[pred]);
       
-      kAction act = parser.lookup_action(pred);
-      WordId lab = parser.lookup_label(pred);
-
-      if (act == kAction::la) {
-        parser.leftArc(lab);
-      } else if (act == kAction::ra) {
-        parser.rightArc(lab);
-      } else if (act == kAction::sh) {
-        //sample a tag - disallow root tag
-        Reals tag_distr = weights->predictTag(parser.tagContext());
-        tag_distr[0] = L_MAX;  
-
-        multinomial_distribution_log<Real> t_mult(tag_distr);
-        WordId tag = t_mult(eng);
-        Real tagp = tag_distr[tag];
-        parser.push_tag(tag);
-        parser.add_particle_weight(tagp);
-
-        //sample a word 
-        Reals word_distr = weights->predictWord(parser.wordContext());
-        word_distr[0] = L_MAX;  
-
-        multinomial_distribution_log<Real> w_mult(word_distr);
-        WordId word = w_mult(eng);
-
-        Real wordp = word_distr[word];
-        parser.shift(word);
-        parser.add_particle_weight(wordp);
-      }
+      //std::cout << "(" << parser.stack_depth() << ") ";
+      //std::cout << pred << ":";
     }
-  } while (!parser.inTerminalConfiguration() && !terminate_shift);
+      
+    kAction act = parser.lookup_action(pred);
+    WordId lab = parser.lookup_label(pred);
+    //std::cout << pred << "," << static_cast<int>(act) << " ";
+
+    if (act == kAction::la) {
+      parser.leftArc(lab);
+      //std::cout << "la ";
+    } else if (act == kAction::ra) {
+      parser.rightArc(lab);
+      //std::cout << "ra ";
+    } else if (act == kAction::sh) {
+      //sample a tag - disallow root tag
+      Reals tag_distr = weights->predictTag(parser.tagContext());
+      tag_distr[0] = L_MAX;  
+
+      multinomial_distribution_log<Real> t_mult(tag_distr);
+      WordId tag = t_mult(eng);
+      Real tagp = tag_distr[tag];
+      parser.push_tag(tag);
+      parser.add_particle_weight(tagp);
+
+      //sample a word 
+      Reals word_distr = weights->predictWord(parser.wordContext());
+      word_distr[0] = L_MAX;  
+
+      multinomial_distribution_log<Real> w_mult(word_distr);
+      WordId word = w_mult(eng);
+
+      Real wordp = word_distr[word];
+      parser.shift(word);
+      parser.add_particle_weight(wordp);
+      //std::cout << "sh ";
+      
+      //terminate generation if word is EOS punctuation
+      if (word == config_->stop_id || word == config_-> ques_id)
+        terminate_shift = true;
+    }
+    
+  } while ((parser.stack_depth() > 1)); // && !terminate_shift);
 
   //std::cout << std::endl;
   return parser;
@@ -1248,8 +1259,8 @@ template<class ParsedWeights>
 void ArcStandardLabelledParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
-  unsigned beam_size = 1;
-  ArcStandardLabelledParser parse = beamParseSentence(sent, weights, beam_size);
+  unsigned beam_size = 8;
+  ArcStandardLabelledParser parse = beamLinearParseSentence(sent, weights, beam_size);
   parse.extractExamples(examples);
 }
 

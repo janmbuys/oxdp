@@ -81,6 +81,25 @@ Real NGramModel<Weights>::evaluateSentence(const Sentence& sent,
   return weight;
 }
 
+template<class Weights>
+Sentence NGramModel<Weights>::generateSentence(const boost::shared_ptr<Weights>& weights, MT19937& eng) {
+  unsigned sent_limit = 100;
+  Words sent(order_ - 1, sos_);
+  bool terminate = false;
+  while (sent.back() != eos_) {
+    Reals word_distr = weights->predict(sent);
+    //word_distr[0] = L_MAX;  
+
+    multinomial_distribution_log<Real> w_mult(word_distr);
+    WordId word = w_mult(eng);
+
+    sent.push_back(word);
+   
+  }
+
+  return Sentence(sent);
+}
+
 template class NGramModel<PypWeights<wordLMOrder>>;
 template class NGramModel<Weights>;
 template class NGramModel<FactoredWeights>;

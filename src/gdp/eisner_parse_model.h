@@ -52,6 +52,9 @@ class EisnerParseModel {
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size); 
 
+  EisnerParser generateSentence(const boost::shared_ptr<ParsedWeights>& weights, 
+          MT19937& eng);
+
   private:
   boost::shared_ptr<ModelConfig> config_;
 };

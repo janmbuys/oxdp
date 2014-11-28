@@ -32,6 +32,8 @@ class NGramModel {
   Real evaluateSentence(const Sentence& sent, 
           const boost::shared_ptr<Weights>& weights);
 
+  Sentence generateSentence(const boost::shared_ptr<Weights>& weights, MT19937& eng);
+
   private:
   unsigned order_;
   WordId sos_;

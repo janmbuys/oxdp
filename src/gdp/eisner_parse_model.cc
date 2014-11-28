@@ -242,6 +242,15 @@ Parser EisnerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& s
   return parse; 
 }
 
+template<class ParsedWeights>
+EisnerParser EisnerParseModel<ParsedWeights>::generateSentence(
+        const boost::shared_ptr<ParsedWeights>& weights, 
+        MT19937& eng) {
+  //TODO
+  EisnerParser parse;
+  return parse;
+}
+
 template class EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>;
 template class EisnerParseModel<ParsedPypWeights<tagLMOrderE, 1>>;
 template class EisnerParseModel<ParsedFactoredWeights>;

@@ -101,7 +101,12 @@ void PypModel::learn() {
   }
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;
-  
+   
+  //generate from model
+  for (int i = 0; i < 100; ++i) {
+    Sentence sent = model_->generateSentence(weights_, eng);
+    sent.print_sentence(dict_);
+  }
 }
 
 void PypModel::evaluate() const {
