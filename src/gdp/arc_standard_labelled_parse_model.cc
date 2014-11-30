@@ -1028,6 +1028,9 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
       } else if (oracle_next == kAction::re) {
         reduce_pred = mult(eng);
         beam_stack[j]->add_importance_weight(tot_reducep); 
+        //hack to penalize inconsistent reduce decisions
+        //imagine actually making a shift decision
+        beam_stack[j]->add_importance_weight(action_probs[0]); 
       } else {
         beam_stack[j]->add_importance_weight(action_probs[reduce_pred]); 
       }
@@ -1223,8 +1226,8 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentence(const ParsedS
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
   unsigned beam_size = 8;
-  //ArcStandardLabelledParser parse = staticGoldParseSentence(sent, weights);
-  ArcStandardLabelledParser parse = beamParseSentence(sent, weights, beam_size);
+  ArcStandardLabelledParser parse = staticGoldParseSentence(sent, weights);
+  //ArcStandardLabelledParser parse = beamParseSentence(sent, weights, beam_size);
   //std::cout << "Gold actions: ";
   //parse.print_actions();
   parse.extractExamples(examples);
@@ -1238,7 +1241,9 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentence(const ParsedS
   //unsigned num_particles = 100;
   //bool resample = true;
 
-  ArcStandardLabelledParser parse = particleGoldParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
+  ArcStandardLabelledParser parse = staticGoldParseSentence(sent, weights);
+  //ArcStandardLabelledParser parse = particleGoldParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
+  //ArcStandardLabelledParser  parse = particleMaxParseSentence(sent, weights, eng, 32);
   //parse.print_actions();
   parse.extractExamples(examples);
 }
@@ -1248,10 +1253,10 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentenceUnsupervised(c
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
-  //ArcStandardLabelledParser  parse = particleMaxParseSentence(sent, weights, eng, 32);
-  ArcStandardLabelledParser parse = particleParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
+  ArcStandardLabelledParser  parse = particleMaxParseSentence(sent, weights, eng, 32);
+  //ArcStandardLabelledParser parse = particleParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
   //parse.print_sentence();
-  parse.print_arcs();
+  //parse.print_arcs();
   parse.extractExamples(examples);
 }
 
