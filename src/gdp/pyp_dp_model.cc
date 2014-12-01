@@ -5,12 +5,14 @@ namespace oxlm {
 template<class ParseModel, class ParsedWeights>
 PypDpModel<ParseModel, ParsedWeights>::PypDpModel() {
   dict_ = boost::make_shared<Dict>(true, false);
+  ch_dict_ = boost::make_shared<Dict>("<root>", " ");
 } 
 
 template<class ParseModel, class ParsedWeights>
 PypDpModel<ParseModel, ParsedWeights>::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config) {
   dict_ = boost::make_shared<Dict>(true, config_->parser_type==ParserType::arceager);
+  ch_dict_ = boost::make_shared<Dict>("<root>", " ");
   
   if (config_->parser_type == ParserType::arcstandard) {
     config_->num_actions = 3;
@@ -69,6 +71,13 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
     config_->num_actions += 2*(dict_->label_size()-1); //add labelled actions
   }
 
+  //construct character dictionary
+  for (size_t j = 0; j < dict_->size(); ++j) {
+    const Word w = dict_->lookup(j);
+    for (size_t i = 0; i < w.size(); ++i)
+        ch_dict_->convert(w.substr(i,1), false);
+  }
+
   //read test data 
   std::cerr << "Reading test corpus...\n";
   boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
@@ -90,7 +99,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
       sup_training_corpus->add_sentence(ques_training_corpus->sentence_at(j));
 
   //instantiate weights
-  weights_ = boost::make_shared<ParsedWeights>(dict_->size(), dict_->tag_size(), config_->num_actions);
+  weights_ = boost::make_shared<ParsedWeights>(dict_, ch_dict_, config_->num_actions);
 
   std::vector<int> sup_indices(sup_training_corpus->size());
   std::iota(sup_indices.begin(), sup_indices.end(), 0);
@@ -357,6 +366,13 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   config_->stop_id = dict_->convert(".", true);
   config_->ques_id = dict_->convert("?", true);
 
+  //construct character dictionary
+  for (size_t j = 0; j < dict_->size(); ++j) {
+    const Word w = dict_->lookup(j);
+    for (size_t i = 0; i < w.size(); ++i)
+        ch_dict_->convert(w.substr(i,1), false);
+  }
+
   //read test data 
   std::cerr << "Reading test corpus...\n";
   boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
@@ -435,7 +451,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       sup_training_corpus->add_sentence(ques_training_corpus->sentence_at(j));
 
   //instantiate weights
-  weights_ = boost::make_shared<ParsedWeights>(dict_->size(), dict_->tag_size(), config_->num_actions);
+  weights_ = boost::make_shared<ParsedWeights>(dict_, ch_dict_, config_->num_actions);
 
   std::vector<int> sup_indices(sup_training_corpus->size());
   std::iota(sup_indices.begin(), sup_indices.end(), 0);
@@ -558,7 +574,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       //THEN add new examples
       for (auto j: minibatch) {
         unsup_examples_list.at(j)->clear();
-        if (iter == 0)
+        if (iter % 5 == 0)
           //parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
            //                 weights_, unsup_examples_list.at(j));
           parse_model_->extractSentence(unsup_training_corpus->sentence_at(j), 
@@ -592,7 +608,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
              (sup_training_corpus->numTokens() + unsup_training_corpus->numTokens())
            << "\n\n";
    
-    if (iter%5 == 0)
+    if (iter%10 == 0)
       evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
   }
 
@@ -693,6 +709,11 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
     }
   }
 }
+
+template class PypDpModel<ArcStandardParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>;
+template class PypDpModel<ArcStandardLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>;
+template class PypDpModel<ArcEagerParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>, ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>;
+template class PypDpModel<EisnerParseModel<ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>, ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>;
 
 template class PypDpModel<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
 template class PypDpModel<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;

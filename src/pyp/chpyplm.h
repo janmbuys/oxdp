@@ -18,54 +18,54 @@ namespace oxlm {
 
 // represents an (NW,NC)-gram LM which predicts each character in a word
 template <unsigned NW, unsigned NC> struct CHPYPLM {
-  explicit CHPYPLM(const Dict& d, double da = 1.0, double db = 1.0, double ss = 1.0, double sr = 1.0) 
-    : pyplm(d.max(), da, db, ss, sr), lookup_(NW+NC-2), dict_(d), 
-      sos_index_(dict_.Lookup(sos_)), space_index_(dict_.Lookup(space_))  {}
+  explicit CHPYPLM(const boost::shared_ptr<Dict> d, double da = 1.0, double db = 1.0, double ss = 1.0, double sr = 1.0) 
+    : pyplm(d->max(), da, db, ss, sr), lookup_(NW+NC-2), dict_(d), 
+      sos_index_(d->convert(sos_, true)), space_index_(d->convert(space_, true))  {}
 
   template<typename Engine>
-  void increment(const std::string& w, const std::vector<unsigned>& context, Engine& eng) {
+  void increment(Word w, const std::vector<WordId>& context, Engine& eng) {
     copy_word_context(context, lookup_);
     for (size_t i=0; i<=w.size(); ++i) {
       copy_character_context(w, i, lookup_);
-      pyplm.increment(i == w.size() ? space_index_ : dict_.Lookup(w.substr(i,1)), lookup_, eng);
+      pyplm.increment(i == w.size() ? space_index_ : dict_->convert(w.substr(i,1), true), lookup_, eng);
     }
   }
 
   template<typename Engine>
-  void decrement(const std::string& w, const std::vector<unsigned>& context, Engine& eng) {
+  void decrement(Word w, const std::vector<WordId>& context, Engine& eng) {
     copy_word_context(context, lookup_);
     for (size_t i=0; i<=w.size(); ++i) {
       copy_character_context(w, i, lookup_);
-      pyplm.decrement(i == w.size() ? space_index_ : dict_.Lookup(w.substr(i,1)), lookup_, eng);
+      pyplm.decrement(i == w.size() ? space_index_ : dict_->convert(w.substr(i,1), true), lookup_, eng);
     }
   }
 
-  double prob(const std::string& w, const std::vector<unsigned>& context) const {
+  double prob(Word w, const std::vector<WordId>& context) const {
     double p=1.0;
     copy_word_context(context, lookup_);
     for (size_t i=0; i<=w.size(); ++i) {
       copy_character_context(w, i, lookup_);
-      p *= pyplm.prob(i == w.size() ? space_index_ : dict_.Lookup(w.substr(i,1)), lookup_);
+      p *= pyplm.prob(i == w.size() ? space_index_ : dict_->convert(w.substr(i,1), true), lookup_);
     }
     return p;
   }
 
   template<typename Engine>
-  std::string generate(const std::vector<unsigned>& context, Engine& eng) {
+  std::string generate(const std::vector<WordId>& context, Engine& eng) {
     std::string result("");
-    std::vector<double> probs(dict_.max()+1,0);
+    std::vector<double> probs(dict_->max()+1,0);
     copy_word_context(context, lookup_);
     while (true) {
       copy_character_context(result, result.size(), lookup_);
-      for (unsigned c=0; c<=dict_.max(); ++c)
+      for (unsigned c=0; c<=dict_->max(); ++c)
         probs.at(c) = pyplm.prob(c, lookup_);
 
-      pyp::multinomial_distribution<double> dist(probs);
+      multinomial_distribution<double> dist(probs);
       unsigned index = dist(eng);
       //pyplm.increment(index, lookup_, eng);
 
       if (index == space_index_) break;
-      result.append(dict_.Convert(index));
+      result.append(dict_->lookup(index));
     }
     return result;
   }
@@ -94,17 +94,17 @@ template <unsigned NW, unsigned NC> struct CHPYPLM {
   }
 
 private:
-  void copy_character_context(const std::string& w, int w_i, std::vector<unsigned>& result) const {
+  void copy_character_context(Word w, int w_i, std::vector<WordId>& result) const {
     assert(w_i <= static_cast<int>(w.size()));
     int r=0;
     for (int i=w_i-NC+1; i < w_i; ++i,++r) {
       assert(NW-1+i >= 0);
       assert(NW-1+r < NW+NC-2);
-      result.at(NW-1+r) = (i < 0 ? sos_index_: dict_.Lookup(w.substr(i,1)));
+      result.at(NW-1+r) = (i < 0 ? sos_index_: dict_->convert(w.substr(i,1), true));
     }
   }
 
-  void copy_word_context(const std::vector<unsigned>& context, std::vector<unsigned>& result) const {
+  void copy_word_context(const std::vector<WordId>& context, std::vector<WordId>& result) const {
     assert (context.size() >= NW-1);
     for (unsigned i = 0; i < NW-1; ++i) {
       assert(NW-2-i >= 0);
@@ -112,10 +112,10 @@ private:
     }
   }
 
-  mutable std::vector<unsigned> lookup_;
-  const Dict& dict_;
-  const std::string sos_ = "<s>";
-  const std::string space_ = " ";
+  mutable std::vector<WordId> lookup_;
+  const boost::shared_ptr<Dict> dict_;
+  const Word sos_ = "<s>";
+  const Word space_ = " ";
   unsigned sos_index_;
   unsigned space_index_;
 };

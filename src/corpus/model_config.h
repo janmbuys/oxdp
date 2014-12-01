@@ -62,6 +62,7 @@ struct ModelConfig {
   ParserType  parser_type;
   bool        labelled_parser;
   bool        lexicalised;
+  bool        char_lexicalised;
   bool        semi_supervised;
   bool        direction_deterministic;
   bool        sum_over_beam;
@@ -110,6 +111,7 @@ struct ModelConfig {
     ar & parser_type;
     ar & labelled_parser;
     ar & lexicalised;
+    ar & char_lexicalised;
     ar & semi_supervised;
     ar & direction_deterministic;
     ar & sum_over_beam;

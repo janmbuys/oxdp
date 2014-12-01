@@ -1318,6 +1318,7 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
 }
 
 template class ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
+template class ArcStandardLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>;
 template class ArcStandardLabelledParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>;
 template class ArcStandardLabelledParseModel<ParsedFactoredWeights>;
 

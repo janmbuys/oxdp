@@ -758,6 +758,7 @@ Parser ArcEagerParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence&
 }
 
 template class ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>;
+template class ArcEagerParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>;
 template class ArcEagerParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>;
 template class ArcEagerParseModel<ParsedFactoredWeights>;
 

@@ -3,8 +3,9 @@
 namespace oxlm {
 
 template<unsigned tOrder, unsigned aOrder>
-ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(size_t vocab_size, size_t num_tags, size_t num_actions):
-  PypWeights<tOrder>(num_tags),    
+ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(boost::shared_ptr<Dict> dict, 
+        boost::shared_ptr<Dict> ch_dict, size_t num_actions):
+  PypWeights<tOrder>(dict->tag_size()),    
   action_lm_(num_actions, 1, 1, 1, 1),
   num_actions_(num_actions) {}
 

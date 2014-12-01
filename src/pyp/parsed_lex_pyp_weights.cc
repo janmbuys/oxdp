@@ -3,10 +3,11 @@
 namespace oxlm {
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-ParsedLexPypWeights<wOrder, tOrder, aOrder>::ParsedLexPypWeights(size_t vocab_size, size_t num_tags, size_t num_actions):
-  ParsedPypWeights<tOrder, aOrder>(vocab_size, num_tags, num_actions),    
-  lex_lm_(vocab_size, 1, 1, 1, 1),
-  lex_vocab_size_(vocab_size) {}
+ParsedLexPypWeights<wOrder, tOrder, aOrder>::ParsedLexPypWeights(
+        boost::shared_ptr<Dict> dict, boost::shared_ptr<Dict> ch_dict, size_t num_actions):
+  ParsedPypWeights<tOrder, aOrder>(dict, ch_dict, num_actions),    
+  lex_lm_(dict->size(), 1, 1, 1, 1),
+  lex_vocab_size_(dict->size()) {}
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::predict(WordId word, Words context) const {

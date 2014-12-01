@@ -7,6 +7,7 @@
 
 #include "pyp/parsed_pyp_weights.h"
 #include "pyp/parsed_lex_pyp_weights.h"
+#include "pyp/parsed_chlex_pyp_weights.h"
 #include "lbl/parsed_factored_weights.h"
 
 namespace oxlm {

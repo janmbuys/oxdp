@@ -1,17 +1,18 @@
-#ifndef _PYP_PARSE_LEX_WEIGHTS_H_
-#define _PYP_PARSE_LEX_WEIGHTS_H_
+#ifndef _PYP_PARSE_CHLEX_WEIGHTS_H_
+#define _PYP_PARSE_CHLEX_WEIGHTS_H_
 
+#include "pyp/chpyplm.h"
 #include "pyp/parsed_pyp_weights.h"
 
 namespace oxlm {
 
 //this is the lexicalized model, with tags and words
-template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
+template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
+class ParsedChLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
 
-  public:
-  ParsedLexPypWeights(boost::shared_ptr<Dict> dict, boost::shared_ptr<Dict> ch_dict,
-                      size_t num_actions);
+  public:     
+  ParsedChLexPypWeights(boost::shared_ptr<Dict> dict, boost::shared_ptr<Dict> ch_dict, 
+          size_t num_actions);
 
   Real predict(WordId word, Words context) const override;
 
@@ -36,8 +37,8 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
   int vocabSize() const override;
 
   private:
-  PYPLM<wOrder> lex_lm_;
-  int lex_vocab_size_;
+  CHPYPLM<wOrder, cOrder> lex_lm_;
+  boost::shared_ptr<Dict> dict_;
 };
 
 }

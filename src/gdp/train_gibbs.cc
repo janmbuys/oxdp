@@ -56,6 +56,8 @@ int main(int argc, char** argv) {
         "Predict arc labels.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
+    ("char-lexicalised", value<bool>()->default_value(true),
+        "Predict words with character-based LM.")
     ("semi-supervised", value<bool>()->default_value(false),
         "Use additional, unlabelled training data.")
     ("max-beam-size", value<int>()->default_value(8),
@@ -125,6 +127,7 @@ int main(int argc, char** argv) {
 
   config->labelled_parser = vm["labelled-parser"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
+  config->char_lexicalised = vm["char-lexicalised"].as<bool>();
   config->semi_supervised = vm["semi-supervised"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
@@ -132,9 +135,10 @@ int main(int argc, char** argv) {
   config->num_particles = vm["num-particles"].as<int>();
 
   //otherwise override manually
-  config->beam_sizes = {0, 1};
-  for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
-    config->beam_sizes.push_back(i);
+  //config->beam_sizes = {0, 1};
+  //for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
+  //  config->beam_sizes.push_back(i);
+  config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
  
   std::cout << "################################" << std::endl;
   std::cout << "# Config Summary" << std::endl;
@@ -152,7 +156,17 @@ int main(int argc, char** argv) {
     PypModel model(config); 
     model.learn();
   } else {
-    if (config->lexicalised) {
+   if (config->char_lexicalised) {
+      if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser)
+        train_dp<ArcStandardLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>(config);
+      else if (config->parser_type == ParserType::arcstandard)
+        train_dp<ArcStandardParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>(config);
+      else if (config->parser_type == ParserType::arceager)
+        train_dp<ArcEagerParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>, ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>(config);
+      else
+        train_dp<EisnerParseModel<ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>, ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>(config);
+    } 
+   else if (config->lexicalised) {
       if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser)
         train_dp<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
       else if (config->parser_type == ParserType::arcstandard)

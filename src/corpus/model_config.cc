@@ -15,8 +15,9 @@ ModelConfig::ModelConfig()
       count_collisions(false), filter_contexts(false), filter_error_rate(0),
       max_ngrams(0), min_ngram_freq(0), vocab_size(0), noise_samples(0), sigmoid(false), 
       parser_type(ParserType::arcstandard), labelled_parser(false), lexicalised(false),
-      semi_supervised(false), direction_deterministic(false), sum_over_beam(false),
-      resample(false), num_particles(1), num_tags(1), num_actions(1), beam_sizes(1, 1) {}
+      char_lexicalised(false), semi_supervised(false), direction_deterministic(false), 
+      sum_over_beam(false), resample(false), num_particles(1), num_tags(1), num_actions(1), 
+      beam_sizes(1, 1) {}
 
 bool ModelConfig::operator==(const ModelConfig& other) const {
   if (fabs(l2_lbl - other.l2_lbl) > EPS ||
@@ -39,6 +40,7 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
       && parser_type == other.parser_type
       && labelled_parser == other.labelled_parser
       && lexicalised == other.lexicalised
+      && char_lexicalised == other.char_lexicalised
       && semi_supervised == other.semi_supervised
       && direction_deterministic == other.direction_deterministic
       && sum_over_beam == other.sum_over_beam
