@@ -1026,11 +1026,13 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
         reduce_pred = arg_min(action_probs, config_->num_labels + 1);
         beam_stack[j]->add_importance_weight(tot_reducep); 
       } else if (oracle_next == kAction::re) {
-        reduce_pred = mult(eng);
-        beam_stack[j]->add_importance_weight(tot_reducep); 
+        beam_stack[j]->set_num_particles(0);
+        continue;
+        //reduce_pred = mult(eng);
+        //beam_stack[j]->add_importance_weight(tot_reducep); 
         //hack to penalize inconsistent reduce decisions
         //imagine actually making a shift decision
-        beam_stack[j]->add_importance_weight(action_probs[0]); 
+        //beam_stack[j]->add_importance_weight(action_probs[0]); 
       } else {
         beam_stack[j]->add_importance_weight(action_probs[reduce_pred]); 
       }
@@ -1241,9 +1243,9 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentence(const ParsedS
   //unsigned num_particles = 100;
   //bool resample = true;
 
-  ArcStandardLabelledParser parse = staticGoldParseSentence(sent, weights);
+  //ArcStandardLabelledParser parse = staticGoldParseSentence(sent, weights);
   //ArcStandardLabelledParser parse = particleGoldParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
-  //ArcStandardLabelledParser  parse = particleMaxParseSentence(sent, weights, eng, 32);
+  ArcStandardLabelledParser  parse = particleMaxParseSentence(sent, weights, eng, 256);
   //parse.print_actions();
   parse.extractExamples(examples);
 }
@@ -1253,8 +1255,8 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentenceUnsupervised(c
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
-  ArcStandardLabelledParser  parse = particleMaxParseSentence(sent, weights, eng, 32);
-  //ArcStandardLabelledParser parse = particleParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
+  //ArcStandardLabelledParser  parse = particleMaxParseSentence(sent, weights, eng, 32);
+  ArcStandardLabelledParser parse = particleParseSentence(sent, weights, eng, config_->num_particles, config_->resample);
   //parse.print_sentence();
   //parse.print_arcs();
   parse.extractExamples(examples);

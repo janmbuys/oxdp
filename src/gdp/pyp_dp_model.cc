@@ -313,6 +313,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   MT19937 eng;
   //read training data
   boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>();
+  boost::shared_ptr<ParsedCorpus> ques_training_corpus = boost::make_shared<ParsedCorpus>();
   boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>();
  
   if (config_->training_file.size()) { 
@@ -324,6 +325,16 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   } else {
     std::cerr << "No supervised training corpus.\n";
   } 
+
+  if (config_->training_file_ques.size()) { 
+    std::cerr << "Reading question training corpus...\n";
+    ques_training_corpus->readFile(config_->training_file_ques, dict_, false);
+    std::cerr << "Corpus size: " << ques_training_corpus->size() << " sentences\t (" 
+              << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
+	      << dict_->label_size() << " labels)\n";  
+  } else {
+    std::cerr << "No supervised question training corpus.\n";
+  }
 
   if (config_->semi_supervised && config_->training_file_unsup.size()) { 
     std::cerr << "Reading unsupervised training corpus...\n";
@@ -417,6 +428,11 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
     outs.close();
   }
 
+  //insert ques data x50 into sup corpus
+  unsigned ques_size = ques_training_corpus->size();
+  for (int k = 0; k < 50; ++k)
+    for (int j = 0; j < ques_size; ++j)
+      sup_training_corpus->add_sentence(ques_training_corpus->sentence_at(j));
 
   //instantiate weights
   weights_ = boost::make_shared<ParsedWeights>(dict_->size(), dict_->tag_size(), config_->num_actions);
@@ -543,8 +559,10 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       for (auto j: minibatch) {
         unsup_examples_list.at(j)->clear();
         if (iter == 0)
-          parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
-                            weights_, unsup_examples_list.at(j));
+          //parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
+           //                 weights_, unsup_examples_list.at(j));
+          parse_model_->extractSentence(unsup_training_corpus->sentence_at(j), 
+                              weights_, eng, unsup_examples_list.at(j));
         else 
           parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
                             weights_, eng, unsup_examples_list.at(j));

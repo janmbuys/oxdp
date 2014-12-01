@@ -15,10 +15,10 @@ void train_dp(const boost::shared_ptr<ModelConfig>& config) {
   PypDpModel<ParseModel, ParsedWeights> model(config);
 
   //learn
-  if (config->semi_supervised)
-    model.learn_semi_supervised_ques();
-  else
-  model.learn();
+  //if (config->semi_supervised)
+  //  model.learn_semi_supervised_ques();
+  //else
+    model.learn();
   if (config->iterations > 1)
     model.evaluate();
 }
