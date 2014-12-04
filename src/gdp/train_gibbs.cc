@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
         "Predict arc labels.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
-    ("char-lexicalised", value<bool>()->default_value(true),
+    ("char-lexicalised", value<bool>()->default_value(false),
         "Predict words with character-based LM.")
     ("semi-supervised", value<bool>()->default_value(false),
         "Use additional, unlabelled training data.")
@@ -139,6 +139,7 @@ int main(int argc, char** argv) {
   //for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
   //  config->beam_sizes.push_back(i);
   config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
+  //config->beam_sizes = {100}; //, 200, 300, 500, 1000};
  
   std::cout << "################################" << std::endl;
   std::cout << "# Config Summary" << std::endl;

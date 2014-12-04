@@ -144,8 +144,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
     //add new examples
     for (auto j: minibatch) {
       sup_examples_list.at(j)->clear();
-      parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, sup_examples_list.at(j));
-      //parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
+      parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
       minibatch_examples->extend(sup_examples_list.at(j));
     }     
 
@@ -170,10 +169,10 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
     // add new examples
     for (auto j: minibatch) {
       unsup_examples_list.at(j)->clear();
-      //parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
-      //                      weights_, unsup_examples_list.at(j));
       parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
-                           weights_, eng, unsup_examples_list.at(j));
+                            weights_, unsup_examples_list.at(j));
+      //parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
+      //                     weights_, eng, unsup_examples_list.at(j));
       minibatch_examples->extend(unsup_examples_list.at(j));
     }     
 
@@ -218,8 +217,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
       //then add new examples
       for (auto j: minibatch) {
         sup_examples_list.at(j)->clear();
-        //parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
-        parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, sup_examples_list.at(j));
+        parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
         minibatch_examples->extend(sup_examples_list.at(j));
       }     
 
@@ -252,8 +250,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
       //then add new examples
       for (auto j: minibatch) {
         sup_examples_list.at(j)->clear();
-        //parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
-        parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, sup_examples_list.at(j));
+        parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
         minibatch_examples->extend(sup_examples_list.at(j));
       }     
 
@@ -281,10 +278,10 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
       //THEN add new examples
       for (auto j: minibatch) {
         unsup_examples_list.at(j)->clear();
-        //if (iter < 10)
-        //  parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
-        //                   weights_, unsup_examples_list.at(j));
-        //else 
+        if (iter < 10)
+          parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
+                           weights_, unsup_examples_list.at(j));
+        else 
           parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
                             weights_, eng, unsup_examples_list.at(j));
         minibatch_examples->extend(unsup_examples_list.at(j));
@@ -574,11 +571,9 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       //THEN add new examples
       for (auto j: minibatch) {
         unsup_examples_list.at(j)->clear();
-        if (iter % 5 == 0)
-          //parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
-           //                 weights_, unsup_examples_list.at(j));
-          parse_model_->extractSentence(unsup_training_corpus->sentence_at(j), 
-                              weights_, eng, unsup_examples_list.at(j));
+        if (iter < 10)
+          parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
+                            weights_, unsup_examples_list.at(j));
         else 
           parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
                             weights_, eng, unsup_examples_list.at(j));
@@ -681,8 +676,8 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
             
         //TODO parallize, maybe move
         for (auto j: minibatch) {
-          Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, eng, acc_counts, beam_size); //for particle max
-          //Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, beam_size); 
+          //Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, eng, acc_counts, beam_size); 
+          Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, beam_size); 
           objective += parse.weight();
 
           //write output to conll-format file

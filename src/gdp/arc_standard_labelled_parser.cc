@@ -174,14 +174,14 @@ bool ArcStandardLabelledParser::executeAction(kAction a, WordId l) {
 //(ideally would assert length of order)
 Words ArcStandardLabelledParser::wordContext() const {
   //return word_children_distance_context(); //lbl model (order 8)
-  return word_tag_next_children_context(); //best context (order 6) 
+  return word_tag_next_children_context(); //best context (order 7) 
   //return tag_children_context();  //best full context (order 9)
   //return linear_word_tag_next_context(); //best perplexity
   //return word_tag_next_context(); //order 5
 }
 
 Words ArcStandardLabelledParser::tagContext() const {
-  return tag_children_context();  //best full context (order 9)
+  return tag_children_context();  //best full context (order 8)
   //return tag_children_label_context(); //best full context (order 11)
   //return linear_tag_context();
   //return tag_some_children_context(); //best smaller context (order 5)
@@ -192,10 +192,10 @@ Words ArcStandardLabelledParser::actionContext() const {
   //return tag_children_pure_lookahead_context(); //discriminative (order 11)
   //return word_children_distance_context(); //lbl model (order 8)
   //return tag_children_lookahead_context(); //lookahead context (order 9)
-  //return word_tag_children_context(); //best full context, lexicalized (order 10)
+  return word_tag_children_context(); //best full context, lexicalized (order 10)
   //return word_tag_children_lookahead_context(); //order 11
   //return word_tag_some_children_distance_context(); //best smaller context, lexicalized (order 8)
-  return tag_children_context(); //best full context (order 9)
+  //return tag_children_context(); //best full context (order 8)
   //return tag_children_label_context(); //best full context (order 11)
   //return tag_some_children_distance_context(); //best smaller context (order 6)
 }
@@ -222,6 +222,7 @@ void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDat
     //labelled action prediction 
     WordId lab_act = convert_action(a, lab);
     //std::cout << static_cast<WordId>(a) << "," << lab << "," << lab_act << " ";
+    //if (!parser.buffer_empty()) 
     examples->add_action_example(DataPoint(lab_act, parser.actionContext()));
     parser.executeAction(a, lab);
   }

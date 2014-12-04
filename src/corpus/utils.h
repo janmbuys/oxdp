@@ -40,6 +40,19 @@ inline Real perplexity(Real log_likelihood, size_t corpus_size) {
   //return std::exp((log_likelihood / std::log(2)) / corpus_size);
 }
 
+inline WordIndex arg_max(Reals distr, WordIndex start) {
+  WordIndex max_i = start;
+  Real max = distr[start];
+  for (WordIndex i = start + 1; i < distr.size(); ++i) {
+    if (distr[i] > max) {
+      max_i = i;
+      max = distr[i];
+    }
+  }
+
+  return max_i;
+}
+
 inline WordIndex arg_min(Reals distr, WordIndex start) {
   WordIndex min_i = start;
   Real min = distr[start];

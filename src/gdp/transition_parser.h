@@ -596,33 +596,33 @@ class TransitionParser: public Parser {
 
 
   Words word_tag_children_context() const {
-    Words ctx(8, 0);
+    Words ctx(9, 0);
     if (stack_.size() >= 1) { 
       WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
       WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
-      ctx[7] = tag_at(stack_.at(stack_.size()-1));
+      ctx[8] = tag_at(stack_.at(stack_.size()-1));
       ctx[1] = word_at(stack_.at(stack_.size()-1));
       if (l1 >= 0)
-        ctx[3] = tag_at(l1); //
+        ctx[4] = tag_at(l1); //
       if (r1 >= 0)
-        ctx[5] = tag_at(r1);
+        ctx[6] = tag_at(r1);
     }
     if (stack_.size() >= 2) {
       WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
       WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
 
-      ctx[6] = tag_at(stack_.at(stack_.size()-2));
+      ctx[7] = tag_at(stack_.at(stack_.size()-2));
       ctx[0] = word_at(stack_.at(stack_.size()-2));
       if (l2 >= 0)
-        ctx[2] = tag_at(l2);
+        ctx[3] = tag_at(l2);
       if (r2 >= 0)
-        ctx[4] = tag_at(r2); //
+        ctx[5] = tag_at(r2); //
     }
-    /*if (stack_.size() >= 3) {
-      ctx[3] = tag_at(stack_.at(stack_.size()-3));
+    if (stack_.size() >= 3) {
+      ctx[2] = tag_at(stack_.at(stack_.size()-3));
     } 
-    if (stack_.size() >= 4) {
+    /* if (stack_.size() >= 4) {
       ctx[2] = tag_at(stack_.at(stack_.size()-4));
     } */
     return ctx;
@@ -1194,7 +1194,7 @@ class TransitionParser: public Parser {
         //ctx[2] = label_at(l1);
       }
       if (r1 >= 0) {
-        ctx[4] = tag_at(r1);
+        ctx[3] = tag_at(r1);
         //ctx[3] = label_at(r1);
       }
     }
