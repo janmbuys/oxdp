@@ -52,8 +52,8 @@ void ParsedFactoredWeights::allocate() {
   int K_size = num_actions * word_width;
   int L_size = num_actions;
 
-  std::cout << "alllocating size " << size << std::endl;
   size = K_size + L_size;
+  std::cout << "parse factored weights allocating size " << size << std::endl;
   data = new Real[size]; 
 
   for (int i = 0; i < config->threads; ++i) {
@@ -117,7 +117,7 @@ Real ParsedFactoredWeights::predictAction(WordId action, Words context) const {
 
 Reals ParsedFactoredWeights::predictAction(Words context) const {
   VectorReal prediction_vector = getPredictionVector(context);
-  Reals probs(vocabSize(), 0);
+  Reals probs(numActions(), 0);
 
   Real normalizer = 0;
   VectorReal action_probs = logSoftMax(

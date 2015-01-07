@@ -223,8 +223,9 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         //for now, weight in terms of number of words predicted
         //should actually be total number of predictions, but if the ratio is
         //the same, it should be fine
-        std::cout << "\n" << num_examples << " examples " 
-            << minibatch_factor << " minibatch factor" << std::endl;
+        
+        //std::cout << "\n" << num_examples << " examples " 
+        //    << minibatch_factor << " minibatch factor" << std::endl;
         objective = regularize(global_gradient, minibatch_factor);
         #pragma omp critical
         global_objective += objective;

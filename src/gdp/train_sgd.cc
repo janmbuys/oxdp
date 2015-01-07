@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
 
-  config->beam_sizes = {vm["max-beam-size"].as<int>()};
+  config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
   //for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
   //  config->beam_sizes.push_back(i);
 

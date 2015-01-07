@@ -1647,7 +1647,7 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
 
   acc_counts->countAccuracy(parse, sent);
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
-  //parse.print_actions();
+  parse.print_actions();
   //parse.print_arcs();
   //parse.print_labels();
 
