@@ -59,8 +59,10 @@ WordId Dict::convert(const Word& word, bool frozen) {
 
   auto i = d_.find(word);
   if (i == d_.end()) {
-    if (frozen) 
+    if (frozen) {
+      std::cout << word << " ";
       return bad0_id_;
+    }
     words_.push_back(word);
     d_[word] = words_.size()-1;
     return words_.size()-1;

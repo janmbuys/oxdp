@@ -1257,11 +1257,22 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
     return ArcStandardLabelledParser(*beam_stack[0]);
   } */
   
- //just take 1 sample
-  resampleParticles(&beam_stack, eng, 1);
-  for (unsigned i = 0; i < beam_stack.size(); ++i) 
-    if (beam_stack[i]->num_particles() == 1) 
-      return ArcStandardLabelledParser(*beam_stack[i]); 
+  //resampleParticles(&beam_stack, eng, num_particles);
+  std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_particle_weights); 
+
+  for (unsigned i = 0; (i < beam_stack.size()); ++i)
+    if (beam_stack[i]->num_particles() > 0) {
+      beam_stack[0]->add_beam_weight(beam_stack[i]->particle_weight()); 
+      std::cout <<  beam_stack[i]->particle_weight() << "," << beam_stack[0]->beam_weight() << " ";
+}
+  std::cout << std::endl;
+  //std::cout << beam_stack[0]->size() << " " << beam_stack[0]->particle_weight() << " " << beam_stack[0]->beam_weight() << std::endl;
+
+  //just take 1 sample
+  //resampleParticles(&beam_stack, eng, 1);
+  //for (unsigned i = 0; i < beam_stack.size(); ++i) 
+    if (beam_stack[0]->num_particles() > 0) 
+      return ArcStandardLabelledParser(*beam_stack[0]); 
 
   std::cout << "no parse found" << std::endl;
   return ArcStandardLabelledParser(static_cast<TaggedSentence>(sent), config_->num_labels);  
@@ -1556,8 +1567,8 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::generate
       //std::cout << "sh ";
       
       //terminate generation if word is EOS punctuation
-      if (word == config_->stop_id || word == config_-> ques_id)
-        terminate_shift = true;
+      //if (word == config_->stop_id || word == config_-> ques_id)
+      //  terminate_shift = true;
     }
     
   } while ((parser.stack_depth() > 1)); // && !terminate_shift);
@@ -1658,7 +1669,7 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
     parse = greedyParseSentence(sent, weights);
   else 
     //parse = beamParticleParseSentence(sent, weights, beam_size);
-    parse = particleMaxParseSentence(sent, weights, eng, beam_size);
+    parse = particleParseSentence(sent, weights, eng, beam_size, resample); //mAX
     //parse = particlePosteriorParseSentence(sent, weights, eng, beam_size, resample);
   acc_counts->countAccuracy(parse, sent);
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);

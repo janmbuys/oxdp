@@ -376,6 +376,10 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   if (config_->test_file.size()) {
     test_corpus->readFile(config_->test_file, dict_, true);
     std::cerr << "Done reading test corpus..." << std::endl;
+    std::cerr << "Corpus size: " << test_corpus->size() << " sentences\t (" 
+                 << test_corpus->numTokens() << " tokens\t (" 
+              << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
+	      << dict_->label_size() << " labels)\n";  
   }
 
   bool write_data = false;
@@ -603,17 +607,19 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
              (sup_training_corpus->numTokens() + unsup_training_corpus->numTokens())
            << "\n\n";
    
-    if (iter%10 == 0)
+    if (iter > 0 && (iter%10 == 0))
       evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
   }
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;
+  
 
-   //generate from model
-  /*for (int i = 0; i < 100; ++i) {
+/*  //generate from model
+  for (int i = 0; i < 100; ++i) {
     Parser parse = parse_model_->generateSentence(weights_, eng);
+    std::cout << parse.weight() << "  ";
     parse.print_sentence(dict_);
-  } */
+  } */ 
 
 }
 
@@ -676,8 +682,8 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
             
         //TODO parallize, maybe move
         for (auto j: minibatch) {
-          //Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, eng, acc_counts, beam_size); 
-          Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, beam_size); 
+          Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, eng, acc_counts, beam_size); 
+          //Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, beam_size); 
           objective += parse.weight();
 
           //write output to conll-format file

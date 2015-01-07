@@ -73,7 +73,8 @@ Real NGramModel<Weights>::evaluateSentence(const Sentence& sent,
     Words ctx = Words(context.begin() + i, context.begin() + i + order_ - 1);
     std::reverse(ctx.begin(), ctx.end());
     Real predict_weight = weights->predict(word, ctx); 
-    //std::cout << predict_weight << " ";
+    //if (word == -1)
+    //  std::cout << predict_weight << " ";
     weight += predict_weight;
     context.push_back(word);
   }  
@@ -86,17 +87,19 @@ Sentence NGramModel<Weights>::generateSentence(const boost::shared_ptr<Weights>&
   unsigned sent_limit = 100;
   Words sent(order_ - 1, sos_);
   bool terminate = false;
+  Real weight = 0;
   while (sent.back() != eos_) {
     Reals word_distr = weights->predict(sent);
     //word_distr[0] = L_MAX;  
 
     multinomial_distribution_log<Real> w_mult(word_distr);
     WordId word = w_mult(eng);
+    weight += word_distr[word];
 
     sent.push_back(word);
    
   }
-
+  std::cout << weight << "  ";
   return Sentence(sent);
 }
 
