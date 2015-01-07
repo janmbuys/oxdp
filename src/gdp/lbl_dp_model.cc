@@ -259,10 +259,11 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
              << "  Objective: " << global_objective / training_corpus->numTokens()
              << endl;
         cout << endl;
-      }
-      if (iter%5 == 0)
-        evaluate(test_corpus, iteration_start, minibatch_counter,
+      
+        if (iter%5 == 0)
+          evaluate(test_corpus, iteration_start, minibatch_counter,
                test_objective, best_perplexity);
+      }
     }
   }
 
