@@ -1,4 +1,4 @@
-#include "lbl/parsed_factored_metadata.h"
+#include "lbl/parsed_metadata.h"
 
 #include <boost/make_shared.hpp>
 
@@ -6,21 +6,15 @@
 
 namespace oxlm {
 
-ParsedFactoredMetadata::ParsedFactoredMetadata() {}
+ParsedMetadata::ParsedMetadata() {}
 
-ParsedFactoredMetadata::ParsedFactoredMetadata(
+ParsedMetadata::ParsedMetadata(
     const boost::shared_ptr<ModelConfig>& config, boost::shared_ptr<Dict>& dict)
-    : FactoredMetadata(config, dict),
+    : Metadata(config, dict),
       actionBias(VectorReal::Zero(config->num_actions)) {}
 
-ParsedFactoredMetadata::ParsedFactoredMetadata(
-    const boost::shared_ptr<ModelConfig>& config, boost::shared_ptr<Dict>& dict,
-    const boost::shared_ptr<WordToClassIndex>& index)
-    : FactoredMetadata(config, dict, index),
-      actionBias(VectorReal::Zero(config->num_actions)) {}
-
-void ParsedFactoredMetadata::initialize(const boost::shared_ptr<ParsedCorpus>& corpus) {
-  FactoredMetadata::initialize(corpus);  
+void ParsedMetadata::initialize(const boost::shared_ptr<ParsedCorpus>& corpus) {
+  Metadata::initialize(corpus);  
   vector<int> action_counts = corpus->actionCounts();
   //std::cout << action_counts.size() << " actions" << std::endl;
   if (config->labelled_parser) {
@@ -40,11 +34,11 @@ void ParsedFactoredMetadata::initialize(const boost::shared_ptr<ParsedCorpus>& c
   }
 }
 
-VectorReal ParsedFactoredMetadata::getActionBias() const {
+VectorReal ParsedMetadata::getActionBias() const {
   return actionBias;
 }
 
-bool ParsedFactoredMetadata::operator==(const ParsedFactoredMetadata& other) const {
+bool ParsedMetadata::operator==(const ParsedMetadata& other) const {
   return Metadata::operator==(other)
       && actionBias == other.actionBias;
 }

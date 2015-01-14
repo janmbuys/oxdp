@@ -66,6 +66,8 @@ int main(int argc, char** argv) {
         "Parsing strategy.")    
     ("labelled-parser", value<bool>()->default_value(false),
         "Predict arc labels.")
+    ("lexicalised", value<bool>()->default_value(true),
+        "Predict words in addition to POS tags.")
     ("max-beam-size", value<int>()->default_value(8),
         "Maximum beam size for decoding (in powers of 2).")
     ("direction-det", value<bool>()->default_value(false),
@@ -139,6 +141,7 @@ int main(int argc, char** argv) {
   }
 
   config->labelled_parser = vm["labelled-parser"].as<bool>();
+  config->lexicalised = vm["lexicalised"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
 
@@ -201,7 +204,7 @@ int main(int argc, char** argv) {
       LblModel<Weights, Weights, Metadata> model(config);
       model.learn();
     }
-  } else {
+  } else if (config->lexicalised) {
     if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser) {
       train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else if (config->parser_type == ParserType::arcstandard) {
@@ -210,6 +213,16 @@ int main(int argc, char** argv) {
       train_dp<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else {
       train_dp<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
+    }
+  } else {
+  if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser) {
+      train_dp<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
+    } else if (config->parser_type == ParserType::arcstandard) {
+      train_dp<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
+    } else if (config->parser_type == ParserType::arceager) {
+      train_dp<ArcEagerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
+    } else {
+      train_dp<EisnerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
     }
   }
 

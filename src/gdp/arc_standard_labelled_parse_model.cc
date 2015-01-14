@@ -1647,7 +1647,7 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
 
   acc_counts->countAccuracy(parse, sent);
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
-  parse.print_actions();
+  //parse.print_actions();
   //parse.print_arcs();
   //parse.print_labels();
 
@@ -1682,6 +1682,7 @@ template class ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, 
 template class ArcStandardLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>;
 template class ArcStandardLabelledParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>;
 template class ArcStandardLabelledParseModel<ParsedFactoredWeights>;
+template class ArcStandardLabelledParseModel<ParsedWeights>;
 
 }
 

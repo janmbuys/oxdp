@@ -761,6 +761,7 @@ template class ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderA
 template class ArcEagerParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>;
 template class ArcEagerParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>;
 template class ArcEagerParseModel<ParsedFactoredWeights>;
+template class ArcEagerParseModel<ParsedWeights>;
 
 }
 

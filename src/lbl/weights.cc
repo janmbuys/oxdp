@@ -144,11 +144,14 @@ void Weights::getContextVectors(
   contexts.resize(examples->size());
   context_vectors.resize(
       context_width, MatrixReal::Zero(word_width, examples->size()));
+  //std::cerr << "resized" << std::endl; 
   for (size_t i = 0; i < examples->size(); ++i) {
     contexts[i] = examples->contextAt(i);
     for (int j = 0; j < context_width; ++j) {
+      //std::cerr << contexts[i][j] << " ";
       context_vectors[j].col(i) = Q.col(contexts[i][j]);
     }
+    //std::cerr << std::endl;
   }
 }
 

@@ -13,6 +13,8 @@ add_libraries(lbl
   model_utils.cc
   parsed_factored_metadata.cc
   parsed_factored_weights.cc
+  parsed_metadata.cc
+  parsed_weights.cc
   weights.cc
   word_distributions.cc
   word_to_class_index.cc

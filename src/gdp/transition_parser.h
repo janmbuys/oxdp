@@ -371,7 +371,7 @@ class TransitionParser: public Parser {
 
       WordIndex i = stack_.rbegin()[1];
       WordIndex j = stack_.rbegin()[0];
-      ctx[0] = j - i;
+      ctx[0] = std::min(j - i, 5); //distance
     }
     if (stack_.size() >= 3) {
       ctx[2] = tag_at(stack_.at(stack_.size()-3));
@@ -465,7 +465,7 @@ class TransitionParser: public Parser {
   }
 
 
-  Words word_children_distance_context() const {
+  Words word_children_context() const {
     Words ctx(7, 0);
     if (stack_.size() >= 1) { 
       WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
@@ -487,11 +487,18 @@ class TransitionParser: public Parser {
       if (r2 >= 0)
         ctx[5] = word_at(r2); //
 
-      WordIndex i = stack_.rbegin()[1];
-      WordIndex j = stack_.rbegin()[0];
-      ctx[6] = std::min(j - i, 5); //distance
+      //WordIndex i = stack_.rbegin()[1];
+      //WordIndex j = stack_.rbegin()[0];
+      //ctx[6] = std::min(j - i, 5); //distance
     }
-    
+
+    if (stack_.size() >= 3) {
+      ctx[6] = tag_at(stack_.at(stack_.size()-3));
+    }
+    /* if (stack_.size() >= 4) {
+      ctx[8] = tag_at(stack_.at(stack_.size()-4));
+    } */
+
     return ctx;
   }
 

@@ -65,8 +65,16 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   //bool immutable_dict = config->classes > 0 || config->class_file.size();
   boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>();
   training_corpus->readFile(config->training_file, dict, false);
-  config->vocab_size = dict->size();
-  config->num_tags = dict->tag_size();
+  
+  //for the current setup
+  if (config->lexicalised) {
+    config->vocab_size = dict->size();
+    config->num_tags = 1;
+  } else {
+    config->vocab_size = dict->tag_size();
+    config->num_tags = dict->tag_size();
+  }
+
   config->num_labels = dict->label_size();
   if (config->labelled_parser) {
     config->num_actions += 2*(dict->label_size()-1); //add labelled actions
@@ -172,7 +180,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             vector<int> task(
                 minibatch.begin() + task_start, minibatch.begin() + task_end);
             //collect the training examples for the minibatch
-            //std::cout << "  task " << task.size();
+            //std::cerr << " task " << task_start << std::endl;
             boost::shared_ptr<ParseDataSet> task_examples = boost::make_shared<ParseDataSet>();
             
             // #pragma omp critical
@@ -455,6 +463,11 @@ template class LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFa
 template class LblDpModel<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 template class LblDpModel<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 template class LblDpModel<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
+
+template class LblDpModel<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
+template class LblDpModel<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
+template class LblDpModel<ArcEagerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
+template class LblDpModel<EisnerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 
 } // namespace oxlm
 

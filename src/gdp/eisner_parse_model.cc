@@ -255,5 +255,6 @@ template class EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1
 template class EisnerParseModel<ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>;
 template class EisnerParseModel<ParsedPypWeights<tagLMOrderE, 1>>;
 template class EisnerParseModel<ParsedFactoredWeights>;
+template class EisnerParseModel<ParsedWeights>;
 
 }
