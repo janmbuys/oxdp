@@ -73,6 +73,12 @@ Real NGramModel<Weights>::evaluateSentence(const Sentence& sent,
     Words ctx = Words(context.begin() + i, context.begin() + i + order_ - 1);
     std::reverse(ctx.begin(), ctx.end());
     Real predict_weight = weights->predict(word, ctx); 
+
+    //std::cout << word << ": "; 
+    //for (auto w: ctx)
+    //  std::cout << w << " ";
+    //std::cout << predict_weight << std::endl;
+
     //if (word == -1)
     //  std::cout << predict_weight << " ";
     weight += predict_weight;

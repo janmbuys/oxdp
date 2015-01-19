@@ -112,6 +112,22 @@ class Parser: public ParsedSentence {
     return right_children_.at(j).back();
   }
 
+  WordIndex leftmost_grandchild_at(WordIndex j) const {
+    WordIndex i = leftmost_child_at(j);
+    if (i >= 0)
+      return leftmost_child_at(i);
+    else
+      return -1;
+  }
+
+  WordIndex rightmost_grandchild_at(WordIndex j) const {
+    WordIndex i = rightmost_child_at(j);
+    if (i >= 0)
+      return rightmost_child_at(i);
+    else
+      return -1;
+  }
+
   WordIndex second_leftmost_child_at(WordIndex j) const {
     if ((j >= size()) || (left_children_.at(j).size() < 2)) 
       return -1;

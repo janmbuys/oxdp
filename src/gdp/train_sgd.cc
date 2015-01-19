@@ -13,7 +13,7 @@
 using namespace boost::program_options;
 using namespace oxlm;
 
-#define lblOrderAS 8
+#define lblOrderAS 17
 #define lblOrderAE 8
 #define lblOrderE 6
 

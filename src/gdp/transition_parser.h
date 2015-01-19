@@ -464,6 +464,122 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
+  Words more_extended_word_children_context() const {
+    Words ctx(16, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+
+      WordIndex r12 = second_rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l12 = second_leftmost_child_at(stack_.at(stack_.size()-1));
+
+      WordIndex rr1 = rightmost_grandchild_at(stack_.at(stack_.size()-1));
+      WordIndex ll1 = leftmost_grandchild_at(stack_.at(stack_.size()-1));
+
+      ctx[0] = word_at(stack_.at(stack_.size()-1));
+      if (l1 >= 0)
+        ctx[1] = word_at(l1); 
+      if (r1 >= 0)
+        ctx[2] = word_at(r1);
+
+      if (l12 >= 0)
+        ctx[3] = word_at(l12); 
+      if (r12 >= 0)
+        ctx[4] = word_at(r12);
+
+      if (ll1 >= 0)
+        ctx[5] = word_at(ll1); 
+      if (rr1 >= 0)
+        ctx[6] = word_at(rr1);
+    }
+
+    if (stack_.size() >= 2) {
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+
+      WordIndex r22 = second_rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l22 = second_leftmost_child_at(stack_.at(stack_.size()-2));
+
+      WordIndex rr2 = rightmost_grandchild_at(stack_.at(stack_.size()-2));
+      WordIndex ll2 = leftmost_grandchild_at(stack_.at(stack_.size()-2));
+
+      ctx[7] = word_at(stack_.at(stack_.size()-2));
+      if (l2 >= 0)
+        ctx[8] = word_at(l2);
+      if (r2 >= 0)
+        ctx[9] = word_at(r2); 
+
+      if (l22 >= 0)
+        ctx[10] = word_at(l22);
+      if (r22 >= 0)
+        ctx[11] = word_at(r22); 
+
+      if (ll2 >= 0)
+        ctx[12] = word_at(ll2); 
+      if (rr2 >= 0)
+        ctx[13] = word_at(rr2);
+    }
+
+    if (stack_.size() >= 3) {
+      ctx[14] = tag_at(stack_.at(stack_.size()-3));
+    }
+    if (stack_.size() >= 4) {
+      ctx[15] = tag_at(stack_.at(stack_.size()-4));
+    } 
+
+    return ctx;
+  }
+
+
+  
+  Words extended_word_children_context() const {
+    Words ctx(12, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+
+      WordIndex r12 = second_rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l12 = second_leftmost_child_at(stack_.at(stack_.size()-1));
+
+      ctx[0] = word_at(stack_.at(stack_.size()-1));
+      if (l1 >= 0)
+        ctx[1] = word_at(l1); 
+      if (r1 >= 0)
+        ctx[2] = word_at(r1);
+
+      if (l12 >= 0)
+        ctx[3] = word_at(l12); 
+      if (r12 >= 0)
+        ctx[4] = word_at(r12);
+    }
+    if (stack_.size() >= 2) {
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+
+      WordIndex r22 = second_rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l22 = second_leftmost_child_at(stack_.at(stack_.size()-2));
+
+      ctx[5] = word_at(stack_.at(stack_.size()-2));
+      if (l2 >= 0)
+        ctx[6] = word_at(l2);
+      if (r2 >= 0)
+        ctx[7] = word_at(r2); 
+
+      if (l22 >= 0)
+        ctx[8] = word_at(l22);
+      if (r22 >= 0)
+        ctx[9] = word_at(r22); 
+    }
+
+    if (stack_.size() >= 3) {
+      ctx[10] = tag_at(stack_.at(stack_.size()-3));
+    }
+    if (stack_.size() >= 4) {
+      ctx[11] = tag_at(stack_.at(stack_.size()-4));
+    } 
+
+    return ctx;
+  }
 
   Words word_children_context() const {
     Words ctx(7, 0);
