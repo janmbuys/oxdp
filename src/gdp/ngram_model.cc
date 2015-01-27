@@ -55,7 +55,7 @@ void NGramModel<Weights>::extractSentence(const Sentence& sent,
   for (int i = 0; i < sent.size(); ++i) {    
     WordId word = sent.word_at(i);
     Words ctx = Words(context.begin() + i, context.begin() + i + order_ - 1);
-    std::reverse(ctx.begin(), ctx.end());
+    //std::reverse(ctx.begin(), ctx.end());
     DataPoint example(word, ctx); 
     examples->addExample(example);
     context.push_back(word);
@@ -71,13 +71,8 @@ Real NGramModel<Weights>::evaluateSentence(const Sentence& sent,
   for (int i = 0; i < static_cast<int>(sent.size()); ++i) {    
     WordId word = sent.word_at(i);
     Words ctx = Words(context.begin() + i, context.begin() + i + order_ - 1);
-    std::reverse(ctx.begin(), ctx.end());
+    //std::reverse(ctx.begin(), ctx.end());
     Real predict_weight = weights->predict(word, ctx); 
-
-    //std::cout << word << ": "; 
-    //for (auto w: ctx)
-    //  std::cout << w << " ";
-    //std::cout << predict_weight << std::endl;
 
     //if (word == -1)
     //  std::cout << predict_weight << " ";

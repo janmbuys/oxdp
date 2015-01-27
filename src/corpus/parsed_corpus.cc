@@ -3,8 +3,9 @@
 
 namespace oxlm {
 
-ParsedCorpus::ParsedCorpus():
-  sentences_()
+ParsedCorpus::ParsedCorpus(bool labelled):
+  sentences_(),
+  labelled_(labelled)
 {
 }
 
@@ -26,7 +27,10 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
       else if (col_num == 6) //arc head
         arcs_out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
       else if (col_num == 7) //label 
-        labels_out->push_back(dict->convertLabel(line.substr(last, cur - last - 1), frozen));
+        if (labelled_)
+          labels_out->push_back(dict->convertLabel(line.substr(last, cur - last - 1), frozen));
+        else
+          labels_out->push_back(dict->convertLabel("ROOT", frozen));
        ++col_num;
       state = 0;
     } else {
@@ -109,7 +113,7 @@ size_t ParsedCorpus::size() const {
 size_t ParsedCorpus::numTokens() const {
   size_t total = 0;
   for (auto sent: sentences_)
-    total += sent.size() - 1;
+    total += sent.size();
 
   return total;
 }

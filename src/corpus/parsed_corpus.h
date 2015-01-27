@@ -18,7 +18,7 @@ namespace oxlm {
 //NB this is not at the moment officially related to corpus
 class ParsedCorpus: public CorpusInterface {
   public:
-  ParsedCorpus();
+  ParsedCorpus(bool labelled);
 
   void convertWhitespaceDelimitedConllLine(const std::string& line, 
       const boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, Indices* arcs_out, Words* labels_out, bool frozen);
@@ -43,9 +43,9 @@ class ParsedCorpus: public CorpusInterface {
 
   private:
   std::vector<ParsedSentence> sentences_;
+  bool labelled_;
   int vocab_size_;
-  int num_labels_;
-
+  int num_labels_;  
 };
 
 }

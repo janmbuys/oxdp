@@ -45,6 +45,7 @@ void PypModel::learn() {
   Real test_objective = 0; 
   int minibatch_counter = 1;
   int minibatch_size = config_->minibatch_size;
+  int training_count = 0;
 
   //TODO parallelize
       
@@ -78,6 +79,7 @@ void PypModel::learn() {
       }            
 
       weights_->updateInsert(minibatch_examples, eng); 
+      training_count += minibatch_examples->size();
 
       //for now, only evaluate at end of iteration
       /* if ((minibatch_counter % 1000 == 0 && minibatch_counter <= 10000) || 
@@ -95,7 +97,8 @@ void PypModel::learn() {
     std::cerr << "Iteration: " << iter << ", "
              << "Training Time: " << iteration_time << " seconds, "
              << "Training Objective: " << weights_->likelihood() / training_corpus->numTokens() 
-           << "\n\n";
+             << " Training examples count: " << training_count
+             << "\n\n";
     
     evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
   }

@@ -30,9 +30,9 @@ template<class ParseModel, class ParsedWeights>
 void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
   MT19937 eng;
   //read training data
-  boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>();
-  boost::shared_ptr<ParsedCorpus> ques_training_corpus = boost::make_shared<ParsedCorpus>();
-  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>();
+  boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> ques_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
  
   if (config_->training_file.size()) { 
     std::cerr << "Reading supervised training corpus...\n";
@@ -80,7 +80,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
 
   //read test data 
   std::cerr << "Reading test corpus...\n";
-  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
   if (config_->test_file.size()) {
     test_corpus->readFile(config_->test_file, dict_, true);
     std::cerr << "Done reading test corpus..." << std::endl;
@@ -318,9 +318,9 @@ template<class ParseModel, class ParsedWeights>
 void PypDpModel<ParseModel, ParsedWeights>::learn() {
   MT19937 eng;
   //read training data
-  boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>();
-  boost::shared_ptr<ParsedCorpus> ques_training_corpus = boost::make_shared<ParsedCorpus>();
-  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>();
+  boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> ques_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
  
   if (config_->training_file.size()) { 
     std::cerr << "Reading supervised training corpus...\n";
@@ -372,7 +372,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
 
   //read test data 
   std::cerr << "Reading test corpus...\n";
-  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
   if (config_->test_file.size()) {
     test_corpus->readFile(config_->test_file, dict_, true);
     std::cerr << "Done reading test corpus..." << std::endl;
@@ -607,7 +607,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
              (sup_training_corpus->numTokens() + unsup_training_corpus->numTokens())
            << "\n\n";
    
-    if (iter > 0 && (iter%10 == 0))
+    //if (iter > 0 && (iter%10 == 0))
+    if (iter%10 == 0)
       evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
   }
 
@@ -626,7 +627,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
 template<class ParseModel, class ParsedWeights>
 void PypDpModel<ParseModel, ParsedWeights>::evaluate() const {
  //read test data 
-  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
   test_corpus->readFile(config_->test_file, dict_, true);
   std::cerr << "Done reading test corpus..." << std::endl;
   

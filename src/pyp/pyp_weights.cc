@@ -44,7 +44,7 @@ void PypWeights<kOrder>::updateInsert(const boost::shared_ptr<DataSet>& examples
     //std::cout << examples->wordAt(i) << ": "; 
     //for (auto w: examples->contextAt(i))
     //  std::cout << w << " ";
-    //std::cout << -std::log(prob) << std::endl;
+    //std::cout << std::endl;
   }
 }
 

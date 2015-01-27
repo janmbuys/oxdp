@@ -43,7 +43,8 @@ void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSe
       inc_complete_sentences_lab();
   }
 
-  add_total_length(gold_parse.size() - 1);
+  add_total_length(gold_parse.size());
+  add_total_length_punc(gold_parse.size() - 1);
   bool punc_complete = true;
   bool lab_punc_complete = true;
 
@@ -209,37 +210,41 @@ void AccuracyCounts::countLikelihood(Real parse_l, Real gold_l) {
 }
 
 void AccuracyCounts::printAccuracy() const {
-  std::cerr << "Directed Accuracy No Punct: " << directed_accuracy_nopunc() << std::endl;
-  std::cerr << "Undirected Accuracy No Punct: " << undirected_accuracy_nopunc() << std::endl;
-  std::cerr << "Labelled Directed Accuracy No Punct: " << directed_accuracy_lab_nopunc() << std::endl;
-  std::cerr << "Directed Accuracy: " << directed_accuracy() << std::endl;
-  std::cerr << "Undirected Accuracy: " << undirected_accuracy() << std::endl;
-  std::cerr << "Labelled Directed Accuracy: " << directed_accuracy_lab() << std::endl;
-  std::cerr << "Final reduce error rate: " << final_reduce_error_rate() << std::endl;
-  std::cerr << "Completely correct: " << complete_accuracy() << std::endl;
-  std::cerr << "Labelled Completely correct: " << complete_accuracy_lab() << std::endl;
-  std::cerr << "Completely correct No Punct: " << complete_accuracy_nopunc() << std::endl;
-  std::cerr << "Labelled Completely correct No Punct: " << complete_accuracy_lab_nopunc() << std::endl;
+  std::cerr << "Labelled Accuracy No Punct: " << directed_accuracy_lab_nopunc() << std::endl;
+  std::cerr << "Unlabelled Accuracy No Punct: " << directed_accuracy_nopunc() << std::endl;
   std::cerr << "Root correct: " << root_accuracy() << std::endl;
-  std::cerr << "ArcDirection Precision: " << arc_dir_precision() << std::endl;
+  std::cerr << "Labelled Completely correct No Punct: " << complete_accuracy_lab_nopunc() << std::endl;
+  std::cerr << "Completely correct No Punct: " << complete_accuracy_nopunc() << std::endl;
+
+  std::cerr << std::endl;
+  std::cerr << "Perplexity: " << perplexity() << std::endl;   
+  std::cerr << "Cross entropy: " << cross_entropy() << std::endl;   
+  std::cerr << "Log likelihood: " << likelihood() << std::endl;   
+  std::cerr << "Beam Perplexity: " << beam_perplexity() << std::endl;   
+  std::cerr << "Beam Cross entropy: " << beam_cross_entropy() << std::endl;   
+  std::cerr << "Beam Log likelihood: " << beam_likelihood() << std::endl;   
+  std::cerr << "Importance Perplexity: " << importance_perplexity() << std::endl;   
+  std::cerr << "Importance Cross entropy: " << importance_cross_entropy() << std::endl;
+  std::cerr << "Importance Log likelihood: " << importance_likelihood() << std::endl;   
+  std::cerr << "Gold Perplexity: " << gold_perplexity() << std::endl;   
+  std::cerr << "Gold Cross entropy: " << gold_cross_entropy() << std::endl;   
+  std::cerr << "Gold Log likelihood: " << gold_likelihood() << std::endl;   
+  std::cerr << "Gold more likely: " << gold_more_likely() << std::endl;   
+
+  std::cerr << std::endl;
+  std::cerr << "Labelled Accuracy With Punct: " << directed_accuracy_lab() << std::endl;
+  std::cerr << "Unlabelled Accuracy With Punct: " << directed_accuracy() << std::endl;
+  std::cerr << "Labelled Completely correct With Punct: " << complete_accuracy_lab() << std::endl;
+  std::cerr << "Completely correct With Punct: " << complete_accuracy() << std::endl;
+  //std::cerr << "Undirected Accuracy No Punct: " << undirected_accuracy_nopunc() << std::endl;
+  //std::cerr << "Undirected Accuracy: " << undirected_accuracy() << std::endl;
+  std::cerr << "Final reduce error rate: " << final_reduce_error_rate() << std::endl;
+  std::cerr << "ArcDirection Precision With Punct:: " << arc_dir_precision() << std::endl;
   std::cerr << "ArcDirection Precision No Punct: " << arc_dir_precision_nopunc() << std::endl;
   std::cerr << "Shift recall: " << shift_recall() << std::endl;
   std::cerr << "Reduce recall: " << reduce_recall() << std::endl;   
   std::cerr << "Total length: " << total_length() << std::endl;   
   std::cerr << "Total length no punct: " << total_length_nopunc() << std::endl;   
-  std::cerr << "Gold Log likelihood: " << gold_likelihood() << std::endl;   
-  std::cerr << "Gold Cross entropy: " << gold_cross_entropy() << std::endl;   
-  std::cerr << "Gold Perplexity: " << gold_perplexity() << std::endl;   
-  std::cerr << "Gold more likely: " << gold_more_likely() << std::endl;   
-  std::cerr << "Log likelihood: " << likelihood() << std::endl;   
-  std::cerr << "Cross entropy: " << cross_entropy() << std::endl;   
-  std::cerr << "Perplexity: " << perplexity() << std::endl;   
-  std::cerr << "Beam Log likelihood: " << beam_likelihood() << std::endl;   
-  std::cerr << "Beam Cross entropy: " << beam_cross_entropy() << std::endl;   
-  std::cerr << "Beam Perplexity: " << beam_perplexity() << std::endl;   
-  std::cerr << "Importance Log likelihood: " << importance_likelihood() << std::endl;   
-  std::cerr << "Importance Cross entropy: " << importance_cross_entropy() << std::endl;
-  std::cerr << "Importance Perplexity: " << importance_perplexity() << std::endl;   
   std::cerr << std::endl;
 }
 

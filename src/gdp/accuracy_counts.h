@@ -109,6 +109,10 @@ public:
     total_length_ += l; 
   }
 
+  void add_total_length_punc(int l) {
+    total_length_punc_ += l; 
+  }
+
   void add_num_actions(int l) {
     num_actions_ += l; 
   }
@@ -146,11 +150,11 @@ public:
   void printAccuracy() const;
 
   Real directed_accuracy() const {
-    return (directed_count_ + 0.0)/total_length_;
+    return (directed_count_ + 0.0)/total_length_punc_;
   }
 
   Real directed_accuracy_lab() const {
-    return (directed_count_lab_ + 0.0)/total_length_;
+    return (directed_count_lab_ + 0.0)/total_length_punc_;
   }
 
   Real directed_accuracy_nopunc() const {
@@ -162,7 +166,7 @@ public:
   }
 
   Real undirected_accuracy() const {
-    return (undirected_count_ + 0.0)/total_length_;
+    return (undirected_count_ + 0.0)/total_length_punc_;
   }
 
   Real undirected_accuracy_nopunc() const {
@@ -229,47 +233,56 @@ public:
     return total_length_;
   }
 
+  int total_length_punc() const {
+    return total_length_punc_;
+  }
+
   int total_length_nopunc() const {
     return total_length_nopunc_;
   }
 
   Real final_reduce_error_rate() const {
-    return (final_reduce_error_count_ + 0.0)/total_length_;
+    return (final_reduce_error_count_ + 0.0)/total_length_punc_;
   }
 
   Real cross_entropy() const {
-    return likelihood_/(std::log(2)*total_length_);
-    //return likelihood_/(std::log(2)*num_actions_);
+    //return likelihood_/(std::log(2)*total_length_);
+    return likelihood_/total_length_;
   }
 
   Real beam_cross_entropy() const {
-    return beam_likelihood_/(std::log(2)*total_length_);
-    //return beam_likelihood_/(std::log(2)*num_actions_);
+    //return beam_likelihood_/(std::log(2)*total_length_);
+    return beam_likelihood_/total_length_;
   }
   
   Real importance_cross_entropy() const {
-    return importance_likelihood_/(std::log(2)*total_length_);
+    //return importance_likelihood_/(std::log(2)*total_length_);
+    return importance_likelihood_/total_length_;
   }
   
   Real gold_cross_entropy() const {
-    return gold_likelihood_/(std::log(2)*total_length_);
-    //return gold_likelihood_/(std::log(2)*num_actions_);
+    //return gold_likelihood_/(std::log(2)*total_length_);
+    return gold_likelihood_/total_length_;
   }
 
   Real perplexity() const {
-    return std::pow(2, cross_entropy());
+    //return std::pow(2, cross_entropy());
+    return std::exp(cross_entropy());
   }
 
   Real beam_perplexity() const {
-    return std::pow(2, beam_cross_entropy());
+    //return std::pow(2, beam_cross_entropy());
+    return std::exp(beam_cross_entropy());
   }
 
   Real importance_perplexity() const {
-    return std::pow(2, importance_cross_entropy());
+    //return std::pow(2, importance_cross_entropy());
+    return std::exp(importance_cross_entropy());
   }
 
   Real gold_perplexity() const {
-    return std::pow(2, gold_cross_entropy());
+    //return std::pow(2, gold_cross_entropy());
+    return std::exp(gold_cross_entropy());
   }
 
 private:
@@ -284,6 +297,7 @@ private:
     int shift_gold_;
     int final_reduce_error_count_;
     int total_length_;
+    int total_length_punc_;
     int total_length_nopunc_;
     int directed_count_;
     int directed_count_lab_;

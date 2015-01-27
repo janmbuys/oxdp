@@ -63,7 +63,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   // Initialize the dictionary now, if it hasn't been initialized when the
   // vocabulary was partitioned in classes. - allways initialize, else miss tags etc
   //bool immutable_dict = config->classes > 0 || config->class_file.size();
-  boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>();
+  boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>(config->labelled_parser);
   training_corpus->readFile(config->training_file, dict, false);
   
   //for the current setup
@@ -79,7 +79,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   if (config->labelled_parser) {
     config->num_actions += 2*(dict->label_size()-1); //add labelled actions
   }
-  cout << "Done reading training corpus..." << endl;
+  std::cerr << "Done reading training corpus..." << endl;
 
   std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
             << dict->size() << " word types, " << dict->tag_size() << " tags, "  
@@ -87,9 +87,9 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
   boost::shared_ptr<ParsedCorpus> test_corpus; 
   if (config->test_file.size()) {
-    test_corpus = boost::make_shared<ParsedCorpus>();
+    test_corpus = boost::make_shared<ParsedCorpus>(config->labelled_parser);
     test_corpus->readFile(config->test_file, dict, true);
-    cout << "Done reading test corpus..." << endl;
+    std::cerr << "Done reading test corpus..." << endl;
   }
 
   if (config->model_input_file.size() == 0) {
@@ -99,7 +99,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   } else {
     Real log_likelihood = 0;
     evaluate(test_corpus, log_likelihood);
-    cout << "Initial perplexity: "
+    std::cerr << "Initial perplexity: "
          << perplexity(log_likelihood, test_corpus->numTokens()) << endl;
   }
 
@@ -260,14 +260,13 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
       #pragma omp master
       {
         Real iteration_time = get_duration(iteration_start, get_time());
-        cout << "Iteration: " << iter << ", "
+        std::cerr << "Iteration: " << iter << ", "
              << "Time: " << iteration_time << " seconds, "
              << "  Likelihood: " << global_objective 
              << "  Size: " << training_corpus->numTokens()
              << "  Perplexity: " << perplexity(global_objective, training_corpus->numTokens())
              << "  Objective: " << global_objective / training_corpus->numTokens()
-             << endl;
-        cout << endl;
+             << endl << endl;
       
         if (iter%5 == 0)
           evaluate(test_corpus, iteration_start, minibatch_counter,
@@ -276,7 +275,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
     }
   }
 
-  cout << "Overall minimum perplexity: " << best_perplexity << endl;
+  std::cerr << "Overall minimum perplexity: " << best_perplexity << endl;
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
@@ -298,15 +297,15 @@ Real LblDpModel<ParseModel, ParsedWeights, Metadata>::regularize(
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate() const {
  //read test data 
-  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>();
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config->labelled_parser);
   test_corpus->readFile(config->test_file, dict, true);
   std::cerr << "Done reading test corpus..." << std::endl;
   
   Real log_likelihood = 0;
   evaluate(test_corpus, log_likelihood);
     
-  size_t test_size = test_corpus->numTokens(); //TODO should actually be number of examples
-  Real test_perplexity = perplexity(log_likelihood, test_size); //TODO use perplexity function
+  size_t test_size = 3*test_corpus->numTokens(); //approx
+  Real test_perplexity = perplexity(log_likelihood, test_size); 
   std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
@@ -393,7 +392,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     {
       Real test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
       Real iteration_time = get_duration(iteration_start, get_time());
-      cout << "\tMinibatch " << minibatch_counter << ", "
+      std::cerr << "\tMinibatch " << minibatch_counter << ", "
            << "Time: " << get_duration(iteration_start, get_time()) << " seconds, "
            << "  Test Likelihood: " << log_likelihood 
            << "  Test Size: " << test_corpus->numTokens() 
@@ -419,14 +418,14 @@ Real LblDpModel<ParseModel, ParsedWeights, Metadata>::predict(
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::save() const {
   if (config->model_output_file.size()) {
-    cout << "Writing model to " << config->model_output_file << "..." << endl;
+      std::cerr << "Writing model to " << config->model_output_file << "..." << endl;
     ofstream fout(config->model_output_file);
     boost::archive::binary_oarchive oar(fout);
     oar << config;
     oar << dict;
     oar << weights;
     oar << metadata;
-    cout << "Done..." << endl;
+    std::cerr << "Done..." << endl;
   }
 }
 

@@ -2,8 +2,10 @@
 #include <cstdlib>
 #include <chrono>
 
-#include "hpyplm.h"
+#include "pyp/pyplm.h"
 #include "corpus/dict.h"
+#include "corpus/sentence_corpus.h"
+#include "corpus/data_set.h"
 #include "utils/m.h"
 #include "utils/random.h"
 #include "pyp/crp.h"
@@ -11,8 +13,8 @@
 
 using namespace oxlm;
 
-typedef std::vector<WordIndex> WxList;
-typedef std::vector<Words> WordsList;
+//typedef std::vector<WordIndex> WxList;
+//typedef std::vector<Words> WordsList;
 
 int main(int argc, char** argv) {
   const unsigned kOrder = 4;
@@ -25,20 +27,19 @@ int main(int argc, char** argv) {
 
   int num_samples = atoi(argv[1]);
 
-  Dict dict("<s>", "</s>");
-  const WordId kSOS = dict.convert("<s>", true);
-  const WordId kEOS = dict.convert("</s>", true);
+  boost::shared_ptr<Dict> dict = boost::make_shared<Dict>("<s>", "</s>");
+  const WordId kSOS = dict->convert("<s>", true);
+  const WordId kEOS = dict->convert("</s>", true);
 
   /*Training */
-  std::string train_file = "english-wsj/english_wsj_train.conll";
-
-  std::vector<Words> corpus_sents;
-  std::vector<Words> corpus_tags;
-  std::vector<WxList> corpus_deps;
+  std::string training_file = "english-wsj-conll08-nofunc-noedges-unk/english_wsj_train.conll.txt";
   
   std::cerr << "Reading training corpus...\n";
-  dict.readFromConllFile(train_file, &corpus_sents, &corpus_tags, &corpus_deps, false);
-  std::cerr << "Corpus size: " << corpus_sents.size() << " sentences\t (" << dict.size() << " word types, " << dict.tag_size() << " tags)\n";
+  boost::shared_ptr<SentenceCorpus> training_corpus = boost::make_shared<SentenceCorpus>();
+  training_corpus->readFile(training_file, dict, false);
+
+  std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
+            << dict_->size() << " word types)\n";  
 
   //define pyp model
   PYPLM<kOrder> lm(dict.size() + 1, 1, 1, 1, 1);
@@ -48,18 +49,21 @@ int main(int argc, char** argv) {
                   
   std::vector<WordId> ctx(kOrder - 1, kSOS);
   for (int sample = 0; sample < num_samples; ++sample) {
-    
-    for (const auto& s: corpus_sents) {
+    int train_cnt = 0;
+    for (int k = 0; k < training_corpus->size(); ++k) {
+      Sentence s = trianing_corpus->sentence_at(k);
       ctx.resize(kOrder - 1);
-      for (unsigned i = 0; i <= s.size(); ++i) {
-        WordId w = (i < s.size() ? s[i] : kEOS);
+      for (unsigned i = 0; i < s.size(); ++i) {
+        WordId w = (i < s.size() ? s.word_at(i) : kEOS);
         if (sample > 0) 
           lm.decrement(w, ctx, eng);
         lm.increment(w, ctx, eng);
         ctx.push_back(w);
+        train_cnt++;
       }
     }
 
+    std::cerr << train_cnt << " training instances\n";
     if (sample % 10 == 9) {
       std::cerr << (sample + 1) << " iterations\n";
       if (sample % 30u == 29) 
@@ -76,30 +80,26 @@ int main(int argc, char** argv) {
  /*Testing */
 
   std::string test_file = "english-wsj/english_wsj_dev.conll";
-  
-  std::vector<Words> test_sents;
-  std::vector<Words> test_tags;
-  std::vector<WxList> test_deps;
-
+  boost::shared_ptr<SentenceCorpus> test_corpus = boost::make_shared<SentenceCorpus>();
   std::cerr << "Reading test corpus...\n";
-  dict.readFromConllFile(test_file, &test_sents, &test_tags, &test_deps, true);
-  std::cerr << "Corpus size: " << test_sents.size() << " sentences\n";
+  test_corpus->readFile(test_file, dict, true);
+  std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
+            << dict_->size() << " word types)\n";  
 
   double llh = 0;
   int cnt = 0;
   
-  for (auto& s : test_sents) {
+  for (int k = 0; k < training_corpus->size(); ++k) {
+    Sentence s = trianing_corpus->sentence_at(k);
     ctx.resize(kOrder - 1);
     for (unsigned i = 1; i <= s.size(); ++i) {
-      WordId w = (i < s.size() ? s[i] : kEOS);
+      WordId w = (i < s.size() ? s.word_at(i) : kEOS);
       double lp = std::log(lm.prob(w, ctx));
       
       ctx.push_back(w);
       llh -= lp;
-
-      if (i < s.size()) {
-        cnt++;
-      }
+      //if (i < s.size()) 
+      cnt++;
     }
   }
  
