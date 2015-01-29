@@ -20,7 +20,8 @@ TEST_F(SGDTest, TestBasic) {
   std::cout << "  Test Likelihood: " << log_likelihood 
            << "  Test Size: " << test_corpus->numTokens() 
            << "  Test Perplexity: " << perplexity(log_likelihood, test_corpus->numTokens()) << std::endl;
-  EXPECT_NEAR(72.5700378, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //minibatch size
+  EXPECT_NEAR(71.3570632, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //minibatch size
+          //slight computational changes 72.5700378,
           //original 72.2445220 
 }
 
@@ -37,8 +38,9 @@ TEST_F(SGDTest, TestNCE) {
   std::cout << "  Test Likelihood: " << log_likelihood 
            << "  Test Size: " << test_corpus->numTokens() 
            << "  Test Perplexity: " << perplexity(log_likelihood, test_corpus->numTokens()) << std::endl;
-  EXPECT_NEAR(66.8057022, perplexity(log_likelihood, test_corpus->numTokens()), EPS); 
-       //? numerical issue 66.8699874
+  EXPECT_NEAR(67.6779098, perplexity(log_likelihood, test_corpus->numTokens()), EPS); 
+       //slight computational changes 66.8057022
+       //numerical issue 66.8699874
        //original 67.7361526
 }
 

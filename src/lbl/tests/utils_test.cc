@@ -63,22 +63,6 @@ TEST(UtilsTest, TestSigmoidDerivative) {
   EXPECT_MATRIX_NEAR(expected_w, w, EPS);
 }
 
-TEST(UtilsTest, TestMurmurHash) {
-  vector<int> data = {0};
-  EXPECT_EQ(14961230494313510588ULL, MurmurHash(data, 0));
-  EXPECT_EQ(4464299780005672250ULL, MurmurHash(data, 1));
 
-  data = {1};
-  EXPECT_EQ(9841952836289088254ULL, MurmurHash(data));
-
-  data = {2};
-  EXPECT_EQ(15712189420091562848ULL, MurmurHash(data));
-
-  data = {1, 2};
-  EXPECT_EQ(15037832940209189704ULL, MurmurHash(data));
-
-  data = {1, 2, 3};
-  EXPECT_EQ(5822962753042209973ULL, MurmurHash(data));
-}
 
 } // namespace oxlm

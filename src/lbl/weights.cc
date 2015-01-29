@@ -176,13 +176,14 @@ MatrixReal Weights::getPredictionVectors(
     prediction_vectors += getContextProduct(i, context_vectors[i]);
   }
 
-  if (config->sigmoid) {
-    for (size_t i = 0; i < prediction_size; ++i) {
-      prediction_vectors.col(i) = sigmoid(prediction_vectors.col(i));
-    }
-  }
+  //if (config->sigmoid) {
+  //  for (size_t i = 0; i < prediction_size; ++i) {
+  //    prediction_vectors.col(i) = sigmoid<MatrixReal>(prediction_vectors.col(i));
+  //  }
+  //} 
+  //return prediction_vectors;
 
-  return prediction_vectors;
+  return applyActivation<MatrixReal>(config->activation, prediction_vectors);
 }
 
 MatrixReal Weights::getContextProduct(
@@ -220,9 +221,10 @@ MatrixReal Weights::getWeightedRepresentations(
     weighted_representations.col(i) -= R.col(examples->wordAt(i));
   }
 
-  if (config->sigmoid) {
+  /* if (config->sigmoid) {
     weighted_representations.array() *= sigmoidDerivative(prediction_vectors);
-  }
+  } */
+  weighted_representations.array() *= activationDerivative(config->activation, prediction_vectors);
 
   return weighted_representations;
 }
@@ -423,9 +425,10 @@ void Weights::estimateGradient(
       examples, prediction_vectors, gradient,
       weighted_representations, objective, words);
 
-  if (config->sigmoid) {
+  /* if (config->sigmoid) {
     weighted_representations.array() *= sigmoidDerivative(prediction_vectors);
-  }
+  } */
+  weighted_representations.array() *= activationDerivative(config->activation, prediction_vectors);
 
   getContextGradient(
       examples->size(), contexts, context_vectors, weighted_representations, gradient);
@@ -563,7 +566,8 @@ VectorReal Weights::getPredictionVector(const vector<int>& context) const {
   }
 
   //std::cout << "has vector" << std::endl;
-  return config->sigmoid ? sigmoid(prediction_vector) : prediction_vector;
+  //return config->sigmoid ? sigmoid(prediction_vector) : prediction_vector;
+  return applyActivation<VectorReal>(config->activation, prediction_vector);
 }
 
 //now returning negative log likelihood

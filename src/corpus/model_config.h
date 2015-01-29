@@ -12,6 +12,7 @@
 namespace oxlm {
 
 enum class ParserType {ngram, eisner, arcstandard, arceager};
+enum class Activation {linear, sigmoid, tanh, rectifier};
 
 struct ModelConfig {
   ModelConfig();
@@ -58,8 +59,8 @@ struct ModelConfig {
   int         min_ngram_freq;
   int         vocab_size;
   int         noise_samples;
-  bool        sigmoid;
   ParserType  parser_type;
+  Activation activation;
   bool        labelled_parser;
   bool        lexicalised;
   bool        char_lexicalised;
@@ -107,8 +108,8 @@ struct ModelConfig {
     ar & filter_error_rate;
     ar & vocab_size;
     ar & noise_samples;
-    ar & sigmoid;
     ar & parser_type;
+    ar & activation;
     ar & labelled_parser;
     ar & lexicalised;
     ar & char_lexicalised;

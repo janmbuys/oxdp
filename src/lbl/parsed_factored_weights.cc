@@ -308,9 +308,10 @@ MatrixReal ParsedFactoredWeights::getActionWeightedRepresentations(
     weighted_representations.col(i) -= K.col(action_id);
   }
 
-  if (config->sigmoid) {
+  /* if (config->sigmoid) {
     weighted_representations.array() *= sigmoidDerivative(action_prediction_vectors);
-  }
+  } */
+  weighted_representations.array() *= activationDerivative(config->activation, action_prediction_vectors);
 
   return weighted_representations;
 }

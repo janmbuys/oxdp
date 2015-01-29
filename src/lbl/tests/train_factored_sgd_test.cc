@@ -17,7 +17,8 @@ TEST_F(FactoredSGDTest, TestTrainFactoredSGD) {
   test_corpus->readFile(config->test_file, dict, true);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
-  EXPECT_NEAR(61.5424766, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //minibatch size
+  EXPECT_NEAR(61.5693321, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //minibatch size
+    //slight computational changes 61.5424766,
     //numerical issue 61.6428337
     //original 61.6428031 
 }
@@ -32,7 +33,8 @@ TEST_F(FactoredSGDTest, TestTrainFactoredNCE) {
   test_corpus->readFile(config->test_file, dict, true);
   Real log_likelihood = 0;
   model.evaluate(test_corpus, log_likelihood);
-  EXPECT_NEAR(65.9348297, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //minibatch size
+  EXPECT_NEAR(66.1376800, perplexity(log_likelihood, test_corpus->numTokens()), EPS); //minibatch size
+    //slight computational change 65.9348297
     //numerical issue 66.0728988
     //original 66.0725250
 }

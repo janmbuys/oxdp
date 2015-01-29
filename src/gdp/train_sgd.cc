@@ -76,8 +76,8 @@ int main(int argc, char** argv) {
         "Sum over likelihoods of identical parses in final beam.")
     ("diagonal-contexts", value<bool>()->default_value(true),
         "Use diagonal context matrices (usually faster).")
-    ("sigmoid", value<bool>()->default_value(true),
-        "Apply a sigmoid non-linearity to the prediction (hidden) layer.")
+    ("activation", value<std::string>()->default_value("linear"),
+        "Activation function for to the projection (hidden) layer.")
     ("noise-samples", value<int>()->default_value(0),
         "Number of noise samples for noise contrastive estimation. "
         "If zero, minibatch gradient descent is used instead.")
@@ -140,6 +140,20 @@ int main(int argc, char** argv) {
     config->parser_type = ParserType::ngram; 
   }
 
+  std::string activation_str = vm["activation"].as<std::string>();
+  if (activation_str == "linear") 
+    config->activation = Activation::linear;
+  else if (activation_str == "sigmoid") 
+    config->activation = Activation::sigmoid;
+  else if (activation_str == "tanh") 
+    config->activation = Activation::tanh;
+  else if (activation_str == "rectifier") 
+    config->activation = Activation::rectifier;
+  //else if (activation_str == "cube") 
+  //  config->activation = Activation::cube;
+  else 
+    config->activation = Activation::linear;
+
   config->labelled_parser = vm["labelled-parser"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
@@ -155,7 +169,6 @@ int main(int argc, char** argv) {
   config->step_size = vm["step-size"].as<float>();
   config->randomise = vm["randomise"].as<bool>();
   config->diagonal_contexts = vm["diagonal-contexts"].as<bool>();
-  config->sigmoid = vm["sigmoid"].as<bool>();
   config->factored = vm["class-factored"].as<bool>();
 
   config->noise_samples = vm["noise-samples"].as<int>();
@@ -183,7 +196,6 @@ int main(int argc, char** argv) {
   cout << "# threads = " << config->threads << endl;
   cout << "# randomise = " << config->randomise << endl;
   cout << "# diagonal contexts = " << config->diagonal_contexts << endl;
-  cout << "# sigmoid = " << config->sigmoid << endl;
   cout << "# noise samples = " << config->noise_samples << endl;
   cout << "################################" << endl;
 
@@ -205,20 +217,16 @@ int main(int argc, char** argv) {
       model.learn();
     }
   } else if (config->lexicalised) {
-    if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser) {
+    if (config->parser_type == ParserType::arcstandard) {
       train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
-    } else if (config->parser_type == ParserType::arcstandard) {
-      train_dp<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else if (config->parser_type == ParserType::arceager) {
       train_dp<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else {
       train_dp<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     }
   } else {
-  if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser) {
+  if (config->parser_type == ParserType::arcstandard) {
       train_dp<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
-    } else if (config->parser_type == ParserType::arcstandard) {
-      train_dp<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
     } else if (config->parser_type == ParserType::arceager) {
       train_dp<ArcEagerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
     } else {

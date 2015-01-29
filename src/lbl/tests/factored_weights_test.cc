@@ -22,7 +22,7 @@ class FactoredWeightsTest : public testing::Test {
     config->word_representation_size = 3;
     config->vocab_size = 5;
     config->ngram_order = 3;
-    config->sigmoid = true;
+    config->activation = Activation::sigmoid;
 
     vector<int> data = {2, 3, 4, 1};
     vector<int> classes = {0, 2, 4, 5};

@@ -24,7 +24,7 @@ class TestWeights : public testing::Test {
     config->word_representation_size = 3;
     config->vocab_size = 5;
     config->ngram_order = 3;
-    config->sigmoid = true;
+    config->activation = Activation::sigmoid;
 
     vector<int> data = {2, 3, 4, 1};
     corpus = boost::make_shared<SentenceCorpus>(data, config->vocab_size);

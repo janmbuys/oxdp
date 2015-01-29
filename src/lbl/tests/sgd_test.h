@@ -20,7 +20,7 @@ class SGDTest : public ::testing::Test {
     config->word_representation_size = 100;
     config->threads = 1;
     config->step_size = 0.06;
-    config->sigmoid = true;
+    config->activation = Activation::sigmoid;
   }
 
   boost::shared_ptr<ModelConfig> config;
