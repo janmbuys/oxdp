@@ -526,6 +526,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
        // std::cout << "ADD" << std::endl;
       for (auto j: minibatch) {
         sup_examples_list.at(j)->clear();
+        //std::cout << "extracting" << j << "\n";
         //if (iter == 0)
           parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
         //else
@@ -538,6 +539,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
         //  std::cout << j << " (" << sup_examples_list.at(j)->word_example_size() << ") ";
       }     
 
+      //std::cout << minibatch_examples->word_example_size() << std::endl;
    /*   if (iter > 0)
         for (int i = 0; i < minibatch_examples->word_example_size(); ++i) {
           std::cout << minibatch_examples->word_at(i) << "\t";
@@ -715,16 +717,19 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
 template class PypDpModel<ArcStandardParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>;
 template class PypDpModel<ArcStandardLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>;
 template class PypDpModel<ArcEagerParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>, ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>;
+template class PypDpModel<ArcEagerLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>, ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>;
 template class PypDpModel<EisnerParseModel<ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>, ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>;
 
 template class PypDpModel<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
 template class PypDpModel<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
 template class PypDpModel<ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>, ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>;
+template class PypDpModel<ArcEagerLabelledParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>, ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>;
 template class PypDpModel<EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>, ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>;
 
 template class PypDpModel<ArcStandardParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>;
 template class PypDpModel<ArcStandardLabelledParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>;
 template class PypDpModel<ArcEagerParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>, ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>;
+template class PypDpModel<ArcEagerLabelledParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>, ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>;
 template class PypDpModel<EisnerParseModel<ParsedPypWeights<tagLMOrderE, 1>>, ParsedPypWeights<tagLMOrderE, 1>>;
 
 } //namespace oxlm

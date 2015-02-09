@@ -581,6 +581,39 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
+  Words word_children_ngram_context() const {
+    Words ctx(9, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+
+      ctx[0] = word_at(stack_.at(stack_.size()-1));
+      if (l1 >= 0)
+        ctx[1] = word_at(l1); 
+      if (r1 >= 0)
+        ctx[2] = word_at(r1);
+    }
+    if (stack_.size() >= 2) {
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+
+      ctx[3] = word_at(stack_.at(stack_.size()-2));
+      if (l2 >= 0)
+        ctx[4] = word_at(l2);
+      if (r2 >= 0)
+        ctx[5] = word_at(r2); //
+    }
+
+    if (buffer_next() >= 1)
+      ctx[6] = word_at(buffer_next()-1);
+    if (buffer_next() >= 2)
+      ctx[7] = word_at(buffer_next()-2);
+    if (buffer_next() >= 3)
+      ctx[8] = word_at(buffer_next()-3);
+    
+    return ctx;
+  }
+
   Words word_children_context() const {
     Words ctx(6, 0);
     if (stack_.size() >= 1) { 
@@ -788,6 +821,72 @@ class TransitionParser: public Parser {
     if (stack_.size() >= 4) {
       ctx[1] = tag_at(stack_.at(stack_.size()-4));
     } 
+    return ctx;
+  }
+
+  Words tag_children_rel_indices() const {
+    Words ctx(7, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      
+      ctx[6] = stack_.at(stack_.size()-1);
+      if (l1 >= 0)
+        ctx[2] = l1; //
+      if (r1 >= 0)
+        ctx[4] = r1;
+    }
+    if (stack_.size() >= 2) {
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+
+      ctx[5] = stack_.at(stack_.size()-2);
+      if (l2 >= 0)
+        ctx[1] = l2;
+      if (r2 >= 0)
+        ctx[3] = r2; //
+    }
+    if (stack_.size() >= 3) {
+      ctx[0] = stack_.at(stack_.size()-3);
+    }
+    //if (stack_.size() >= 4) {
+    //  ctx[0] = tag_at(stack_.at(stack_.size()-4));
+    //} 
+    for (unsigned i = 0; i < ctx.size(); ++i) {
+      ctx[i] = std::min(0, buffer_next() - ctx[i]);
+    }
+    
+    return ctx;
+  }
+
+  Words tag_children_indices() const {
+    Words ctx(7, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      
+      ctx[6] = stack_.at(stack_.size()-1);
+      if (l1 >= 0)
+        ctx[2] = l1; //
+      if (r1 >= 0)
+        ctx[4] = r1;
+    }
+    if (stack_.size() >= 2) {
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+
+      ctx[5] = stack_.at(stack_.size()-2);
+      if (l2 >= 0)
+        ctx[1] = l2;
+      if (r2 >= 0)
+        ctx[3] = r2; //
+    }
+    if (stack_.size() >= 3) {
+      ctx[0] = stack_.at(stack_.size()-3);
+    }
+    //if (stack_.size() >= 4) {
+    //  ctx[0] = tag_at(stack_.at(stack_.size()-4));
+    //} 
     return ctx;
   }
 
@@ -1265,7 +1364,7 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
-  Words word_next_children_context() const {
+  Words word_next_children_more_context() const {
     Words ctx(7, 0);
     
     //word context 2, pos context 2 + next token
@@ -1301,6 +1400,53 @@ class TransitionParser: public Parser {
 
     return ctx;
   }
+
+  Words word_next_children_context() const {
+    Words ctx(7, 0);
+    
+    //word context 2, pos context 2 + next token
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex r2 = second_rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+      
+      ctx[0] = word_at(stack_.at(stack_.size()-1));
+      if (l1 >= 0) {
+        ctx[1] = word_at(l1);
+      }
+      if (r1 >= 0) {
+        ctx[2] = word_at(r1);
+      }
+      if (r2 >= 0) {
+        ctx[3] = word_at(r2);
+      }
+    }
+    if (stack_.size() >= 2) { 
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+
+      ctx[4] = word_at(stack_.at(stack_.size()-2));
+      //if (l2 >= 0)
+      //  ctx[2] = word_at(l2);
+      //if (r2 >= 0)
+      //  ctx[0] = word_at(r2); //
+    }
+
+    if (!buffer_empty()) {
+      WordIndex bl1 = leftmost_child_at(buffer_next_);
+      WordIndex bl2 = second_leftmost_child_at(buffer_next_);
+
+      if (bl1 >= 0)
+        ctx[5] = word_at(bl1);
+        
+      if (bl2 >= 0)
+        ctx[6] = word_at(bl2);
+    }
+
+    return ctx;
+  }
+
+
 
   Words word_tag_next_children_context() const {
     Words ctx(6, 0);

@@ -4,6 +4,7 @@
 #include "arc_standard_parser.h"
 #include "arc_standard_labelled_parser.h"
 #include "arc_eager_parser.h"
+#include "arc_eager_labelled_parser.h"
 #include "eisner_parser.h"
 
 namespace oxlm {
@@ -144,6 +145,8 @@ public:
   void countAccuracy(const ArcStandardLabelledParser& prop_parse, const ParsedSentence& gold_parse); 
 
   void countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse); 
+
+  void countAccuracy(const ArcEagerLabelledParser& prop_parse, const ParsedSentence& gold_parse); 
 
   void countLikelihood(Real parse_l, Real gold_l);
 

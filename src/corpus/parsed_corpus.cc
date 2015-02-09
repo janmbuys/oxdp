@@ -30,7 +30,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
         if (labelled_)
           labels_out->push_back(dict->convertLabel(line.substr(last, cur - last - 1), frozen));
         else
-          labels_out->push_back(dict->convertLabel("ROOT", frozen));
+          labels_out->push_back(dict->convertLabel("<null>", frozen));
        ++col_num;
       state = 0;
     } else {

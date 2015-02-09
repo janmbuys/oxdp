@@ -320,7 +320,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     for (unsigned beam_size: config->beam_sizes) {
       std::ofstream outs;
       outs.open("system.out" + std::to_string(beam_size));
-//    #pragma omp master
+      #pragma omp master
       {
         std::cerr << "parsing with beam size " << beam_size << ":\n";
         accumulator = 0;
@@ -328,7 +328,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
 
       // Each thread must wait until the perplexity is set to 0.
       // Otherwise, partial results might get overwritten.
-//      #pragma omp barrier
+      #pragma omp barrier
       
       auto beam_start = get_time();
       boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>(dict);
@@ -356,7 +356,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
           outs << "\n";
         }
 
-  //      #pragma omp critical
+        #pragma omp critical
         accumulator += objective;
         start = end;
       } 
@@ -364,7 +364,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
       // Wait for all the threads to compute the perplexity for their slice of
       // test data.
       // do we need both a barrier and a master?
-    //  #pragma omp barrier
+      #pragma omp barrier
 
 //      #pragma omp master
       {
@@ -376,7 +376,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
       }
     }
     
-//    #pragma omp master
+    #pragma omp barrier
     weights->clearCache();
   }
 }
@@ -461,11 +461,13 @@ bool LblDpModel<ParseModel, ParsedWeights, Metadata>::operator==(
 template class LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 template class LblDpModel<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 template class LblDpModel<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
+template class LblDpModel<ArcEagerLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 template class LblDpModel<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 
 template class LblDpModel<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 template class LblDpModel<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 template class LblDpModel<ArcEagerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
+template class LblDpModel<ArcEagerLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 template class LblDpModel<EisnerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 
 } // namespace oxlm

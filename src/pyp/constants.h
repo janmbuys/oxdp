@@ -5,7 +5,7 @@ namespace oxlm {
 
 #define wordLMOrderAS 7 
 #define tagLMOrderAS 8 
-#define actionLMOrderAS 10
+#define actionLMOrderAS 8
 
 #define wordLMOrderAE 6
 #define tagLMOrderAE 8

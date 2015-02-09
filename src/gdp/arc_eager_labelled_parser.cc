@@ -1,46 +1,59 @@
-#include "arc_eager_parser.h"
+#include "arc_eager_labelled_parser.h"
 
 namespace oxlm {
 
-ArcEagerParser::ArcEagerParser(): 
-  TransitionParser()
+ArcEagerLabelledParser::ArcEagerLabelledParser(int num_labels): 
+  TransitionParser(),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
-ArcEagerParser::ArcEagerParser(Words sent): 
-  TransitionParser(sent)
+ArcEagerLabelledParser::ArcEagerLabelledParser(Words sent, int num_labels): 
+  TransitionParser(sent),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
-ArcEagerParser::ArcEagerParser(Words sent, Words tags): 
-  TransitionParser(sent, tags)
+ArcEagerLabelledParser::ArcEagerLabelledParser(Words sent, Words tags, int num_labels): 
+  TransitionParser(sent, tags),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
-ArcEagerParser::ArcEagerParser(Words sent, Words tags, int num_particles):
-  TransitionParser(sent, tags, num_particles) 
+ArcEagerLabelledParser::ArcEagerLabelledParser(Words sent, Words tags, int num_particles, int num_labels):
+  TransitionParser(sent, tags, num_particles),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
-ArcEagerParser::ArcEagerParser(const TaggedSentence& parse):
-  TransitionParser(parse)
+ArcEagerLabelledParser::ArcEagerLabelledParser(const TaggedSentence& parse, int num_labels):
+  TransitionParser(parse),
+  num_labels_(num_labels),
+  action_labels_()
 {
 }   
 
-ArcEagerParser::ArcEagerParser(const TaggedSentence& parse, int num_particles):
-  TransitionParser(parse, num_particles) 
+ArcEagerLabelledParser::ArcEagerLabelledParser(const TaggedSentence& parse, int num_particles, int num_labels):
+  TransitionParser(parse, num_particles), 
+  num_labels_(num_labels),
+  action_labels_()
 {
 }
 
-bool ArcEagerParser::shift() {
+bool ArcEagerLabelledParser::shift() {
   WordIndex i = buffer_next();
   pop_buffer();
   push_stack(i);
   append_action(kAction::sh);
+  append_action_label(-1);
   return true;
 }
 
-bool ArcEagerParser::shift(WordId w) {
+bool ArcEagerLabelledParser::shift(WordId w) {
   //assume the tag has been generated already
   WordIndex i = size() - 1;
   push_word(w);
@@ -49,18 +62,20 @@ bool ArcEagerParser::shift(WordId w) {
     pop_buffer();
   push_stack(i);
   append_action(kAction::sh);
+  append_action_label(-1);
   return true;
 }
 
-bool ArcEagerParser::reduce() {
+bool ArcEagerLabelledParser::reduce() {
   if (!reduce_valid())
     return false;
   pop_stack();
   append_action(kAction::re);
+  append_action_label(-1);
   return true;
 } 
 
-bool ArcEagerParser::leftArc() {
+bool ArcEagerLabelledParser::leftArc(WordId l) {
   if (!left_arc_valid())
     return false;
     
@@ -68,8 +83,10 @@ bool ArcEagerParser::leftArc() {
   WordIndex i = stack_top();
   WordIndex j = buffer_next();
   set_arc(i, j);
+  set_label(i, l);
   pop_stack();
   append_action(kAction::la);
+  append_action_label(l);
   //take (first) left-most and closest left-child
   //if ((buffer_left_child_ > -1) && (buffer_left_most_child_ == -1))
   //  buffer_left_most_child_ = buffer_left_child_;
@@ -77,18 +94,20 @@ bool ArcEagerParser::leftArc() {
   return true;
 }
 
-bool ArcEagerParser::rightArc() {
+bool ArcEagerLabelledParser::rightArc(WordId l) {
   //add right arc and shift
   WordIndex i = stack_top();
   WordIndex j = buffer_next();
   set_arc(j, i);
+  set_label(j, l);
   pop_buffer();
   push_stack(j);
   append_action(kAction::ra);
+  append_action_label(l);
   return true;
 }
 
-bool ArcEagerParser::rightArc(WordId w) {
+bool ArcEagerLabelledParser::rightArc(WordId l, WordId w) {
   //add right arc and shift
   WordIndex i = stack_top();
   //assume the tag has been generated already
@@ -97,15 +116,37 @@ bool ArcEagerParser::rightArc(WordId w) {
   push_arc();
   
   set_arc(j, i);
+  set_label(j, l);
   if (!buffer_empty()) 
     pop_buffer();
   push_stack(j);
   append_action(kAction::ra);
+  append_action_label(l);
   return true;
 }
 
+//Give the label for reduce action, if at all valid 
+WordId ArcEagerLabelledParser::oracleNextLabel(const ParsedSentence& gold_parse) const {
+  WordId lab = -1;
+
+  //assume not in terminal configuration 
+  if (!stack_empty()) {
+    WordIndex i = stack_top();
+    if (!buffer_empty()) {    
+      WordIndex j = buffer_next();
+      if (gold_parse.has_arc(i, j)) {
+        lab = gold_parse.label_at(i);
+      } else if (gold_parse.has_arc(j, i)) {
+        lab = gold_parse.label_at(j);
+      } 
+    }
+  }
+    
+  return lab;
+}
+
 //predict the next action according to the oracle
-kAction ArcEagerParser::oracleNext(const ParsedSentence& gold_parse) const {
+kAction ArcEagerLabelledParser::oracleNext(const ParsedSentence& gold_parse) const {
   kAction a = kAction::sh;
 
   //maybe change so that we can assume stack_depth > 0 
@@ -148,9 +189,9 @@ kAction ArcEagerParser::oracleNext(const ParsedSentence& gold_parse) const {
   return a;
 }
 
-bool ArcEagerParser::inTerminalConfiguration() const {
+bool ArcEagerLabelledParser::inTerminalConfiguration() const {
   //last word generated is STOP
-  return (!stack_empty() && (tag_at(stack_top()) == 1)); 
+  //return (!stack_empty() && (tag_at(stack_top()) == 1)); 
     
   // && !buffer_next_has_child());
   //return (!is_stack_empty() && (stack_top() == static_cast<int>(sentence_length() - 1))); // && !buffer_next_has_child());
@@ -159,17 +200,17 @@ bool ArcEagerParser::inTerminalConfiguration() const {
   //if (is_generating()) 
   //  return ((buffer_next() >= 3) && (stack_depth() == 1)); 
   //else     
-  //  return (is_buffer_empty() && (stack_depth() == 1));
+  return (buffer_empty() && (stack_depth() == 1));
 }
 
-bool ArcEagerParser::executeAction(kAction a) {
+bool ArcEagerLabelledParser::executeAction(kAction a, WordId l) {
   switch(a) {
   case kAction::sh:
     return shift();
   case kAction::la:
-    return leftArc();
+    return leftArc(l);
   case kAction::ra:
-    return rightArc();
+    return rightArc(l);
   case kAction::re:
     return reduce();
   default: 
@@ -178,19 +219,18 @@ bool ArcEagerParser::executeAction(kAction a) {
   }
 }
 
-Words ArcEagerParser::wordContext() const {
-  return word_next_children_context();  //(order 8)
-  //return word_tag_next_children_context();  //(order 6)
+Words ArcEagerLabelledParser::wordContext() const {
   //return word_children_distance_context(); //lbl model (order 8)
+  return word_tag_next_children_context();  //(order 6)
   //return word_tag_next_context();
 }
 
-Words ArcEagerParser::tagContext() const {
+Words ArcEagerLabelledParser::tagContext() const {
   return tag_next_children_some_context(); //smaller context (order 6)
 }
  
 //problem is we can't append the action before it has been executed
-Words ArcEagerParser::tagContext(kAction a) const {
+Words ArcEagerLabelledParser::tagContext(kAction a) const {
   //Words ctx = tag_next_children_some_context(); //smaller context (order 6)
   Words ctx = tag_next_children_context(); //full context (order 8)
   ctx.push_back(ctx.back());
@@ -201,18 +241,20 @@ Words ArcEagerParser::tagContext(kAction a) const {
   return ctx;
 }
 
-Words ArcEagerParser::actionContext() const {
-  return word_next_children_context();  //(order 8)
-  //return tag_next_children_word_context(); //lexicalized, full context (order 8)
+Words ArcEagerLabelledParser::actionContext() const {
   //return word_children_distance_context(); //lbl model (order 8)
   //return tag_next_children_distance_some_context(); //smaller context (order 5)
   //return tag_next_children_distance_context(); //full (order 8)
+  return tag_next_children_word_context(); //lexicalized, full context (order 8)
 }
 
-void ArcEagerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
-  ArcEagerParser parser(static_cast<TaggedSentence>(*this)); 
+void ArcEagerLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
+  ArcEagerLabelledParser parser(static_cast<TaggedSentence>(*this), num_labels_); 
 
-  for (kAction& a: actions()) {
+  for (unsigned i = 0; i < actions().size(); ++i) {
+    kAction a = actions().at(i);
+    WordId lab = action_label_at(i);
+
     if (a == kAction::sh || a == kAction::ra) {
       //tag prediction
       examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext(a)));  
@@ -222,10 +264,10 @@ void ArcEagerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& exam
       examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
     }  
 
-    //action prediction
-    examples->add_action_example(DataPoint(static_cast<WordId>(a), parser.actionContext()));
-    //std::cout << static_cast<WordId>(a) << std::endl;
-    parser.executeAction(a);
+    //labelled action prediction 
+    WordId lab_act = convert_action(a, lab);
+    examples->add_action_example(DataPoint(lab_act, parser.actionContext()));
+    parser.executeAction(a, lab);
   }
 } 
 
