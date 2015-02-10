@@ -20,6 +20,6 @@ add_libraries(lbl
   word_to_class_index.cc
 )
 
-target_link_libs(lbl corpus murmurhash rt ${Boost_LIBRARIES})
+target_link_libs(lbl corpus rt ${Boost_LIBRARIES})
 
 #add_subdirectory(tests)

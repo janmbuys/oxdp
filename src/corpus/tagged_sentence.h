@@ -7,8 +7,7 @@
 namespace oxlm {
 
 class TaggedSentence: public Sentence {
-  public:
-
+ public:
   TaggedSentence();
   
   TaggedSentence(Words tags);
@@ -25,16 +24,10 @@ class TaggedSentence: public Sentence {
    tags_.push_back(t);
   }
 
-  //overriding base class method
   size_t size() const override {
     return tags_.size();
   }
-
-  /*
-   Words tags() const {
-    return tags_;
-  } */
-  
+ 
   size_t tags_length() const {
     return tags_.size();
   }
@@ -43,7 +36,7 @@ class TaggedSentence: public Sentence {
     return tags_.at(i);
   }
 
-  private:
+ private:
   Words tags_;
 
 };

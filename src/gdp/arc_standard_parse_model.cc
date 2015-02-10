@@ -809,7 +809,7 @@ Parser ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSenten
   acc_counts->countAccuracy(parse, sent);
   ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
   
-  acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
+  acc_counts->countGoldLikelihood(parse.weight(), gold_parse.weight());
   return parse;
 }
 
@@ -825,7 +825,7 @@ Parser ArcStandardParseModel<ParsedWeights>::evaluateSentence(const ParsedSenten
   acc_counts->countAccuracy(parse, sent);
   ArcStandardParser gold_parse = staticGoldParseSentence(sent, weights);
   
-  acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
+  acc_counts->countGoldLikelihood(parse.weight(), gold_parse.weight());
   return parse;
 }
 

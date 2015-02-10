@@ -19,7 +19,6 @@ class TransitionParseModelInterface {
         const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
         bool resample) = 0;
 
-  //sample a derivation for the gold parse, given the current model
   virtual TParser particleGoldParseSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, 
           unsigned num_particles, bool resample) = 0;

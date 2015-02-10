@@ -20,9 +20,6 @@ using namespace chrono;
 
 namespace oxlm {
 
-//typedef int            WordId;
-//typedef vector<WordId> Corpus;
-
 typedef vector<vector<int>>                        GlobalFeatureIndexes;
 typedef boost::shared_ptr<GlobalFeatureIndexes>    GlobalFeatureIndexesPtr;
 typedef unordered_map<int, vector<int>>            MinibatchFeatureIndexes;
@@ -34,10 +31,6 @@ typedef Eigen::Map<VectorReal>                              VectorRealMap;
 typedef Eigen::Array<Real, Eigen::Dynamic, 1>               ArrayReal;
 typedef Eigen::Array<Real, Eigen::Dynamic, Eigen::Dynamic>  Array2DReal;
 typedef Eigen::SparseVector<Real>                           SparseVectorReal;
-
-//typedef high_resolution_clock Clock;
-//typedef Clock::time_point     Time;
-
 
 // Helper operations on vectors.
 
@@ -81,7 +74,6 @@ template<class Matrix>
 inline Matrix tanh(const Matrix& v) {
   Matrix w = (-2.0*v).array().exp();
   return (1.0 - w.array())*(1.0 + w.array()).inverse();
-  //return (1.0 - (-2.0*v).array().exp())*(1.0 + (-2.0*v).array().exp()).inverse();
 }
 
 inline Array2DReal tanhDerivative(const MatrixReal& v) {
@@ -122,19 +114,6 @@ inline Array2DReal activationDerivative(
       return v;
   }
 }
-
-// Helper functions for time measurement.
-
-//Time GetTime();
-
-//double GetDuration(const Time& start_time, const Time& stop_time);
-
-/*
-inline size_t MurmurHash(const vector<int>& data, int seed = 0) {
-  size_t result[2] = {0, 0};
-  MurmurHash3_x64_128(data.data(), data.size() * sizeof(int), seed, result);
-  return result[0];
-} */
 
 class NotImplementedException : public exception {
   virtual const char* what() const throw() {

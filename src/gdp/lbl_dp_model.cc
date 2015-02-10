@@ -29,13 +29,8 @@ LblDpModel<ParseModel, ParsedWeights, Metadata>::LblDpModel(
   dict = boost::make_shared<Dict>(true, config->parser_type==ParserType::arceager);
   parse_model = boost::make_shared<ParseModel>(config);
   
-  if (config->parser_type == ParserType::arcstandard) {
-    config->num_actions = 3;
-  } else if (config->parser_type == ParserType::arceager) {
-    config->num_actions = 4;
-  } else {
-    config->num_actions = 1;
-    dict->convert("<stop>", false);
+  if (config->parser_type == ParserType::eisner) {
+    dict->convert("<stop>", false); //add terminating symbol
   }
 
   metadata = boost::make_shared<Metadata>(config, dict);
@@ -63,22 +58,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   // Initialize the dictionary now, if it hasn't been initialized when the
   // vocabulary was partitioned in classes. - allways initialize, else miss tags etc
   //bool immutable_dict = config->classes > 0 || config->class_file.size();
-  boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>(config->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>(config);
   training_corpus->readFile(config->training_file, dict, false);
-  
-  //for the current setup
-  if (config->lexicalised) {
-    config->vocab_size = dict->size();
-    config->num_tags = 1;
-  } else {
-    config->vocab_size = dict->tag_size();
-    config->num_tags = dict->tag_size();
-  }
-
-  config->num_labels = dict->label_size();
-  if (config->labelled_parser) {
-    config->num_actions += 2*(dict->label_size()-1); //add labelled actions
-  }
   std::cerr << "Done reading training corpus..." << endl;
 
   std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
@@ -87,7 +68,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
   boost::shared_ptr<ParsedCorpus> test_corpus; 
   if (config->test_file.size()) {
-    test_corpus = boost::make_shared<ParsedCorpus>(config->labelled_parser);
+    test_corpus = boost::make_shared<ParsedCorpus>(config);
     test_corpus->readFile(config->test_file, dict, true);
     std::cerr << "Done reading test corpus..." << endl;
   }
@@ -297,7 +278,7 @@ Real LblDpModel<ParseModel, ParsedWeights, Metadata>::regularize(
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate() const {
  //read test data 
-  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config);
   test_corpus->readFile(config->test_file, dict, true);
   std::cerr << "Done reading test corpus..." << std::endl;
   

@@ -18,7 +18,6 @@ ParsedFactoredWeights::ParsedFactoredWeights(
     : FactoredWeights(config, metadata, init), metadata(metadata),
       data(NULL), K(0, 0, 0), L(0, 0), PW(0, 0) { 
   allocate();
-  //std::cout << config->num_actions << " actions" << std::endl;
 
   if (init) {
    // Initialize model weights randomly.
@@ -47,13 +46,12 @@ size_t ParsedFactoredWeights::numParameters() const {
 
 void ParsedFactoredWeights::allocate() {
   //set vector sizes
-  int num_actions = config->num_actions;
-  int word_width = config->word_representation_size;
+  int num_actions = config->numActions();
+  int word_width = config->representation_size;
   int K_size = num_actions * word_width;
   int L_size = num_actions;
 
   size = K_size + L_size;
-  //std::cout << "parse factored weights allocating size " << size << std::endl;
   data = new Real[size]; 
 
   for (int i = 0; i < config->threads; ++i) {
@@ -65,9 +63,8 @@ void ParsedFactoredWeights::allocate() {
 
 void ParsedFactoredWeights::setModelParameters() {
   //new the model parameters
-  
-  int num_actions = config->num_actions;
-  int word_width = config->word_representation_size;
+  int num_actions = config->numActions();
+  int word_width = config->representation_size;
   int K_size = num_actions * word_width;
   int L_size = num_actions;
 
@@ -78,8 +75,6 @@ void ParsedFactoredWeights::setModelParameters() {
 }
 
 Real ParsedFactoredWeights::predictWord(int word, Words context) const {
-  //std::cout << "context: " << std::endl;
-  //std::cout << context.size() << std::endl;
   return FactoredWeights::predict(word, context);
 }
 
@@ -112,7 +107,6 @@ Real ParsedFactoredWeights::predictAction(WordId action, Words context) const {
   //}
 
   return -prob;
-  //return -std::log(1.0/numActions());
 }
 
 Reals ParsedFactoredWeights::predictAction(Words context) const {
@@ -123,11 +117,10 @@ Reals ParsedFactoredWeights::predictAction(Words context) const {
   VectorReal action_probs = logSoftMax(
       K.transpose() * prediction_vector + L, normalizer);
   //actionNormalizerCache.set(context, normalizer);
-  for (int i = 0; i < numActions(); ++i) //this might slow things down
-    probs[i] = -action_probs(i);  //check the sign
+  for (int i = 0; i < numActions(); ++i) 
+    probs[i] = -action_probs(i);  
   
   return probs;
-  //return Reals(numActions(), -std::log(1.0/numActions()));
 }
 
 int ParsedFactoredWeights::numWords() const {
@@ -139,7 +132,7 @@ int ParsedFactoredWeights::numTags() const {
 }
 
 int ParsedFactoredWeights::numActions() const {
-  return config->num_actions;
+  return config->numActions();
 }
  
 void ParsedFactoredWeights::getGradient(
@@ -238,9 +231,6 @@ Real ParsedFactoredWeights::getObjective(
     MatrixReal& class_probs,
     vector<VectorReal>& word_probs,
     MatrixReal& action_probs) const {
-  //it is somewhat double work to compute these twice, but else need a more complicated example 
-  //representation
-    //std::cout << "preparing to get compute objective" << std::endl;
   getContextVectors(examples->word_examples(), word_contexts, word_context_vectors);
   getContextVectors(examples->action_examples(), action_contexts, action_context_vectors);
   word_prediction_vectors = getPredictionVectors(examples->word_example_size(), word_context_vectors); 
@@ -250,7 +240,6 @@ Real ParsedFactoredWeights::getObjective(
       examples, word_contexts, action_contexts, word_prediction_vectors, action_prediction_vectors,
       class_probs, word_probs, action_probs);
 
-  //std::cout << "computing objective" << std::endl;
   Real objective = 0;
   for (size_t i = 0; i < examples->word_example_size(); ++i) {
     int word_id = examples->word_at(i);
@@ -308,15 +297,11 @@ MatrixReal ParsedFactoredWeights::getActionWeightedRepresentations(
     weighted_representations.col(i) -= K.col(action_id);
   }
 
-  /* if (config->sigmoid) {
-    weighted_representations.array() *= sigmoidDerivative(action_prediction_vectors);
-  } */
   weighted_representations.array() *= activationDerivative(config->activation, action_prediction_vectors);
 
   return weighted_representations;
 }
 
-//alternatively call base method first
 void ParsedFactoredWeights::getFullGradient(
     const boost::shared_ptr<ParseDataSet>& examples,
     const vector<vector<int>>& word_contexts,

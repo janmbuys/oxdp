@@ -33,13 +33,11 @@ AccuracyCounts::AccuracyCounts(boost::shared_ptr<Dict> dict):
   }
 
 void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSentence& gold_parse) {
-  //TODO labelled accuracy
-    
   //sentence level
   inc_num_sentences();
-  if (prop_parse.has_equal_arcs(gold_parse)) {
+  if (prop_parse.equal_arcs(gold_parse)) {
     inc_complete_sentences();
-    if (prop_parse.has_equal_labels(gold_parse))
+    if (prop_parse.equal_labels(gold_parse))
       inc_complete_sentences_lab();
   }
 
@@ -48,11 +46,8 @@ void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSe
   bool punc_complete = true;
   bool lab_punc_complete = true;
 
-  //maybe change this again later ...
   add_likelihood(prop_parse.weight());
-  /* add_gold_likelihood(gold_parse.weight());
-  if (gold_parse.weight() < prop_parse.weight())
-    inc_gold_more_likely_count(); */
+  //computate gold likelihood seperately
 
   //arc level
   for (WordIndex j = 1; j < gold_parse.size(); ++j) {
@@ -101,7 +96,7 @@ void AccuracyCounts::transitionCountAccuracy(const TransitionParser& prop_parse,
   //parent method
   parseCountAccuracy(prop_parse, gold_parse); 
   
-  //general for transition parser 
+  //for transition parsers
   add_importance_likelihood(prop_parse.importance_weight());
   add_beam_likelihood(prop_parse.beam_weight());
   add_num_actions(prop_parse.num_actions());
@@ -120,7 +115,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse,
   transitionCountAccuracy(prop_parse, gold_parse); 
   
   //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcStandardParser simul(static_cast<TaggedSentence>(prop_parse)); //need sentence and tags
+  ArcStandardParser simul(static_cast<TaggedSentence>(prop_parse)); 
 
   for (auto& a: prop_parse.actions()) {
     kAction next = simul.oracleNext(gold_parse);
@@ -132,7 +127,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse,
         inc_shift_count();
     } else if (next==kAction::la || next==kAction::ra) {
       inc_reduce_gold();
-      if (a==kAction::la || a==kAction::ra) //counts either direction
+      if (a==kAction::la || a==kAction::ra) 
         inc_reduce_count();
     } 
   
@@ -149,7 +144,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardLabelledParser& prop_parse,
   transitionCountAccuracy(prop_parse, gold_parse); 
   
   //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcStandardLabelledParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.num_labels()); //need sentence and tags
+  ArcStandardLabelledParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.num_labels()); 
 
   for (unsigned i = 0; i < prop_parse.actions().size(); ++i) {
     kAction a = prop_parse.actions().at(i);
@@ -158,7 +153,6 @@ void AccuracyCounts::countAccuracy(const ArcStandardLabelledParser& prop_parse,
     kAction next = simul.oracleNext(gold_parse);
     WordId nextLabel = simul.oracleNextLabel(gold_parse);
 
-    //TODO labelled accuracy
     //count when shifted/reduced when it should have shifted/reduced
     if (next==kAction::sh) {
       inc_shift_gold();
@@ -166,44 +160,12 @@ void AccuracyCounts::countAccuracy(const ArcStandardLabelledParser& prop_parse,
         inc_shift_count();
     } else if (next==kAction::la || next==kAction::ra) {
       inc_reduce_gold();
-      if (a==kAction::la || a==kAction::ra) //counts either direction
+      if (a==kAction::la || a==kAction::ra) 
         inc_reduce_count();
     } 
   
     if (simul.buffer_empty() && next==kAction::re)
       inc_final_reduce_error_count();
-    
-    simul.executeAction(a, alab);
-  }
-}
-
-
-void AccuracyCounts::countAccuracy(const ArcEagerLabelledParser& prop_parse, 
-                                   const ParsedSentence& gold_parse) {
-  //parent method
-  transitionCountAccuracy(prop_parse, gold_parse); 
-  
-  //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcEagerLabelledParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.num_labels()); //need sentence and tags
-
-  for (unsigned i = 0; i < prop_parse.actions().size(); ++i) {
-    kAction a = prop_parse.actions().at(i);
-    WordId alab = prop_parse.action_label_at(i);
-
-    kAction next = simul.oracleNext(gold_parse);
-    WordId nextLabel = simul.oracleNextLabel(gold_parse);
-
-    //TODO labelled accuracy
-    //count when shifted/reduced when it should have shifted/reduced
-    if (next==kAction::sh || next==kAction::ra) {
-      inc_shift_gold();
-      if (a==kAction::sh || a==kAction::ra)
-        inc_shift_count();
-    } else if (next==kAction::la || next==kAction::re) {
-      inc_reduce_gold();
-      if (a==kAction::la || a==kAction::re) 
-        inc_reduce_count();
-    } 
     
     simul.executeAction(a, alab);
   }
@@ -235,7 +197,37 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const Parse
   }
 }  
 
-void AccuracyCounts::countLikelihood(Real parse_l, Real gold_l) {
+void AccuracyCounts::countAccuracy(const ArcEagerLabelledParser& prop_parse, 
+                                   const ParsedSentence& gold_parse) {
+  //parent method
+  transitionCountAccuracy(prop_parse, gold_parse); 
+  
+  //resimulate the computation of the proposed action sequence to compute accuracy  
+  ArcEagerLabelledParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.num_labels()); 
+
+  for (unsigned i = 0; i < prop_parse.actions().size(); ++i) {
+    kAction a = prop_parse.actions().at(i);
+    WordId alab = prop_parse.action_label_at(i);
+
+    kAction next = simul.oracleNext(gold_parse);
+    WordId nextLabel = simul.oracleNextLabel(gold_parse);
+
+    //count when shifted/reduced when it should have shifted/reduced
+    if (next==kAction::sh || next==kAction::ra) {
+      inc_shift_gold();
+      if (a==kAction::sh || a==kAction::ra)
+        inc_shift_count();
+    } else if (next==kAction::la || next==kAction::re) {
+      inc_reduce_gold();
+      if (a==kAction::la || a==kAction::re) 
+        inc_reduce_count();
+    } 
+    
+    simul.executeAction(a, alab);
+  }
+}
+
+void AccuracyCounts::countGoldLikelihood(Real parse_l, Real gold_l) {
   add_gold_likelihood(gold_l);
   if (gold_l < parse_l)
     inc_gold_more_likely_count();
@@ -268,8 +260,6 @@ void AccuracyCounts::printAccuracy() const {
   std::cerr << "Unlabelled Accuracy With Punct: " << directed_accuracy() << std::endl;
   std::cerr << "Labelled Completely correct With Punct: " << complete_accuracy_lab() << std::endl;
   std::cerr << "Completely correct With Punct: " << complete_accuracy() << std::endl;
-  //std::cerr << "Undirected Accuracy No Punct: " << undirected_accuracy_nopunc() << std::endl;
-  //std::cerr << "Undirected Accuracy: " << undirected_accuracy() << std::endl;
   std::cerr << "Final reduce error rate: " << final_reduce_error_rate() << std::endl;
   std::cerr << "ArcDirection Precision With Punct:: " << arc_dir_precision() << std::endl;
   std::cerr << "ArcDirection Precision No Punct: " << arc_dir_precision_nopunc() << std::endl;

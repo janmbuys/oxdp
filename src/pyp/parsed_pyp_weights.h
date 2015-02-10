@@ -9,7 +9,7 @@
 
 namespace oxlm {
 
-//NB this is the unlexicalized model, with only tags
+//Note that this is the unlexicalized model, predicting tags not words
 template<unsigned tOrder, unsigned aOrder>
 class ParsedPypWeights: public PypWeights<tOrder> {
 

@@ -3,11 +3,10 @@
 
 #include "corpus/parse_data_set.h"
 #include "gdp/transition_parser.h"
-#include "gdp/transition_parser_interface.h"
 
 namespace oxlm {
 
-class ArcEagerParser : public TransitionParser, public TransitionParserInterface {
+class ArcEagerParser : public TransitionParser {
   public:
 
   ArcEagerParser();
@@ -22,33 +21,33 @@ class ArcEagerParser : public TransitionParser, public TransitionParserInterface
 
   ArcEagerParser(const TaggedSentence& parse, int num_particles);
 
-  bool shift() override;
+  bool shift();
   
   bool shift(WordId w);
 
-  bool leftArc() override;
+  bool leftArc();
 
-  bool rightArc() override;
+  bool rightArc();
   
   bool rightArc(WordId w);
   
   bool reduce();
 
-  kAction oracleNext(const ParsedSentence& gold_parse) const override;
+  kAction oracleNext(const ParsedSentence& gold_parse) const;
 
-  bool inTerminalConfiguration() const override;
+  bool inTerminalConfiguration() const;
  
-  bool executeAction(kAction a) override;
+  bool executeAction(kAction a);
  
-  Words wordContext() const override;
+  Words wordContext() const;
  
-  Words tagContext() const override;
+  Words tagContext() const;
  
   Words tagContext(kAction a) const;
 
-  Words actionContext() const override;
+  Words actionContext() const;
  
-  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const override;
+  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
 
   bool left_arc_valid() const {
     //stack_size 1 -> stack top is root

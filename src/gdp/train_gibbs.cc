@@ -56,6 +56,8 @@ int main(int argc, char** argv) {
         "Predict arc labels.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
+    ("root-first", value<bool>()->default_value(true),
+        "Add root to the beginning (else end) of the sentence.")
     ("char-lexicalised", value<bool>()->default_value(false),
         "Predict words with character-based LM.")
     ("semi-supervised", value<bool>()->default_value(false),
@@ -132,6 +134,7 @@ int main(int argc, char** argv) {
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
   config->resample = vm["particle-resample"].as<bool>();
+  config->root_first = vm["root-first"].as<bool>();
   config->num_particles = vm["num-particles"].as<int>();
 
   //otherwise override manually

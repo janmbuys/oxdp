@@ -48,7 +48,7 @@ size_t FactoredWeights::numParameters() const {
 
 void FactoredWeights::allocate() {
   int num_classes = index->getNumClasses();
-  int word_width = config->word_representation_size;
+  int word_width = config->representation_size;
 
   int S_size = num_classes * word_width;
   int T_size = num_classes;
@@ -65,7 +65,7 @@ void FactoredWeights::allocate() {
 
 void FactoredWeights::setModelParameters() {
   int num_classes = index->getNumClasses();
-  int word_width = config->word_representation_size;
+  int word_width = config->representation_size;
 
   int S_size = num_classes * word_width;
   int T_size = num_classes;
@@ -190,9 +190,6 @@ MatrixReal FactoredWeights::getWeightedRepresentations(
     weighted_representations.col(i) -= S.col(class_id) + R.col(word_id);
   }
 
-  /*if (config->sigmoid) {
-    weighted_representations.array() *= sigmoidDerivative(prediction_vectors);
-  } */
   weighted_representations.array() *= activationDerivative(config->activation, prediction_vectors);
 
   return weighted_representations;
@@ -368,9 +365,6 @@ void FactoredWeights::estimateGradient(
       examples, prediction_vectors, gradient,
       weighted_representations, objective, words);
 
-  /* if (config->sigmoid) {
-    weighted_representations.array() *= sigmoidDerivative(prediction_vectors);
-  } */
   weighted_representations.array() *= activationDerivative(config->activation, prediction_vectors);
 
   getContextGradient(
@@ -454,7 +448,6 @@ void FactoredWeights::clear(const MinibatchWords& words, bool parallel_update) {
 Real FactoredWeights::predict(int word, Words context) const {
   int class_id = index->getClass(word);
   int word_class_id = index->getWordIndexInClass(word);
-  //std::cout << "getting predict vector" << std::endl;
   VectorReal prediction_vector = getPredictionVector(context);
 
   Real class_prob;
@@ -488,8 +481,7 @@ Real FactoredWeights::predict(int word, Words context) const {
 
 
 Reals FactoredWeights::predict(Words context) const {
-  //this is inefficient, but I may not need this in practice
-
+  //this is inefficient, but not used in practice
   Reals probs(vocabSize(), 0);
   for (int i = 0; i < vocabSize(); ++i)
     probs[i] = predict(i, context);
@@ -513,7 +505,6 @@ bool FactoredWeights::operator==(const FactoredWeights& other) const {
 FactoredWeights::~FactoredWeights() {
   delete data;
 }
-
 
 
 } // namespace oxlm

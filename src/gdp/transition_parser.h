@@ -2,8 +2,6 @@
 #define _GDP_TR_PARSER_H_
 
 #include<string>
-//  #include<functional>
-//  #include<cstdlib>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -16,27 +14,21 @@
 
 namespace oxlm {
 
-//don't think I'm using this anywhere
-/* inline kAction convert_to_action(WordId a) {
-  std::vector<kAction> actList = {kAction::sh, kAction::la, kAction::ra, kAction::re, kAction::la2, kAction::ra2};
-  return actList[a];
-} */
-
 class TransitionParser: public Parser {
   public:
 
-  //use specifically when generating from model
-  TransitionParser();
+  //constructor for generating from model
+  TransitionParser(const boost::shared_ptr<ModelConfig>& config);
   
-  TransitionParser(Words tags);
+  TransitionParser(Words tags, const boost::shared_ptr<ModelConfig>& config);
 
-  TransitionParser(Words sent, Words tags); 
+  TransitionParser(Words sent, Words tags, const boost::shared_ptr<ModelConfig>& config); 
 
-  TransitionParser(Words sent, Words tags, int num_particles);
+  TransitionParser(Words sent, Words tags, int num_particles, const boost::shared_ptr<ModelConfig>& config);
 
-  TransitionParser(const TaggedSentence& parse);  
+  TransitionParser(const TaggedSentence& parse, const boost::shared_ptr<ModelConfig>& config);  
   
-  TransitionParser(const TaggedSentence& parse, int num_particles);  
+  TransitionParser(const TaggedSentence& parse, int num_particles, const boost::shared_ptr<ModelConfig>& config);  
 
   void pop_buffer() {
     ++buffer_next_;
@@ -57,8 +49,6 @@ class TransitionParser: public Parser {
   void reset_importance_weight() {
     importance_weight_ = 0;
   }
-
-  //TODO update usage of weight methods
   
   void set_importance_weight(Real w) {
     importance_weight_ = w;
@@ -67,8 +57,6 @@ class TransitionParser: public Parser {
   void add_importance_weight(Real w) {
     importance_weight_ += w;
   }
-
-  //void set_log_particle_weight(Real w) -> set_weight
 
   void set_particle_weight(Real w) {
     set_weight(w);
@@ -79,14 +67,14 @@ class TransitionParser: public Parser {
   }
 
   void add_log_particle_weight(Real w) {
-    if (weight()==0)
+    if (weight() == 0)
       set_weight(w);
     else
       set_weight(neg_log_sum_exp(weight(), w)); //add in log space
   }
 
   void add_beam_weight(Real w) {
-    if (beam_weight_==0)
+    if (beam_weight_ == 0)
       beam_weight_ = w;
     else
       beam_weight_ = neg_log_sum_exp(beam_weight_, w); //add in log space
@@ -166,6 +154,7 @@ class TransitionParser: public Parser {
     return beam_weight_;
   }
 
+  //number of particles associated with (partial) parse
   int num_particles() const {
     return num_particles_;
   }
@@ -1668,13 +1657,14 @@ class TransitionParser: public Parser {
       return (p1->weighted_importance_weight() < p2->weighted_importance_weight());
   } 
 
-  private:
+ private:
   Indices stack_;
   WordIndex buffer_next_;
   ActList actions_;
   Real importance_weight_; 
   Real beam_weight_; //cummulative beam log particle weight
   int num_particles_;
+  boost::shared_ptr<ModelConfig> config_;
 };
 
 }

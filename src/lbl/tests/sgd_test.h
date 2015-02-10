@@ -17,7 +17,7 @@ class SGDTest : public ::testing::Test {
     config->minibatch_size = 380; //10000;
     config->ngram_order = 5;
     config->l2_lbl = 2;
-    config->word_representation_size = 100;
+    config->representation_size = 100;
     config->threads = 1;
     config->step_size = 0.06;
     config->activation = Activation::sigmoid;

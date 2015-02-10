@@ -12,8 +12,6 @@ class Sentence {
 
   Sentence(Words sent);
 
-  //do we need a virtual destructor?
-
   void push_word(WordId w) {
    sentence_.push_back(w);
   }
@@ -27,11 +25,6 @@ class Sentence {
   virtual size_t size() const {
     return sentence_.size();
   }
-
-  //hopefully not needed
-  /*Words sentence() const {
-    return sentence_;
-  } */
 
   WordId word_at(WordIndex i) const {
     return sentence_.at(i);

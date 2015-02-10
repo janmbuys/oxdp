@@ -37,7 +37,6 @@ Weights::Weights(
   cout << "  Output vocab size = " << config->vocab_size << endl;
   cout << "  Total parameters = " << numParameters() << endl;
   cout << "===============================" << endl;
-  //std::cout << "W: " << W.norm() << std::endl;
   } else {
     W.setZero();
   }
@@ -53,7 +52,7 @@ Weights::Weights(const Weights& other)
 void Weights::allocate() {
   int num_context_words = config->vocab_size;
   int num_output_words = config->vocab_size;
-  int word_width = config->word_representation_size;
+  int word_width = config->representation_size;
   int context_width = config->ngram_order - 1;
 
   int Q_size = word_width * num_context_words;
@@ -81,7 +80,7 @@ void Weights::allocate() {
 void Weights::setModelParameters() {
   int num_context_words = config->vocab_size;
   int num_output_words = config->vocab_size;
-  int word_width = config->word_representation_size;
+  int word_width = config->representation_size;
   int context_width = config->ngram_order - 1;
 
   int Q_size = word_width * num_context_words;
@@ -116,7 +115,6 @@ void Weights::getGradient(
     const boost::shared_ptr<Weights>& gradient,
     Real& objective,
     MinibatchWords& words) const {
-  //std::cout << "g W: " << W.norm() << std::endl;
   vector<vector<int>> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
@@ -139,19 +137,16 @@ void Weights::getContextVectors(
     vector<vector<int>>& contexts,
     vector<MatrixReal>& context_vectors) const {
   int context_width = config->ngram_order - 1;
-  int word_width = config->word_representation_size;
+  int word_width = config->representation_size;
 
   contexts.resize(examples->size());
   context_vectors.resize(
       context_width, MatrixReal::Zero(word_width, examples->size()));
-  //std::cerr << "resized" << std::endl; 
   for (size_t i = 0; i < examples->size(); ++i) {
     contexts[i] = examples->contextAt(i);
     for (int j = 0; j < context_width; ++j) {
-      //std::cerr << contexts[i][j] << " ";
       context_vectors[j].col(i) = Q.col(contexts[i][j]);
     }
-    //std::cerr << std::endl;
   }
 }
 
@@ -169,19 +164,12 @@ MatrixReal Weights::getPredictionVectors(
     size_t prediction_size,
     const vector<MatrixReal>& context_vectors) const {
   int context_width = config->ngram_order - 1;
-  int word_width = config->word_representation_size;
+  int word_width = config->representation_size;
   MatrixReal prediction_vectors = MatrixReal::Zero(word_width, prediction_size);
 
   for (int i = 0; i < context_width; ++i) {
     prediction_vectors += getContextProduct(i, context_vectors[i]);
   }
-
-  //if (config->sigmoid) {
-  //  for (size_t i = 0; i < prediction_size; ++i) {
-  //    prediction_vectors.col(i) = sigmoid<MatrixReal>(prediction_vectors.col(i));
-  //  }
-  //} 
-  //return prediction_vectors;
 
   return applyActivation<MatrixReal>(config->activation, prediction_vectors);
 }
@@ -221,11 +209,7 @@ MatrixReal Weights::getWeightedRepresentations(
     weighted_representations.col(i) -= R.col(examples->wordAt(i));
   }
 
-  /* if (config->sigmoid) {
-    weighted_representations.array() *= sigmoidDerivative(prediction_vectors);
-  } */
   weighted_representations.array() *= activationDerivative(config->activation, prediction_vectors);
-
   return weighted_representations;
 }
 
@@ -260,7 +244,7 @@ void Weights::getContextGradient(
     const MatrixReal& weighted_representations,
     const boost::shared_ptr<Weights>& gradient) const {
   int context_width = config->ngram_order - 1;
-  int word_width = config->word_representation_size;
+  int word_width = config->representation_size;
   MatrixReal context_gradients = MatrixReal::Zero(word_width, prediction_size);
   for (int j = 0; j < context_width; ++j) {
     context_gradients = getContextProduct(j, weighted_representations, true);
@@ -286,7 +270,6 @@ bool Weights::checkGradient(
   MatrixReal word_probs;
 
   for (int i = 0; i < size; ++i) {
-    //cout << W.norm() << endl;
     W(i) += eps;
     Real objective_plus = getObjective(examples);
     W(i) -= eps;
@@ -328,7 +311,6 @@ Real Weights::getObjective(
   Real objective = 0;
   for (size_t i = 0; i < examples->size(); ++i) {
     Real word_likelihood = -word_probs(examples->wordAt(i), i);    
-    //std::cout << word_likelihood << " ";
     objective += word_likelihood;
   }
 
@@ -363,7 +345,7 @@ void Weights::estimateProjectionGradient(
     Real& objective,
     MinibatchWords& words) const {
   int noise_samples = config->noise_samples;
-  int word_width = config->word_representation_size;
+  int word_width = config->representation_size;
   VectorReal unigram = metadata->getUnigram();
   vector<vector<int>> noise_words = getNoiseWords(examples);
 
@@ -425,9 +407,6 @@ void Weights::estimateGradient(
       examples, prediction_vectors, gradient,
       weighted_representations, objective, words);
 
-  /* if (config->sigmoid) {
-    weighted_representations.array() *= sigmoidDerivative(prediction_vectors);
-  } */
   weighted_representations.array() *= activationDerivative(config->activation, prediction_vectors);
 
   getContextGradient(
@@ -454,8 +433,6 @@ void Weights::syncUpdate(
 
   lock_guard<mutex> lock(*mutexB);
   B += gradient->B;
-
-  //std::cerr << "W: " << W.norm() << std::endl;
 }
 
 Block Weights::getBlock(int start, int size) const {
@@ -543,37 +520,23 @@ void Weights::clear(const MinibatchWords& words, bool parallel_update) {
 
 VectorReal Weights::getPredictionVector(const vector<int>& context) const {
   int context_width = config->ngram_order - 1;
-  int word_width = config->word_representation_size;
-  //std::cout << config->vocab_size << std::endl;
+  int word_width = config->representation_size;
 
   VectorReal prediction_vector = VectorReal::Zero(word_width);
   for (int i = 0; i < context_width; ++i) {
-    //std::cout << "getting " << context[i] << std::endl;
-    //std::cout << i << " " << C[i].norm() << " " << std::endl;
-    //std::cout << i << " " << Q.col(context[i]).norm() << " " << std::endl;
-
     if (config->diagonal_contexts) {
-      //std::cout << "C: " << C[i].size() << std::endl;
-      //std::cout << "Q: " << Q.col(context[i]).size() << std::endl;
-      //std::cout << "Pred: " << prediction_vector.size() << std::endl;
-      VectorReal add_vector = C[i].array() * Q.col(context[i]).array();
-      //std::cout << add_vector << std::endl;
-      prediction_vector += add_vector; //C[i].asDiagonal() * Q.col(context[i]);
+     VectorReal add_vector = C[i].array() * Q.col(context[i]).array();
+      prediction_vector += add_vector; 
     } else {
       prediction_vector += C[i] * Q.col(context[i]);
     }
-    //std::cout << "gotton" << std::endl;
   }
 
-  //std::cout << "has vector" << std::endl;
-  //return config->sigmoid ? sigmoid(prediction_vector) : prediction_vector;
   return applyActivation<VectorReal>(config->activation, prediction_vector);
 }
 
-//now returning negative log likelihood
 Real Weights::predict(int word, vector<int> context) const {
   VectorReal prediction_vector = getPredictionVector(context);
- // std::cout << prediction_vector.norm() << " ";
   Real prob = 0;
 
   auto ret = normalizerCache.get(context);
@@ -587,12 +550,12 @@ Real Weights::predict(int word, vector<int> context) const {
     prob = word_probs(word);
   }
 
+  //return negative log likelihood
   return -prob;
 }
 
 Reals Weights::predict(vector<int> context) const {
   VectorReal prediction_vector = getPredictionVector(context);
- // std::cout << prediction_vector.norm() << " ";
   Reals probs(vocabSize(), 0);
 
   Real normalizer = 0;
@@ -600,7 +563,7 @@ Reals Weights::predict(vector<int> context) const {
       R.transpose() * prediction_vector + B, normalizer);
   normalizerCache.set(context, normalizer);
   for (int i = 0; i < vocabSize(); ++i)
-    probs[i] = word_probs(i);
+    probs[i] = -word_probs(i);
   
   return probs;
 }

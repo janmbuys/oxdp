@@ -23,7 +23,6 @@ Words SentenceCorpus::convertWhitespaceDelimitedLine(const std::string& line,
   int state = 0;
      
   //don't add start of sentence symbol
-  //out.push_back(0); 
 
   while (cur < line.size()) {
     if (Dict::is_ws(line[cur++])) {

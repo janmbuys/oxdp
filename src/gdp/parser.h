@@ -6,7 +6,6 @@
 #include "corpus/data_point.h"
 #include "corpus/parsed_sentence.h"
 
-
 namespace oxlm {
 
 class Parser: public ParsedSentence {
@@ -21,7 +20,6 @@ class Parser: public ParsedSentence {
 
   Parser(Words sent, Words tags, Indices arcs, Words labels);
 
-  //Parse(const Parse& parse);
   Parser(const TaggedSentence& parse);
 
   void push_arc() override {
@@ -30,17 +28,14 @@ class Parser: public ParsedSentence {
     right_children_.push_back(Indices()); 
   }
 
-  //may need a using statement
   void set_arc(WordIndex i, WordIndex j) override {
     ParsedSentence::set_arc(i, j);
       
     if ((j < 0) || (j >= size()))
       return;
     
-    //TODO make sure insertions are at correct positions
     if (i < j) {
       bool inserted = false;
-      //   WordIndex k = 0; (k < left_children_.at(j).size()) && !inserted; ++k) {
       for (auto p = left_children_.at(j).begin(); (p < left_children_.at(j).end()) && !inserted; ++p) {
         if (*p > i) {
           left_children_.at(j).insert(p, i);
@@ -51,8 +46,7 @@ class Parser: public ParsedSentence {
         left_children_.at(j).push_back(i); 
     } else if (i > j) {
       bool inserted = false;
-     // for (WordIndex k = 0; (k < right_children_.at(j).size()) && !inserted; ++k) {
-     for (auto p = right_children_.at(j).begin(); (p < right_children_.at(j).end()) && !inserted; ++p) {
+      for (auto p = right_children_.at(j).begin(); (p < right_children_.at(j).end()) && !inserted; ++p) {
         if (*p > i) {
           right_children_.at(j).insert(p, i);
           inserted = true;
@@ -76,8 +70,8 @@ class Parser: public ParsedSentence {
   }
 
   //child i < head j
-  //find child right of i
   WordIndex prev_left_child_at(WordIndex i, WordIndex j) const {
+    //find child to the right of i
     for (unsigned k = 0; k < (left_children_.at(j).size() - 1); ++k) {
       if (left_children_[j][k] == i) {
         return left_children_[j][k+1];
@@ -88,8 +82,8 @@ class Parser: public ParsedSentence {
   }
 
   //child i > head j
-  //find child left of i
   WordIndex prev_right_child_at(WordIndex i, WordIndex j) const {
+   //find child to the left of i
    for (unsigned k = (right_children_[j].size() - 1); k > 0; --k) {
       if (right_children_[j][k] == i) {
         return right_children_[j][k-1];
@@ -153,7 +147,7 @@ class Parser: public ParsedSentence {
     return (left_children_.at(j).size() + right_children_.at(j).size());
   }
 
-  bool has_equal_arcs(const ParsedSentence& parse) const {
+  bool equal_arcs(const ParsedSentence& parse) const {
     for (WordIndex j = 1; j < size(); ++j) {
       if (arc_at(j) != parse.arc_at(j))
         return false;
@@ -162,7 +156,7 @@ class Parser: public ParsedSentence {
     return true;
   }
 
-  bool has_equal_labels(const ParsedSentence& parse) const {
+  bool equal_labels(const ParsedSentence& parse) const {
     for (WordIndex j = 1; j < size(); ++j) {
       if (label_at(j) != parse.label_at(j))
         return false;

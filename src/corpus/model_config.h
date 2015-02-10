@@ -11,56 +11,36 @@
 
 namespace oxlm {
 
-enum class ParserType {ngram, eisner, arcstandard, arceager};
+enum class ParserType {ngram, eisner, arcstandard, arceager, arcstandard2};
 enum class Activation {linear, sigmoid, tanh, rectifier};
 
 struct ModelConfig {
   ModelConfig();
 
-  std::string      training_file;
-  std::string      training_file_unsup;
-  std::string      training_file_ques;
-  std::string      test_file;
-  std::string      test_output_file;
+  std::string training_file;
+  std::string training_file_unsup;
+  std::string training_file_ques;
+  std::string test_file;
+  std::string test_output_file;
   int         iterations;
   int         minibatch_size;
   int         minibatch_size_unsup;
-  int         instances;
-  int         ngram_order;
-  int         feature_context_size;
-  std::string      model_input_file;
-  std::string      model_output_file;
+  int         ngram_order; 
+  std::string model_input_file;
+  std::string model_output_file;
   float       l2_lbl;
-  float       l2_maxent;
-  int         word_representation_size;
+  int         representation_size;   
   int         threads;
   float       step_size;
   bool        factored;
   int         classes;
-  std::string      class_file;
+  std::string class_file;
   bool        randomise;
-  bool        reclass;
   bool        diagonal_contexts;
-  bool        uniform;
-  bool        pseudo_likelihood_cne;
-  bool        mixture;
-  bool        lbfgs;
-  int         lbfgs_vectors;
-  int         test_tokens;
-  float       gnorm_threshold;
-  float       eta;
-  float       multinomial_step_size;
-  bool        random_weights;
-  int         hash_space;
-  bool        count_collisions;
-  bool        filter_contexts;
-  float       filter_error_rate;
-  int         max_ngrams;
-  int         min_ngram_freq;
   int         vocab_size;
   int         noise_samples;
   ParserType  parser_type;
-  Activation activation;
+  Activation  activation;
   bool        labelled_parser;
   bool        lexicalised;
   bool        char_lexicalised;
@@ -68,15 +48,15 @@ struct ModelConfig {
   bool        direction_deterministic;
   bool        sum_over_beam;
   bool        resample;
+  bool        root_first;
   int         num_particles;
   int         num_tags;
-  int         num_actions;
   int         num_labels;
-  int         stop_id;
-  int         ques_id;
   std::vector<unsigned> beam_sizes;
 
   bool operator==(const ModelConfig& other) const;
+
+  int numActions() const;
 
   friend class boost::serialization::access;
   template<class Archive>
@@ -89,23 +69,17 @@ struct ModelConfig {
     ar & iterations;
     ar & minibatch_size;
     ar & minibatch_size_unsup;
-    ar & instances;
     ar & ngram_order;
-    ar & feature_context_size;
     ar & model_input_file;
     ar & model_output_file;
     ar & l2_lbl;
-    ar & l2_maxent;
-    ar & word_representation_size;
+    ar & representation_size;
     ar & step_size;
     ar & factored;
     ar & classes;
     ar & class_file;
     ar & randomise;
     ar & diagonal_contexts;
-    ar & hash_space;
-    ar & filter_contexts;
-    ar & filter_error_rate;
     ar & vocab_size;
     ar & noise_samples;
     ar & parser_type;
@@ -117,13 +91,10 @@ struct ModelConfig {
     ar & direction_deterministic;
     ar & sum_over_beam;
     ar & resample;
+    ar & root_first;
     ar & num_particles;
     ar & num_tags;
-    ar & num_actions;
     ar & num_labels;
-    ar & stop_id;
-    ar & ques_id;
-    ar & beam_sizes;
   }
 };
 

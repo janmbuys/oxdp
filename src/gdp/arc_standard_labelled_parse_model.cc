@@ -704,7 +704,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
         continue;
 
       Reals action_probs = weights->predictAction(beam_stack[j]->actionContext());
-      std::vector<int> sample_counts(config_->num_actions, 0);
+      std::vector<int> sample_counts(config_->numActions(), 0);
       Real shiftp = action_probs[0];
 
       if (beam_stack[j]->stack_depth() <= 2) {
@@ -793,7 +793,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
 
 	  if (config_->direction_deterministic && (beam_stack[j]->stack_depth() > 2) && (num_samples > 1)) {
         action_probs[0] = L_MAX;
-        std::vector<int> sample_counts(config_->num_actions, 0);
+        std::vector<int> sample_counts(config_->numActions(), 0);
         multinomial_distribution_log<Real> mult(action_probs); 
         for (int k = 1; k < num_samples; k++) {
           WordId action = mult(eng);
@@ -876,7 +876,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
       Real shiftp = action_probs[0];
       Real tot_reducep = log_one_min(shiftp);
 
-      std::vector<int> sample_counts(config_->num_actions, 0);
+      std::vector<int> sample_counts(config_->numActions(), 0);
 
       if (beam_stack[j]->stack_depth() <= 2) {
         //only shift is allowed
@@ -967,7 +967,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
  
       //sample more reduce actions 
 	  if ((beam_stack[j]->stack_depth() > 2) && (num_samples > 1)) {
-        std::vector<int> sample_counts(config_->num_actions, 0);
+        std::vector<int> sample_counts(config_->numActions(), 0);
         for (int k = 1; k < num_samples; k++) {
           WordId action = mult(eng);
           ++sample_counts[action];
@@ -1058,7 +1058,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
       Real shiftp = action_probs[0];
       Real tot_reducep = log_one_min(shiftp);
 
-      std::vector<int> sample_counts(config_->num_actions, 0);
+      std::vector<int> sample_counts(config_->numActions(), 0);
 
       if (beam_stack[j]->stack_depth() <= 2) {
         //only shift is allowed
@@ -1149,7 +1149,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
  
       //sample more reduce actions 
 	  if ((beam_stack[j]->stack_depth() > 2) && (num_samples > 1)) {
-        std::vector<int> sample_counts(config_->num_actions, 0);
+        std::vector<int> sample_counts(config_->numActions(), 0);
         for (int k = 1; k < num_samples; k++) {
           WordId action = mult(eng);
           ++sample_counts[action];
@@ -1565,10 +1565,6 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::generate
       parser.shift(word);
       parser.add_particle_weight(wordp);
       //std::cout << "sh ";
-      
-      //terminate generation if word is EOS punctuation
-      //if (word == config_->stop_id || word == config_-> ques_id)
-      //  terminate_shift = true;
     }
     
   } while ((parser.stack_depth() > 1)); // && !terminate_shift);
@@ -1651,7 +1647,7 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
   //parse.print_arcs();
   //parse.print_labels();
 
-  acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
+  acc_counts->countGoldLikelihood(parse.weight(), gold_parse.weight());
   return parse;
 }
 
@@ -1674,7 +1670,7 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
   acc_counts->countAccuracy(parse, sent);
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
   
-  acc_counts->countLikelihood(parse.weight(), gold_parse.weight());
+  acc_counts->countGoldLikelihood(parse.weight(), gold_parse.weight());
   return parse;
 }
 

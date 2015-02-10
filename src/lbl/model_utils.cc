@@ -140,45 +140,4 @@ void frequencyBinning(
   in.close();
 }
 
-/*
-int convert(
-    const string& token, Dict& dict,
-    bool immutable_dict, bool convert_unknowns) {
-  int w = dict.convert(token, immutable_dict);
-  if (w < 0) {
-    if (convert_unknowns) {
-      w = dict.convert("<unk>", immutable_dict);
-      assert(w >= 0);
-    } else {
-      cout << token << " " << w << endl;
-      assert(!"Unknown word found in test corpus.");
-    }
-  }
-  return w;
-}
-
-boost::shared_ptr<Corpus> readCorpus(
-    const string& filename, Dict& dict,
-    bool immutable_dict, bool convert_unknowns) {
-  boost::shared_ptr<Corpus> corpus = boost::make_shared<Corpus>();
-  int end_id = convert("</s>", dict, immutable_dict, convert_unknowns);
-
-  ifstream in(filename);
-  string line;
-  while (getline(in, line)) {
-    stringstream line_stream(line);
-    string token;
-    while (line_stream >> token) {
-      corpus->push_back(convert(token, dict, immutable_dict, convert_unknowns));
-    }
-    corpus->push_back(end_id);
-  }
-
-  return corpus;
-} 
-
-Real perplexity(Real log_likelihood, size_t corpus_size) {
-  return exp(log_likelihood / corpus_size);
-} */
-
 } // namespace oxlm

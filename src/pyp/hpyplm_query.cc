@@ -24,7 +24,6 @@ int main(int argc, char** argv) {
   string test_file = argv[2];
 
   PYPLM<kORDER> lm;
-  //vector<unsigned> ctx(kORDER - 1, kSOS);
 
   cerr << "Reading LM from " << lm_file << " ...\n";
   ifstream ifile(lm_file.c_str(), ios::in | ios::binary);
@@ -56,10 +55,7 @@ int main(int argc, char** argv) {
         ++oovs;
         lp = 0;
       }
-      //cerr << "p(" << dict.Convert(w) << " |";
-      //for (unsigned j = ctx.size() + 1 - kORDER; j < ctx.size(); ++j)
-      //  cerr << ' ' << dict.Convert(ctx[j]);
-      //cerr << ") = " << lp << endl;
+      
       ctx.push_back(w);
       llh -= lp;
       cnt++;

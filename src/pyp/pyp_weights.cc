@@ -11,8 +11,6 @@ PypWeights<kOrder>::PypWeights(size_t vocab_size):
 template<unsigned kOrder>
 Real PypWeights<kOrder>::predict(WordId word, Words context) const {
   Real prob = lm_.prob(word, context);
-  //if (prob <= 0 || prob >= 1)
-  //  std::cout << prob << " ";
   return -std::log(prob);
 }
 
@@ -38,26 +36,16 @@ void PypWeights<kOrder>::resampleHyperparameters(MT19937& eng) {
 //update PYP model to insert new training examples 
 template<unsigned kOrder>
 void PypWeights<kOrder>::updateInsert(const boost::shared_ptr<DataSet>& examples, MT19937& eng) {
-  //std::cout << "INSERT\n";
   for (unsigned i = 0; i < examples->size(); ++i) {
     lm_.increment(examples->wordAt(i), examples->contextAt(i), eng);
-    //std::cout << examples->wordAt(i) << ": "; 
-    //for (auto w: examples->contextAt(i))
-    //  std::cout << w << " ";
-    //std::cout << std::endl;
   }
 }
 
 //update PYP model to remove old training examples
 template<unsigned kOrder>
 void PypWeights<kOrder>::updateRemove(const boost::shared_ptr<DataSet>& examples, MT19937& eng) {
-  //std::cout << "REMOVE\n";
   for (unsigned i = 0; i < examples->size(); ++i) {
     lm_.decrement(examples->wordAt(i), examples->contextAt(i), eng);
-    //std::cout << examples->wordAt(i) << ": "; 
-    //for (auto w: examples->contextAt(i))
-    //  std::cout << w << " ";
-    //std::cout << -std::log(prob) << std::endl;
   }
 }
 

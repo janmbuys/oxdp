@@ -95,7 +95,7 @@ class ParsedSentence: public TaggedSentence {
     return true;
   }
 
-  bool is_projective_dependency() const {
+  bool projective_dependency() const {
     for (int i = 0; i < (size() - 1); ++i)
       for (int j = i + 1; (j < size()); ++j)
         if ((arcs_[i]<i &&

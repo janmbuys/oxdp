@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
         "base filename of model output files")
     ("lambda-lbl,r", value<float>()->default_value(7.0),
         "regularisation strength parameter")
-    ("word-width", value<int>()->default_value(100),
-        "Width of word representation vectors.")
+    ("representation-size", value<int>()->default_value(100),
+        "Width of representation vectors.")
     ("threads", value<int>()->default_value(1),
         "number of worker threads.")
     ("step-size", value<float>()->default_value(0.05),
@@ -68,6 +68,8 @@ int main(int argc, char** argv) {
         "Predict arc labels.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
+    ("root-first", value<bool>()->default_value(true),
+        "Add root to the beginning (else end) of the sentence.")
     ("max-beam-size", value<int>()->default_value(8),
         "Maximum beam size for decoding (in powers of 2).")
     ("direction-det", value<bool>()->default_value(false),
@@ -158,13 +160,14 @@ int main(int argc, char** argv) {
   config->lexicalised = vm["lexicalised"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
+  config->root_first = vm["root-first"].as<bool>();
 
   config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
   //for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
   //  config->beam_sizes.push_back(i);
 
   config->l2_lbl = vm["lambda-lbl"].as<float>();
-  config->word_representation_size = vm["word-width"].as<int>();
+  config->representation_size = vm["representation-size"].as<int>();
   config->threads = vm["threads"].as<int>();
   config->step_size = vm["step-size"].as<float>();
   config->randomise = vm["randomise"].as<bool>();
@@ -184,7 +187,7 @@ int main(int argc, char** argv) {
   }
   cout << "# Config Summary" << endl;
   cout << "# order = " << config->ngram_order << endl;
-  cout << "# word_width = " << config->word_representation_size << endl;
+  cout << "# representation_size = " << config->representation_size << endl;
   if (config->model_output_file.size()) {
     cout << "# model-out = " << config->model_output_file << endl;
   }

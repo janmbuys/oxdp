@@ -3,9 +3,9 @@
 
 namespace oxlm {
 
-ParsedCorpus::ParsedCorpus(bool labelled):
+ParsedCorpus::ParsedCorpus(const boost::shared_ptr<ModelConfig>& config):
   sentences_(),
-  labelled_(labelled)
+  config_(config)
 {
 }
 
@@ -22,15 +22,16 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
         continue;
       if (col_num == 1) //1 - word
         sent_out->push_back(dict->convert(line.substr(last, cur - last - 1), frozen));
-      else if (col_num == 4) //4 - postag (3 - course postag)
+      else if (col_num == 4) //4 - postag (3 - coarse postag)
         tags_out->push_back(dict->convertTag(line.substr(last, cur - last - 1), frozen));
-      else if (col_num == 6) //arc head
+      else if (col_num == 6) //arc head index
         arcs_out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
-      else if (col_num == 7) //label 
-        if (labelled_)
+      else if (col_num == 7) { //label 
+        if (config_->labelled_parser)
           labels_out->push_back(dict->convertLabel(line.substr(last, cur - last - 1), frozen));
         else
           labels_out->push_back(dict->convertLabel("<null>", frozen));
+      }
        ++col_num;
       state = 0;
     } else {
@@ -40,9 +41,10 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
       state = 1;
     }
   }
-
-  if ((state == 1) && (col_num == 1)) //use relavent if we need last column
-    sent_out->push_back(dict->convert(line.substr(last, cur - last), frozen));
+  
+  //in case we need to process last column (n):
+  /*if ((state == 1) && (col_num == n)) 
+    sent_out->push_back(dict->convert(line.substr(last, cur - last), frozen)); */
 }
 
 void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, 
@@ -72,13 +74,7 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         labels.push_back(-1);
       }
 
-      //could make storing the label optional
       sentences_.push_back(ParsedSentence(sent, tags, arcs, labels)); 
-      //add arcs seperately
-      //for (unsigned i = 1; i < sent.size(); ++i)
-      //  sentences_.back().set_arc(i, arcs.at(i));
-      //sentences_.back().print_arcs();
-
       state = 1;
     } else {
       if (state==1) {
@@ -88,22 +84,24 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         arcs.clear();
         labels.clear();
 
-        //add start of sentence symbol
-        sent.push_back(dict->sos()); 
-        tags.push_back(dict->sos());
-        arcs.push_back(-1);
-        labels.push_back(-1);
+        //add start of sentence symbol if defined
+        if (dict->sos() != -1) {
+          sent.push_back(dict->sos()); 
+          tags.push_back(dict->sos());
+          arcs.push_back(-1);
+          labels.push_back(-1);
+        }
         state = 0;
       }
 
       convertWhitespaceDelimitedConllLine(line, dict, &sent, &tags, &arcs, &labels, frozen); 
-      //std::cout << labels[1] << " ";
     }
   }
 
-  vocab_size_ = dict->size();
-  //std::cout << dict->size() << " dict labels: " << dict->label_size() << std::endl;
-  num_labels_ = dict->label_size();
+  //update vocab sizes
+  config_->vocab_size = dict->size();
+  config_->num_tags = dict->tag_size();
+  config_->num_labels = dict->label_size();
 }
 
 size_t ParsedCorpus::size() const {
@@ -119,7 +117,7 @@ size_t ParsedCorpus::numTokens() const {
 }
 
 std::vector<int> ParsedCorpus::unigramCounts() const {
-  std::vector<int> counts(vocab_size_, 0);
+  std::vector<int> counts(config_->vocab_size, 0);
   for (auto sent: sentences_) {
     for (size_t j = 0; j < sent.size(); ++j)
       counts[sent.word_at(j)] += 1;
@@ -129,22 +127,30 @@ std::vector<int> ParsedCorpus::unigramCounts() const {
 }
 
 std::vector<int> ParsedCorpus::actionCounts() const {
-  //this is labelled, for arc-standard, but can't really compute it directly for arc-eager
-    
-  std::vector<int> counts(num_labels_*2+1, 0);
+  std::vector<int> counts(config_->numActions(), 0);
+
   for (auto sent: sentences_) {
+    int la_count = 0;
+    int ra_count = 0;
+
     for (size_t j = 1; j < sent.size(); ++j) {
+      //count left-arcs and right-arcs
       WordId lab = sent.label_at(j);
       if (sent.arc_at(j) < j) {
-        //left arc
-        ++counts[lab+1];
+        ++la_count;
+        ++counts[lab + 1];
       } else {
-        //right arc 
-        ++counts[lab+num_labels_ + 1];
+        ++ra_count;
+        ++counts[lab + 1 + config_->num_labels];
       }
-        
     }
-    counts[0] += sent.size() - 1;
+ 
+    if (config_->parser_type == ParserType::arceager) {
+      counts[0] += sent.size() - 1 - ra_count; //shift
+      counts[counts.size() - 1] += sent.size() - 1 - la_count; //reduce
+    } else if (config_->parser_type == ParserType::arcstandard) {
+      counts[0] += sent.size() - 1;
+    }
   }
 
   return counts;

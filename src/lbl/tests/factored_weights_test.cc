@@ -19,7 +19,7 @@ class FactoredWeightsTest : public testing::Test {
  protected:
   void SetUp() {
     config = boost::make_shared<ModelConfig>();
-    config->word_representation_size = 3;
+    config->representation_size = 3;
     config->vocab_size = 5;
     config->ngram_order = 3;
     config->activation = Activation::sigmoid;

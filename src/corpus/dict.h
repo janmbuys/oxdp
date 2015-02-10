@@ -19,12 +19,8 @@
 
 namespace oxlm {
 
-//add a cc file later, but not yet
 class Dict {
-// typedef std::unordered_map<std::string, WordId, std::hash<std::string> > Map;
-// typedef std::map<std::string, WordId> Map;
 public:
-  //for language modeling
   Dict();
 
   Dict(Word sos, Word eos);

@@ -10,15 +10,15 @@
 #include <boost/make_shared.hpp>
 
 #include "corpus/dict.h"
+#include "corpus/model_config.h"
 #include "corpus/parsed_sentence.h"
 #include "corpus/corpus_interface.h"
 
 namespace oxlm {
 
-//NB this is not at the moment officially related to corpus
 class ParsedCorpus: public CorpusInterface {
-  public:
-  ParsedCorpus(bool labelled);
+ public:
+  ParsedCorpus(const boost::shared_ptr<ModelConfig>& config);
 
   void convertWhitespaceDelimitedConllLine(const std::string& line, 
       const boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, Indices* arcs_out, Words* labels_out, bool frozen);
@@ -41,11 +41,9 @@ class ParsedCorpus: public CorpusInterface {
 
   std::vector<int> actionCounts() const;
 
-  private:
+ private:
   std::vector<ParsedSentence> sentences_;
-  bool labelled_;
-  int vocab_size_;
-  int num_labels_;  
+  boost::shared_ptr<ModelConfig> config_;
 };
 
 }

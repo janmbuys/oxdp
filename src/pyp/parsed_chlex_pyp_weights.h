@@ -6,7 +6,7 @@
 
 namespace oxlm {
 
-//this is the lexicalized model, with tags and words
+//lexicalized model, character-based word prediction model
 template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
 class ParsedChLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
 

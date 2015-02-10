@@ -5,11 +5,10 @@
 
 namespace oxlm {
 
-//this is the lexicalized model, with tags and words
+//Lexicalized model, predicting tags and words
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
-
-  public:
+ public:
   ParsedLexPypWeights(boost::shared_ptr<Dict> dict, boost::shared_ptr<Dict> ch_dict,
                       size_t num_actions);
 
@@ -35,7 +34,7 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
 
   int vocabSize() const override;
 
-  private:
+ private:
   PYPLM<wOrder> lex_lm_;
   int lex_vocab_size_;
 };

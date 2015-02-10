@@ -3,13 +3,11 @@
 
 #include "corpus/parse_data_set.h"
 #include "gdp/transition_parser.h"
-#include "gdp/transition_parser_interface.h"
 
 namespace oxlm {
 
-class ArcStandardParser : public TransitionParser, public TransitionParserInterface {
-  public:
-
+class ArcStandardParser : public TransitionParser {
+ public:
   ArcStandardParser();
 
   ArcStandardParser(Words sent);
@@ -22,25 +20,25 @@ class ArcStandardParser : public TransitionParser, public TransitionParserInterf
   
   ArcStandardParser(const TaggedSentence& parse, int num_particles);
 
-  bool shift() override;
+  bool shift();
 
   bool shift(WordId w);
 
-  bool leftArc() override;
+  bool leftArc();
 
-  bool rightArc() override;
+  bool rightArc();
   
-  kAction oracleNext(const ParsedSentence& gold_parse) const override;
+  kAction oracleNext(const ParsedSentence& gold_parse) const;
   
-  bool inTerminalConfiguration() const override;
+  bool inTerminalConfiguration() const;
 
-  bool executeAction(kAction a) override;
+  bool executeAction(kAction a);
  
-  Words wordContext() const override;
+  Words wordContext() const;
 
-  Words tagContext() const override;
+  Words tagContext() const;
  
-  Words actionContext() const override;
+  Words actionContext() const;
  
   bool left_arc_valid() const {
     if (stack_depth() < 2)
@@ -49,22 +47,7 @@ class ArcStandardParser : public TransitionParser, public TransitionParserInterf
     return (i != 0);
   }
 
-  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const override;
-
-  //just in case this might help
-  //but this should be static...
-  /*
-  size_t reduce_context_size() const {
-    return reduce_context().size();
-  }
-
-  size_t shift_context_size() const {
-    return shift_context().size();
-  }
-
-  size_t tag_context_size() const {
-    return tag_context().size();
-  }  */
+  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
 
 };
 

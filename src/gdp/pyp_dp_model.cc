@@ -5,22 +5,17 @@ namespace oxlm {
 template<class ParseModel, class ParsedWeights>
 PypDpModel<ParseModel, ParsedWeights>::PypDpModel() {
   dict_ = boost::make_shared<Dict>(true, false);
-  ch_dict_ = boost::make_shared<Dict>("<root>", " ");
+  ch_dict_ = boost::make_shared<Dict>("<s>", " ");
 } 
 
 template<class ParseModel, class ParsedWeights>
 PypDpModel<ParseModel, ParsedWeights>::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config) {
   dict_ = boost::make_shared<Dict>(true, config_->parser_type==ParserType::arceager);
-  ch_dict_ = boost::make_shared<Dict>("<root>", " ");
+  ch_dict_ = boost::make_shared<Dict>("<s>", " ");
   
-  if (config_->parser_type == ParserType::arcstandard) {
-    config_->num_actions = 3;
-  } else if (config_->parser_type == ParserType::arceager) {
-    config_->num_actions = 4;
-  } else {
-    config_->num_actions = 1;
-    dict_->convert("<stop>", false);
+  if (config_->parser_type == ParserType::eisner) {
+    dict_->convert("<stop>", false);  //add terminating symbol
   }
 
   parse_model_ = boost::make_shared<ParseModel>(config);
@@ -30,9 +25,9 @@ template<class ParseModel, class ParsedWeights>
 void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
   MT19937 eng;
   //read training data
-  boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
-  boost::shared_ptr<ParsedCorpus> ques_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
-  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>(config_);
+  boost::shared_ptr<ParsedCorpus> ques_training_corpus = boost::make_shared<ParsedCorpus>(config_);
+  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>(config_);
  
   if (config_->training_file.size()) { 
     std::cerr << "Reading supervised training corpus...\n";
@@ -64,13 +59,6 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
     std::cerr << "No unsupervised training corpus.\n";
   }
 
-  config_->vocab_size = dict_->size();
-  config_->num_tags = dict_->tag_size();
-  config_->num_labels = dict_->label_size();
-  if (config_->labelled_parser) {
-    config_->num_actions += 2*(dict_->label_size()-1); //add labelled actions
-  }
-
   //construct character dictionary
   for (size_t j = 0; j < dict_->size(); ++j) {
     const Word w = dict_->lookup(j);
@@ -80,7 +68,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
 
   //read test data 
   std::cerr << "Reading test corpus...\n";
-  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_);
   if (config_->test_file.size()) {
     test_corpus->readFile(config_->test_file, dict_, true);
     std::cerr << "Done reading test corpus..." << std::endl;
@@ -99,7 +87,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semi_supervised_ques() {
       sup_training_corpus->add_sentence(ques_training_corpus->sentence_at(j));
 
   //instantiate weights
-  weights_ = boost::make_shared<ParsedWeights>(dict_, ch_dict_, config_->num_actions);
+  weights_ = boost::make_shared<ParsedWeights>(dict_, ch_dict_, config_->numActions());
 
   std::vector<int> sup_indices(sup_training_corpus->size());
   std::iota(sup_indices.begin(), sup_indices.end(), 0);
@@ -318,9 +306,9 @@ template<class ParseModel, class ParsedWeights>
 void PypDpModel<ParseModel, ParsedWeights>::learn() {
   MT19937 eng;
   //read training data
-  boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
-  boost::shared_ptr<ParsedCorpus> ques_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
-  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>(config_);
+  boost::shared_ptr<ParsedCorpus> ques_training_corpus = boost::make_shared<ParsedCorpus>(config_);
+  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>(config_);
  
   if (config_->training_file.size()) { 
     std::cerr << "Reading supervised training corpus...\n";
@@ -352,17 +340,6 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
     std::cerr << "No unsupervised training corpus.\n";
   }
 
-  config_->vocab_size = dict_->size();
-  config_->num_tags = dict_->tag_size();
-  config_->num_labels = dict_->label_size();
-  if (config_->labelled_parser) {
-    config_->num_actions += 2*(dict_->label_size()-1); //add labelled actions
-  }
-
-  //record full stop and question make id
-  config_->stop_id = dict_->convert(".", true);
-  config_->ques_id = dict_->convert("?", true);
-
   //construct character dictionary
   for (size_t j = 0; j < dict_->size(); ++j) {
     const Word w = dict_->lookup(j);
@@ -372,7 +349,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
 
   //read test data 
   std::cerr << "Reading test corpus...\n";
-  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_);
   if (config_->test_file.size()) {
     test_corpus->readFile(config_->test_file, dict_, true);
     std::cerr << "Done reading test corpus..." << std::endl;
@@ -452,7 +429,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       sup_training_corpus->add_sentence(ques_training_corpus->sentence_at(j));
 
   //instantiate weights
-  weights_ = boost::make_shared<ParsedWeights>(dict_, ch_dict_, config_->num_actions);
+  weights_ = boost::make_shared<ParsedWeights>(dict_, ch_dict_, config_->numActions());
 
   std::vector<int> sup_indices(sup_training_corpus->size());
   std::iota(sup_indices.begin(), sup_indices.end(), 0);
@@ -531,7 +508,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
           parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
         //else
         //  parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, sup_examples_list.at(j));
-        if (!sup_training_corpus->sentence_at(j).is_projective_dependency())
+        if (!sup_training_corpus->sentence_at(j).projective_dependency())
           ++non_projective_count;
         minibatch_examples->extend(sup_examples_list.at(j));
         
@@ -629,7 +606,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
 template<class ParseModel, class ParsedWeights>
 void PypDpModel<ParseModel, ParsedWeights>::evaluate() const {
  //read test data 
-  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_->labelled_parser);
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_);
   test_corpus->readFile(config_->test_file, dict_, true);
   std::cerr << "Done reading test corpus..." << std::endl;
   

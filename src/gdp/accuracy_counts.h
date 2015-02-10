@@ -148,7 +148,7 @@ public:
 
   void countAccuracy(const ArcEagerLabelledParser& prop_parse, const ParsedSentence& gold_parse); 
 
-  void countLikelihood(Real parse_l, Real gold_l);
+  void countGoldLikelihood(Real parse_l, Real gold_l);
 
   void printAccuracy() const;
 
@@ -249,42 +249,34 @@ public:
   }
 
   Real cross_entropy() const {
-    //return likelihood_/(std::log(2)*total_length_);
     return likelihood_/total_length_;
   }
 
   Real beam_cross_entropy() const {
-    //return beam_likelihood_/(std::log(2)*total_length_);
     return beam_likelihood_/total_length_;
   }
   
   Real importance_cross_entropy() const {
-    //return importance_likelihood_/(std::log(2)*total_length_);
     return importance_likelihood_/total_length_;
   }
   
   Real gold_cross_entropy() const {
-    //return gold_likelihood_/(std::log(2)*total_length_);
     return gold_likelihood_/total_length_;
   }
 
   Real perplexity() const {
-    //return std::pow(2, cross_entropy());
     return std::exp(cross_entropy());
   }
 
   Real beam_perplexity() const {
-    //return std::pow(2, beam_cross_entropy());
     return std::exp(beam_cross_entropy());
   }
 
   Real importance_perplexity() const {
-    //return std::pow(2, importance_cross_entropy());
     return std::exp(importance_cross_entropy());
   }
 
   Real gold_perplexity() const {
-    //return std::pow(2, gold_cross_entropy());
     return std::exp(gold_cross_entropy());
   }
 

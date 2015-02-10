@@ -25,8 +25,6 @@ typedef std::vector<Real> Reals;
 typedef std::chrono::high_resolution_clock Clock;
 typedef Clock::time_point Time;
 
-//time functions
-
 inline Time get_time() {
   return Clock::now();
 }
@@ -37,7 +35,6 @@ inline Real get_duration(const Time& start_time, const Time& stop_time) {
 
 inline Real perplexity(Real log_likelihood, size_t corpus_size) {
   return std::exp(log_likelihood / corpus_size);
-  //return std::exp((log_likelihood / std::log(2)) / corpus_size);
 }
 
 inline WordIndex arg_max(Reals distr, WordIndex start) {
@@ -53,10 +50,37 @@ inline WordIndex arg_max(Reals distr, WordIndex start) {
   return max_i;
 }
 
+inline WordIndex arg_max(Reals distr, WordIndex start, WordIndex end) {
+  WordIndex max_i = start;
+  Real max = distr[start];
+  for (WordIndex i = start + 1; i < end; ++i) {
+    if (distr[i] > max) {
+      max_i = i;
+      max = distr[i];
+    }
+  }
+
+  return max_i;
+}
+
 inline WordIndex arg_min(Reals distr, WordIndex start) {
   WordIndex min_i = start;
   Real min = distr[start];
   for (WordIndex i = start + 1; i < distr.size(); ++i) {
+    if (distr[i] < min) {
+      min_i = i;
+      min = distr[i];
+    }
+  }
+
+  return min_i;
+}
+
+
+inline WordIndex arg_min(Reals distr, WordIndex start, WordIndex end) {
+  WordIndex min_i = start;
+  Real min = distr[start];
+  for (WordIndex i = start + 1; i < end; ++i) {
     if (distr[i] < min) {
       min_i = i;
       min = distr[i];

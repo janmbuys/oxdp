@@ -2,21 +2,21 @@
 
 namespace oxlm {
 
-ArcStandardLabelledParser::ArcStandardLabelledParser(int num_labels):
+ArcStandardLabelledParser::ArcStandardLabelledParser(const boost::shared_ptr<ModelConfig>& config):
   TransitionParser(),
   num_labels_(num_labels),
   action_labels_()
 {
 }
 
-ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, int num_labels):
+ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, const boost::shared_ptr<ModelConfig>& configint num_labels):
   TransitionParser(sent),
   num_labels_(num_labels),
   action_labels_()
 {
 }
 
-ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, Words tags, int num_labels):
+ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, Words tags, const boost::shared_ptr<ModelConfig>& configint num_labels):
   TransitionParser(sent, tags),
   num_labels_(num_labels),
   action_labels_()

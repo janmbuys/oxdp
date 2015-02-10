@@ -19,7 +19,6 @@ void score(const string& model_file, const string& data_file) {
 
   boost::shared_ptr<ModelConfig> config = model->getConfig();
   boost::shared_ptr<Dict> dict = model->getDict();
-  //NGramModel<Model> ngram_model(config->ngram_order, dict->sos(), dict->eos());
 
   boost::shared_ptr<SentenceCorpus> test_corpus = boost::make_shared<SentenceCorpus>();
   test_corpus->readFile(data_file, dict, true);

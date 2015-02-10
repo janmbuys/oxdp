@@ -127,13 +127,6 @@ template <unsigned N> struct PYPLM {
 
   double prob(WordId w, const std::vector<WordId>& context) const {
     copy_context(context, lookup);
-    /* if (N==4) {
-      std::cout << "[";
-      for (auto& l: lookup)
-        std::cout << l << " ";
-      std::cout << "] ";
-    } */
-    //std::cerr << w << std::endl;
     const double bo = backoff.prob(w, context);
 
     // singletons can be scored with a default crp
@@ -146,8 +139,6 @@ template <unsigned N> struct PYPLM {
 
     auto it = p.find(lookup);
     if (it == p.end()) {
-      /*if (N==4)
-        std::cout << p.size() << " "; */
       return bo;
     }
     return it->second.prob(w, bo);
