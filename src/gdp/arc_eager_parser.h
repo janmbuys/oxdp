@@ -7,19 +7,12 @@
 namespace oxlm {
 
 class ArcEagerParser : public TransitionParser {
-  public:
+ public:
+  ArcEagerParser(const boost::shared_ptr<ModelConfig>& config);
 
-  ArcEagerParser();
+  ArcEagerParser(const TaggedSentence& parse, const boost::shared_ptr<ModelConfig>& config);
 
-  ArcEagerParser(Words sent);
-
-  ArcEagerParser(Words sent, Words tags);
-
-  ArcEagerParser(Words sent, Words tags, int num_particles);
-
-  ArcEagerParser(const TaggedSentence& parse);
-
-  ArcEagerParser(const TaggedSentence& parse, int num_particles);
+  ArcEagerParser(const TaggedSentence& parse, int num_particles, const boost::shared_ptr<ModelConfig>& config);
 
   bool shift();
   

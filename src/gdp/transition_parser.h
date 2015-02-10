@@ -1,13 +1,14 @@
 #ifndef _GDP_TR_PARSER_H_
 #define _GDP_TR_PARSER_H_
 
-#include<string>
+#include <string>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
 #include "utils/random.h"
 #include "corpus/dict.h"
+#include "corpus/model_config.h"
 #include "corpus/parse_data_set.h"
 #include "gdp/utils.h"
 #include "gdp/parser.h"
@@ -20,12 +21,6 @@ class TransitionParser: public Parser {
   //constructor for generating from model
   TransitionParser(const boost::shared_ptr<ModelConfig>& config);
   
-  TransitionParser(Words tags, const boost::shared_ptr<ModelConfig>& config);
-
-  TransitionParser(Words sent, Words tags, const boost::shared_ptr<ModelConfig>& config); 
-
-  TransitionParser(Words sent, Words tags, int num_particles, const boost::shared_ptr<ModelConfig>& config);
-
   TransitionParser(const TaggedSentence& parse, const boost::shared_ptr<ModelConfig>& config);  
   
   TransitionParser(const TaggedSentence& parse, int num_particles, const boost::shared_ptr<ModelConfig>& config);  
@@ -128,6 +123,14 @@ class TransitionParser: public Parser {
     return actions_.size();
   }
 
+  int num_labels() const {
+    return config_->num_labels;
+  }
+
+  bool root_first() const {
+    return config_->root_first;
+  }
+
   std::vector<std::string> action_str_list() const {
     const std::vector<std::string> action_names {"sh", "la", "ra", "re", "la2", "ra2"};
     std::vector<std::string> list;
@@ -165,6 +168,10 @@ class TransitionParser: public Parser {
 
   Real weighted_importance_weight() const {
     return (importance_weight_ - std::log(num_particles_));
+  }
+
+  boost::shared_ptr<ModelConfig> config() const {
+    return boost::shared_ptr<ModelConfig>(config_);
   }
 
   //****functions for context vectors: each function defined for a specific context length
@@ -1662,7 +1669,7 @@ class TransitionParser: public Parser {
   WordIndex buffer_next_;
   ActList actions_;
   Real importance_weight_; 
-  Real beam_weight_; //cummulative beam log particle weight
+  Real beam_weight_; 
   int num_particles_;
   boost::shared_ptr<ModelConfig> config_;
 };

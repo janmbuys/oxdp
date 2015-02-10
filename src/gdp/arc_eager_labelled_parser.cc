@@ -2,44 +2,20 @@
 
 namespace oxlm {
 
-ArcEagerLabelledParser::ArcEagerLabelledParser(int num_labels): 
-  TransitionParser(),
-  num_labels_(num_labels),
+ArcEagerLabelledParser::ArcEagerLabelledParser(const boost::shared_ptr<ModelConfig>& config): 
+  TransitionParser(config),
   action_labels_()
 {
 }
 
-ArcEagerLabelledParser::ArcEagerLabelledParser(Words sent, int num_labels): 
-  TransitionParser(sent),
-  num_labels_(num_labels),
-  action_labels_()
-{
-}
-
-ArcEagerLabelledParser::ArcEagerLabelledParser(Words sent, Words tags, int num_labels): 
-  TransitionParser(sent, tags),
-  num_labels_(num_labels),
-  action_labels_()
-{
-}
-
-ArcEagerLabelledParser::ArcEagerLabelledParser(Words sent, Words tags, int num_particles, int num_labels):
-  TransitionParser(sent, tags, num_particles),
-  num_labels_(num_labels),
-  action_labels_()
-{
-}
-
-ArcEagerLabelledParser::ArcEagerLabelledParser(const TaggedSentence& parse, int num_labels):
-  TransitionParser(parse),
-  num_labels_(num_labels),
+ArcEagerLabelledParser::ArcEagerLabelledParser(const TaggedSentence& parse, const boost::shared_ptr<ModelConfig>& config):
+  TransitionParser(parse, config),
   action_labels_()
 {
 }   
 
-ArcEagerLabelledParser::ArcEagerLabelledParser(const TaggedSentence& parse, int num_particles, int num_labels):
-  TransitionParser(parse, num_particles), 
-  num_labels_(num_labels),
+ArcEagerLabelledParser::ArcEagerLabelledParser(const TaggedSentence& parse, int num_particles, const boost::shared_ptr<ModelConfig>& config):
+  TransitionParser(parse, num_particles, config), 
   action_labels_()
 {
 }
@@ -249,7 +225,7 @@ Words ArcEagerLabelledParser::actionContext() const {
 }
 
 void ArcEagerLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
-  ArcEagerLabelledParser parser(static_cast<TaggedSentence>(*this), num_labels_); 
+  ArcEagerLabelledParser parser(static_cast<TaggedSentence>(*this), config()); 
 
   for (unsigned i = 0; i < actions().size(); ++i) {
     kAction a = actions().at(i);

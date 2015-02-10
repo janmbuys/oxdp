@@ -3,43 +3,19 @@
 namespace oxlm {
 
 ArcStandardLabelledParser::ArcStandardLabelledParser(const boost::shared_ptr<ModelConfig>& config):
-  TransitionParser(),
-  num_labels_(num_labels),
+  TransitionParser(config),
   action_labels_()
 {
 }
 
-ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, const boost::shared_ptr<ModelConfig>& configint num_labels):
-  TransitionParser(sent),
-  num_labels_(num_labels),
+ArcStandardLabelledParser::ArcStandardLabelledParser(const TaggedSentence& parse, const boost::shared_ptr<ModelConfig>& config):
+  TransitionParser(parse, config),
   action_labels_()
 {
 }
 
-ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, Words tags, const boost::shared_ptr<ModelConfig>& configint num_labels):
-  TransitionParser(sent, tags),
-  num_labels_(num_labels),
-  action_labels_()
-{
-}
-
-ArcStandardLabelledParser::ArcStandardLabelledParser(Words sent, Words tags, int num_particles, int num_labels):
-  TransitionParser(sent, tags, num_particles),
-  num_labels_(num_labels),
-  action_labels_()
-{
-}
-
-ArcStandardLabelledParser::ArcStandardLabelledParser(const TaggedSentence& parse, int num_labels):
-  TransitionParser(parse),
-  num_labels_(num_labels),
-  action_labels_()
-{
-}
-
-ArcStandardLabelledParser::ArcStandardLabelledParser(const TaggedSentence& parse, int num_particles, int num_labels):
-  TransitionParser(parse, num_particles),
-  num_labels_(num_labels),
+ArcStandardLabelledParser::ArcStandardLabelledParser(const TaggedSentence& parse, int num_particles, const boost::shared_ptr<ModelConfig>& config):
+  TransitionParser(parse, num_particles, config),
   action_labels_()
 {
 }
@@ -209,7 +185,7 @@ Words ArcStandardLabelledParser::actionContext() const {
 }
 
 void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
-  ArcStandardLabelledParser parser(static_cast<TaggedSentence>(*this), num_labels_); 
+  ArcStandardLabelledParser parser(static_cast<TaggedSentence>(*this), config()); 
  
   //note that we are extracting the initial shift as an example
   for (unsigned i = 0; i < actions().size(); ++i) {

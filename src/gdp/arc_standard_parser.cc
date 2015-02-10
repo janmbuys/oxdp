@@ -2,33 +2,18 @@
 
 namespace oxlm {
 
-ArcStandardParser::ArcStandardParser():
-  TransitionParser() 
+ArcStandardParser::ArcStandardParser(const boost::shared_ptr<ModelConfig>& config):
+  TransitionParser(config) 
 {
 }
 
-ArcStandardParser::ArcStandardParser(Words sent):
-  TransitionParser(sent) 
+ArcStandardParser::ArcStandardParser(const TaggedSentence& parse, const boost::shared_ptr<ModelConfig>& config):
+  TransitionParser(parse, config) 
 {
 }
 
-ArcStandardParser::ArcStandardParser(Words sent, Words tags):
-  TransitionParser(sent, tags) 
-{
-}
-
-ArcStandardParser::ArcStandardParser(Words sent, Words tags, int num_particles):
-  TransitionParser(sent, tags, num_particles) 
-{
-}
-
-ArcStandardParser::ArcStandardParser(const TaggedSentence& parse):
-  TransitionParser(parse) 
-{
-}
-
-ArcStandardParser::ArcStandardParser(const TaggedSentence& parse, int num_particles):
-  TransitionParser(parse, num_particles) 
+ArcStandardParser::ArcStandardParser(const TaggedSentence& parse, int num_particles, const boost::shared_ptr<ModelConfig>& config):
+  TransitionParser(parse, num_particles, config) 
 {
 }
 
@@ -113,7 +98,6 @@ kAction ArcStandardParser::oracleNext(const ParsedSentence& gold_parse) const {
 }
 
 bool ArcStandardParser::inTerminalConfiguration() const {
-  //if (is_generating()) return ((buffer_next() >= 3) && (stack_depth() == 1)); //&& !buffer_next_has_child());
   return (buffer_empty() && (stack_depth() == 1));
 }
 
@@ -154,18 +138,14 @@ Words ArcStandardParser::actionContext() const {
 }
 
 void ArcStandardParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
-  ArcStandardParser parser(static_cast<TaggedSentence>(*this)); 
+  ArcStandardParser parser(static_cast<TaggedSentence>(*this), config()); 
  
-  //note that we are extracting the initial shift as an example
   for (kAction& a: actions()) {
     if (a == kAction::sh) {
-      DataPoint point(parser.next_tag(), parser.tagContext());
-
       //tag prediction
       examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext()));  
        
       //word prediction
-      //if (!(word_examples == nullptr))  //do we want to do this?
       examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
     }  
 

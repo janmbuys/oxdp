@@ -8,17 +8,11 @@ namespace oxlm {
 
 class ArcStandardParser : public TransitionParser {
  public:
-  ArcStandardParser();
+  ArcStandardParser(const boost::shared_ptr<ModelConfig>& config);
 
-  ArcStandardParser(Words sent);
-
-  ArcStandardParser(Words sent, Words tags);
-
-  ArcStandardParser(Words sent, Words tags, int num_particles);
-
-  ArcStandardParser(const TaggedSentence& parse);
+  ArcStandardParser(const TaggedSentence& parse, const boost::shared_ptr<ModelConfig>& config);
   
-  ArcStandardParser(const TaggedSentence& parse, int num_particles);
+  ArcStandardParser(const TaggedSentence& parse, int num_particles, const boost::shared_ptr<ModelConfig>& config);
 
   bool shift();
 
@@ -44,7 +38,10 @@ class ArcStandardParser : public TransitionParser {
     if (stack_depth() < 2)
       return false;
     WordIndex i = stack_top_second();
-    return (i != 0);
+    if (root_first())
+      return (i != 0);
+    else 
+      return true; // root can never be dependent of left-arc
   }
 
   void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;

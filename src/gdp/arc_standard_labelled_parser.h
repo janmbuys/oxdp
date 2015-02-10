@@ -7,19 +7,12 @@
 namespace oxlm {
 
 class ArcStandardLabelledParser : public TransitionParser {
-  public:
+ public:
+  ArcStandardLabelledParser(const boost::shared_ptr<ModelConfig>& config);
 
-  ArcStandardLabelledParser(int num_labels);
-
-  ArcStandardLabelledParser(Words sent, int num_labels);
-
-  ArcStandardLabelledParser(Words sent, Words tags, int num_labels);
-
-  ArcStandardLabelledParser(Words sent, Words tags, int num_particles, int num_labels);
-
-  ArcStandardLabelledParser(const TaggedSentence& parse, int num_labels);
+  ArcStandardLabelledParser(const TaggedSentence& parse, const boost::shared_ptr<ModelConfig>& config);
   
-  ArcStandardLabelledParser(const TaggedSentence& parse, int num_particles, int num_labels);
+  ArcStandardLabelledParser(const TaggedSentence& parse, int num_particles, const boost::shared_ptr<ModelConfig>& config);
 
   bool shift();
 
@@ -66,7 +59,7 @@ class ArcStandardLabelledParser : public TransitionParser {
     else if (a == kAction::la)
       return l + 1;
     else if (a == kAction::ra)
-      return num_labels_ + l + 1;
+      return num_labels() + l + 1;
     else 
       return -1;
   }
@@ -74,9 +67,9 @@ class ArcStandardLabelledParser : public TransitionParser {
   kAction lookup_action(WordId la) const {
     if (la == 0)
       return kAction::sh;
-    else if (la <= num_labels_)
+    else if (la <= num_labels())
       return kAction::la;
-    else if (la <= num_labels_*2)
+    else if (la <= 2*num_labels())
       return kAction::ra;
     else
       return kAction::re;
@@ -85,20 +78,15 @@ class ArcStandardLabelledParser : public TransitionParser {
   WordId lookup_label(WordId la) const {
     if (la == 0)
       return -1;
-    else if (la <= num_labels_)
+    else if (la <= num_labels())
       return la - 1;
-    else if (la <= num_labels_*2)
-      return la - num_labels_ - 1;
+    else if (la <= 2*num_labels())
+      return la - num_labels() - 1;
     else
       return -1;
   }
 
-  int num_labels() const {
-    return num_labels_;
-  }
-
   private:
-  int num_labels_;
   Words action_labels_;  
 };
 

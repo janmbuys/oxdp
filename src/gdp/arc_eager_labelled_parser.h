@@ -9,17 +9,11 @@ namespace oxlm {
 class ArcEagerLabelledParser : public TransitionParser {
   public:
 
-  ArcEagerLabelledParser(int num_labels);
+  ArcEagerLabelledParser(const boost::shared_ptr<ModelConfig>& config);
 
-  ArcEagerLabelledParser(Words sent, int num_labels);
+  ArcEagerLabelledParser(const TaggedSentence& parse, const boost::shared_ptr<ModelConfig>& config);
 
-  ArcEagerLabelledParser(Words sent, Words tags, int num_labels);
-
-  ArcEagerLabelledParser(Words sent, Words tags, int num_particles, int num_labels);
-
-  ArcEagerLabelledParser(const TaggedSentence& parse, int num_labels);
-
-  ArcEagerLabelledParser(const TaggedSentence& parse, int num_particles, int num_labels);
+  ArcEagerLabelledParser(const TaggedSentence& parse, int num_particles, const boost::shared_ptr<ModelConfig>& config);
 
   bool shift();
   
@@ -108,9 +102,9 @@ class ArcEagerLabelledParser : public TransitionParser {
     else if (a == kAction::la)
       return l + 1;
     else if (a == kAction::ra)
-      return num_labels_ + l + 1;
+      return num_labels() + l + 1;
     else if (a == kAction::re)
-      return 2*num_labels_ + 1;
+      return 2*num_labels() + 1;
     else
       return -1;
   }
@@ -118,11 +112,11 @@ class ArcEagerLabelledParser : public TransitionParser {
   kAction lookup_action(WordId l) const {
     if (l == 0)
       return kAction::sh;
-    else if (l <= num_labels_)
+    else if (l <= num_labels())
       return kAction::la;
-    else if (l <= 2*num_labels_)
+    else if (l <= 2*num_labels())
       return kAction::ra;
-    else if (l == 2*num_labels_ + 1)
+    else if (l == 2*num_labels() + 1)
       return kAction::re;
     else
       return kAction::re;
@@ -131,23 +125,16 @@ class ArcEagerLabelledParser : public TransitionParser {
   WordId lookup_label(WordId l) const {
     if (l == 0)
       return -1;
-    else if (l <= num_labels_)
+    else if (l <= num_labels())
       return l - 1;
-    else if (l <= num_labels_*2)
-      return l - num_labels_ - 1;
+    else if (l <= 2*num_labels())
+      return l - num_labels() - 1;
     else //include reduce
       return -1;
   }
 
-  int num_labels() const {
-    return num_labels_;
-  }
-
-  private:
-  int num_labels_;
+ private:
   Words action_labels_;  
-
-
 };
 
 }

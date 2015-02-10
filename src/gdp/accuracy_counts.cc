@@ -115,7 +115,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse,
   transitionCountAccuracy(prop_parse, gold_parse); 
   
   //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcStandardParser simul(static_cast<TaggedSentence>(prop_parse)); 
+  ArcStandardParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.config()); 
 
   for (auto& a: prop_parse.actions()) {
     kAction next = simul.oracleNext(gold_parse);
@@ -144,7 +144,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardLabelledParser& prop_parse,
   transitionCountAccuracy(prop_parse, gold_parse); 
   
   //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcStandardLabelledParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.num_labels()); 
+  ArcStandardLabelledParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.config()); 
 
   for (unsigned i = 0; i < prop_parse.actions().size(); ++i) {
     kAction a = prop_parse.actions().at(i);
@@ -176,7 +176,7 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const Parse
   transitionCountAccuracy(prop_parse, gold_parse); 
   
   //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcEagerParser simul(static_cast<TaggedSentence>(prop_parse));
+  ArcEagerParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.config());
   
   for (auto& a: prop_parse.actions()) {
     kAction next = simul.oracleNext(gold_parse);
@@ -203,7 +203,7 @@ void AccuracyCounts::countAccuracy(const ArcEagerLabelledParser& prop_parse,
   transitionCountAccuracy(prop_parse, gold_parse); 
   
   //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcEagerLabelledParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.num_labels()); 
+  ArcEagerLabelledParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.config()); 
 
   for (unsigned i = 0; i < prop_parse.actions().size(); ++i) {
     kAction a = prop_parse.actions().at(i);
