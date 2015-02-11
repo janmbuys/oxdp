@@ -127,7 +127,6 @@ kAction ArcStandardLabelledParser::oracleNext(const ParsedSentence& gold_parse) 
 }
 
 bool ArcStandardLabelledParser::inTerminalConfiguration() const {
-  //if (is_generating()) return ((buffer_next() >= 3) && (stack_depth() == 1)); //&& !buffer_next_has_child());
   return (buffer_empty() && (stack_depth() == 1));
 }
 
@@ -145,43 +144,42 @@ bool ArcStandardLabelledParser::executeAction(kAction a, WordId l) {
   }
 } 
 
-//TODO update contexts for labelled case
-
-//(ideally would assert length of order)
 Words ArcStandardLabelledParser::wordContext() const {
-  return word_children_ngram_context(); //lbl model (order 10)
-  //return word_children_context(); //lbl model (order 7)
-  //return extended_word_children_context(); //lbl model (order 13)
-  //return word_tag_next_children_context(); //best context (order 7) 
-  //return tag_children_context();  //best full context (order 9)
-  //return linear_word_tag_next_context(); //best perplexity
-  //return word_tag_next_context(); //order 5
+  if (pyp_model())
+    return word_tag_next_children_context(); //order 7
+    //return word_tag_next_ngram_context(); // best perplexity
+  else {
+    if (context_type() == "extended")
+      return extended_word_children_context(); //order 13
+    else if (context_type() == "more-extended")
+      return more_extended_word_children_context(); //order 17
+    else if (context_type() == "with-ngram")
+      return word_children_ngram_context(); //order 13
+    else
+      return word_children_context(); //order 7
+  }
 }
 
 Words ArcStandardLabelledParser::tagContext() const {
-  //return tag_children_context(); //lbl unlex model (order 8)
-  return tag_children_context();  //best full context (order 8)
-  //return tag_children_label_context(); //best full context (order 11)
-  //return linear_tag_context();
-  //return tag_some_children_context(); //best smaller context (order 5)
+  return tag_children_context();  //order 8
 }
 
 Words ArcStandardLabelledParser::actionContext() const {
-  return word_children_ngram_context(); //lbl model (order 10)
-  //return word_children_context(); //lbl model (order 7)
-  //return extended_word_children_context(); //lbl model (order 13)
-  //return word_children_lookahead_context(); //discriminative (order 11)
-  //return tag_children_pure_lookahead_context(); //discriminative (order 11)
-  //return tag_children_context(); //lbl unlex model (order 8)
-  //return tag_children_lookahead_context(); //lookahead context (order 9)
-  
-  //return word_tag_children_context(); //best full context, lexicalized (order 10)
-  //return word_tag_children_lookahead_context(); //order 11
-  //return word_tag_some_children_distance_context(); //best smaller context, lexicalized (order 8)
-  //return tag_children_context(); //best full context (order 8)
-  //return tag_children_rel_indices(); //best full context indices (order 8)
-  //return tag_children_label_context(); //best full context (order 11)
-  //return tag_some_children_distance_context(); //best smaller context (order 6)
+  if (pyp_model()) {
+    if (lexicalised())
+      return word_tag_children_context(); //order 10
+    else
+      return tag_children_context(); //order 8
+  } else {
+    if (context_type() == "extended")
+      return extended_word_children_context(); //order 13
+    else if (context_type() == "more-extended")
+      return more_extended_word_children_context(); //order 17
+    else if (context_type() == "with-ngram")
+      return word_children_ngram_context(); //order 13
+    else
+      return word_children_context(); //order 7
+  }
 }
 
 void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
@@ -193,25 +191,18 @@ void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDat
     WordId lab = action_label_at(i);
 
     if (a == kAction::sh) {
-      //DataPoint point(parser.next_tag(), parser.tagContext());
-
       //tag prediction
       examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext()));  
        
       //word prediction
-      //if (!(word_examples == nullptr))  //do we want to do this?
       examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
     } 
 
     //labelled action prediction 
     WordId lab_act = convert_action(a, lab);
-    //std::cout << static_cast<WordId>(a) << "," << lab << "," << lab_act << " ";
-    //if (!parser.buffer_empty()) 
     examples->add_action_example(DataPoint(lab_act, parser.actionContext()));
     parser.executeAction(a, lab);
   }
-
-  //std::cout << std::endl;
 } 
 
 }

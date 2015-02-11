@@ -64,6 +64,8 @@ int main(int argc, char** argv) {
         "Visit the training tokens in random order.")
     ("parser-type", value<std::string>()->default_value("arcstandard"),
         "Parsing strategy.")    
+    ("context-type", value<std::string>()->default_value(""),
+        "Conditioning context used.")    
     ("labelled-parser", value<bool>()->default_value(false),
         "Predict arc labels.")
     ("lexicalised", value<bool>()->default_value(true),
@@ -113,6 +115,7 @@ int main(int argc, char** argv) {
     config->test_file = vm["test-set"].as<string>();
   }
 
+  config->pyp_model = false;
   config->iterations = vm["iterations"].as<int>();
   config->minibatch_size = vm["minibatch-size"].as<int>();
   config->ngram_order = vm["order"].as<int>();
@@ -128,6 +131,7 @@ int main(int argc, char** argv) {
     }
   }
 
+  config->context_type = vm["context-type"].as<std::string>();
   std::string parser_type_str = vm["parser-type"].as<std::string>();
   if (parser_type_str == "arcstandard") {
     config->parser_type = ParserType::arcstandard; 

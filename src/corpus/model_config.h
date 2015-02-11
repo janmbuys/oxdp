@@ -41,6 +41,8 @@ struct ModelConfig {
   int         noise_samples;
   ParserType  parser_type;
   Activation  activation;
+  bool        pyp_model;
+  std::string context_type;
   bool        labelled_parser;
   bool        lexicalised;
   bool        char_lexicalised;
@@ -84,6 +86,7 @@ struct ModelConfig {
     ar & noise_samples;
     ar & parser_type;
     ar & activation;
+    ar & pyp_model;
     ar & labelled_parser;
     ar & lexicalised;
     ar & char_lexicalised;

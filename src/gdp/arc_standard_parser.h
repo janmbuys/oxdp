@@ -38,14 +38,11 @@ class ArcStandardParser : public TransitionParser {
     if (stack_depth() < 2)
       return false;
     WordIndex i = stack_top_second();
-    if (root_first())
-      return (i != 0);
-    else 
-      return true; // root can never be dependent of left-arc
+    //root can never be the dependent of left-arc
+    return (!(root_first() && (i == 0)));
   }
 
   void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
-
 };
 
 }

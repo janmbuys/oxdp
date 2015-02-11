@@ -63,10 +63,6 @@ bool ArcEagerLabelledParser::leftArc(WordId l) {
   pop_stack();
   append_action(kAction::la);
   append_action_label(l);
-  //take (first) left-most and closest left-child
-  //if ((buffer_left_child_ > -1) && (buffer_left_most_child_ == -1))
-  //  buffer_left_most_child_ = buffer_left_child_;
-  //buffer_left_child_ = i;
   return true;
 }
 
@@ -105,7 +101,6 @@ bool ArcEagerLabelledParser::rightArc(WordId l, WordId w) {
 WordId ArcEagerLabelledParser::oracleNextLabel(const ParsedSentence& gold_parse) const {
   WordId lab = -1;
 
-  //assume not in terminal configuration 
   if (!stack_empty()) {
     WordIndex i = stack_top();
     if (!buffer_empty()) {    
@@ -125,9 +120,7 @@ WordId ArcEagerLabelledParser::oracleNextLabel(const ParsedSentence& gold_parse)
 kAction ArcEagerLabelledParser::oracleNext(const ParsedSentence& gold_parse) const {
   kAction a = kAction::sh;
 
-  //maybe change so that we can assume stack_depth > 0 
-  //force generation of stop asap in training examples
-  if (stack_empty()) //|| (buffer_next() < static_cast<int>(sentence_length())) && (tag_at(buffer_next())==1)))
+  if (stack_empty()) 
     return a;
 
   WordIndex i = stack_top();
@@ -141,8 +134,6 @@ kAction ArcEagerLabelledParser::oracleNext(const ParsedSentence& gold_parse) con
       //add right arc eagerly
       a = kAction::ra; 
     } else if (reduce_valid()) {  
-      //if (child_count_at(i) >= gold_arcs.child_count_at(i)) 
-      //  a = kAction::re;
       //reduce if i has its children
       a = kAction::re;
       for (WordIndex k = 1; k < size(); ++k) {
@@ -166,17 +157,10 @@ kAction ArcEagerLabelledParser::oracleNext(const ParsedSentence& gold_parse) con
 }
 
 bool ArcEagerLabelledParser::inTerminalConfiguration() const {
-  //last word generated is STOP
-  //return (!stack_empty() && (tag_at(stack_top()) == 1)); 
-    
-  // && !buffer_next_has_child());
-  //return (!is_stack_empty() && (stack_top() == static_cast<int>(sentence_length() - 1))); // && !buffer_next_has_child());
-
-  //return ((tag_at(stack_top()) == 1)); // && !buffer_next_has_child());
-  //if (is_generating()) 
-  //  return ((buffer_next() >= 3) && (stack_depth() == 1)); 
-  //else     
-  return (buffer_empty() && (stack_depth() == 1));
+  if (root_first()) 
+    return buffer_empty(); //can have an incomplete parse, don't enforce final reduces
+  else
+    return (buffer_empty() && (stack_depth() == 1)); //parser should do reduces before last shift
 }
 
 bool ArcEagerLabelledParser::executeAction(kAction a, WordId l) {
@@ -196,19 +180,23 @@ bool ArcEagerLabelledParser::executeAction(kAction a, WordId l) {
 }
 
 Words ArcEagerLabelledParser::wordContext() const {
-  //return word_children_distance_context(); //lbl model (order 8)
-  return word_tag_next_children_context();  //(order 6)
-  //return word_tag_next_context();
+  if (pyp_model())
+    return word_tag_next_children_context(); //order 7
+  else {
+    if (context_type() == "extended") 
+      return extended_word_next_children_context(); //order 13
+    else
+      return word_next_children_context(); //order 7
+  }
 }
 
 Words ArcEagerLabelledParser::tagContext() const {
-  return tag_next_children_some_context(); //smaller context (order 6)
+  return tag_next_children_context(); //order 7
 }
  
-//problem is we can't append the action before it has been executed
+//TODO remove when right-arc is redefined
 Words ArcEagerLabelledParser::tagContext(kAction a) const {
-  //Words ctx = tag_next_children_some_context(); //smaller context (order 6)
-  Words ctx = tag_next_children_context(); //full context (order 8)
+  Words ctx = tag_next_children_context(); //order 7 + 1
   ctx.push_back(ctx.back());
   if (a == kAction::ra)
     ctx.at(ctx.size()-2) = 1;
@@ -218,10 +206,17 @@ Words ArcEagerLabelledParser::tagContext(kAction a) const {
 }
 
 Words ArcEagerLabelledParser::actionContext() const {
-  //return word_children_distance_context(); //lbl model (order 8)
-  //return tag_next_children_distance_some_context(); //smaller context (order 5)
-  //return tag_next_children_distance_context(); //full (order 8)
-  return tag_next_children_word_context(); //lexicalized, full context (order 8)
+  if (pyp_model()) {
+    if (lexicalised())
+      return tag_next_children_word_context(); //order 8
+    else
+      return tag_next_children_context(); //order 7
+  } else {
+    if (context_type() == "extended") 
+      return extended_word_next_children_context(); //order 13
+    else
+      return word_next_children_context(); //order 7
+  }
 }
 
 void ArcEagerLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
@@ -236,7 +231,6 @@ void ArcEagerLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSe
       examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext(a)));  
        
       //word prediction
-      //if (!(word_examples == nullptr))  //do we want to do this?
       examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
     }  
 

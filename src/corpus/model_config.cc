@@ -9,8 +9,8 @@ ModelConfig::ModelConfig()
       l2_lbl(0), representation_size(0), threads(1), step_size(0), 
       factored(true), classes(0), randomise(false), diagonal_contexts(false),
       vocab_size(0), noise_samples(0), parser_type(ParserType::arcstandard), 
-      activation(Activation::linear), labelled_parser(false), lexicalised(false),
-      char_lexicalised(false), semi_supervised(false), 
+      activation(Activation::linear), pyp_model(false), labelled_parser(false), 
+      lexicalised(false), char_lexicalised(false), semi_supervised(false), 
       direction_deterministic(false), sum_over_beam(false), resample(false), 
       root_first(true), num_particles(1), num_tags(1), num_labels(1), 
       beam_sizes(1, 1) {}
@@ -42,6 +42,7 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
       && noise_samples == other.noise_samples
       && parser_type == other.parser_type
       && activation == other.activation
+      && pyp_model == other.pyp_model
       && labelled_parser == other.labelled_parser
       && lexicalised == other.lexicalised
       && char_lexicalised == other.char_lexicalised

@@ -18,9 +18,9 @@ class ArcStandardLabelledParser : public TransitionParser {
 
   bool shift(WordId w);
 
-  bool leftArc(WordId l); //not overriding any more
+  bool leftArc(WordId l); 
 
-  bool rightArc(WordId l); //not overriding any more
+  bool rightArc(WordId l); 
   
   kAction oracleNext(const ParsedSentence& gold_parse) const;
   
@@ -28,7 +28,7 @@ class ArcStandardLabelledParser : public TransitionParser {
 
   bool inTerminalConfiguration() const;
 
-  bool executeAction(kAction a, WordId l); //not overriding any more
+  bool executeAction(kAction a, WordId l); 
  
   Words wordContext() const;
 
@@ -46,7 +46,7 @@ class ArcStandardLabelledParser : public TransitionParser {
     if (stack_depth() < 2)
       return false;
     WordIndex i = stack_top_second();
-    return (i != 0);
+    return (!(root_first() && (i == 0)));
   }
 
   WordId action_label_at(int i) const {

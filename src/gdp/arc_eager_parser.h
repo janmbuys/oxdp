@@ -43,31 +43,18 @@ class ArcEagerParser : public TransitionParser {
   void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
 
   bool left_arc_valid() const {
-    //stack_size 1 -> stack top is root
-    if (stack_depth() < 2)
+    if (stack_depth() == 0)
+      return false;    
+    WordIndex i = stack_top();
+    return (!has_parent_at(i) && !(root_first() && (i == 0)));
+  }
+
+  bool reduce_valid() const {
+    if (stack_depth() == 0)
       return false;    
     WordIndex i = stack_top();
     return (!has_parent_at(i));
   }
-
-  bool reduce_valid() const {
-    WordIndex i = stack_top();
-    //if STOP, should not have parent, else it should
-    if (tag_at(i) == 1)
-      return !has_parent_at(i);
-    else
-      return has_parent_at(i);
-  }
-
-  //TODO update where this is used
-  /*bool is_complete_parse() const {
-    for (WordIndex i = 1; i < arcs_.size() - 1; ++i) {
-      if (!arcs_.has_parent(i) && (tags_.at(i)!=1))
-        return false;
-    }
-
-    return ((buffer_next_ >= 3) && !buffer_next_has_child());
-  } */
 
   static bool cmp_reduce_particle_weights(const boost::shared_ptr<ArcEagerParser>& p1, 
                                  const boost::shared_ptr<ArcEagerParser>& p2) {
@@ -76,7 +63,7 @@ class ArcEagerParser : public TransitionParser {
     return false;
   else if (p2 == nullptr)
     return true;
-  //then those that cannot reduce
+  //then particles that cannot reduce
   else if (!p1->reduce_valid())
     return false;
   else if (!p2->reduce_valid())

@@ -112,6 +112,7 @@ int main(int argc, char** argv) {
     config->test_output_file = vm["test-out-file"].as<std::string>();
   }
 
+  config->pyp_model = true;
   config->iterations = vm["iterations"].as<int>();
   config->minibatch_size = vm["minibatch-size"].as<int>();
   config->minibatch_size_unsup = vm["minibatch-size-unsup"].as<int>();

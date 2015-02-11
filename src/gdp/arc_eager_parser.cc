@@ -145,20 +145,19 @@ bool ArcEagerParser::executeAction(kAction a) {
 }
 
 Words ArcEagerParser::wordContext() const {
-  return word_next_children_context();  //(order 8)
-  //return word_tag_next_children_context();  //(order 6)
-  //return word_children_distance_context(); //lbl model (order 8)
-  //return word_tag_next_context();
+  if (pyp_model())
+    return word_tag_next_children_context(); //order 7
+  else  
+    return word_next_children_context(); //order 7
 }
 
 Words ArcEagerParser::tagContext() const {
-  return tag_next_children_some_context(); //smaller context (order 6)
+  return tag_next_children_context(); //order 7
 }
  
-//problem is we can't append the action before it has been executed
+//TODO remove when right-arc is redefined
 Words ArcEagerParser::tagContext(kAction a) const {
-  //Words ctx = tag_next_children_some_context(); //smaller context (order 6)
-  Words ctx = tag_next_children_context(); //full context (order 8)
+  Words ctx = tag_next_children_context(); // order 7+1
   ctx.push_back(ctx.back());
   if (a == kAction::ra)
     ctx.at(ctx.size()-2) = 1;
@@ -168,11 +167,14 @@ Words ArcEagerParser::tagContext(kAction a) const {
 }
 
 Words ArcEagerParser::actionContext() const {
-  return word_next_children_context();  //(order 8)
-  //return tag_next_children_word_context(); //lexicalized, full context (order 8)
-  //return word_children_distance_context(); //lbl model (order 8)
-  //return tag_next_children_distance_some_context(); //smaller context (order 5)
-  //return tag_next_children_distance_context(); //full (order 8)
+  if (pyp_model()) {
+    if (lexicalised())
+      return tag_next_children_word_context(); //order 8
+    else
+      return tag_next_children_context(); //order 7
+  } else {
+    return word_next_children_context(); //order 7
+  }
 }
 
 void ArcEagerParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
