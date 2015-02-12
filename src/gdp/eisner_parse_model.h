@@ -15,6 +15,7 @@
 
 namespace oxlm {
 
+//not actively developed right now
 template<class ParsedWeights>
 class EisnerParseModel {
   public:

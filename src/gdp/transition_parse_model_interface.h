@@ -15,13 +15,14 @@ class TransitionParseModelInterface {
   virtual TParser beamParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) = 0;
 
-  virtual TParser particleParseSentence(const ParsedSentence& sent, 
+//not developing particle filtering methods right currently
+/*  virtual TParser particleParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
         bool resample) = 0;
 
   virtual TParser particleGoldParseSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, 
-          unsigned num_particles, bool resample) = 0;
+          unsigned num_particles, bool resample) = 0;  */
 
   virtual TParser staticGoldParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights) = 0;

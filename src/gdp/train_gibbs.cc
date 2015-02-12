@@ -13,12 +13,7 @@ using namespace oxlm;
 template<class ParseModel, class ParsedWeights>
 void train_dp(const boost::shared_ptr<ModelConfig>& config) {
   PypDpModel<ParseModel, ParsedWeights> model(config);
-
-  //learn
-  //if (config->semi_supervised)
-  //  model.learn_semi_supervised_ques();
-  //else
-    model.learn();
+  model.learn();
   if (config->iterations > 1)
     model.evaluate();
 }
@@ -138,12 +133,10 @@ int main(int argc, char** argv) {
   config->root_first = vm["root-first"].as<bool>();
   config->num_particles = vm["num-particles"].as<int>();
 
-  //otherwise override manually
+  config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
   //config->beam_sizes = {0, 1};
   //for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
   //  config->beam_sizes.push_back(i);
-  config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
-  //config->beam_sizes = {100}; //, 200, 300, 500, 1000};
  
   std::cout << "################################" << std::endl;
   std::cout << "# Config Summary" << std::endl;
@@ -162,12 +155,12 @@ int main(int argc, char** argv) {
     model.learn();
   } else {
    if (config->char_lexicalised) {
-      if ((config->parser_type == ParserType::arcstandard) && config->labelled_parser)
+      if (config->parser_type == ParserType::arcstandard)
         train_dp<ArcStandardLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>(config);
-      else if (config->parser_type == ParserType::arcstandard)
-        train_dp<ArcStandardParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>(config);
+      //else if (config->parser_type == ParserType::arcstandard)
+      //  train_dp<ArcStandardParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>(config);
       else if (config->parser_type == ParserType::arceager)
-        train_dp<ArcEagerParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>, ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>(config);
+        train_dp<ArcEagerLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>, ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>(config);
       else
         train_dp<EisnerParseModel<ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>, ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>(config);
     } 
@@ -176,10 +169,10 @@ int main(int argc, char** argv) {
         train_dp<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
       //else if (config->parser_type == ParserType::arcstandard)
       //  train_dp<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
-      else if ((config->parser_type == ParserType::arceager) && config->labelled_parser)
+      else if (config->parser_type == ParserType::arceager) //&& config->labelled_parser)
         train_dp<ArcEagerLabelledParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>, ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>(config);
-      else if (config->parser_type == ParserType::arceager) 
-        train_dp<ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>, ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>(config);
+      //else if (config->parser_type == ParserType::arceager) 
+      //  train_dp<ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>, ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>(config);
       else
         train_dp<EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>, ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>(config);
     } else {
@@ -187,10 +180,10 @@ int main(int argc, char** argv) {
         train_dp<ArcStandardLabelledParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(config);
       //else if (config->parser_type == ParserType::arcstandard)
       //  train_dp<ArcStandardParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(config);
-      else if ((config->parser_type == ParserType::arceager) && config->labelled_parser)
+      else if (config->parser_type == ParserType::arceager) //&& config->labelled_parser)
         train_dp<ArcEagerLabelledParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>, ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>(config);
-      else if (config->parser_type == ParserType::arceager)
-        train_dp<ArcEagerParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>, ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>(config);
+      //else if (config->parser_type == ParserType::arceager)
+      //  train_dp<ArcEagerParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>, ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>(config);
       else
         train_dp<EisnerParseModel<ParsedPypWeights<tagLMOrderE, 1>>, ParsedPypWeights<tagLMOrderE, 1>>(config);
     }

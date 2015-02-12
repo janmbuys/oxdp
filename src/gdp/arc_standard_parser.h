@@ -4,6 +4,7 @@
 #include "corpus/parse_data_set.h"
 #include "gdp/transition_parser.h"
 
+//Currently not developing this class
 namespace oxlm {
 
 class ArcStandardParser : public TransitionParser {

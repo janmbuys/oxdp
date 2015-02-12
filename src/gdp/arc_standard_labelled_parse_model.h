@@ -29,8 +29,8 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
 
   ArcStandardLabelledParser greedyParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights) override;
 
-  ArcStandardLabelledParser beamParticleParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
-                unsigned num_particles);
+  ArcStandardLabelledParser beamDiscriminativeParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
+                unsigned beam_size);
 
   ArcStandardLabelledParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
                 unsigned beam_size) override;
@@ -38,9 +38,10 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
   ArcStandardLabelledParser beamLinearParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
                 unsigned beam_size);
 
-  ArcStandardLabelledParser beamDiscriminativeParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
-                unsigned beam_size);
+  ArcStandardLabelledParser beamParticleParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
+                unsigned num_particles);
 
+  /*
   ArcStandardLabelledParser particlePosteriorParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
         bool resample);
@@ -54,7 +55,8 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
 
   ArcStandardLabelledParser particleGoldParseSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, 
-          unsigned num_particles, bool resample) override;
+          unsigned num_particles, bool resample) override;  
+*/
 
   ArcStandardLabelledParser staticGoldParseSentence(const ParsedSentence& sent, 
                                              const boost::shared_ptr<ParsedWeights>& weights) override;

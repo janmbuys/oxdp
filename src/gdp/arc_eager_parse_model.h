@@ -15,6 +15,7 @@ namespace oxlm {
 
 typedef std::vector<boost::shared_ptr<ArcEagerParser>> AeParserList;
 
+//Currently not developing this class
 template<class ParsedWeights>
 class ArcEagerParseModel: public TransitionParseModelInterface<ArcEagerParser, ParsedWeights> {
   public:

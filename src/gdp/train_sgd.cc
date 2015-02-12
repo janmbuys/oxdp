@@ -13,8 +13,12 @@
 using namespace boost::program_options;
 using namespace oxlm;
 
-#define lblOrderAS 10
-#define lblOrderAE 8
+#define lblOrderAS 7
+#define lblOrderASn 13
+#define lblOrderASx 13
+#define lblOrderASxx 17
+#define lblOrderAE 7
+#define lblOrderAEx 13
 #define lblOrderE 6
 
 template<class ParseModel, class ParsedWeights, class LblMetadata>
@@ -135,10 +139,18 @@ int main(int argc, char** argv) {
   std::string parser_type_str = vm["parser-type"].as<std::string>();
   if (parser_type_str == "arcstandard") {
     config->parser_type = ParserType::arcstandard; 
-    config->ngram_order = lblOrderAS;
+    if (config->context_type == "extended")
+      config->ngram_order = lblOrderASx;
+    else if (config->context_type == "more-extended")
+      config->ngram_order = lblOrderASxx;
+    else
+      config->ngram_order = lblOrderAS;
   } else if (parser_type_str == "arceager") {
     config->parser_type = ParserType::arceager;
-    config->ngram_order = lblOrderAE;
+    if (config->context_type == "extended")
+      config->ngram_order = lblOrderAEx;
+    else
+      config->ngram_order = lblOrderAE;
   } else if (parser_type_str == "eisner") {
     config->parser_type = ParserType::eisner; 
     config->ngram_order = lblOrderE;
@@ -155,8 +167,6 @@ int main(int argc, char** argv) {
     config->activation = Activation::tanh;
   else if (activation_str == "rectifier") 
     config->activation = Activation::rectifier;
-  //else if (activation_str == "cube") 
-  //  config->activation = Activation::cube;
   else 
     config->activation = Activation::linear;
 
@@ -227,7 +237,7 @@ int main(int argc, char** argv) {
     if (config->parser_type == ParserType::arcstandard) {
       train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else if (config->parser_type == ParserType::arceager) {
-      train_dp<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
+      train_dp<ArcEagerLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else {
       train_dp<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     }
@@ -235,7 +245,7 @@ int main(int argc, char** argv) {
   if (config->parser_type == ParserType::arcstandard) {
       train_dp<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
     } else if (config->parser_type == ParserType::arceager) {
-      train_dp<ArcEagerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
+      train_dp<ArcEagerLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
     } else {
       train_dp<EisnerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
     }

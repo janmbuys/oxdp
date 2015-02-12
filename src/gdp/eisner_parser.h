@@ -16,6 +16,7 @@ typedef std::array<WordIndex, 4> ESplitChartItem;
 typedef std::vector<std::vector<EChartItem>> EChart;
 typedef std::vector<std::vector<ESplitChartItem>> ESplitChart;
 
+//not actively developed currently
 class EisnerParser: public Parser {
   public:
 

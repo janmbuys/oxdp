@@ -32,13 +32,13 @@ class ArcEagerLabelledParseModel: public TransitionParseModelInterface<ArcEagerL
   ArcEagerLabelledParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
           unsigned beam_size) override;
 
-  ArcEagerLabelledParser particleParseSentence(const ParsedSentence& sent, 
+/*  ArcEagerLabelledParser particleParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
         bool resample) override;
 
   ArcEagerLabelledParser particleGoldParseSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, 
-          unsigned num_particles, bool resample) override;
+          unsigned num_particles, bool resample) override;  */
 
   ArcEagerLabelledParser staticGoldParseSentence(const ParsedSentence& sent, 
                                     const boost::shared_ptr<ParsedWeights>& weights) override;

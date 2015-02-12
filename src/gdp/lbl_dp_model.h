@@ -26,9 +26,9 @@
 #include "pyp/parsed_lex_pyp_weights.h"
 
 #include "gdp/transition_parser.h"
-#include "gdp/arc_standard_parse_model.h"
+//#include "gdp/arc_standard_parse_model.h"
 #include "gdp/arc_standard_labelled_parse_model.h"
-#include "gdp/arc_eager_parse_model.h"
+//#include "gdp/arc_eager_parse_model.h"
 #include "gdp/arc_eager_labelled_parse_model.h"
 #include "gdp/eisner_parse_model.h"
 #include "gdp/accuracy_counts.h"
@@ -87,7 +87,7 @@ class LblDpModel {
   boost::shared_ptr<ParseModel> parse_model;
 };
 
-
+/*
 class ASParsedFactoredLblLM: public LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata> {
  public:
   ASParsedFactoredLblLM() : LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>() {}
@@ -102,6 +102,6 @@ class ASParsedLblLM: public LblDpModel<ArcStandardParseModel<ParsedWeights>, Par
 
   ASParsedLblLM(const boost::shared_ptr<ModelConfig>& config)
      : LblDpModel<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config) {}
-};  
+}; */ 
 
 } // namespace oxlm
