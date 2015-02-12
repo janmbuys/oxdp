@@ -30,8 +30,8 @@ target_link_libs(gdp utils corpus pyp lbl)
 # Executables
 #############################################
 
+#extract_word_vectors
 set(EXECUTABLES
-  extract_word_vectors
   evaluate_lbl
   predict_lbl
   score_lbl

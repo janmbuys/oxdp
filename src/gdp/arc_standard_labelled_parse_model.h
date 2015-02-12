@@ -35,9 +35,6 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
   ArcStandardLabelledParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
                 unsigned beam_size) override;
 
-  ArcStandardLabelledParser beamLinearParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
-                unsigned beam_size);
-
   ArcStandardLabelledParser beamParticleParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
                 unsigned num_particles);
 

@@ -108,7 +108,7 @@ void AccuracyCounts::countAccuracy(const EisnerParser& prop_parse,
   parseCountAccuracy(prop_parse, gold_parse); 
 }
 
-//this isn't ideal, but good enough for now
+/*
 void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, 
                                    const ParsedSentence& gold_parse) {
   //parent method
@@ -136,7 +136,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse,
     
     simul.executeAction(a);
   }
-}
+} */
 
 void AccuracyCounts::countAccuracy(const ArcStandardLabelledParser& prop_parse, 
                                    const ParsedSentence& gold_parse) {
@@ -171,7 +171,7 @@ void AccuracyCounts::countAccuracy(const ArcStandardLabelledParser& prop_parse,
   }
 }
 
-void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse) {
+/* void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse) {
   //parent method
   transitionCountAccuracy(prop_parse, gold_parse); 
   
@@ -195,7 +195,7 @@ void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const Parse
     
     simul.executeAction(a);
   }
-}  
+}  */
 
 void AccuracyCounts::countAccuracy(const ArcEagerLabelledParser& prop_parse, 
                                    const ParsedSentence& gold_parse) {
@@ -261,7 +261,7 @@ void AccuracyCounts::printAccuracy() const {
   std::cerr << "Labelled Completely correct With Punct: " << complete_accuracy_lab() << std::endl;
   std::cerr << "Completely correct With Punct: " << complete_accuracy() << std::endl;
   std::cerr << "Final reduce error rate: " << final_reduce_error_rate() << std::endl;
-  std::cerr << "ArcDirection Precision With Punct:: " << arc_dir_precision() << std::endl;
+  std::cerr << "ArcDirection Precision With Punct: " << arc_dir_precision() << std::endl;
   std::cerr << "ArcDirection Precision No Punct: " << arc_dir_precision_nopunc() << std::endl;
   std::cerr << "Shift recall: " << shift_recall() << std::endl;
   std::cerr << "Reduce recall: " << reduce_recall() << std::endl;   

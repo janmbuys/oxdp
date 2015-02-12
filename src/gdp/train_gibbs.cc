@@ -59,6 +59,8 @@ int main(int argc, char** argv) {
         "Use additional, unlabelled training data.")
     ("max-beam-size", value<int>()->default_value(8),
         "Maximum beam size for decoding (in powers of 2).")
+    ("max-beam-increment", value<int>()->default_value(1),
+        "Maximum items to add to beam from one state.")
     ("direction-det", value<bool>()->default_value(false),
         "Arc direction always deterministic in beam search.")
     ("sum-over-beam", value<bool>()->default_value(false),
@@ -132,6 +134,7 @@ int main(int argc, char** argv) {
   config->resample = vm["particle-resample"].as<bool>();
   config->root_first = vm["root-first"].as<bool>();
   config->num_particles = vm["num-particles"].as<int>();
+  config->max_beam_increment = vm["max-beam-increment"].as<int>();
 
   config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
   //config->beam_sizes = {0, 1};

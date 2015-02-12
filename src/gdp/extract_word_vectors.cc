@@ -10,6 +10,7 @@ using namespace boost::program_options;
 using namespace oxlm;
 using namespace std;
 
+//TODO correct
 template<class Model>
 void ExtractWordVectors(
     const string& model_file,

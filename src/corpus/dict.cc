@@ -50,7 +50,7 @@ Dict::Dict(bool sos, bool eos):
     convertTag(sos_, false);
   }
   if (eos) {
-    eos_= "<s>";
+    eos_= "</s>";
     convert(eos_, false);
     convertTag(eos_, false);
   }

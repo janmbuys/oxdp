@@ -439,15 +439,15 @@ bool LblDpModel<ParseModel, ParsedWeights, Metadata>::operator==(
       && *weights == *other.weights;
 }
 
-template class LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
+//template class LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 template class LblDpModel<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
-template class LblDpModel<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
+//template class LblDpModel<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 template class LblDpModel<ArcEagerLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 template class LblDpModel<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 
-template class LblDpModel<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
+//template class LblDpModel<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 template class LblDpModel<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
-template class LblDpModel<ArcEagerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
+//template class LblDpModel<ArcEagerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 template class LblDpModel<ArcEagerLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 template class LblDpModel<EisnerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 

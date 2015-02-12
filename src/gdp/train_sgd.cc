@@ -78,6 +78,8 @@ int main(int argc, char** argv) {
         "Add root to the beginning (else end) of the sentence.")
     ("max-beam-size", value<int>()->default_value(8),
         "Maximum beam size for decoding (in powers of 2).")
+    ("max-beam-increment", value<int>()->default_value(1),
+        "Maximum items to add to beam from one state.")
     ("direction-det", value<bool>()->default_value(false),
         "Arc direction always deterministic in beam search.")
     ("sum-over-beam", value<bool>()->default_value(false),
@@ -175,6 +177,7 @@ int main(int argc, char** argv) {
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
   config->root_first = vm["root-first"].as<bool>();
+  config->max_beam_increment = vm["max-beam-increment"].as<int>();
 
   config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
   //for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)

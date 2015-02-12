@@ -140,11 +140,11 @@ public:
 
   void countAccuracy(const EisnerParser& prop_parse, const ParsedSentence& gold_parse); 
 
-  void countAccuracy(const ArcStandardParser& prop_parse, const ParsedSentence& gold_parse); 
+  //void countAccuracy(const ArcStandardParser& prop_parse, const ParsedSentence& gold_parse); 
 
   void countAccuracy(const ArcStandardLabelledParser& prop_parse, const ParsedSentence& gold_parse); 
 
-  void countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse); 
+  //void countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse); 
 
   void countAccuracy(const ArcEagerLabelledParser& prop_parse, const ParsedSentence& gold_parse); 
 

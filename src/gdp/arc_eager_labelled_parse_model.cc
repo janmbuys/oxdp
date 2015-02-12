@@ -26,15 +26,12 @@ void ArcEagerLabelledParseModel<ParsedWeights>::reallocateParticles(AelParserLis
   for (unsigned i = 0; i < beam_stack->size(); ++i) 
     if (beam_stack->at(i)->num_particles() > 0) {
       sample_counts[i] = (int)(std::exp(sum - beam_stack->at(i)->weighted_particle_weight())*num_particles);
-     // std::cout << beam_stack->size() << " " << i << " " << sample_counts[i] << std::endl;
       if (beam_stack->at(i)->particle_weight() < best_weight) {
         best_weight = beam_stack->at(i)->particle_weight();
         best_i = i;
       }
     }
   
-    sample_counts[best_i] += num_particles - std::accumulate(sample_counts.begin(), sample_counts.end(), 0);
-
   for (unsigned i = 0; i < beam_stack->size(); ++i) {
     if (beam_stack->at(i)->num_particles() > 0) 
       beam_stack->at(i)->set_num_particles(sample_counts[i]);
@@ -45,17 +42,22 @@ template<class ParsedWeights>
 void ArcEagerLabelledParseModel<ParsedWeights>::resampleParticleParticles(AelParserList* beam_stack, MT19937& eng,
         unsigned num_particles) {
   std::vector<Real> importance_w(beam_stack->size(), L_MAX); 
+  bool valid_sample = false;
   for (unsigned i = 0; i < importance_w.size(); ++i) 
-    if (beam_stack->at(i)->num_particles() > 0)
+    if (beam_stack->at(i)->num_particles() > 0) {
       importance_w[i] = beam_stack->at(i)->weighted_particle_weight();
+      valid_sample = true;
+    }
 
-  //resample according to importance weight
-  multinomial_distribution_log<Real> part_mult(importance_w); 
+  //resample according to particle weight
   std::vector<int> sample_counts(beam_stack->size(), 0);
-  for (unsigned i = 0; i < num_particles;) {
-    unsigned pi = part_mult(eng);
-    ++sample_counts[pi];
-    ++i;
+  if (valid_sample) {
+    multinomial_distribution_log<Real> part_mult(importance_w); 
+    for (unsigned i = 0; i < num_particles;) {
+      unsigned pi = part_mult(eng);
+      ++sample_counts[pi];
+      ++i;
+    }
   }
 
   for (unsigned i = 0; i < beam_stack->size(); ++i) {
@@ -66,18 +68,24 @@ void ArcEagerLabelledParseModel<ParsedWeights>::resampleParticleParticles(AelPar
 template<class ParsedWeights>
 void ArcEagerLabelledParseModel<ParsedWeights>::resampleParticles(AelParserList* beam_stack, MT19937& eng,
         unsigned num_particles) {
-  //assume (beam_stack->at(pi)->num_particles() > 0)
   std::vector<Real> importance_w(beam_stack->size(), L_MAX); 
+  bool valid_sample = false;
+
   for (unsigned i = 0; i < importance_w.size(); ++i) 
-    importance_w[i] = beam_stack->at(i)->weighted_importance_weight();
+    if (beam_stack->at(i)->num_particles() > 0) {
+      importance_w[i] = beam_stack->at(i)->weighted_importance_weight();
+      valid_sample = true;
+    }
 
   //resample according to importance weight
-  multinomial_distribution_log<Real> part_mult(importance_w); 
   std::vector<int> sample_counts(beam_stack->size(), 0);
-  for (unsigned i = 0; i < num_particles;) {
-    unsigned pi = part_mult(eng);
-    ++sample_counts[pi];
-    ++i;
+  if (valid_sample) {
+    multinomial_distribution_log<Real> part_mult(importance_w); 
+    for (unsigned i = 0; i < num_particles;) {
+      unsigned pi = part_mult(eng);
+      ++sample_counts[pi];
+      ++i;
+    }
   }
 
   for (unsigned i = 0; i < beam_stack->size(); ++i) {
@@ -86,11 +94,13 @@ void ArcEagerLabelledParseModel<ParsedWeights>::resampleParticles(AelParserList*
   }
 }
 
+
 template<class ParsedWeights>
 ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::greedyParseSentence(const ParsedSentence& sent, 
                            const boost::shared_ptr<ParsedWeights>& weights) {
   //implement properly later
-  ArcEagerLabelledParser parser(static_cast<TaggedSentence>(sent), config_->num_labels);
+  ArcEagerLabelledParser parser(static_cast<TaggedSentence>(sent), config_);
+/*  
   parser.shift(); 
   std::cout << "Parsing\n";
 
@@ -155,7 +165,7 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::greedyParseSen
     parser.reduce();
   }
 
-  std::cout << std::endl;
+  std::cout << std::endl; */
   return parser;
 }
 
@@ -163,11 +173,11 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::greedyParseSen
 template<class ParsedWeights>
 ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParseSentence(const ParsedSentence& sent, 
                            const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) {
-  //index in beam_chart is depth-of-stack - 1
-  std::vector<AelParserList> beam_chart; 
-  beam_chart.push_back(AelParserList());
+  AelParserList beam_stack; 
+ /* beam_chart.push_back(AelParserList());
   beam_chart[0].push_back(boost::make_shared<ArcEagerLabelledParser>(static_cast<TaggedSentence>(sent), config_->num_labels)); 
 
+  
   //shift ROOT symbol (probability 1)
   beam_chart[0][0]->shift(); 
 
@@ -313,29 +323,40 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParseSente
     //float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
     //std::cout << "  Dir Accuracy: " << dir_acc;
     //std::cout << "  Sample weight: " << (beam_chart[n][i]->particle_weight()) << std::endl;
-  }  
+  } */
 
-  if (beam_chart[n].size()==0) {
-    //std::cout << "no parse found" << std::endl;
-  return ArcEagerLabelledParser(static_cast<TaggedSentence>(sent), config_->num_labels);  
+  if (beam_stack.size()==0) {
+    std::cout << "no parse found" << std::endl;
+  return ArcEagerLabelledParser(static_cast<TaggedSentence>(sent), config_);  
   } else {
-    //beam_chart[n][0]->print_arcs();
-    //beam_chart[n][0]->print_actions();
-    return ArcEagerLabelledParser(*beam_chart[n][0], config_->num_labels); 
+    return ArcEagerLabelledParser(*beam_stack[0]); 
+  }
+}
+
+template<class ParsedWeights>
+ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticleParseSentence(
+        const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights, unsigned num_particles) {
+  AelParserList beam_stack; 
+  //TODO
+  if (beam_stack.size()==0) {
+    std::cout << "no parse found" << std::endl;
+  return ArcEagerLabelledParser(static_cast<TaggedSentence>(sent), config_);  
+  } else {
+    return ArcEagerLabelledParser(*beam_stack[0]); 
   }
 }
 
 template<class ParsedWeights>
 ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::staticGoldParseSentence(const ParsedSentence& sent,
                                         const boost::shared_ptr<ParsedWeights>& weights) {
-  ArcEagerLabelledParser parser(static_cast<TaggedSentence>(sent), config_->num_labels);
+  ArcEagerLabelledParser parser(static_cast<TaggedSentence>(sent), config_);
 
   kAction a = kAction::sh;
   while (!parser.inTerminalConfiguration() && !(parser.buffer_empty() && (a == kAction::sh))) {
     a = parser.oracleNext(sent);
     WordId lab = parser.oracleNextLabel(sent);
     if (!(parser.buffer_empty() && (a == kAction::sh))) {
-      //update particle weight
+      WordId la = parser.convert_action(a, lab);
       Real actionp = weights->predictAction(static_cast<WordId>(a), parser.actionContext());
       parser.add_particle_weight(actionp);
 
@@ -355,17 +376,14 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::staticGoldPars
 
 template<class ParsedWeights>
 ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::staticGoldParseSentence(const ParsedSentence& sent) {
-  ArcEagerLabelledParser parser(static_cast<TaggedSentence>(sent), config_->num_labels);
-
+  ArcEagerLabelledParser parser(static_cast<TaggedSentence>(sent), config_);
   kAction a = kAction::sh;
   while (!parser.inTerminalConfiguration() && !(parser.buffer_empty() && (a == kAction::sh))) {
     a = parser.oracleNext(sent);
-    //std::cout << static_cast<int>(a) << " ";
     WordId lab = parser.oracleNextLabel(sent);
     if (!(parser.buffer_empty() && (a == kAction::sh))) 
       parser.executeAction(a, lab); 
   }
-  //std::cout << std::endl;
 
   return parser;
 }
@@ -373,8 +391,8 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::staticGoldPars
 template<class ParsedWeights>
 ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::generateSentence(const boost::shared_ptr<ParsedWeights>& weights, 
         MT19937& eng) {
-  ArcEagerLabelledParser parser(config_->num_labels);
-  unsigned sent_limit = 100;
+  ArcEagerLabelledParser parser(config_);
+/*  unsigned sent_limit = 100;
   bool terminate_shift = false;
   //bool need_shift = false;
   parser.push_tag(0);
@@ -465,7 +483,7 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::generateSenten
 
   } while (!parser.inTerminalConfiguration() && !terminate_shift);
   //std::cout << std::endl;
-
+ */
   return parser;
 }
 
@@ -498,7 +516,7 @@ void ArcEagerLabelledParseModel<ParsedWeights>::extractSentenceUnsupervised(cons
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
-  ArcEagerLabelledParser parse = beamParseSentence(sent, weights, config_->beam_size);
+  ArcEagerLabelledParser parse = beamParticleParseSentence(sent, weights, config_->num_particles);
   parse.extractExamples(examples);
 }
 
@@ -506,7 +524,7 @@ template<class ParsedWeights>
 void ArcEagerLabelledParseModel<ParsedWeights>::extractSentenceUnsupervised(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
-  ArcEagerLabelledParser parse = beamParseSentence(sent, weights, config_->beam_size);
+  ArcEagerLabelledParser parse = beamParticleParseSentence(sent, weights, config_->num_particles);
   parse.extractExamples(examples);
 }
 
@@ -515,7 +533,7 @@ Parser ArcEagerLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedS
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
-  ArcEagerLabelledParser parse(config_->num_labels);
+  ArcEagerLabelledParser parse(config_);
   if (beam_size == 0)
     parse = greedyParseSentence(sent, weights);
   else
@@ -533,12 +551,11 @@ Parser ArcEagerLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedS
           const boost::shared_ptr<ParsedWeights>& weights, 
           MT19937& eng, const boost::shared_ptr<AccuracyCounts>& acc_counts,
           size_t beam_size) {
-  bool resample = false;
-  ArcEagerLabelledParser parse(config_->num_labels);
+  ArcEagerLabelledParser parse(config_);
   if (beam_size == 0)
     parse = greedyParseSentence(sent, weights);
   else
-    parse = particleParseSentence(sent, weights, eng, beam_size, resample);
+    parse = beamParticleParseSentence(sent, weights, beam_size);
   acc_counts->countAccuracy(parse, sent);
   ArcEagerLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
   
