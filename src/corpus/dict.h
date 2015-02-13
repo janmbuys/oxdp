@@ -25,7 +25,7 @@ public:
 
   Dict(Word sos, Word eos);
 
-  Dict(bool sos, bool eos); 
+  Dict(bool root_first); 
 
   WordId convert(const Word& word, bool frozen);
  
@@ -81,6 +81,10 @@ public:
     return (id >= 0);
   }
 
+  bool root_first() const {
+    return root_first_;
+  }
+
   static bool is_ws(char x) {
     return (x == ' ' || x == '\t');
   }
@@ -107,6 +111,7 @@ private:
   Word null_;
   Word sos_;
   Word eos_;
+  bool root_first_;
   WordId bad0_id_;
   std::vector<Word> words_;
   std::map<std::string, WordId> d_;

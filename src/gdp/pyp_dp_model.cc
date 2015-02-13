@@ -4,14 +4,14 @@ namespace oxlm {
 
 template<class ParseModel, class ParsedWeights>
 PypDpModel<ParseModel, ParsedWeights>::PypDpModel() {
-  dict_ = boost::make_shared<Dict>(true, false);
+  dict_ = boost::make_shared<Dict>(true);
   ch_dict_ = boost::make_shared<Dict>("<s>", " ");
 } 
 
 template<class ParseModel, class ParsedWeights>
 PypDpModel<ParseModel, ParsedWeights>::PypDpModel(const boost::shared_ptr<ModelConfig>& config): 
     config_(config) {
-  dict_ = boost::make_shared<Dict>(true, config_->parser_type==ParserType::arceager);
+  dict_ = boost::make_shared<Dict>(config->root_first);
   ch_dict_ = boost::make_shared<Dict>("<s>", " ");
   
   if (config_->parser_type == ParserType::eisner) {

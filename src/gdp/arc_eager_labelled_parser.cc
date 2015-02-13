@@ -143,7 +143,7 @@ kAction ArcEagerLabelledParser::oracleNext(const ParsedSentence& gold_parse) con
         }
       }
   
-      //alternatively, test if we should, else shift
+      //alternatively, test if we should reduce, else shift
       /*for (WordIndex k = i - 1; ((k >= 0) && (a==kAction::sh)); --k) {
         //std::cout << k << " ";
         //if we need to reduce i to be able to add the arc

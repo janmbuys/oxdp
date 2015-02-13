@@ -19,14 +19,14 @@ namespace oxlm {
 
 template<class ParseModel, class ParsedWeights, class Metadata>
 LblDpModel<ParseModel, ParsedWeights, Metadata>::LblDpModel() {
-  dict = boost::make_shared<Dict>(true, false);
+  dict = boost::make_shared<Dict>(true);
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
 LblDpModel<ParseModel, ParsedWeights, Metadata>::LblDpModel(
     const boost::shared_ptr<ModelConfig>& config)
     : config(config) {
-  dict = boost::make_shared<Dict>(true, config->parser_type==ParserType::arceager);
+  dict = boost::make_shared<Dict>(true);
   parse_model = boost::make_shared<ParseModel>(config);
   
   if (config->parser_type == ParserType::eisner) {
@@ -325,7 +325,6 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
         for (auto j: minibatch) {
           Parser parse = parse_model->evaluateSentence(test_corpus->sentence_at(j), weights, acc_counts, beam_size);
           objective += parse.weight();
-          //parse.print_actions();
           //parse.print_arcs();
 
           //write output to conll-format file: may need a lock

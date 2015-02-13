@@ -47,7 +47,6 @@ void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSe
   bool lab_punc_complete = true;
 
   add_likelihood(prop_parse.weight());
-  //computate gold likelihood seperately
 
   //arc level
   for (WordIndex j = 1; j < gold_parse.size(); ++j) {

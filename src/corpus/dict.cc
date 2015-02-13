@@ -7,6 +7,7 @@ Dict::Dict():
   b0_("<unk>"), 
   sos_("<s>"), 
   eos_("</s>"), 
+  root_first_(false),
   bad0_id_(-1) 
 {
   words_.reserve(1000);
@@ -19,23 +20,26 @@ Dict::Dict(Word sos, Word eos):
   b0_("<unk>"), 
   sos_(sos), 
   eos_(eos), 
+  root_first_(true),
   bad0_id_(-1)
 {
   words_.reserve(1000);
   convert(sos_, false);
   convertTag(sos_, false);
   if (eos!="") {
+    root_first_ = false;
     convert(eos_, false);
     convertTag(eos_, false);
   }
 }  
  
 //for parsing 
-Dict::Dict(bool sos, bool eos): 
+Dict::Dict(bool root_first): 
   b0_("<unk>"), //not in the vocabulary
   null_("<null>"), 
   sos_(""), 
   eos_(""), 
+  root_first_(root_first),
   bad0_id_(-1)
 {
   words_.reserve(1000);
@@ -43,17 +47,14 @@ Dict::Dict(bool sos, bool eos):
   convertTag(null_, false);
   convertLabel(null_, false);
 
-  //either sos or eos can function as root
-  if (sos) {
-    sos_= "<s>";
-    convert(sos_, false);
-    convertTag(sos_, false);
-  }
-  if (eos) {
-    eos_= "</s>";
-    convert(eos_, false);
-    convertTag(eos_, false);
-  }
+  //allways put root token in front
+  sos_= "<s>";
+  convert(sos_, false);
+  convertTag(sos_, false);
+  
+  //  eos_= "</s>";
+  //  convert(eos_, false);
+  //  convertTag(eos_, false);
 } 
 
 WordId Dict::convert(const Word& word, bool frozen) {

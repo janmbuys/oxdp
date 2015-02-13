@@ -96,19 +96,26 @@ class TransitionParser: public Parser {
   }
 
   WordIndex buffer_next() const {
-    return buffer_next_;
+    if (!root_first() && (buffer_next_ == static_cast<int>(size())))
+      return 0;
+    else
+      return buffer_next_;
   }
 
   bool buffer_empty() const {
-    return (buffer_next_ >= static_cast<int>(size())); 
+    //for root-last, root occurs after the end of sentence
+    if (root_first())
+      return (buffer_next_ >= static_cast<int>(size()));
+    else
+      return (buffer_next_ > static_cast<int>(size()));
   }
 
   WordId next_word() const {
-    return word_at(buffer_next_);
+    return word_at(buffer_next());
   }
 
   WordId next_tag() const {
-    return tag_at(buffer_next_);
+    return tag_at(buffer_next());
   }
 
   ActList actions() const {
@@ -494,8 +501,8 @@ class TransitionParser: public Parser {
     }
 
     if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child_at(buffer_next_);
-      WordIndex bl2 = second_leftmost_child_at(buffer_next_);
+      WordIndex bl1 = leftmost_child_at(buffer_next());
+      WordIndex bl2 = second_leftmost_child_at(buffer_next());
 
       if (bl1 >= 0)
         ctx[5] = word_at(bl1);
@@ -537,8 +544,8 @@ class TransitionParser: public Parser {
         ctx[7] = word_at(r2); 
     }
     if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child_at(buffer_next_);
-      WordIndex bl2 = second_leftmost_child_at(buffer_next_);
+      WordIndex bl1 = leftmost_child_at(buffer_next());
+      WordIndex bl2 = second_leftmost_child_at(buffer_next());
 
       if (bl1 >= 0)
         ctx[8] = word_at(bl1);
