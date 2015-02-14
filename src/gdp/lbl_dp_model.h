@@ -75,11 +75,11 @@ class LblDpModel {
   bool operator==(
       const LblDpModel<ParseModel, ParsedWeights, Metadata>& other) const;
 
- private:
   void evaluate(
       const boost::shared_ptr<ParsedCorpus>& corpus, const Time& iteration_start,
       int minibatch_counter, Real& objective, Real& best_perplexity) const;
 
+ private:
   boost::shared_ptr<ModelConfig> config;
   boost::shared_ptr<Dict> dict;
   boost::shared_ptr<Metadata> metadata;

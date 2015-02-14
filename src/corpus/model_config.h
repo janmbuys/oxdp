@@ -51,8 +51,10 @@ struct ModelConfig {
   bool        sum_over_beam;
   bool        resample;
   bool        root_first;
+  bool        bootstrap;
   int         max_beam_increment;
   int         num_particles;
+  int         generate_samples;
   int         num_tags;
   int         num_labels;
   std::vector<unsigned> beam_sizes;
@@ -96,8 +98,10 @@ struct ModelConfig {
     ar & sum_over_beam;
     ar & resample;
     ar & root_first;
+    ar & bootstrap;
     ar & max_beam_increment;
     ar & num_particles;
+    ar & generate_samples;
     ar & num_tags;
     ar & num_labels;
   }

@@ -29,12 +29,10 @@ namespace oxlm {
 
 template<class ParseModel, class ParsedWeights>
 class PypDpModel {
-  public:
+ public:
   PypDpModel();
 
   PypDpModel(const boost::shared_ptr<ModelConfig>& config);
-
-  void learn_semi_supervised_ques();
 
   void learn();
 
@@ -45,7 +43,7 @@ class PypDpModel {
 
   void evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) const;
 
-  private:
+ private:
   boost::shared_ptr<ModelConfig> config_;
   boost::shared_ptr<Dict> dict_;
   boost::shared_ptr<Dict> ch_dict_;

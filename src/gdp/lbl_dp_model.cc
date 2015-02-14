@@ -55,9 +55,6 @@ MatrixReal LblDpModel<ParseModel, ParsedWeights, Metadata>::getWordVectors() con
 
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
-  // Initialize the dictionary now, if it hasn't been initialized when the
-  // vocabulary was partitioned in classes. - allways initialize, else miss tags etc
-  //bool immutable_dict = config->classes > 0 || config->class_file.size();
   boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>(config);
   training_corpus->readFile(config->training_file, dict, false);
   std::cerr << "Done reading training corpus..." << endl;
@@ -65,6 +62,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
             << dict->size() << " word types, " << dict->tag_size() << " tags, "  
 	    << dict->label_size() << " labels)\n";  
+
+  //TODO read unsup corpus
 
   boost::shared_ptr<ParsedCorpus> test_corpus; 
   if (config->test_file.size()) {
