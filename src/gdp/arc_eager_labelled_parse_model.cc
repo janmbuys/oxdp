@@ -94,79 +94,95 @@ void ArcEagerLabelledParseModel<ParsedWeights>::resampleParticles(AelParserList*
   }
 }
 
-
 template<class ParsedWeights>
 ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::greedyParseSentence(const ParsedSentence& sent, 
                            const boost::shared_ptr<ParsedWeights>& weights) {
-  //implement properly later
   ArcEagerLabelledParser parser(static_cast<TaggedSentence>(sent), config_);
-/*  
-  parser.shift(); 
-  std::cout << "Parsing\n";
 
-  //if greedy, we are effectively ignoring word predictions
-  for (unsigned k = 1; k < sent.size(); ++k) {
-    std::cout << "k " << k << std::endl;
+  while (!parser.buffer_empty()) {
     Reals action_probs = weights->predictAction(parser.actionContext());
-    //give null prob to invalid actions
-    if (!parser.reduce_valid()) { // (re_act == kAction::la) 
-      action_probs[action_probs.size()-1] = L_MAX;   
-    } 
-    if (!parser.left_arc_valid()) {
-      for (unsigned k = 1; k <= config_->num_labels; ++k)
-        action_probs[k] = L_MAX;
-    }
+    if (!parser.left_arc_valid()) 
+      for (unsigned i = 1; i <= config_->num_labels; ++i)
+        action_probs[i] = L_MAX;
+    if (!parser.reduce_valid())
+      action_probs[action_probs.size()-1] = L_MAX;
 
     WordIndex pred = arg_min(action_probs, 0);
-    kAction re_act = parser.lookup_action(pred);
-    WordId re_label = parser.lookup_label(pred);
-    //reduce until shift action is chosen
-    
-    while ((re_act == kAction::la) || (re_act == kAction::re)) {
-      std::cout << pred << " ";
+
+    if (parser.stack_empty())
+      pred = 0; 
+    //for root last, enforce reduces so that the parse forms a tree
+    else if (!config_->root_first && (parser.buffer_next() == 0)) {
+      //left-arc or reduce allowed
+      if (parser.left_arc_valid())
+        pred = arg_min(action_probs, 1, config_->num_labels + 1);
+      else if (parser.reduce_valid())
+        pred = action_probs.size() - 1;
+      else 
+        pred = 0; //cannot form a tree
+    } else if (pred == 0)
+      parser.add_particle_weight(action_probs[pred]);
+
+    //reduce until a shift action is chosen
+    while (pred > 0) {
+      kAction re_act = parser.lookup_action(pred);
+      WordId re_label = parser.lookup_label(pred);
       if (re_act == kAction::la) 
         parser.leftArc(re_label);
-	  else 
+      else if (re_act == kAction::ra) 
+        parser.rightArc(re_label);
+      else
         parser.reduce();
       parser.add_particle_weight(action_probs[pred]);
 
-      //next action
       action_probs = weights->predictAction(parser.actionContext());
-      if (!parser.reduce_valid()) 
-        action_probs[action_probs.size()-1] = L_MAX;   
-      if (!parser.left_arc_valid()) {
-        for (unsigned k = 1; k <= config_->num_labels; ++k)
-          action_probs[k] = L_MAX;
-      }
+      if (!parser.left_arc_valid()) 
+        for (unsigned i = 1; i <= config_->num_labels; ++i)
+          action_probs[i] = L_MAX;
+      if (!parser.reduce_valid())
+        action_probs[action_probs.size()-1] = L_MAX;
 
       pred = arg_min(action_probs, 0);
-      re_act = parser.lookup_action(pred);
-      re_label = parser.lookup_label(pred);
+
+      if ((re_act == kAction::ra) || parser.stack_empty())
+        pred = 0; 
+      else if (!config_->root_first && (parser.buffer_next() == 0)) {
+      if (parser.left_arc_valid())
+        pred = arg_min(action_probs, 1, config_->num_labels + 1);
+      else if (parser.reduce_valid())
+        pred = action_probs.size() - 1;
+      else 
+        pred = 0; //cannot form a tree
+      } else if (pred == 0)
+        parser.add_particle_weight(action_probs[pred]);
     }
-    
-    parser.add_particle_weight(action_probs[pred]);
-    if (re_act == kAction::ra) {
-      parser.rightArc(re_label);
-    } else {
-      parser.shift();
-    }
+
+    //shift    
+    Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext());
+    Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
+    parser.shift();
+    parser.add_particle_weight(tagp);
+    parser.add_particle_weight(wordp);
   }
 
-  if (parser.buffer_empty())
-    std::cout << " buffer empty\n";
-
-  //completion
-  while (!parser.inTerminalConfiguration()) {
-    //reduce
-    std::cout << " D " << parser.stack_depth();
-    Reals action_probs = weights->predictAction(parser.actionContext());
-    WordIndex pred = action_probs.size() - 1;
-    parser.add_particle_weight(action_probs[pred]);
-    parser.reduce();
-  }
-
-  std::cout << std::endl; */
+  //no final reduce 
+  //parser.print_actions();
   return parser;
+}
+
+template<class ParsedWeights>
+ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamDiscriminativeParseSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) {
+  AelParserList beam_stack; 
+  //TODO
+
+  if (beam_stack.size()==0) {
+    std::cout << "no parse found" << std::endl;
+  return ArcEagerLabelledParser(static_cast<TaggedSentence>(sent), config_);  
+  } else {
+    return ArcEagerLabelledParser(*beam_stack[0]); 
+  }
+
 }
 
 //TODO
@@ -352,23 +368,24 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::staticGoldPars
   ArcEagerLabelledParser parser(static_cast<TaggedSentence>(sent), config_);
 
   kAction a = kAction::sh;
-  while (!parser.inTerminalConfiguration() && !(parser.buffer_empty() && (a == kAction::sh))) {
+  while (!parser.buffer_empty()) {
     a = parser.oracleNext(sent);
     WordId lab = parser.oracleNextLabel(sent);
-    if (!(parser.buffer_empty() && (a == kAction::sh))) {
-      WordId la = parser.convert_action(a, lab);
-      Real actionp = weights->predictAction(static_cast<WordId>(a), parser.actionContext());
-      parser.add_particle_weight(actionp);
+    WordId la = parser.convert_action(a, lab);
+    Real actionp = weights->predictAction(static_cast<WordId>(a), parser.actionContext());
+    parser.add_particle_weight(actionp);
 
-      if (a == kAction::sh || a == kAction::ra) {
-        Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext(a));
-        Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
-        parser.add_particle_weight(tagp);
-        parser.add_particle_weight(wordp);
-      }
-      
+    if (a != kAction::sh) 
       parser.executeAction(a, lab); 
-    } 
+
+    if (a == kAction::sh || a == kAction::ra) {
+      Real tagp = weights->predictTag(parser.next_tag(), parser.tagContext());
+      Real wordp = weights->predictWord(parser.next_word(), parser.wordContext());
+      parser.shift();
+      parser.add_particle_weight(tagp);
+      parser.add_particle_weight(wordp);
+    }
+      
   }
 
   return parser;
@@ -378,11 +395,13 @@ template<class ParsedWeights>
 ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::staticGoldParseSentence(const ParsedSentence& sent) {
   ArcEagerLabelledParser parser(static_cast<TaggedSentence>(sent), config_);
   kAction a = kAction::sh;
-  while (!parser.inTerminalConfiguration() && !(parser.buffer_empty() && (a == kAction::sh))) {
+  while (!parser.buffer_empty()) {
     a = parser.oracleNext(sent);
     WordId lab = parser.oracleNextLabel(sent);
-    if (!(parser.buffer_empty() && (a == kAction::sh))) 
+    if (a != kAction::sh) 
       parser.executeAction(a, lab); 
+    if (a == kAction::sh || a == kAction::ra) 
+      parser.shift();
   }
 
   return parser;

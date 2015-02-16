@@ -82,10 +82,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   if (config_->test_file.size()) {
     test_corpus->readFile(config_->test_file, dict_, true);
     std::cerr << "Done reading test corpus..." << std::endl;
-    std::cerr << "Corpus size: " << test_corpus->size() << " sentences\t (" 
-                 << test_corpus->numTokens() << " tokens\t (" 
-              << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
-	      << dict_->label_size() << " labels)\n";  
+    std::cerr << "Corpus size: " << test_corpus->size() << " sentences,\t" 
+                 << test_corpus->numTokens() << " tokens\n";
   }
 
   bool write_data = false;
@@ -261,16 +259,18 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       } 
     }
 
-    if (iter % 5 == 0)
+    if ((iter > 0) && (iter % 5 == 0))
       weights_->resampleHyperparameters(eng);
 
     Real iteration_time = get_duration(iteration_start, get_time());
+    unsigned total_size = sup_training_corpus->numTokens() + unsup_training_corpus->numTokens();
 
     std::cerr << "Iteration: " << iter << ", "
-             << "Training Time: " << iteration_time << " seconds, "
-             << "Non-projective: " << (non_projective_count + 0.0) / sup_training_corpus->size() << ", "
-             << "Training Objective: " << weights_->likelihood() / 
-             (sup_training_corpus->numTokens() + unsup_training_corpus->numTokens())
+             << "Time: " << iteration_time << " seconds, "
+             << "  Non-projective: " << (non_projective_count + 0.0)/sup_training_corpus->size() << ", "
+             << "  Size: " << total_size
+             << "  Likelihood: " << weights_->likelihood() 
+             << "  Objective: " << weights_->likelihood() / total_size
            << "\n\n";
    
     if (iter%5 == 0)
@@ -312,8 +312,7 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
     
     size_t test_size = 3*test_corpus->numTokens(); //approx
     Real test_perplexity = perplexity(log_likelihood, test_size); 
-    std::cerr << "\tMinibatch " << minibatch_counter << ", "
-         << "Test Perplexity: " << test_perplexity << std::endl;
+    std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
 
     if (test_perplexity < best_perplexity) 
       best_perplexity = test_perplexity;

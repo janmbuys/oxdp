@@ -42,12 +42,18 @@ int main(int argc, char** argv) {
     ("training-set,i", 
         value<std::string>()->default_value("english-wsj-stanford-unk/english_wsj_train.conll"),
         "corpus of parsed sentences for training, conll format")
-    ("test-set", value<string>(),
+    ("training-set-unsup,u", value<std::string>(),
+        "corpus of unparsed sentences for semi-supervised training, conll format")
+    ("test-set,t", value<string>(),
         "corpus of test sentences")
-    ("iterations", value<int>()->default_value(10),
+    ("test-out-file,o", value<std::string>()->default_value("system.out.conll"),
+        "conll output file for system parsing the test set")
+    ("iterations", value<int>()->default_value(1),
         "number of passes through the data")
     ("minibatch-size", value<int>()->default_value(10000),
         "number of sentences per minibatch")
+    ("minibatch-size-unsup", value<int>()->default_value(1),
+        "number of sentences per minibatch, unsupervised training")
     ("order,n", value<int>()->default_value(4),
         "ngram order")
     ("class-factored,f", value<bool>()->default_value(true),
@@ -74,12 +80,18 @@ int main(int argc, char** argv) {
         "Predict arc labels.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
+    ("semi-supervised", value<bool>()->default_value(false),
+        "Use additional, unlabelled training data.")
     ("root-first", value<bool>()->default_value(true),
         "Add root to the beginning (else end) of the sentence.")
+    ("bootstrap", value<bool>()->default_value(false),
+        "Extract training data with beam search.")
     ("max-beam-size", value<int>()->default_value(8),
         "Maximum beam size for decoding (in powers of 2).")
     ("max-beam-increment", value<int>()->default_value(1),
         "Maximum items to add to beam from one state.")
+    ("generate-samples", value<int>()->default_value(0),
+        "  Maximum items to add to beam from one state.")
     ("direction-det", value<bool>()->default_value(false),
         "Arc direction always deterministic in beam search.")
     ("sum-over-beam", value<bool>()->default_value(false),
@@ -108,7 +120,7 @@ int main(int argc, char** argv) {
   }
 
   if (vm.count("help")) {
-    cout << cmdline_options << "\n";
+    std::cerr << cmdline_options << "\n";
     return 1;
   }
 
@@ -176,8 +188,11 @@ int main(int argc, char** argv) {
   config->lexicalised = vm["lexicalised"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
+  config->semi_supervised = vm["semi-supervised"].as<bool>();
   config->root_first = vm["root-first"].as<bool>();
+  config->bootstrap = vm["bootstrap"].as<bool>();
   config->max_beam_increment = vm["max-beam-increment"].as<int>();
+  config->generate_samples = vm["generate-samples"].as<int>();
 
   config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
   //for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
@@ -198,26 +213,40 @@ int main(int argc, char** argv) {
     config->class_file = vm["class-file"].as<string>();
   }
 
-  cout << "################################" << endl;
+  std::cerr << "################################" << std::endl;
   if (strlen(GIT_REVISION) > 0) {
-    cout << "# Git revision: " << GIT_REVISION << endl;
+    std::cerr << "# Git revision: " << GIT_REVISION << std::endl;
   }
-  cout << "# Config Summary" << endl;
-  cout << "# order = " << config->ngram_order << endl;
-  cout << "# representation_size = " << config->representation_size << endl;
+  std::cerr << "# Config Summary" << std::endl;
+  std::cerr << "# order = " << config->ngram_order << std::endl;
+  std::cerr << "# representation_size = " << config->representation_size << std::endl;
+  std::cerr << "# class factored = " << config->factored << std::endl;
+  std::cerr << "# parser type = " << parser_type_str << std::endl;
+  std::cerr << "# context type = " << config->context_type << std::endl;
+  std::cerr << "# labelled parser = " << config->labelled_parser << std::endl;
+  std::cerr << "# lexicalised parser = " << config->lexicalised << std::endl;
+  std::cerr << "# root first = " << config->root_first << std::endl;
+  std::cerr << "# bootstrap = " << config->bootstrap << std::endl;
+  std::cerr << "# direction deterministic = " << config->direction_deterministic << std::endl;
+  std::cerr << "# sum over beam = " << config->sum_over_beam << std::endl;
+  std::cerr << "# max beam size = " << config->beam_sizes.back() << std::endl;
+  if (config->model_input_file.size()) {
+    std::cerr << "# model-in = " << config->model_output_file << std::endl;
+  }
   if (config->model_output_file.size()) {
-    cout << "# model-out = " << config->model_output_file << endl;
+    std::cerr << "# model-out = " << config->model_output_file << std::endl;
   }
-  cout << "# input = " << config->training_file << endl;
-  cout << "# minibatch size = " << config->minibatch_size << endl;
-  cout << "# lambda = " << config->l2_lbl << endl;
-  cout << "# step size = " << config->step_size << endl;
-  cout << "# iterations = " << config->iterations << endl;
-  cout << "# threads = " << config->threads << endl;
-  cout << "# randomise = " << config->randomise << endl;
-  cout << "# diagonal contexts = " << config->diagonal_contexts << endl;
-  cout << "# noise samples = " << config->noise_samples << endl;
-  cout << "################################" << endl;
+  std::cerr << "# supervised training data = " << config->training_file << std::endl;
+  std::cerr << "# unsupervised training data = " << config->training_file_unsup << std::endl;
+  std::cerr << "# minibatch size = " << config->minibatch_size << std::endl;
+  std::cerr << "# lambda = " << config->l2_lbl << std::endl;
+  std::cerr << "# step size = " << config->step_size << std::endl;
+  std::cerr << "# iterations = " << config->iterations << std::endl;
+  std::cerr << "# threads = " << config->threads << std::endl;
+  std::cerr << "# randomise = " << config->randomise << std::endl;
+  std::cerr << "# diagonal contexts = " << config->diagonal_contexts << std::endl;
+  std::cerr << "# noise samples = " << config->noise_samples << std::endl;
+  std::cerr << "################################" << std::endl;
 
   if (config->parser_type == ParserType::ngram) {
     if (config->factored) {

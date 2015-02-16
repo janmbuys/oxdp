@@ -29,6 +29,9 @@ class ArcEagerLabelledParseModel: public TransitionParseModelInterface<ArcEagerL
 
   ArcEagerLabelledParser greedyParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights) override;
 
+  ArcEagerLabelledParser beamDiscriminativeParseSentence(const ParsedSentence& sent, 
+          const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size);
+
   ArcEagerLabelledParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
           unsigned beam_size) override;
 

@@ -55,6 +55,7 @@ MatrixReal LblDpModel<ParseModel, ParsedWeights, Metadata>::getWordVectors() con
 
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
+  MT19937 eng;
   boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>(config);
   training_corpus->readFile(config->training_file, dict, false);
   std::cerr << "Done reading training corpus..." << endl;
@@ -75,7 +76,6 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   if (config->model_input_file.size() == 0) {
     metadata->initialize(training_corpus);
     weights = boost::make_shared<ParsedWeights>(config, metadata, true);
-    //std::cout << "initialized weights" << std::endl;
   } else {
     Real log_likelihood = 0;
     evaluate(test_corpus, log_likelihood);
@@ -97,7 +97,6 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   int shared_index = 0;
   // For no particular reason. It just looks like this works best.
   int task_size = sqrt(config->minibatch_size) / 4; //to imitate word-level behaviour
-  //std::cout << "initialized gradients" << std::endl;
     
   omp_set_num_threads(config->threads);
   #pragma omp parallel
@@ -109,7 +108,6 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
     for (int iter = 0; iter < config->iterations; ++iter) {
       auto iteration_start = get_time();
-      //std::cout << "training size: " << training_corpus->size() << std::endl;
 
       #pragma omp master
       {
@@ -128,17 +126,13 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         vector<int> minibatch(
             indices.begin() + start,
             min(indices.begin() + end, indices.end()));
-       //std::cout << "minibatch: " << minibatch.size() << " sentences\n";
 
-        //global_gradient->init(training_corpus, minibatch);
         // Reset the set of minibatch words shared across all threads.
         #pragma omp master
         {
           global_words = MinibatchWords();
           shared_index = 0;
         }
-
-        //gradient->init(training_corpus, minibatch);
 
         // Wait until the global gradient is initialized. Otherwise, some
         // gradient updates may be ignored.
@@ -160,13 +154,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             vector<int> task(
                 minibatch.begin() + task_start, minibatch.begin() + task_end);
             //collect the training examples for the minibatch
-            //std::cerr << " task " << task_start << std::endl;
             boost::shared_ptr<ParseDataSet> task_examples = boost::make_shared<ParseDataSet>();
             
-            // #pragma omp critical
             for (int j: task) 
               parse_model->extractSentence(training_corpus->sentence_at(j), task_examples);
-            //std::cout << " (" << task_examples->size() << ") ";
             num_examples += task_examples->word_example_size() + task_examples->action_example_size();
 
             if (config->noise_samples > 0) {
@@ -175,7 +166,6 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             } else {
               weights->getGradient(
                   task_examples, gradient, objective, words);
-              //std::cout << minibatch_counter << " " << minibatch.size() << " " << task_start << std::endl;               
               //if (!weights->checkGradient(task_examples, global_gradient, EPS))
               //  std::cout << "gradient check failed" << std::endl;
             }
@@ -208,12 +198,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         #pragma omp barrier
         Real minibatch_factor =
             static_cast<Real>(num_examples) / (3*training_corpus->numTokens());
-        //for now, weight in terms of number of words predicted
-        //should actually be total number of predictions, but if the ratio is
-        //the same, it should be fine
+        //approx total number of predictions
         
-        //std::cout << "\n" << num_examples << " examples " 
-        //    << minibatch_factor << " minibatch factor" << std::endl;
         objective = regularize(global_gradient, minibatch_factor);
         #pragma omp critical
         global_objective += objective;
@@ -226,9 +212,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         // words are reset only after the global gradient is fully cleared.
         #pragma omp barrier
 
-        //don't evaluate before end of iteration
-        /* if ((minibatch_counter % 100 == 0 && minibatch_counter <= 1000) ||
-            minibatch_counter % 1000 == 0) {
+        /* if (minibatch_counter % 1000 == 0) {
           evaluate(test_corpus, iteration_start, minibatch_counter,
                    test_objective, best_perplexity);
         } */
@@ -256,6 +240,15 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   }
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << endl;
+
+  //generate from model
+  for (int i = 0; i < config->generate_samples; ++i) {
+    Parser parse = parse_model->generateSentence(weights, eng);
+    std::cout << parse.weight() << "  ";
+    parse.print_sentence(dict);
+    parse.print_arcs();
+    parse.print_labels();
+  }  
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
@@ -324,9 +317,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
         for (auto j: minibatch) {
           Parser parse = parse_model->evaluateSentence(test_corpus->sentence_at(j), weights, acc_counts, beam_size);
           objective += parse.weight();
-          //parse.print_arcs();
 
-          //write output to conll-format file: may need a lock
+          //write output to conll-format file
           for (unsigned i = 1; i < parse.size(); ++i) { 
             outs << i << "\t" << dict->lookup(parse.word_at(i)) << "\t_\t_\t" 
                  << dict->lookupTag(parse.tag_at(i)) << "\t_\t" << parse.arc_at(i) << "\t"
@@ -342,15 +334,17 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     
       // Wait for all the threads to compute the perplexity for their slice of
       // test data.
-      // do we need both a barrier and a master?
       #pragma omp barrier
 
-//      #pragma omp master
+      #pragma omp master
       {
         outs.close();
         Real beam_time = get_duration(beam_start, get_time());
         Real sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
-        std::cerr << "(" << static_cast<int>(sents_per_sec) << " sentences per second)\n"; 
+        Real tokens_per_sec = static_cast<int>(test_corpus->numTokens())/beam_time;
+        std::cerr << "(" << beam_time << "s, " <<
+                   static_cast<int>(sents_per_sec) << " sentences per second, " <<
+                   static_cast<int>(tokens_per_sec) << " tokens per second)\n";
         acc_counts->printAccuracy();
       }
     }

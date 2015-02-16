@@ -23,7 +23,7 @@ class ArcEagerLabelledParser : public TransitionParser {
 
   bool rightArc(WordId l);
   
-  bool rightArc(WordId l, WordId w);
+  //bool rightArc(WordId l, WordId w);
   
   bool reduce();
 
@@ -39,7 +39,7 @@ class ArcEagerLabelledParser : public TransitionParser {
  
   Words tagContext() const;
  
-  Words tagContext(kAction a) const;
+  //Words tagContext(kAction a) const;
 
   Words actionContext() const;
  
@@ -60,7 +60,7 @@ class ArcEagerLabelledParser : public TransitionParser {
     if (stack_depth() == 0)
       return false;    
     WordIndex i = stack_top();
-    return (!has_parent_at(i));
+    return (has_parent_at(i));
   }
 
   WordId action_label_at(int i) const {
@@ -107,6 +107,10 @@ class ArcEagerLabelledParser : public TransitionParser {
       return kAction::re;
     else
       return kAction::re;
+  }
+
+  bool shift_action(WordId l) const {
+    return ((l == 0) || ((l > num_labels() + 1) && (l < 2*num_labels() + 1)));
   }
 
   WordId lookup_label(WordId l) const {

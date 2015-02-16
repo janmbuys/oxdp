@@ -212,7 +212,7 @@ void AccuracyCounts::countAccuracy(const ArcEagerLabelledParser& prop_parse,
     WordId nextLabel = simul.oracleNextLabel(gold_parse);
 
     //count when shifted/reduced when it should have shifted/reduced
-    if (next==kAction::sh || next==kAction::ra) {
+    if (next==kAction::sh) { // || next==kAction::ra) {
       inc_shift_gold();
       if (a==kAction::sh || a==kAction::ra)
         inc_shift_count();

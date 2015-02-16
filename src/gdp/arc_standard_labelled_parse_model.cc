@@ -2,7 +2,6 @@
 
 namespace oxlm {
 
-//TODO 
 template<class ParsedWeights>
 ArcStandardLabelledParseModel<ParsedWeights>::ArcStandardLabelledParseModel(boost::shared_ptr<ModelConfig> config):
   config_(config)
@@ -33,7 +32,7 @@ void ArcStandardLabelledParseModel<ParsedWeights>::reallocateParticles(AslParser
       }
     }
   
-  //TODO test without this 
+  //TODO test with(out) this 
   //sample_counts[best_i] += num_particles - std::accumulate(sample_counts.begin(), sample_counts.end(), 0);
 
   for (unsigned i = 0; i < beam_stack->size(); ++i) {

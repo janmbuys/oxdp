@@ -67,18 +67,19 @@ bool ArcEagerLabelledParser::leftArc(WordId l) {
 }
 
 bool ArcEagerLabelledParser::rightArc(WordId l) {
-  //add right arc and shift
   WordIndex i = stack_top();
   WordIndex j = buffer_next();
   set_arc(j, i);
   set_label(j, l);
-  pop_buffer();
-  push_stack(j);
+  //don't shift
+  //pop_buffer();
+  //push_stack(j);
   append_action(kAction::ra);
   append_action_label(l);
   return true;
 }
 
+/*
 bool ArcEagerLabelledParser::rightArc(WordId l, WordId w) {
   //add right arc and shift
   WordIndex i = stack_top();
@@ -89,13 +90,14 @@ bool ArcEagerLabelledParser::rightArc(WordId l, WordId w) {
   
   set_arc(j, i);
   set_label(j, l);
-  if (!buffer_empty()) 
-    pop_buffer();
-  push_stack(j);
+  //don't shift
+  //if (!buffer_empty()) 
+  // pop_buffer();
+  //push_stack(j);
   append_action(kAction::ra);
   append_action_label(l);
   return true;
-}
+} */
 
 //Give the label for reduce action, if at all valid 
 WordId ArcEagerLabelledParser::oracleNextLabel(const ParsedSentence& gold_parse) const {
@@ -181,7 +183,7 @@ bool ArcEagerLabelledParser::executeAction(kAction a, WordId l) {
 
 Words ArcEagerLabelledParser::wordContext() const {
   if (pyp_model())
-    return word_tag_next_children_context(); //order 7
+    return word_tag_next_children_context(); //order 9
   else {
     if (context_type() == "extended") 
       return extended_word_next_children_context(); //order 13
@@ -195,7 +197,7 @@ Words ArcEagerLabelledParser::tagContext() const {
 }
  
 //TODO remove when right-arc is redefined
-Words ArcEagerLabelledParser::tagContext(kAction a) const {
+/*Words ArcEagerLabelledParser::tagContext(kAction a) const {
   Words ctx = tag_next_children_context(); //order 7 + 1
   ctx.push_back(ctx.back());
   if (a == kAction::ra)
@@ -203,7 +205,7 @@ Words ArcEagerLabelledParser::tagContext(kAction a) const {
   else
     ctx.at(ctx.size()-2) = 0;
   return ctx;
-}
+} */
 
 Words ArcEagerLabelledParser::actionContext() const {
   if (pyp_model()) {
@@ -226,9 +228,9 @@ void ArcEagerLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSe
     kAction a = actions().at(i);
     WordId lab = action_label_at(i);
 
-    if (a == kAction::sh || a == kAction::ra) {
+    if (a == kAction::sh) {   // || a == kAction::ra) {
       //tag prediction
-      examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext(a)));  
+      examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext()));  
        
       //word prediction
       examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  

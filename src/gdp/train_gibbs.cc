@@ -47,12 +47,16 @@ int main(int argc, char** argv) {
         "Visit the training tokens in random order.")
     ("parser-type", value<std::string>()->default_value("arcstandard"),
         "Parsing strategy.")
+    ("context-type", value<std::string>()->default_value(""),
+        "Conditioning context used.")    
     ("labelled-parser", value<bool>()->default_value(false),
         "Predict arc labels.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
     ("root-first", value<bool>()->default_value(true),
         "Add root to the beginning (else end) of the sentence.")
+    ("bootstrap", value<bool>()->default_value(false),
+        "Extract training data with beam search.")
     ("char-lexicalised", value<bool>()->default_value(false),
         "Predict words with character-based LM.")
     ("semi-supervised", value<bool>()->default_value(false),
@@ -61,6 +65,8 @@ int main(int argc, char** argv) {
         "Maximum beam size for decoding (in powers of 2).")
     ("max-beam-increment", value<int>()->default_value(1),
         "Maximum items to add to beam from one state.")
+    ("generate-samples", value<int>()->default_value(0),
+        "  Maximum items to add to beam from one state.")
     ("direction-det", value<bool>()->default_value(false),
         "Arc direction always deterministic in beam search.")
     ("sum-over-beam", value<bool>()->default_value(false),
@@ -85,7 +91,7 @@ int main(int argc, char** argv) {
   }
 
   if (vm.count("help")) {
-    std::cout << cmdline_options << "\n";
+    std::cerr << cmdline_options << "\n";
     return 1;
   }
 
@@ -115,8 +121,9 @@ int main(int argc, char** argv) {
   config->minibatch_size_unsup = vm["minibatch-size-unsup"].as<int>();
   config->randomise = vm["randomise"].as<bool>();
 
+  config->context_type = vm["context-type"].as<std::string>(); //not currently used
   std::string parser_type_str = vm["parser-type"].as<std::string>();
-  if (parser_type_str == "arcstandard")
+  if (parser_type_str == "arcstandard") 
     config->parser_type = ParserType::arcstandard; 
   else if (parser_type_str == "arceager")
     config->parser_type = ParserType::arceager; 
@@ -133,25 +140,41 @@ int main(int argc, char** argv) {
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
   config->resample = vm["particle-resample"].as<bool>();
   config->root_first = vm["root-first"].as<bool>();
+  config->bootstrap = vm["bootstrap"].as<bool>();
   config->num_particles = vm["num-particles"].as<int>();
   config->max_beam_increment = vm["max-beam-increment"].as<int>();
+  config->generate_samples = vm["generate-samples"].as<int>();
 
   config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
-  //config->beam_sizes = {0, 1};
   //for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
   //  config->beam_sizes.push_back(i);
  
-  std::cout << "################################" << std::endl;
-  std::cout << "# Config Summary" << std::endl;
-  std::cout << "# training set = " << config->training_file << std::endl;
-  std::cout << "# minibatch size = " << config->minibatch_size << std::endl;
-  std::cout << "# iterations = " << config->iterations << std::endl;
-  std::cout << "# randomise = " << config->randomise << std::endl;
-  std::cout << "# parser type = " << parser_type_str << std::endl;
-  std::cout << "# lexicalised = " << config->lexicalised << std::endl;
-  std::cout << "# semi-supervised = " << config->semi_supervised << std::endl;
+  std::cerr << "################################" << std::endl;
+  std::cerr << "# Config Summary" << std::endl;
+    std::cerr << "# parser type = " << parser_type_str << std::endl;
+  std::cerr << "# context type = " << config->context_type << std::endl;
+  std::cerr << "# labelled parser = " << config->labelled_parser << std::endl;
+  std::cerr << "# lexicalised parser = " << config->lexicalised << std::endl;
+  std::cerr << "# root first = " << config->root_first << std::endl;
+  std::cerr << "# bootstrap = " << config->bootstrap << std::endl;
+  std::cerr << "# direction deterministic = " << config->direction_deterministic << std::endl;
+  std::cerr << "# sum over beam = " << config->sum_over_beam << std::endl;
+  std::cerr << "# max beam size = " << config->beam_sizes.back() << std::endl;
 
-  std::cout << "################################" << std::endl;
+  std::cerr << "# supervised training data = " << config->training_file << std::endl;
+  std::cerr << "# unsupervised training data = " << config->training_file_unsup << std::endl;
+  std::cerr << "# question training data = " << config->training_file_ques << std::endl;
+  std::cerr << "# semi-supervised = " << config->semi_supervised << std::endl;
+  std::cerr << "# character LM = " << config->char_lexicalised << std::endl;
+  std::cerr << "# minibatch size = " << config->minibatch_size << std::endl;
+  std::cerr << "# particle resample = " << config->resample << std::endl;
+  std::cerr << "# number of particles = " << config->num_particles << std::endl;
+  std::cerr << "# iterations = " << config->iterations << std::endl;
+  std::cerr << "# randomise = " << config->randomise << std::endl;
+
+
+
+  std::cerr << "################################" << std::endl;
 
   if (config->parser_type == ParserType::ngram) {
     PypModel model(config); 
