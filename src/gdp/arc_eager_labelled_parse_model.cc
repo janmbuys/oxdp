@@ -185,165 +185,139 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamDiscrimina
 
 }
 
-//TODO
 template<class ParsedWeights>
 ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParseSentence(const ParsedSentence& sent, 
                            const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) {
   AelParserList beam_stack; 
- /* beam_chart.push_back(AelParserList());
-  beam_chart[0].push_back(boost::make_shared<ArcEagerLabelledParser>(static_cast<TaggedSentence>(sent), config_->num_labels)); 
 
-  
-  //shift ROOT symbol (probability 1)
-  beam_chart[0][0]->shift(); 
+  beam_stack.push_back(boost::make_shared<ArcEagerLabelledParser>(static_cast<TaggedSentence>(sent), config_)); 
 
-  //add reduce actions, then shift word k (expect for last iteration) 
-  for (unsigned k = 1; k < sent.size(); ++k) {
-    //there are k beam lists. perform reduces down to list 1
-    for (unsigned i = k - 1; i > 0; --i) { 
-      //prune if size exceeds beam_size
-      if (beam_chart[i].size() > beam_size) {
-        std::sort(beam_chart[i].begin(), beam_chart[i].end(), TransitionParser::cmp_particle_weights); //handle pointers
-        //remove items with worst scores
-        for (unsigned j = beam_chart[i].size(); j > beam_size; --j)
-          beam_chart[i].pop_back();
-      }
+  for (unsigned i = 0; (i < sent.size()); ++i) {
+    //TODO test if worst_weight helps  -> causes a bug here
+    double worst_weight = beam_stack[beam_stack.size() - 1]->particle_weight();
 
-      //std::cout << "reduce list size: " << beam_chart[i].size() << std::endl;
-      //consider reduce and left arc actions
-      //for every item in the list, add valid reduce actions to list i - 1 
-      for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
-        Real leftarcreducep = weights->predictAction(static_cast<WordId>(kAction::la), 
-                                                       beam_chart[i][j]->actionContext());
-        Real reducep = weights->predictAction(static_cast<WordId>(kAction::re), 
-                                                       beam_chart[i][j]->actionContext());
-        //std::cout << "(la: " << leftarcreducep << ", re: " << reducep << ") ";
-        //Real reducetotalp = neg_log_sum_exp(leftarcreducep, reducep);
-       
-        //actually also need importance weight if either is invalid
-        //left arc invalid also after last shift
-        if (beam_chart[i][j]->left_arc_valid()) { 
-          beam_chart[i-1].push_back(boost::make_shared<ArcEagerLabelledParser>(*beam_chart[i][j]));
-          beam_chart[i-1].back()->leftArc(0);
-          beam_chart[i-1].back()->add_particle_weight(leftarcreducep);
+    for (unsigned j = 0; j < beam_stack.size(); ++j) { 
+      //reduce actions are direction deterministic
+      Reals action_probs = weights->predictAction(beam_stack[j]->actionContext());
+      Real shiftp = action_probs[0];
+      if (beam_stack[j]->num_particles() == 0)
+
+      if ((!beam_stack[j]->stack_empty()) && (beam_stack[j]->last_action() != kAction::ra)) {
+         // && ((j < beam_size) || (!config_->root_first && (i == sent.size() -1)) || (beam_stack[j]->particle_weight() < worst_weight))) { 
+        //add reduce actions
+        if (beam_stack[j]->reduce_valid()) {
+          Real reducep = action_probs.back();
+          beam_stack.push_back(boost::make_shared<ArcEagerLabelledParser>(*beam_stack[j]));
+          beam_stack.back()->reduce();
+        } else if (beam_stack[j]->left_arc_valid()) {
+          //sort to find the best left-arc actions
+          std::vector<int> indices(config_->num_labels);
+          std::iota(indices.begin(), indices.end(), 1);
+          std::sort(indices.begin(), indices.end(), [&action_probs](const int i, const int j) 
+                {return (action_probs[i] < action_probs[j]);});
+          for (unsigned l = 0; (l < beam_size && l < config_->max_beam_increment); ++l) {
+            WordIndex reduce_pred = indices[l];
+            Real reducep = action_probs[reduce_pred];
+            WordId re_label = beam_stack[j]->lookup_label(reduce_pred);
+            //don't add hypothesis guaranteed to be off the beam
+            //if ((j < beam_size) || (beam_stack[j]->particle_weight() + reducep < worst_weight)) {
+              beam_stack.push_back(boost::make_shared<ArcEagerLabelledParser>(*beam_stack[j]));
+              beam_stack.back()->leftArc(re_label);
+              beam_stack.back()->add_particle_weight(reducep);
+            //}
+          }
         } 
-        //else //TODO temp experiment - basically no difference
-        if (beam_chart[i][j]->reduce_valid()) {          
-          beam_chart[i-1].push_back(boost::make_shared<ArcEagerLabelledParser>(*beam_chart[i][j]));
-          beam_chart[i-1].back()->reduce();
-          beam_chart[i-1].back()->add_particle_weight(reducep); 
-          
+
+        //right-arcs added and shifted when reached later in loop
+        if (config_->root_first || (i < sent.size() - 1)) {
+          std::vector<int> indices(config_->num_labels);
+          std::iota(indices.begin(), indices.end(), config_->num_labels + 1);
+          std::sort(indices.begin(), indices.end(), [&action_probs](const int i, const int j) 
+              {return (action_probs[i] < action_probs[j]);});
+          for (unsigned l = 0; (l < beam_size && l < config_->max_beam_increment); ++l) {
+            WordIndex reduce_pred = indices[l];
+            Real reducep = action_probs[reduce_pred];
+            WordId re_label = beam_stack[j]->lookup_label(reduce_pred);
+            //don't add hypothesis guaranteed to be off the beam
+            //if ((j < beam_size) || (beam_stack[j]->particle_weight() + reducep < worst_weight)) {
+              beam_stack.push_back(boost::make_shared<ArcEagerLabelledParser>(*beam_stack[j]));
+              beam_stack.back()->rightArc(re_label);
+              beam_stack.back()->add_particle_weight(reducep);
+            //}
+          }
         }
+      } else {
+        shiftp = 0;
       }
-      //std::cout << std::endl;
+
+      if ((beam_stack[j]->num_particles() > 0) && (beam_stack[j]->particle_weight() > worst_weight))
+        worst_weight = beam_stack[j]->particle_weight();
+
+      if (config_->root_first || (i < sent.size() - 1) || beam_stack[j]->stack_empty()) {
+        //shift
+        Real tagp = weights->predictTag(beam_stack[j]->next_tag(), beam_stack[j]->tagContext());
+        Real wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+
+        beam_stack[j]->shift();
+        beam_stack[j]->add_particle_weight(shiftp); 
+        beam_stack[j]->add_particle_weight(wordp); 
+        beam_stack[j]->add_particle_weight(tagp); 
+        beam_stack[j]->add_importance_weight(wordp); 
+        beam_stack[j]->add_importance_weight(tagp); 
+      } else {
+        beam_stack[j]->set_num_particles(0);
+      }
     }
 
-    if (beam_chart[0].size() > beam_size) {
-        std::sort(beam_chart[0].begin(), beam_chart[0].end(), TransitionParser::cmp_particle_weights); //handle pointers
-        //remove items with worst scores
-        for (unsigned j = beam_chart[0].size(); j > beam_size; --j)
-          beam_chart[0].pop_back();
+    //prune the beam
+    if (beam_stack.size() > beam_size) {
+      std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_particle_weights); 
+      for (int j = beam_stack.size()- 1; ((j >= beam_size) || ((j >= 0) && (beam_stack[j]->num_particles() == 0))); --j)
+        beam_stack.pop_back();
     }
 
-    //perform shifts: shift or right arc
-    for (unsigned i = 0; (i < k); ++i) { 
-      unsigned list_size = beam_chart[i].size();
-      for (unsigned j = 0; j < list_size; ++j) {
-          
-        Real shiftp = weights->predictAction(static_cast<WordId>(kAction::sh), 
-                                              beam_chart[i][j]->actionContext());
-        Real rightarcshiftp = weights->predictAction(static_cast<WordId>(kAction::ra), 
-                                              beam_chart[i][j]->actionContext());
-        //Real shifttotalp = neg_log_sum_exp(shiftp, rightarcshiftp);
-        //std::cout << "(sh: " << shiftp << ", ra: " << rightarcshiftp << ") ";
+   }
 
-        //ra not valid for stop symbol
-        if (k < (sent.size() - 1)) {
-          Real tagp = weights->predictTag(beam_chart[i][j]->next_tag(), 
-                                           beam_chart[i][j]->tagContext(kAction::ra));
-          Real wordp = weights->predictWord(beam_chart[i][j]->next_word(), 
-                                             beam_chart[i][j]->wordContext());
-         
-          beam_chart[i].push_back(boost::make_shared<ArcEagerLabelledParser>(*beam_chart[i][j]));
-          beam_chart[i].back()->rightArc(0);
-          beam_chart[i].back()->add_particle_weight(rightarcshiftp);
-          beam_chart[i].back()->add_importance_weight(tagp); 
-          beam_chart[i].back()->add_importance_weight(wordp); 
-          beam_chart[i].back()->add_particle_weight(tagp); 
-          beam_chart[i].back()->add_particle_weight(wordp); 
+  //sum over identical parses in final beam 
+  vector<bool> duplicate(beam_stack.size(), false);
+  if (config_->sum_over_beam) {
+    for (unsigned i = 0; (i < beam_stack.size()-1); ++i) {
+      if (!duplicate[i])
+        for (unsigned j = i + 1; (j < beam_stack.size()); ++j) {
+          if (ParsedSentence::eq_arcs(beam_stack[i], beam_stack[j])) {
+            beam_stack[i]->add_log_particle_weight(beam_stack[j]->particle_weight());          
+            duplicate[j] = true;
+          }
         }
-
-        //shift is valid
-        Real tagp = weights->predictTag(beam_chart[i][j]->next_tag(), 
-                                           beam_chart[i][j]->tagContext(kAction::sh));
-        Real wordp = weights->predictWord(beam_chart[i][j]->next_word(), 
-                                             beam_chart[i][j]->wordContext());
-          
-        beam_chart[i][j]->shift();
-        beam_chart[i][j]->add_particle_weight(shiftp); 
-        beam_chart[i][j]->add_importance_weight(tagp); 
-        beam_chart[i][j]->add_importance_weight(wordp); 
-        beam_chart[i][j]->add_particle_weight(tagp); 
-        beam_chart[i][j]->add_particle_weight(wordp); 
-      }
-    }
-    //insert new beam_chart[0] to increment indexes
-    beam_chart.insert(beam_chart.begin(), AelParserList());
-       
-    //std::cout << std::endl;
-  }
- 
-  //completion: reduce after last shift
-  //std::cout << "completion" << std::endl;
-  for (unsigned i = beam_chart.size() - 1; i > 0; --i) {  //sent.size()
-    //prune if size exceeds beam_size
-    if (beam_chart[i].size() > beam_size) {
-      std::sort(beam_chart[i].begin(), beam_chart[i].end(), ArcEagerLabelledParser::cmp_reduce_particle_weights); //handle pointers
-      //remove items with worst scores, and those that cannot reduce
-      for (unsigned j = beam_chart[i].size() - 1; ((j >= beam_size) || ((j > 0) && !beam_chart[i][j]->reduce_valid())); --j)
-        beam_chart[i].pop_back();
-    }
-
-    //std::cout << i <<  " reduce list size: " << beam_chart[i].size() << std::endl;
-    //consider reduce and left arc actions
-    //for every item in the list, add valid reduce actions to list i - 1 
-    for (unsigned j = 0; (j < beam_chart[i].size()); ++j) {
-      Real reducep = weights->predictAction(static_cast<WordId>(kAction::re), 
-                                             beam_chart[i][j]->actionContext());
-                
-      if (beam_chart[i][j]->reduce_valid()) {  
-        beam_chart[i-1].push_back(boost::make_shared<ArcEagerLabelledParser>(*beam_chart[i][j]));
-        beam_chart[i-1].back()->reduce();
-        //in some models, don't add the weights TODO
-        //beam_chart[i-1].back()->add_particle_weight(reducep); 
-        //beam_chart[i-1].back()->add_importance_weight(reducep); 
-        //std::cout << j << " re valid ";
-      }
-    }
-    //std::cout << std::endl;
+    } 
   }
 
-  std::sort(beam_chart[0].begin(), beam_chart[0].end(), TransitionParser::cmp_particle_weights); //handle pointers
+  //eliminate incomplete parses in root-first parser
+  if (config_->root_first) {
+    for (unsigned j = 0; j < beam_stack.size(); ++j) { 
+      while ((beam_stack[j]->num_particles() > 0) && (beam_stack[j]->stack_depth() >= 2)) {
+        if (beam_stack[j]->reduce_valid()) {
+          Real reducep = weights->predictAction(config_->numActions()-1, beam_stack[j]->actionContext());
+          beam_stack[j]->reduce();
+          beam_stack[j]->add_particle_weight(reducep);
+        } else {
+          beam_stack[j]->set_num_particles(0);
+        }
+      }
+    }
+  }
 
-  //print parses
-  unsigned const n = 0; 
-  //std::cout << "Beam size: " << beam_chart[n].size() << std::endl;
-  for (unsigned i = 0; (i < beam_chart[n].size()); ++i) 
-    beam_chart[n][0]->add_beam_weight(beam_chart[n][i]->particle_weight());
+  if (beam_stack.size() > 0)
+    std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_particle_weights); 
 
-  for (unsigned i = 0; (i < 5) && (i < beam_chart[n].size()); ++i) {
-    //std::cout << beam_chart[n][i]->particle_weight() << " ";
-    //beam_chart[n][i]->print_arcs();
-    //beam_chart[n][i]->print_actions();
+  //compute beam weight
+  for (unsigned i = 0; (i < beam_stack.size()); ++i)
+    if (!duplicate[i] && (beam_stack[i]->num_particles() > 0)) 
+      beam_stack[0]->add_beam_weight(beam_stack[i]->particle_weight()); 
 
-    //float dir_acc = (beam_chart[n][i]->directed_accuracy_count(gold_dep) + 0.0)/(sent.size()-1);
-    //std::cout << "  Dir Accuracy: " << dir_acc;
-    //std::cout << "  Sample weight: " << (beam_chart[n][i]->particle_weight()) << std::endl;
-  } */
-
-  if (beam_stack.size()==0) {
+  if (beam_stack.size()==0 || beam_stack[0]->num_particles() == 0) {
     std::cout << "no parse found" << std::endl;
-  return ArcEagerLabelledParser(static_cast<TaggedSentence>(sent), config_);  
+    return ArcEagerLabelledParser(static_cast<TaggedSentence>(sent), config_);  
   } else {
     return ArcEagerLabelledParser(*beam_stack[0]); 
   }
@@ -372,7 +346,7 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::staticGoldPars
     a = parser.oracleNext(sent);
     WordId lab = parser.oracleNextLabel(sent);
     WordId la = parser.convert_action(a, lab);
-    Real actionp = weights->predictAction(static_cast<WordId>(a), parser.actionContext());
+    Real actionp = weights->predictAction(la, parser.actionContext());
     parser.add_particle_weight(actionp);
 
     if (a != kAction::sh) 
@@ -557,6 +531,8 @@ Parser ArcEagerLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedS
     parse = greedyParseSentence(sent, weights);
   else
     parse = beamParseSentence(sent, weights, beam_size);
+    //parse = beamParticleParseSentence(sent, weights, beam_size);
+  parse.print_actions();
 
   acc_counts->countAccuracy(parse, sent);
   ArcEagerLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
