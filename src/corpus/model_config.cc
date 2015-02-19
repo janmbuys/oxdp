@@ -12,8 +12,8 @@ ModelConfig::ModelConfig()
       activation(Activation::linear), pyp_model(false), labelled_parser(false), 
       lexicalised(false), char_lexicalised(false), semi_supervised(false), 
       direction_deterministic(false), sum_over_beam(false), resample(false), 
-      root_first(true), bootstrap(false), max_beam_increment(1), num_particles(1), 
-      generate_samples(0), num_tags(1), num_labels(1), beam_sizes(1, 1) {}
+      root_first(true), bootstrap(false), complete_parse(true), max_beam_increment(1), 
+      num_particles(1), generate_samples(0), num_tags(1), num_labels(1), beam_sizes(1, 1) {}
 
 int ModelConfig::numActions() const {
   if (parser_type == ParserType::arcstandard)
@@ -48,6 +48,7 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
       && char_lexicalised == other.char_lexicalised
       && semi_supervised == other.semi_supervised
       && root_first == other.root_first
+      && complete_parse == other.complete_parse
       && num_tags == other.num_tags
       && num_labels == other.num_labels);
 }

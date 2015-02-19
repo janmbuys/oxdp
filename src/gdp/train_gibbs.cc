@@ -57,6 +57,8 @@ int main(int argc, char** argv) {
         "Add root to the beginning (else end) of the sentence.")
     ("bootstrap", value<bool>()->default_value(false),
         "Extract training data with beam search.")
+    ("complete-parse", value<bool>()->default_value(true),
+        "Enforce complete tree-structured parse.")
     ("char-lexicalised", value<bool>()->default_value(false),
         "Predict words with character-based LM.")
     ("semi-supervised", value<bool>()->default_value(false),
@@ -144,6 +146,7 @@ int main(int argc, char** argv) {
   config->num_particles = vm["num-particles"].as<int>();
   config->max_beam_increment = vm["max-beam-increment"].as<int>();
   config->generate_samples = vm["generate-samples"].as<int>();
+  config->complete_parse = vm["complete-parse"].as<bool>();
 
   config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
   //for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
@@ -158,6 +161,7 @@ int main(int argc, char** argv) {
   std::cerr << "# root first = " << config->root_first << std::endl;
   std::cerr << "# bootstrap = " << config->bootstrap << std::endl;
   std::cerr << "# direction deterministic = " << config->direction_deterministic << std::endl;
+  std::cerr << "# complete parse = " << config->complete_parse << std::endl;
   std::cerr << "# sum over beam = " << config->sum_over_beam << std::endl;
   std::cerr << "# max beam size = " << config->beam_sizes.back() << std::endl;
 

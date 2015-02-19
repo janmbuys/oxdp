@@ -51,6 +51,7 @@ struct ModelConfig {
   bool        sum_over_beam;
   bool        resample;
   bool        root_first;
+  bool        complete_parse;
   bool        bootstrap;
   int         max_beam_increment;
   int         num_particles;
@@ -98,6 +99,7 @@ struct ModelConfig {
     ar & sum_over_beam;
     ar & resample;
     ar & root_first;
+    ar & complete_parse;
     ar & bootstrap;
     ar & max_beam_increment;
     ar & num_particles;

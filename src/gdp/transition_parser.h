@@ -219,7 +219,7 @@ class TransitionParser: public Parser {
       WordIndex p = arc_at(buffer_next());
       if (p >= 0) {
         ctx[6] = tag_at(p);
-        ctx[1] = word_at(p);
+        //ctx[1] = word_at(p);
       }
     }
 
@@ -244,6 +244,39 @@ class TransitionParser: public Parser {
       ctx[0] = word_at(i-3); 
     }
     
+    return ctx;
+  }
+
+  Words word_children_lookahead_context() const {
+    Words ctx(9, 0);
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+
+      ctx[0] = word_at(stack_.at(stack_.size()-1));
+      if (l1 >= 0)
+        ctx[1] = word_at(l1); 
+      if (r1 >= 0)
+        ctx[2] = word_at(r1);
+    }
+    if (stack_.size() >= 2) {
+      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      WordIndex l2 = leftmost_child_at(stack_.at(stack_.size()-2));
+
+      ctx[3] = word_at(stack_.at(stack_.size()-2));
+      if (l2 >= 0)
+        ctx[4] = word_at(l2);
+      if (r2 >= 0)
+        ctx[5] = word_at(r2); 
+    }
+
+    if (buffer_next() < size())
+      ctx[6] = word_at(buffer_next());
+    if (buffer_next() + 1 < size())
+      ctx[7] = word_at(buffer_next() + 1);
+    if (buffer_next() + 2 < size())
+      ctx[8] = word_at(buffer_next() + 2);
+
     return ctx;
   }
 
@@ -483,8 +516,48 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
-  Words word_next_children_context() const {
-    Words ctx(7, 0);
+ Words word_next_children_context() const {
+    Words ctx(8, 0);
+    
+    if (stack_.size() >= 1) { 
+      WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex r2 = second_rightmost_child_at(stack_.at(stack_.size()-1));
+      WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
+      
+      ctx[0] = word_at(stack_.at(stack_.size()-1));
+      if (l1 >= 0) {
+        ctx[1] = word_at(l1);
+      }
+      if (r1 >= 0 && (r1 != buffer_next())) {
+        ctx[2] = word_at(r1);
+      }
+      if (r2 >= 0) {
+        ctx[3] = word_at(r2);
+      }
+    }
+    if (stack_.size() >= 2) { 
+      ctx[4] = word_at(stack_.at(stack_.size()-2));
+    }
+
+    if (!buffer_empty()) {
+      WordIndex bl1 = leftmost_child_at(buffer_next());
+      WordIndex bl2 = second_leftmost_child_at(buffer_next());
+      WordIndex p = arc_at(buffer_next());
+      if (bl1 >= 0)
+        ctx[5] = word_at(bl1);
+      if (bl2 >= 0)
+        ctx[6] = word_at(bl2);
+
+      if (p >= 0) {
+        ctx[7] = word_at(p);
+      }
+    }
+
+    return ctx;
+  }
+
+  Words word_next_children_lookahead_context() const {
+    Words ctx(11, 0);
     
     if (stack_.size() >= 1) { 
       WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
@@ -509,19 +582,29 @@ class TransitionParser: public Parser {
     if (!buffer_empty()) {
       WordIndex bl1 = leftmost_child_at(buffer_next());
       WordIndex bl2 = second_leftmost_child_at(buffer_next());
-
+      WordIndex p = arc_at(buffer_next());
       if (bl1 >= 0)
         ctx[5] = word_at(bl1);
-        
       if (bl2 >= 0)
         ctx[6] = word_at(bl2);
+
+      if (p >= 0) {
+        ctx[7] = word_at(p);
+      }
     }
+
+    if (buffer_next() < size())
+      ctx[8] = word_at(buffer_next());
+    if (buffer_next() + 1 < size())
+      ctx[9] = word_at(buffer_next() + 1);
+    if (buffer_next() + 2 < size())
+      ctx[10] = word_at(buffer_next() + 2);
 
     return ctx;
   }
 
   Words extended_word_next_children_context() const {
-    Words ctx(12, 0);
+    Words ctx(13, 0);
     
     if (stack_.size() >= 1) { 
       WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
@@ -532,7 +615,7 @@ class TransitionParser: public Parser {
       ctx[0] = word_at(stack_.at(stack_.size()-1));
       if (l1 >= 0)
         ctx[1] = word_at(l1); 
-      if (r1 >= 0)
+      if (r1 >= 0 && (r1 != buffer_next())) 
         ctx[2] = word_at(r1);
       if (l2 >= 0)
         ctx[3] = word_at(l2); 
@@ -552,19 +635,23 @@ class TransitionParser: public Parser {
     if (!buffer_empty()) {
       WordIndex bl1 = leftmost_child_at(buffer_next());
       WordIndex bl2 = second_leftmost_child_at(buffer_next());
+      WordIndex p = arc_at(buffer_next());
 
       if (bl1 >= 0)
         ctx[8] = word_at(bl1);
-        
       if (bl2 >= 0)
         ctx[9] = word_at(bl2);
+
+      if (p >= 0) {
+        ctx[10] = word_at(p);
+      }
     }
 
     if (stack_.size() >= 3) {
-      ctx[10] = word_at(stack_.at(stack_.size()-3));
+      ctx[11] = word_at(stack_.at(stack_.size()-3));
     }
     if (stack_.size() >= 4) {
-      ctx[11] = word_at(stack_.at(stack_.size()-4));
+      ctx[12] = word_at(stack_.at(stack_.size()-4));
     } 
 
     return ctx;
@@ -579,8 +666,8 @@ class TransitionParser: public Parser {
       
       ctx[5] = tag_at(stack_.at(stack_.size()-1));
       if (l1 >= 0)
-        ctx[0] = tag_at(l1); 
-      if (r1 >= 0)
+        ctx[2] = tag_at(l1); 
+      if (r1 >= 0 && (r1 != buffer_next())) 
         ctx[3] = tag_at(r1); 
 
     }
@@ -592,11 +679,11 @@ class TransitionParser: public Parser {
     }
     
     if (stack_.size() >= 2) { 
-      ctx[2] = tag_at(stack_.at(stack_.size()-2)); 
+      ctx[1] = tag_at(stack_.at(stack_.size()-2)); 
     }
     
     if (stack_.size() >= 3) { 
-      ctx[1] = tag_at(stack_.at(stack_.size()-3)); 
+      ctx[0] = tag_at(stack_.at(stack_.size()-3)); 
     }
 
     return ctx;
@@ -610,11 +697,11 @@ class TransitionParser: public Parser {
       WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[6] = tag_at(stack_.at(stack_.size()-1));
-      ctx[4] = word_at(stack_.at(stack_.size()-1));
+      ctx[0] = word_at(stack_.at(stack_.size()-1));
       if (l1 >= 0)
-        ctx[0] = tag_at(l1); 
-      if (r1 >= 0)
-        ctx[3] = tag_at(r1); 
+        ctx[3] = tag_at(l1); 
+      if (r1 >= 0 && (r1 != buffer_next())) 
+        ctx[4] = tag_at(r1); 
 
     }
 

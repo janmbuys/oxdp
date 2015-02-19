@@ -14,11 +14,13 @@ using namespace boost::program_options;
 using namespace oxlm;
 
 #define lblOrderAS 7
+#define lblOrderASl 10
 #define lblOrderASn 13
 #define lblOrderASx 13
 #define lblOrderASxx 17
-#define lblOrderAE 7
-#define lblOrderAEx 13
+#define lblOrderAE 8
+#define lblOrderAEl 12
+#define lblOrderAEx 14
 #define lblOrderE 6
 
 template<class ParseModel, class ParsedWeights, class LblMetadata>
@@ -84,6 +86,8 @@ int main(int argc, char** argv) {
         "Use additional, unlabelled training data.")
     ("root-first", value<bool>()->default_value(true),
         "Add root to the beginning (else end) of the sentence.")
+    ("complete-parse", value<bool>()->default_value(true),
+        "Enforce complete tree-structured parse.")
     ("bootstrap", value<bool>()->default_value(false),
         "Extract training data with beam search.")
     ("max-beam-size", value<int>()->default_value(8),
@@ -157,12 +161,18 @@ int main(int argc, char** argv) {
       config->ngram_order = lblOrderASx;
     else if (config->context_type == "more-extended")
       config->ngram_order = lblOrderASxx;
+    else if (config->context_type == "with-ngram")
+      config->ngram_order = lblOrderASn;
+    else if (config->context_type == "lookahead")
+      config->ngram_order = lblOrderASl;
     else
       config->ngram_order = lblOrderAS;
   } else if (parser_type_str == "arceager") {
     config->parser_type = ParserType::arceager;
     if (config->context_type == "extended")
       config->ngram_order = lblOrderAEx;
+    else if (config->context_type == "lookahead")
+      config->ngram_order = lblOrderAEl;
     else
       config->ngram_order = lblOrderAE;
   } else if (parser_type_str == "eisner") {
@@ -190,6 +200,7 @@ int main(int argc, char** argv) {
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
   config->semi_supervised = vm["semi-supervised"].as<bool>();
   config->root_first = vm["root-first"].as<bool>();
+  config->complete_parse = vm["complete-parse"].as<bool>();
   config->bootstrap = vm["bootstrap"].as<bool>();
   config->max_beam_increment = vm["max-beam-increment"].as<int>();
   config->generate_samples = vm["generate-samples"].as<int>();
@@ -227,6 +238,7 @@ int main(int argc, char** argv) {
   std::cerr << "# lexicalised parser = " << config->lexicalised << std::endl;
   std::cerr << "# root first = " << config->root_first << std::endl;
   std::cerr << "# bootstrap = " << config->bootstrap << std::endl;
+  std::cerr << "# complete parse = " << config->complete_parse << std::endl;
   std::cerr << "# direction deterministic = " << config->direction_deterministic << std::endl;
   std::cerr << "# sum over beam = " << config->sum_over_beam << std::endl;
   std::cerr << "# max beam size = " << config->beam_sizes.back() << std::endl;

@@ -186,9 +186,11 @@ Words ArcEagerLabelledParser::wordContext() const {
     return word_tag_next_children_context(); //order 9
   else {
     if (context_type() == "extended") 
-      return extended_word_next_children_context(); //order 13
+      return extended_word_next_children_context(); //order 14
+    else if (context_type() == "lookahead")
+      return word_next_children_lookahead_context(); //order 12
     else
-      return word_next_children_context(); //order 7
+      return word_next_children_context(); //order 8
   }
 }
 
@@ -215,9 +217,11 @@ Words ArcEagerLabelledParser::actionContext() const {
       return tag_next_children_context(); //order 7
   } else {
     if (context_type() == "extended") 
-      return extended_word_next_children_context(); //order 13
+      return extended_word_next_children_context(); //order 14
+    else if (context_type() == "lookahead")
+      return word_next_children_lookahead_context(); //order 12
     else
-      return word_next_children_context(); //order 7
+      return word_next_children_context(); //order 8
   }
 }
 
@@ -234,6 +238,10 @@ void ArcEagerLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSe
        
       //word prediction
       examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
+      std::cout << parser.next_word() << ": ";
+      for (auto w: parser.wordContext())
+        std::cout << w << " ";
+      std::cout << std::endl;
     }  
 
     //labelled action prediction 

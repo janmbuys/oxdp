@@ -82,12 +82,28 @@ public:
     ++undirected_count_nopunc_;
   }
 
+  void inc_unheaded_count() {
+    ++unheaded_count_;
+  }
+
+  void inc_unheaded_count_nopunc() {
+    ++unheaded_count_nopunc_;
+  }
+
   void inc_num_sentences() {
     ++num_sentences_;
   }
 
   void inc_total_length_nopunc() {
     ++total_length_nopunc_; 
+  }
+
+  void inc_total_length_nopunc_headed() {
+    ++total_length_nopunc_headed_; 
+  }
+
+  void inc_total_length_punc_headed() {
+    ++total_length_punc_headed_; 
   }
 
   void add_likelihood(Real l) {
@@ -156,18 +172,41 @@ public:
     return (directed_count_ + 0.0)/total_length_punc_;
   }
 
+  Real directed_precision() const {
+    return (directed_count_ + 0.0)/total_length_punc_headed_;
+  }
+
   Real directed_accuracy_lab() const {
     return (directed_count_lab_ + 0.0)/total_length_punc_;
+  }
+
+  Real directed_precision_lab() const {
+    return (directed_count_lab_ + 0.0)/total_length_punc_headed_;
   }
 
   Real directed_accuracy_nopunc() const {
     return (directed_count_nopunc_ + 0.0)/total_length_nopunc_;
   }
 
+  Real directed_precision_nopunc() const {
+    return (directed_count_nopunc_ + 0.0)/total_length_nopunc_headed_;
+  }
+
   Real directed_accuracy_lab_nopunc() const {
     return (directed_count_lab_nopunc_ + 0.0)/total_length_nopunc_;
   }
 
+  Real directed_precision_lab_nopunc() const {
+    return (directed_count_lab_nopunc_ + 0.0)/total_length_nopunc_headed_;
+  }
+
+  Real unheaded_recall() const {
+    return (unheaded_count_ + 0.0)/total_length_punc_;
+  }
+
+  Real unheaded_recall_nopunc() const {
+    return (unheaded_count_nopunc_ + 0.0)/total_length_nopunc_;
+  }
   Real undirected_accuracy() const {
     return (undirected_count_ + 0.0)/total_length_punc_;
   }
@@ -240,8 +279,16 @@ public:
     return total_length_punc_;
   }
 
+  int total_length_punc_headed() const {
+    return total_length_punc_headed_;
+  }
+
   int total_length_nopunc() const {
     return total_length_nopunc_;
+  }
+
+  int total_length_nopunc_headed() const {
+    return total_length_nopunc_headed_;
   }
 
   Real final_reduce_error_rate() const {
@@ -293,11 +340,15 @@ private:
     int final_reduce_error_count_;
     int total_length_;
     int total_length_punc_;
+    int total_length_punc_headed_;
     int total_length_nopunc_;
+    int total_length_nopunc_headed_;
     int directed_count_;
     int directed_count_lab_;
     int directed_count_nopunc_;
     int directed_count_lab_nopunc_;
+    int unheaded_count_;
+    int unheaded_count_nopunc_;
     int undirected_count_;
     int undirected_count_nopunc_;
     int root_count_;

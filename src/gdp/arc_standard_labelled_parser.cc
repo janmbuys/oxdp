@@ -155,6 +155,8 @@ Words ArcStandardLabelledParser::wordContext() const {
       return more_extended_word_children_context(); //order 17
     else if (context_type() == "with-ngram")
       return word_children_ngram_context(); //order 13
+    else if (context_type() == "lookahead")
+      return word_children_lookahead_context(); //order 10
     else
       return word_children_context(); //order 7
   }
@@ -177,6 +179,8 @@ Words ArcStandardLabelledParser::actionContext() const {
       return more_extended_word_children_context(); //order 17
     else if (context_type() == "with-ngram")
       return word_children_ngram_context(); //order 13
+    else if (context_type() == "lookahead")
+      return word_children_lookahead_context(); //order 10
     else
       return word_children_context(); //order 7
   }

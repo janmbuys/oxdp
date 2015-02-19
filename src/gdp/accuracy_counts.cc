@@ -14,7 +14,10 @@ AccuracyCounts::AccuracyCounts(boost::shared_ptr<Dict> dict):
   shift_gold_{0},
   final_reduce_error_count_{0},
   total_length_{0},
+  total_length_punc_{0},
+  total_length_punc_headed_{0},
   total_length_nopunc_{0},
+  total_length_nopunc_headed_{0},
   directed_count_{0},
   directed_count_lab_{0},
   directed_count_nopunc_{0},
@@ -72,9 +75,17 @@ void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSe
 
     if (prop_parse.has_arc(j, 0) && gold_parse.has_arc(j, 0)) 
       inc_root_count();
-      
+    if (prop_parse.has_parent_at(j))
+      inc_total_length_punc_headed();
+    else 
+      inc_unheaded_count();
+
     if (!dict_->punctTag(prop_parse.tag_at(j))) {
       inc_total_length_nopunc();
+      if (prop_parse.has_parent_at(j))
+        inc_total_length_nopunc_headed();
+      else 
+        inc_unheaded_count_nopunc();
       if (prop_parse.arc_at(j)!=gold_parse.arc_at(j)) {
         punc_complete = false;
         lab_punc_complete = false;
@@ -236,6 +247,9 @@ void AccuracyCounts::printAccuracy() const {
   std::cerr << "Labelled Accuracy No Punct: " << directed_accuracy_lab_nopunc() << std::endl;
   std::cerr << "Unlabelled Accuracy No Punct: " << directed_accuracy_nopunc() << std::endl;
   std::cerr << "Root correct: " << root_accuracy() << std::endl;
+  std::cerr << "Labelled Precision No Punct: " << directed_precision_lab_nopunc() << std::endl;
+  std::cerr << "Unlabelled Precision No Punct: " << directed_precision_nopunc() << std::endl;
+  std::cerr << "Unheaded recall No Punct: " << unheaded_recall_nopunc() << std::endl;
   std::cerr << "Labelled Completely correct No Punct: " << complete_accuracy_lab_nopunc() << std::endl;
   std::cerr << "Completely correct No Punct: " << complete_accuracy_nopunc() << std::endl;
 
@@ -257,6 +271,9 @@ void AccuracyCounts::printAccuracy() const {
   std::cerr << std::endl;
   std::cerr << "Labelled Accuracy With Punct: " << directed_accuracy_lab() << std::endl;
   std::cerr << "Unlabelled Accuracy With Punct: " << directed_accuracy() << std::endl;
+  std::cerr << "Labelled Precision With Punct: " << directed_precision_lab() << std::endl;
+  std::cerr << "Unlabelled Precision With Punct: " << directed_precision() << std::endl;
+  std::cerr << "Unheaded recall With Punct: " << unheaded_recall() << std::endl;
   std::cerr << "Labelled Completely correct With Punct: " << complete_accuracy_lab() << std::endl;
   std::cerr << "Completely correct With Punct: " << complete_accuracy() << std::endl;
   std::cerr << "Final reduce error rate: " << final_reduce_error_rate() << std::endl;

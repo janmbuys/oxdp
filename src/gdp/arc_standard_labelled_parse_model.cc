@@ -345,7 +345,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPars
   }
     
   //completion: greedily reduce each item
-  for (unsigned j = 0; j < beam_stack.size(); ++j) { 
+  for (unsigned j = 0; (config_->complete_parse && (j < beam_stack.size())); ++j) { 
     while (beam_stack[j]->stack_depth() >= 2) {
       Reals action_probs = weights->predictAction(beam_stack[j]->actionContext());
       WordIndex reduce_pred = arg_min(action_probs, 1);
@@ -478,7 +478,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
   }
 
   //completion: greedily reduce each item
-  for (unsigned j = 0; j < beam_stack.size(); ++j) { 
+  for (unsigned j = 0; (config_->complete_parse && (j < beam_stack.size())); ++j) { 
     while ((beam_stack[j]->num_particles() > 0) && (beam_stack[j]->stack_depth() >= 2)) {
       Reals action_probs = weights->predictAction(beam_stack[j]->actionContext());
       int num_samples = beam_stack[j]->num_particles();
