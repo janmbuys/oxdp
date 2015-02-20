@@ -181,47 +181,36 @@ bool ArcEagerLabelledParser::executeAction(kAction a, WordId l) {
   }
 }
 
-Words ArcEagerLabelledParser::wordContext() const {
+Context ArcEagerLabelledParser::wordContext() const {
   if (pyp_model())
-    return word_tag_next_children_context(); //order 9
+    return Context(word_tag_next_children_context()); //order 9
   else {
     if (context_type() == "extended") 
-      return extended_word_next_children_context(); //order 14
+      return map_context(extended_next_children_context()); //order 14
     else if (context_type() == "lookahead")
-      return word_next_children_lookahead_context(); //order 12
+      return map_context(next_children_lookahead_context()); //order 12
     else
-      return word_next_children_context(); //order 8
+      return map_context(next_children_context()); //order 8
   }
 }
 
-Words ArcEagerLabelledParser::tagContext() const {
-  return tag_next_children_context(); //order 7
+Context ArcEagerLabelledParser::tagContext() const {
+  return Context(tag_next_children_context()); //order 7
 }
  
-//TODO remove when right-arc is redefined
-/*Words ArcEagerLabelledParser::tagContext(kAction a) const {
-  Words ctx = tag_next_children_context(); //order 7 + 1
-  ctx.push_back(ctx.back());
-  if (a == kAction::ra)
-    ctx.at(ctx.size()-2) = 1;
-  else
-    ctx.at(ctx.size()-2) = 0;
-  return ctx;
-} */
-
-Words ArcEagerLabelledParser::actionContext() const {
+Context ArcEagerLabelledParser::actionContext() const {
   if (pyp_model()) {
     if (lexicalised())
-      return tag_next_children_word_context(); //order 8
+      return Context(tag_next_children_word_context()); //order 8
     else
-      return tag_next_children_context(); //order 7
+      return Context(tag_next_children_context()); //order 7
   } else {
-    if (context_type() == "extended") 
-      return extended_word_next_children_context(); //order 14
+   if (context_type() == "extended") 
+      return map_context(extended_next_children_context()); //order 14
     else if (context_type() == "lookahead")
-      return word_next_children_lookahead_context(); //order 12
+      return map_context(next_children_lookahead_context()); //order 12
     else
-      return word_next_children_context(); //order 8
+      return map_context(next_children_context()); //order 8
   }
 }
 
@@ -238,10 +227,10 @@ void ArcEagerLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSe
        
       //word prediction
       examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
-      std::cout << parser.next_word() << ": ";
-      for (auto w: parser.wordContext())
-        std::cout << w << " ";
-      std::cout << std::endl;
+      //std::cout << parser.next_word() << ": ";
+      //for (auto w: parser.wordContext().words)
+      //  std::cout << w << " ";
+      //std::cout << std::endl;
     }  
 
     //labelled action prediction 

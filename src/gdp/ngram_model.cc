@@ -11,7 +11,7 @@ NGramModel<Weights>::NGramModel(unsigned order, WordId sos, WordId eos):
     }
 
 template<class Weights>
-Words NGramModel<Weights>::extractContext(const boost::shared_ptr<Corpus> corpus, int position) {
+Context NGramModel<Weights>::extractContext(const boost::shared_ptr<Corpus> corpus, int position) {
   Words context;
 
   // The context is constructed starting from the most recent word:
@@ -25,14 +25,14 @@ Words NGramModel<Weights>::extractContext(const boost::shared_ptr<Corpus> corpus
     context.push_back(word_id);
   }
 
-  return context;
+  return Context(context);
 }
 
 template<class Weights>
 void NGramModel<Weights>::extract(const boost::shared_ptr<Corpus> corpus, int position,
     const boost::shared_ptr<DataSet>& examples) {
   WordId word = corpus->at(position);
-  Words context = extractContext(corpus, position);
+  Context context = extractContext(corpus, position);
   examples->addExample(DataPoint(word, context));  
 }
 
@@ -40,7 +40,7 @@ template<class Weights>
 Real NGramModel<Weights>::evaluate(const boost::shared_ptr<Corpus> corpus, int position, 
           const boost::shared_ptr<Weights>& weights) {
   WordId word = corpus->at(position);
-  Words context = extractContext(corpus, position);
+  Context context = extractContext(corpus, position);
   return weights->predict(word, context);
 }
 
@@ -51,7 +51,7 @@ void NGramModel<Weights>::extractSentence(const Sentence& sent,
   //eos is already at end of sentence
   for (int i = 0; i < sent.size(); ++i) {    
     WordId word = sent.word_at(i);
-    Words ctx = Words(context.begin() + i, context.begin() + i + order_ - 1);
+    Context ctx = Context(Words(context.begin() + i, context.begin() + i + order_ - 1));
     DataPoint example(word, ctx); 
     examples->addExample(example);
     context.push_back(word);
@@ -66,7 +66,7 @@ Real NGramModel<Weights>::evaluateSentence(const Sentence& sent,
   //eos is already at end of sentence
   for (int i = 0; i < static_cast<int>(sent.size()); ++i) {    
     WordId word = sent.word_at(i);
-    Words ctx = Words(context.begin() + i, context.begin() + i + order_ - 1);
+    Context ctx = Context(Words(context.begin() + i, context.begin() + i + order_ - 1));
     Real predict_weight = weights->predict(word, ctx); 
 
     weight += predict_weight;

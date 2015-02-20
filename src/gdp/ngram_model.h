@@ -17,7 +17,7 @@ class NGramModel {
   public:
   NGramModel(unsigned order, WordId sos, WordId eos);
 
-  Words extractContext(const boost::shared_ptr<Corpus> corpus, int position);
+  Context extractContext(const boost::shared_ptr<Corpus> corpus, int position);
 
   void extract(const boost::shared_ptr<Corpus> corpus, int position,     
           const boost::shared_ptr<DataSet>& examples);

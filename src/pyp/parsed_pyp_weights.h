@@ -17,17 +17,17 @@ class ParsedPypWeights: public PypWeights<tOrder> {
   ParsedPypWeights(boost::shared_ptr<Dict> dict, boost::shared_ptr<Dict> ch_dict, 
                   size_t num_actions);
 
-  virtual Real predictWord(WordId word, Words context) const;
+  virtual Real predictWord(WordId word, Context context) const;
   
-  virtual Reals predictWord(Words context) const;
+  virtual Reals predictWord(Context context) const;
 
-  Real predictTag(WordId tag, Words context) const;
+  Real predictTag(WordId tag, Context context) const;
 
-  Reals predictTag(Words context) const;
+  Reals predictTag(Context context) const;
   
-  Real predictAction(WordId action, Words context) const;
+  Real predictAction(WordId action, Context context) const;
 
-  Reals predictAction(Words context) const;
+  Reals predictAction(Context context) const;
 
   virtual Real wordLikelihood() const;
 

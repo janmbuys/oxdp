@@ -1,4 +1,4 @@
-#include "corpus/feature_context.h"
+#include "corpus/context.h"
 
 namespace oxlm {
 

@@ -78,9 +78,9 @@ class Weights {
 
   void clear(const MinibatchWords& words, bool parallel_update);
 
-  Real predict(int word, vector<int> context) const;
+  Real predict(int word, Context context) const;
 
-  Reals predict(vector<int> context) const;
+  Reals predict(Context context) const;
 
   int vocabSize() const;
 

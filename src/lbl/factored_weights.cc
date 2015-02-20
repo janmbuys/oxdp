@@ -445,26 +445,27 @@ void FactoredWeights::clear(const MinibatchWords& words, bool parallel_update) {
   }
 }
 
-Real FactoredWeights::predict(int word, Words context) const {
+Real FactoredWeights::predict(int word, Context context) const {
+  Words context_words = context.words;
   int class_id = index->getClass(word);
   int word_class_id = index->getWordIndexInClass(word);
-  VectorReal prediction_vector = getPredictionVector(context);
+  VectorReal prediction_vector = getPredictionVector(context_words);
 
   Real class_prob;
-  auto ret = normalizerCache.get(context);
+  auto ret = normalizerCache.get(context_words);
   if (ret.second) {
     class_prob = (S.col(class_id).dot(prediction_vector) + T(class_id) - ret.first);
   } else { 
     Real normalizer = 0;
     VectorReal class_probs = logSoftMax(
         S.transpose() * prediction_vector + T, normalizer);
-    normalizerCache.set(context, normalizer);
+    normalizerCache.set(context_words, normalizer);
     class_prob = class_probs(class_id);
   }
 
-  context.insert(context.begin(), class_id);
+  context_words.insert(context_words.begin(), class_id);
   Real word_prob;
-  ret = classNormalizerCache.get(context);
+  ret = classNormalizerCache.get(context_words);
   if (ret.second) {
     word_prob = (R.col(word).dot(prediction_vector) + B(word) - ret.first);
   } else { 
@@ -472,7 +473,7 @@ Real FactoredWeights::predict(int word, Words context) const {
     VectorReal word_probs = logSoftMax(
         classR(class_id).transpose() * prediction_vector + classB(class_id),
         normalizer);
-    classNormalizerCache.set(context, normalizer);
+    classNormalizerCache.set(context_words, normalizer);
     word_prob = word_probs(word_class_id);
   }
 
@@ -480,7 +481,7 @@ Real FactoredWeights::predict(int word, Words context) const {
 }
 
 
-Reals FactoredWeights::predict(Words context) const {
+Reals FactoredWeights::predict(Context context) const {
   //this is inefficient, but not used in practice
   Reals probs(vocabSize(), 0);
   for (int i = 0; i < vocabSize(); ++i)

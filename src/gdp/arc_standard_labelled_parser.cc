@@ -144,45 +144,45 @@ bool ArcStandardLabelledParser::executeAction(kAction a, WordId l) {
   }
 } 
 
-Words ArcStandardLabelledParser::wordContext() const {
+Context ArcStandardLabelledParser::wordContext() const {
   if (pyp_model())
-    return word_tag_next_children_context(); //order 7
+    return Context(word_tag_next_children_context()); //order 7
     //return word_tag_next_ngram_context(); // best perplexity
   else {
     if (context_type() == "extended")
-      return extended_word_children_context(); //order 13
+      return map_context(extended_children_context()); //order 13
     else if (context_type() == "more-extended")
-      return more_extended_word_children_context(); //order 17
+      return map_context(more_extended_children_context()); //order 17
     else if (context_type() == "with-ngram")
-      return word_children_ngram_context(); //order 13
+      return map_context(children_ngram_context()); //order 13
     else if (context_type() == "lookahead")
-      return word_children_lookahead_context(); //order 10
+      return map_context(children_lookahead_context()); //order 10
     else
-      return word_children_context(); //order 7
+      return map_context(children_context()); //order 7
   }
 }
 
-Words ArcStandardLabelledParser::tagContext() const {
-  return tag_children_context();  //order 8
+Context ArcStandardLabelledParser::tagContext() const {
+  return Context(tag_children_context());  //order 8
 }
 
-Words ArcStandardLabelledParser::actionContext() const {
+Context ArcStandardLabelledParser::actionContext() const {
   if (pyp_model()) {
     if (lexicalised())
-      return word_tag_children_context(); //order 10
+      return Context(word_tag_children_context()); //order 10
     else
-      return tag_children_context(); //order 8
+      return Context(tag_children_context()); //order 8
   } else {
     if (context_type() == "extended")
-      return extended_word_children_context(); //order 13
+      return map_context(extended_children_context()); //order 13
     else if (context_type() == "more-extended")
-      return more_extended_word_children_context(); //order 17
+      return map_context(more_extended_children_context()); //order 17
     else if (context_type() == "with-ngram")
-      return word_children_ngram_context(); //order 13
+      return map_context(children_ngram_context()); //order 13
     else if (context_type() == "lookahead")
-      return word_children_lookahead_context(); //order 10
+      return map_context(children_lookahead_context()); //order 10
     else
-      return word_children_context(); //order 7
+      return map_context(children_context()); //order 7
   }
 }
 

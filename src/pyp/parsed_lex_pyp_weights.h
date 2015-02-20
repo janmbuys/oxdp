@@ -12,13 +12,13 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
   ParsedLexPypWeights(boost::shared_ptr<Dict> dict, boost::shared_ptr<Dict> ch_dict,
                       size_t num_actions);
 
-  Real predict(WordId word, Words context) const override;
+  Real predict(WordId word, Context context) const override;
 
-  Reals predict(Words context) const override;
+  Reals predict(Context context) const override;
 
-  Real predictWord(WordId word, Words context) const override;
+  Real predictWord(WordId word, Context context) const override;
   
-  Reals predictWord(Words context) const override;
+  Reals predictWord(Context context) const override;
   
   Real likelihood() const override;
 

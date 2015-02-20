@@ -5,6 +5,7 @@
 add_libraries(corpus
   dict.cc
   sentence.cc
+  context.cc
   tagged_sentence.cc
   parsed_sentence.cc
   corpus.cc

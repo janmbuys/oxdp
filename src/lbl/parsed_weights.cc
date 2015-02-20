@@ -74,50 +74,50 @@ void ParsedWeights::setModelParameters() {
   new (&L) WeightsType(data + K_size, L_size);
 }
 
-Real ParsedWeights::predictWord(int word, Words context) const {
+Real ParsedWeights::predictWord(int word, Context context) const {
   //implement as unlexicalised model
     return 0.0;
 }
 
-Reals ParsedWeights::predictWord(Words context) const {
+Reals ParsedWeights::predictWord(Context context) const {
   return Reals(numWords(), 0.0);
 }
 
-Real ParsedWeights::predictTag(int tag, Words context) const {
+Real ParsedWeights::predictTag(int tag, Context context) const {
   return Weights::predict(tag, context);
 }
  
-Reals ParsedWeights::predictTag(Words context) const {
+Reals ParsedWeights::predictTag(Context context) const {
   return Weights::predict(context);
 }
   
-Real ParsedWeights::predictAction(WordId action, Words context) const {
-  VectorReal prediction_vector = getPredictionVector(context);
+Real ParsedWeights::predictAction(WordId action, Context context) const {
+  VectorReal prediction_vector = getPredictionVector(context.words);
   Real prob = 0;
 
   //TODO debug cache
-  //auto ret = actionNormalizerCache.get(context);
+  //auto ret = actionNormalizerCache.get(context.words);
   //if (ret.second) {
   //  prob = (K.col(action).dot(prediction_vector) + L(action) - ret.first);
   //} else {  
     Real normalizer = 0;
     VectorReal action_probs = logSoftMax(
         K.transpose() * prediction_vector + L, normalizer);
-    //actionNormalizerCache.set(context, normalizer);
+    //actionNormalizerCache.set(context.words, normalizer);
     prob = action_probs(action);
   //}
 
   return -prob;
 }
 
-Reals ParsedWeights::predictAction(Words context) const {
-  VectorReal prediction_vector = getPredictionVector(context);
+Reals ParsedWeights::predictAction(Context context) const {
+  VectorReal prediction_vector = getPredictionVector(context.words);
   Reals probs(numActions(), 0);
 
   Real normalizer = 0;
   VectorReal action_probs = logSoftMax(
       K.transpose() * prediction_vector + L, normalizer);
-  //actionNormalizerCache.set(context, normalizer);
+  //actionNormalizerCache.set(context.words, normalizer);
   for (int i = 0; i < numActions(); ++i) 
     probs[i] = -action_probs(i);  
   

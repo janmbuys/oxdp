@@ -10,17 +10,17 @@ ParsedLexPypWeights<wOrder, tOrder, aOrder>::ParsedLexPypWeights(
   lex_vocab_size_(dict->size()) {}
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::predict(WordId word, Words context) const {
+Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::predict(WordId word, Context context) const {
   return predictWord(word, context);
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-Reals ParsedLexPypWeights<wOrder, tOrder, aOrder>::predict(Words context) const {
+Reals ParsedLexPypWeights<wOrder, tOrder, aOrder>::predict(Context context) const {
   return predictWord(context);
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-Reals ParsedLexPypWeights<wOrder, tOrder, aOrder>::predictWord(Words context) const {
+Reals ParsedLexPypWeights<wOrder, tOrder, aOrder>::predictWord(Context context) const {
   Reals weights(numWords(), 0);
   for (int i = 0; i < numWords(); ++i)
     weights[i] = predictWord(i, context);
@@ -28,8 +28,8 @@ Reals ParsedLexPypWeights<wOrder, tOrder, aOrder>::predictWord(Words context) co
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::predictWord(WordId word, Words context) const {
-  return -std::log(lex_lm_.prob(word, context));
+Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::predictWord(WordId word, Context context) const {
+  return -std::log(lex_lm_.prob(word, context.words));
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
@@ -54,7 +54,7 @@ template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateInsert(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
   ParsedPypWeights<tOrder, aOrder>::updateInsert(examples, eng);
   for (unsigned i = 0; i < examples->word_example_size(); ++i)
-    lex_lm_.increment(examples->word_at(i), examples->word_context_at(i), eng);
+    lex_lm_.increment(examples->word_at(i), examples->word_context_at(i).words, eng);
 }
 
 //update PYP model to remove old training examples
@@ -62,7 +62,7 @@ template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 void ParsedLexPypWeights<wOrder, tOrder, aOrder>::updateRemove(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
   ParsedPypWeights<tOrder, aOrder>::updateRemove(examples, eng);
   for (unsigned i = 0; i < examples->word_example_size(); ++i)
-    lex_lm_.decrement(examples->word_at(i), examples->word_context_at(i), eng);
+    lex_lm_.decrement(examples->word_at(i), examples->word_context_at(i).words, eng);
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>

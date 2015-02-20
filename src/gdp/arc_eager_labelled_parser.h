@@ -35,13 +35,11 @@ class ArcEagerLabelledParser : public TransitionParser {
  
   bool executeAction(kAction a, WordId l);
  
-  Words wordContext() const;
+  Context wordContext() const;
  
-  Words tagContext() const;
+  Context tagContext() const;
  
-  //Words tagContext(kAction a) const;
-
-  Words actionContext() const;
+  Context actionContext() const;
  
   void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
 

@@ -74,49 +74,49 @@ void ParsedFactoredWeights::setModelParameters() {
   new (&L) WeightsType(data + K_size, L_size);
 }
 
-Real ParsedFactoredWeights::predictWord(int word, Words context) const {
+Real ParsedFactoredWeights::predictWord(int word, Context context) const {
   return FactoredWeights::predict(word, context);
 }
 
-Reals ParsedFactoredWeights::predictWord(Words context) const {
+Reals ParsedFactoredWeights::predictWord(Context context) const {
   return FactoredWeights::predict(context);
 }
 
-Real ParsedFactoredWeights::predictTag(int tag, Words context) const {
+Real ParsedFactoredWeights::predictTag(int tag, Context context) const {
   return 0.0;
 }
  
-Reals ParsedFactoredWeights::predictTag(Words context) const {
+Reals ParsedFactoredWeights::predictTag(Context context) const {
   return Reals(numTags(), 0.0);
 }
   
-Real ParsedFactoredWeights::predictAction(WordId action, Words context) const {
-  VectorReal prediction_vector = getPredictionVector(context);
+Real ParsedFactoredWeights::predictAction(WordId action, Context context) const {
+  VectorReal prediction_vector = getPredictionVector(context.words);
   Real prob = 0;
 
   //TODO bug in cache
-  //auto ret = actionNormalizerCache.get(context);
+  //auto ret = actionNormalizerCache.get(context.words);
   //if (ret.second) {
   //  prob = (K.col(action).dot(prediction_vector) + L(action) - ret.first);
   //} else {  
     Real normalizer = 0;
     VectorReal action_probs = logSoftMax(
         K.transpose() * prediction_vector + L, normalizer);
-    //actionNormalizerCache.set(context, normalizer);
+    //actionNormalizerCache.set(context.words, normalizer);
     prob = action_probs(action);
   //}
 
   return -prob;
 }
 
-Reals ParsedFactoredWeights::predictAction(Words context) const {
-  VectorReal prediction_vector = getPredictionVector(context);
+Reals ParsedFactoredWeights::predictAction(Context context) const {
+  VectorReal prediction_vector = getPredictionVector(context.words);
   Reals probs(numActions(), 0);
 
   Real normalizer = 0;
   VectorReal action_probs = logSoftMax(
       K.transpose() * prediction_vector + L, normalizer);
-  //actionNormalizerCache.set(context, normalizer);
+  //actionNormalizerCache.set(context.words, normalizer);
   for (int i = 0; i < numActions(); ++i) 
     probs[i] = -action_probs(i);  
   

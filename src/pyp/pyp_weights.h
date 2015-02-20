@@ -15,9 +15,9 @@ class PypWeights {
   public:
   PypWeights(size_t vocab_size);
 
-  virtual Real predict(WordId word, Words context) const;
+  virtual Real predict(WordId word, Context context) const;
 
-  virtual Reals predict(Words context) const;
+  virtual Reals predict(Context context) const;
   
   virtual Real likelihood() const;
 

@@ -10,23 +10,23 @@ ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(boost::shared_ptr<Dict> dict,
   num_actions_(num_actions) {}
 
 template<unsigned tOrder, unsigned aOrder>
-Real ParsedPypWeights<tOrder, aOrder>::predictWord(WordId word, Words context) const {
+Real ParsedPypWeights<tOrder, aOrder>::predictWord(WordId word, Context context) const {
   return 0;
 }
 
 template<unsigned tOrder, unsigned aOrder>
-Reals ParsedPypWeights<tOrder, aOrder>::predictWord(Words context) const {
+Reals ParsedPypWeights<tOrder, aOrder>::predictWord(Context context) const {
   return Reals(numWords(), 0);
 }
 
 template<unsigned tOrder, unsigned aOrder>
-Real ParsedPypWeights<tOrder, aOrder>::predictTag(WordId tag, Words context) const {
+Real ParsedPypWeights<tOrder, aOrder>::predictTag(WordId tag, Context context) const {
   return PypWeights<tOrder>::predict(tag, context);
 }
 
 
 template<unsigned tOrder, unsigned aOrder>
-Reals ParsedPypWeights<tOrder, aOrder>::predictTag(Words context) const {
+Reals ParsedPypWeights<tOrder, aOrder>::predictTag(Context context) const {
   Reals weights(numTags(), 0);
   for (int i = 0; i < numTags(); ++i)
     weights[i] = predictTag(i, context);
@@ -34,13 +34,13 @@ Reals ParsedPypWeights<tOrder, aOrder>::predictTag(Words context) const {
 }
 
 template<unsigned tOrder, unsigned aOrder>
-Real ParsedPypWeights<tOrder, aOrder>::predictAction(WordId action, Words context) const {
-  return -std::log(action_lm_.prob(action, context));
+Real ParsedPypWeights<tOrder, aOrder>::predictAction(WordId action, Context context) const {
+  return -std::log(action_lm_.prob(action, context.words));
 }
 
 
 template<unsigned tOrder, unsigned aOrder>
-Reals ParsedPypWeights<tOrder, aOrder>::predictAction(Words context) const {
+Reals ParsedPypWeights<tOrder, aOrder>::predictAction(Context context) const {
   Reals weights(num_actions_, 0);
   for (int i = 0; i < num_actions_; ++i)
     weights[i] = predictAction(i, context);
@@ -79,7 +79,7 @@ template<unsigned tOrder, unsigned aOrder>
 void ParsedPypWeights<tOrder, aOrder>::updateInsert(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
   PypWeights<tOrder>::updateInsert(examples->tag_examples(), eng);
   for (unsigned i = 0; i < examples->action_example_size(); ++i)
-    action_lm_.increment(examples->action_at(i), examples->action_context_at(i), eng);
+    action_lm_.increment(examples->action_at(i), examples->action_context_at(i).words, eng);
 }
 
 //update PYP model to remove old training examples
@@ -87,7 +87,7 @@ template<unsigned tOrder, unsigned aOrder>
 void ParsedPypWeights<tOrder, aOrder>::updateRemove(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
   PypWeights<tOrder>::updateRemove(examples->tag_examples(), eng);
   for (unsigned i = 0; i < examples->action_example_size(); ++i)
-    action_lm_.decrement(examples->action_at(i), examples->action_context_at(i), eng);
+    action_lm_.decrement(examples->action_at(i), examples->action_context_at(i).words, eng);
 }
 
 template<unsigned tOrder, unsigned aOrder>

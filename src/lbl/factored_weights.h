@@ -63,9 +63,9 @@ class FactoredWeights : public Weights {
 
   void clear(const MinibatchWords& words, bool parallel_update);
 
-  Real predict(int word, Words context) const;
+  Real predict(int word, Context context) const;
 
-  Reals predict(Words context) const;
+  Reals predict(Context context) const;
 
   void clearCache();
 

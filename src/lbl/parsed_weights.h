@@ -44,17 +44,17 @@ class ParsedWeights : public Weights {
       Real& objective,
       MinibatchWords& words) const; 
   
-  Real predictWord(int word, Words context) const;
+  Real predictWord(int word, Context context) const;
 
-  Reals predictWord(Words context) const;
+  Reals predictWord(Context context) const;
 
-  Real predictTag(int tag, Words context) const;
+  Real predictTag(int tag, Context context) const;
   
-  Reals predictTag(Words context) const;
+  Reals predictTag(Context context) const;
 
-  Real predictAction(int action, Words context) const;
+  Real predictAction(int action, Context context) const;
   
-  Reals predictAction(Words context) const;
+  Reals predictAction(Context context) const;
 
   void syncUpdate(
       const MinibatchWords& words,

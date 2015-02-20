@@ -143,7 +143,7 @@ void Weights::getContextVectors(
   context_vectors.resize(
       context_width, MatrixReal::Zero(word_width, examples->size()));
   for (size_t i = 0; i < examples->size(); ++i) {
-    contexts[i] = examples->contextAt(i);
+    contexts[i] = examples->contextAt(i).words;
     for (int j = 0; j < context_width; ++j) {
       context_vectors[j].col(i) = Q.col(contexts[i][j]);
     }
@@ -535,18 +535,18 @@ VectorReal Weights::getPredictionVector(const vector<int>& context) const {
   return applyActivation<VectorReal>(config->activation, prediction_vector);
 }
 
-Real Weights::predict(int word, vector<int> context) const {
-  VectorReal prediction_vector = getPredictionVector(context);
+Real Weights::predict(int word, Context context) const {
+  VectorReal prediction_vector = getPredictionVector(context.words);
   Real prob = 0;
 
-  auto ret = normalizerCache.get(context);
+  auto ret = normalizerCache.get(context.words);
   if (ret.second) {
     prob = (R.col(word).dot(prediction_vector) + B(word) - ret.first);
   } else {  
     Real normalizer = 0;
     VectorReal word_probs = logSoftMax(
         R.transpose() * prediction_vector + B, normalizer);
-    normalizerCache.set(context, normalizer);
+    normalizerCache.set(context.words, normalizer);
     prob = word_probs(word);
   }
 
@@ -554,14 +554,14 @@ Real Weights::predict(int word, vector<int> context) const {
   return -prob;
 }
 
-Reals Weights::predict(vector<int> context) const {
-  VectorReal prediction_vector = getPredictionVector(context);
+Reals Weights::predict(Context context) const {
+  VectorReal prediction_vector = getPredictionVector(context.words);
   Reals probs(vocabSize(), 0);
 
   Real normalizer = 0;
   VectorReal word_probs = logSoftMax(
       R.transpose() * prediction_vector + B, normalizer);
-  normalizerCache.set(context, normalizer);
+  normalizerCache.set(context.words, normalizer);
   for (int i = 0; i < vocabSize(); ++i)
     probs[i] = -word_probs(i);
   

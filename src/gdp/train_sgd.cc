@@ -286,7 +286,7 @@ int main(int argc, char** argv) {
     } else if (config->parser_type == ParserType::arceager) {
       train_dp<ArcEagerLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else {
-      train_dp<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
+      //train_dp<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     }
   } else {
   if (config->parser_type == ParserType::arcstandard) {
@@ -294,7 +294,7 @@ int main(int argc, char** argv) {
     } else if (config->parser_type == ParserType::arceager) {
       train_dp<ArcEagerLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
     } else {
-      train_dp<EisnerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
+      //train_dp<EisnerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
     }
   }
 

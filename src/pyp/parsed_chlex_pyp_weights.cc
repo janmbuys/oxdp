@@ -10,17 +10,17 @@ ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::ParsedChLexPypWeights(
   dict_(dict) {}
 
 template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
-Real ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predict(WordId word, Words context) const {
+Real ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predict(WordId word, Context context) const {
   return predictWord(word, context);
 }
 
 template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
-Reals ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predict(Words context) const {
+Reals ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predict(Context context) const {
   return predictWord(context);
 }
 
 template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
-Reals ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predictWord(Words context) const {
+Reals ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predictWord(Context context) const {
   Reals weights(numWords(), 0);
   for (int i = 0; i < numWords(); ++i)
     weights[i] = predictWord(i, context);
@@ -28,8 +28,8 @@ Reals ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predictWord(Words c
 }
 
 template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
-Real ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predictWord(WordId word, Words context) const {
-  return -std::log(lex_lm_.prob(dict_->lookup(word), context));
+Real ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predictWord(WordId word, Context context) const {
+  return -std::log(lex_lm_.prob(dict_->lookup(word), context.words));
 }
 
 template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
@@ -54,7 +54,7 @@ template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
 void ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::updateInsert(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
   ParsedPypWeights<tOrder, aOrder>::updateInsert(examples, eng);
   for (unsigned i = 0; i < examples->word_example_size(); ++i)
-    lex_lm_.increment(dict_->lookup(examples->word_at(i)), examples->word_context_at(i), eng);
+    lex_lm_.increment(dict_->lookup(examples->word_at(i)), examples->word_context_at(i).words, eng);
 }
 
 //update PYP model to remove old training examples
@@ -62,7 +62,7 @@ template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
 void ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::updateRemove(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
   ParsedPypWeights<tOrder, aOrder>::updateRemove(examples, eng);
   for (unsigned i = 0; i < examples->word_example_size(); ++i)
-    lex_lm_.decrement(dict_->lookup(examples->word_at(i)), examples->word_context_at(i), eng);
+    lex_lm_.decrement(dict_->lookup(examples->word_at(i)), examples->word_context_at(i).words, eng);
 }
 
 template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>

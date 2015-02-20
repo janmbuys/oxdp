@@ -30,7 +30,7 @@
 #include "gdp/arc_standard_labelled_parse_model.h"
 //#include "gdp/arc_eager_parse_model.h"
 #include "gdp/arc_eager_labelled_parse_model.h"
-#include "gdp/eisner_parse_model.h"
+//#include "gdp/eisner_parse_model.h"
 #include "gdp/accuracy_counts.h"
 
 namespace oxlm {
