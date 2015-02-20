@@ -22,12 +22,6 @@ class EisnerParser: public Parser {
 
   EisnerParser();
    
-  EisnerParser(Words tags);
-
-  EisnerParser(Words sent, Words tags);
-
-  EisnerParser(Words sent, Words tags, Indices arcs);
-
   EisnerParser(const TaggedSentence& parse);
 
   void recoverParseTree(WordIndex s, WordIndex t, bool complete, bool left_arc);

@@ -193,6 +193,22 @@ class TransitionParser: public Parser {
     return config_->context_type;
   }
 
+  Context map_context(Indices& ind) const {
+    Words words;
+    WordsList features;
+    for (auto i: ind) {
+      if (i >= 0) {
+        words.push_back(word_at(i));
+        features.push_back(features_at(i));
+      } else {
+        words.push_back(0);
+        features.push_back(Words(1, 0));
+      }          
+    }
+    
+    return Context(words, features);
+  }
+
   /*  functions for context vectors  */
 
   Words word_tag_next_children_context() const {

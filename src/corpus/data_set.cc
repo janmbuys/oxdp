@@ -18,7 +18,7 @@ WordId DataSet::wordAt(unsigned i) const {
   return examples_.at(i).word;
 }
 
-Words DataSet::contextAt(unsigned i) const {
+Context DataSet::contextAt(unsigned i) const {
   return examples_.at(i).context;
 }
 

@@ -17,7 +17,7 @@ class DataSet {
 
   WordId wordAt(unsigned i) const;
 
-  Words contextAt(unsigned i) const;
+  Context contextAt(unsigned i) const;
 
   size_t size() const;
 

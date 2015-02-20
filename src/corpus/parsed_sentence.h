@@ -11,13 +11,13 @@ class ParsedSentence: public TaggedSentence {
 
   ParsedSentence();
   
-  ParsedSentence(Words tags);
+  ParsedSentence(WordsList tags);
 
-  ParsedSentence(Words sent, Words tags);
+  ParsedSentence(Words sent, WordsList tags);
 
-  ParsedSentence(Words sent, Words tags, Indices arcs);
+  ParsedSentence(Words sent, WordsList tags, Indices arcs);
 
-  ParsedSentence(Words sent, Words tags, Indices arcs, Words labels);
+  ParsedSentence(Words sent, WordsList tags, Indices arcs, Words labels);
 
   ParsedSentence(const TaggedSentence& parse);
 

@@ -9,32 +9,8 @@ EisnerParser::EisnerParser():
   eos_{1}
   {
   }      
-   
-EisnerParser::EisnerParser(Words tags):
-  Parser(tags),
-  chart_(tags.size(), std::vector<EChartItem>(tags.size(), EChartItem())),
-  split_chart_(tags.size(), std::vector<ESplitChartItem>(tags.size(), ESplitChartItem{-1, -1, -1, -1})),
-  eos_{1}
-  {
-  }
-   
-EisnerParser::EisnerParser(Words sent, Words tags):
-  Parser(tags),
-  chart_(sent.size(), std::vector<EChartItem>(sent.size(), EChartItem())),
-  split_chart_(sent.size(), std::vector<ESplitChartItem>(sent.size(), ESplitChartItem{-1, -1, -1, -1})),
-  eos_{1}
-  {
-  }
 
-EisnerParser::EisnerParser(Words sent, Words tags, Indices arcs):
-  Parser(sent, tags, arcs),
-  chart_(sent.size(), std::vector<EChartItem>(sent.size(), EChartItem())),
-  split_chart_(sent.size(), std::vector<ESplitChartItem>(sent.size(), ESplitChartItem{-1, -1, -1, -1})),
-  eos_{1}
-  {
-  }
-
-EisnerParser::EisnerParser(const TaggedSentence& parse):
+  EisnerParser::EisnerParser(const TaggedSentence& parse):
   Parser(parse),
   chart_(parse.size(), std::vector<EChartItem>(parse.size(), EChartItem())),
   split_chart_(parse.size(), std::vector<ESplitChartItem>(parse.size(), 

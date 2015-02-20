@@ -10,7 +10,7 @@ ParsedCorpus::ParsedCorpus(const boost::shared_ptr<ModelConfig>& config):
 }
 
 void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line, 
-      const boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, Indices* arcs_out, Words* labels_out, bool frozen) {
+      const boost::shared_ptr<Dict>& dict, Words* sent_out, WordsList* tags_out, Indices* arcs_out, Words* labels_out, bool frozen) {
   size_t cur = 0;
   size_t last = 0;
   int state = 0;
@@ -23,7 +23,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
       if (col_num == 1) //1 - word
         sent_out->push_back(dict->convert(line.substr(last, cur - last - 1), frozen));
       else if (col_num == 4) //4 - postag (3 - coarse postag)
-        tags_out->push_back(dict->convertTag(line.substr(last, cur - last - 1), frozen));
+        tags_out->push_back(Words(1, dict->convertTag(line.substr(last, cur - last - 1), frozen)));
       else if (col_num == 6) //arc head index
         arcs_out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
       else if (col_num == 7) { //label 
@@ -50,7 +50,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
 void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, 
                                 bool frozen) {
   Words sent;
-  Words tags;
+  WordsList features;
   Indices arcs;
   Words labels;
  
@@ -69,32 +69,32 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
       //add end of sentence symbol if defined
       if (dict->eos() != -1) {
         sent.push_back(dict->eos()); 
-        tags.push_back(dict->eos()); 
+        features.push_back(Words(1, dict->eos())); 
         arcs.push_back(-1);
         labels.push_back(-1);
       }
 
-      sentences_.push_back(ParsedSentence(sent, tags, arcs, labels)); 
+      sentences_.push_back(ParsedSentence(sent, features, arcs, labels)); 
       state = 1;
     } else {
       if (state==1) {
         //start of sentence
         sent.clear();
-        tags.clear();
+        features.clear();
         arcs.clear();
         labels.clear();
 
         //add start of sentence symbol if defined
         if (dict->sos() != -1) {
           sent.push_back(dict->sos()); 
-          tags.push_back(dict->sos());
+          features.push_back(Words(1, dict->sos()));
           arcs.push_back(-1);
           labels.push_back(-1);
         }
         state = 0;
       }
 
-      convertWhitespaceDelimitedConllLine(line, dict, &sent, &tags, &arcs, &labels, frozen); 
+      convertWhitespaceDelimitedConllLine(line, dict, &sent, &features, &arcs, &labels, frozen); 
     }
   }
 

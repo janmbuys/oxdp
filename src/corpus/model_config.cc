@@ -10,7 +10,7 @@ ModelConfig::ModelConfig()
       factored(true), classes(0), randomise(false), diagonal_contexts(false),
       vocab_size(0), noise_samples(0), parser_type(ParserType::arcstandard), 
       activation(Activation::linear), pyp_model(false), labelled_parser(false), 
-      lexicalised(false), char_lexicalised(false), semi_supervised(false), 
+      lexicalised(false), compositional(false), char_lexicalised(false), semi_supervised(false), 
       direction_deterministic(false), sum_over_beam(false), resample(false), 
       root_first(true), bootstrap(false), complete_parse(true), max_beam_increment(1), 
       num_particles(1), generate_samples(0), num_tags(1), num_labels(1), beam_sizes(1, 1) {}
@@ -45,6 +45,7 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
       && pyp_model == other.pyp_model
       && labelled_parser == other.labelled_parser
       && lexicalised == other.lexicalised
+      && compositional == other.compositional
       && char_lexicalised == other.char_lexicalised
       && semi_supervised == other.semi_supervised
       && root_first == other.root_first

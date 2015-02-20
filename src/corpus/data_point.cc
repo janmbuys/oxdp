@@ -2,7 +2,7 @@
 
 namespace oxlm {
 
-DataPoint::DataPoint(int word, const std::vector<int>& context): 
+DataPoint::DataPoint(int word, const Context& context): 
   word(word), 
   context(context) {}
 

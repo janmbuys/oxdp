@@ -63,15 +63,15 @@ class ParseDataSet {
     return action_examples_->wordAt(i);
   }
 
-  Words word_context_at(unsigned i) const {
+  Context word_context_at(unsigned i) const {
     return word_examples_->contextAt(i);
   }
 
-  Words tag_context_at(unsigned i) const {
+  Context tag_context_at(unsigned i) const {
     return tag_examples_->contextAt(i);
   }
 
-  Words action_context_at(unsigned i) const {
+  Context action_context_at(unsigned i) const {
     return action_examples_->contextAt(i);
   }
 

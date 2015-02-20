@@ -82,6 +82,8 @@ int main(int argc, char** argv) {
         "Predict arc labels.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
+    ("compositional", value<bool>()->default_value(false),
+        "Compositional word representations including POS tags and other features.")
     ("semi-supervised", value<bool>()->default_value(false),
         "Use additional, unlabelled training data.")
     ("root-first", value<bool>()->default_value(true),
@@ -196,6 +198,7 @@ int main(int argc, char** argv) {
 
   config->labelled_parser = vm["labelled-parser"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
+  config->compositional = vm["compositional"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
   config->semi_supervised = vm["semi-supervised"].as<bool>();

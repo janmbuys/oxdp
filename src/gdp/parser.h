@@ -12,14 +12,6 @@ class Parser: public ParsedSentence {
   public:
   Parser();
   
-  Parser(Words tags);
-
-  Parser(Words sent, Words tags);
-  
-  Parser(Words sent, Words tags, Indices arcs);
-
-  Parser(Words sent, Words tags, Indices arcs, Words labels);
-
   Parser(const TaggedSentence& parse);
 
   void push_arc() override {

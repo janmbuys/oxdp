@@ -45,6 +45,7 @@ struct ModelConfig {
   std::string context_type;
   bool        labelled_parser;
   bool        lexicalised;
+  bool        compositional;
   bool        char_lexicalised;
   bool        semi_supervised;
   bool        direction_deterministic;
@@ -93,6 +94,7 @@ struct ModelConfig {
     ar & pyp_model;
     ar & labelled_parser;
     ar & lexicalised;
+    ar & compositional;
     ar & char_lexicalised;
     ar & semi_supervised;
     ar & direction_deterministic;
