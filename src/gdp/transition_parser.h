@@ -264,7 +264,7 @@ class TransitionParser: public Parser {
   }
 
   Indices children_lookahead_context() const {
-    Indices ctx(9, 0);
+    Indices ctx(9, -1);
     if (stack_.size() >= 1) { 
       ctx[0] = stack_.at(stack_.size()-1);
       ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1)); 
@@ -287,7 +287,7 @@ class TransitionParser: public Parser {
   }
 
   Indices children_context() const {
-    Indices ctx(6, 0);
+    Indices ctx(6, -1);
     if (stack_.size() >= 1) { 
       ctx[0] = stack_.at(stack_.size()-1);
       ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1));
@@ -303,7 +303,7 @@ class TransitionParser: public Parser {
   }
 
   Indices children_ngram_context() const {
-    Indices ctx(9, 0);
+    Indices ctx(9, -1);
     if (stack_.size() >= 1) { 
       ctx[0] = stack_.at(stack_.size()-1);
       ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1));
@@ -326,7 +326,7 @@ class TransitionParser: public Parser {
   }
 
   Indices extended_children_context() const {
-    Indices ctx(12, 0);
+    Indices ctx(12, -1);
     if (stack_.size() >= 1) { 
       ctx[0] = stack_.at(stack_.size()-1);
       ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1));
@@ -353,7 +353,7 @@ class TransitionParser: public Parser {
   }
 
   Indices more_extended_children_context() const {
-    Indices ctx(16, 0);
+    Indices ctx(16, -1);
     if (stack_.size() >= 1) { 
       ctx[0] = stack_.at(stack_.size()-1);
       ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1));
@@ -446,7 +446,7 @@ class TransitionParser: public Parser {
   }
 
  Indices next_children_context() const {
-    Indices ctx(8, 0);
+    Indices ctx(8, -1);
     
     if (stack_.size() >= 1) { 
       ctx[0] = stack_.at(stack_.size()-1);
@@ -470,7 +470,7 @@ class TransitionParser: public Parser {
   }
 
   Indices next_children_lookahead_context() const {
-    Indices ctx(11, 0);
+    Indices ctx(11, -1);
     
     if (stack_.size() >= 1) { 
       ctx[0] = stack_.at(stack_.size()-1);
@@ -500,7 +500,7 @@ class TransitionParser: public Parser {
   }
 
   Indices extended_next_children_context() const {
-    Indices ctx(13, 0);
+    Indices ctx(13, -1);
    
     if (stack_.size() >= 1) { 
       ctx[0] = stack_.at(stack_.size()-1);

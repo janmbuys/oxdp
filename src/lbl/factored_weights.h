@@ -81,6 +81,7 @@ class FactoredWeights : public Weights {
   Real getObjective(
       const boost::shared_ptr<DataSet>& examples,
       vector<vector<int>>& contexts,
+      vector<WordsList>& features,
       vector<MatrixReal>& context_vectors,
       MatrixReal& prediction_vectors,
       MatrixReal& class_probs,
@@ -102,6 +103,7 @@ class FactoredWeights : public Weights {
   void getFullGradient(
       const boost::shared_ptr<DataSet>& examples,
       const vector<vector<int>>& contexts,
+      const vector<WordsList>& features,
       const vector<MatrixReal>& context_vectors,
       const MatrixReal& prediction_vectors,
       const MatrixReal& weighted_representations,

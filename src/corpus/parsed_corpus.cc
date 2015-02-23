@@ -15,16 +15,21 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
   size_t last = 0;
   int state = 0;
   int col_num = 0;
-   
+  
+  std::string word_str; 
+  std::string tag_str; 
+  Words features;
+
   while(cur < line.size()) {
     if (Dict::is_ws(line[cur++])) {
       if (state == 0) 
         continue;
       if (col_num == 1) //1 - word
-        sent_out->push_back(dict->convert(line.substr(last, cur - last - 1), frozen));
-      else if (col_num == 4) //4 - postag (3 - coarse postag)
-        tags_out->push_back(Words(1, dict->convertTag(line.substr(last, cur - last - 1), frozen)));
-      else if (col_num == 6) //arc head index
+        word_str = line.substr(last, cur - last - 1);
+      else if (col_num == 4) { //4 - postag (3 - coarse postag)
+        tag_str = line.substr(last, cur - last - 1);
+        features.push_back(dict->convertTag(tag_str, frozen));
+      } else if (col_num == 6) //arc head index
         arcs_out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
       else if (col_num == 7) { //label 
         if (config_->labelled_parser)
@@ -45,6 +50,10 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
   //in case we need to process last column (n):
   /*if ((state == 1) && (col_num == n)) 
     sent_out->push_back(dict->convert(line.substr(last, cur - last), frozen)); */
+  if (word_str != "") {
+    sent_out->push_back(dict->convert(word_str, frozen));
+    tags_out->push_back(features);
+  }
 }
 
 void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, 

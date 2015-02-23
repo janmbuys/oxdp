@@ -149,6 +149,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             shared_index += task_size;
           }
 
+
           if (task_start < minibatch.size()) {
             size_t task_end = min(task_start + task_size, minibatch.size());
             vector<int> task(
@@ -166,8 +167,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             } else {
               weights->getGradient(
                   task_examples, gradient, objective, words);
-              //if (!weights->checkGradient(task_examples, global_gradient, EPS))
-              //  std::cout << "gradient check failed" << std::endl;
+              /* if (!weights->checkGradient(task_examples, global_gradient, EPS))  
+                std::cout << "gradient check failed" << std::endl;
+              else
+               std::cout << "gradient OK" << std::endl; */
             }
           } else {
             break;
@@ -292,7 +295,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     
     for (unsigned beam_size: config->beam_sizes) {
       std::ofstream outs;
-      outs.open("system.out" + std::to_string(beam_size));
+      outs.open(config->test_output_file);
       #pragma omp master
       {
         std::cerr << "parsing with beam size " << beam_size << ":\n";
