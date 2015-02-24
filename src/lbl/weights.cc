@@ -133,6 +133,7 @@ void Weights::getGradient(
       contexts, features, context_vectors, prediction_vectors, word_probs);
 
   setContextWords(contexts, words);
+  setFeatureWords(features, words);
 
   MatrixReal weighted_representations = getWeightedRepresentations(
       examples, prediction_vectors, word_probs);
@@ -177,6 +178,18 @@ void Weights::setContextWords(
   for (const auto& context: contexts) {
     for (int word_id: context) {
       words.addContextWord(word_id);
+    }
+  }
+}
+
+void Weights::setFeatureWords(
+    const vector<WordsList>& features,
+    MinibatchWords& words) const {
+  for (const auto& context: features) {
+    for (const auto& item: context) {
+      for (int word_id: item) {
+        words.addFeatureWord(word_id);
+      }
     }
   }
 }
@@ -313,7 +326,7 @@ bool Weights::checkGradient(
 
     double est_gradient = (objective_plus - objective_minus) / (2 * eps);
     if (fabs(gradient->W(i) - est_gradient) > eps) {
-      //std::cout << i << " " <<  gradient->W(i) << " " << est_gradient << " ";
+      std::cout << i << " " <<  gradient->W(i) << " " << est_gradient << " ";
       //return false;
     }
   }
@@ -435,6 +448,7 @@ void Weights::estimateGradient(
   getContextVectors(examples, contexts, features, context_vectors);
 
   setContextWords(contexts, words);
+  setFeatureWords(features, words);
 
   MatrixReal prediction_vectors =
       getPredictionVectors(examples->size(), context_vectors);

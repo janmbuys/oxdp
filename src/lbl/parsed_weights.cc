@@ -156,7 +156,9 @@ void ParsedWeights::getGradient(
           action_prediction_vectors, word_probs, action_probs); 
 
   setContextWords(word_contexts, words); 
+  setFeatureWords(word_features, words); 
   setContextWords(action_contexts, words); 
+  setFeatureWords(action_features, words); 
 
   MatrixReal word_weighted_representations = Weights::getWeightedRepresentations(
       examples->tag_examples(), word_prediction_vectors, word_probs);

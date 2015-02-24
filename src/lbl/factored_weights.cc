@@ -135,6 +135,7 @@ void FactoredWeights::getGradient(
       class_probs, word_probs);
 
   setContextWords(contexts, words);
+  setFeatureWords(features, words);
 
   MatrixReal weighted_representations = getWeightedRepresentations(
       examples, prediction_vectors, class_probs, word_probs);
@@ -361,6 +362,7 @@ void FactoredWeights::estimateGradient(
   getContextVectors(examples, contexts, features, context_vectors);
 
   setContextWords(contexts, words);
+  setFeatureWords(features, words);
 
   MatrixReal prediction_vectors =
       getPredictionVectors(examples->size(), context_vectors);

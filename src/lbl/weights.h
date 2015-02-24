@@ -107,6 +107,10 @@ class Weights {
       vector<vector<int>>& contexts,
       vector<WordsList>& features,
       vector<MatrixReal>& context_vectors) const;
+  
+  void setFeatureWords(
+      const vector<WordsList>& features,
+      MinibatchWords& words) const;
 
   void setContextWords(
       const vector<vector<int>>& contexts,

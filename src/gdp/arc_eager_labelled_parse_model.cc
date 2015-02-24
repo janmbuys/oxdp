@@ -351,6 +351,18 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
 
       //TODO proportional division of particles
       if ((!beam_stack[j]->stack_empty()) && (beam_stack[j]->last_action() != kAction::ra)) {
+        //0 prob to invalid transitions
+        if (!beam_stack[j]->reduce_valid())
+          action_probs.back() = L_MAX;
+        if (!beam_stack[j]->left_arc_valid()) {
+          for (unsigned l = 0; l < config_->num_labels; ++l)
+            action_probs[l+1] = L_MAX;
+        }
+        if (!config_->root_first && (i == sent.size() - 1)) {
+          for (unsigned l = 0; l < config_->num_labels; ++l)
+            action_probs[config_->num_labels+l+1] = L_MAX;
+        }
+
         //add reduce actions
         if (beam_stack[j]->reduce_valid()) {
           Real reducep = action_probs.back();
