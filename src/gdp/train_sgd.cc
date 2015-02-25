@@ -235,6 +235,7 @@ int main(int argc, char** argv) {
   std::cerr << "# order = " << config->ngram_order << std::endl;
   std::cerr << "# representation_size = " << config->representation_size << std::endl;
   std::cerr << "# class factored = " << config->factored << std::endl;
+  std::cerr << "# compositional = " << config->compositional << std::endl;
   std::cerr << "# parser type = " << parser_type_str << std::endl;
   std::cerr << "# context type = " << config->context_type << std::endl;
   std::cerr << "# labelled parser = " << config->labelled_parser << std::endl;

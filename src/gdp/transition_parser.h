@@ -198,7 +198,13 @@ class TransitionParser: public Parser {
     WordsList features;
     for (auto i: ind) {
       if (i >= 0) {
-        words.push_back(word_at(i));
+        if (config_->lexicalised)
+          words.push_back(word_at(i));
+        else {
+          words.push_back(tag_at(i));
+          //if (tag_at(i)==-1)
+          //  std::cout << i << " ";
+        }
         features.push_back(features_at(i));
       } else {
         words.push_back(0);

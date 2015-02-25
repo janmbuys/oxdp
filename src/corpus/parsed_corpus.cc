@@ -24,9 +24,11 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
     if (Dict::is_ws(line[cur++])) {
       if (state == 0) 
         continue;
-      if (col_num == 1) //1 - word
+      if (col_num == 1) { //1 - word
         word_str = line.substr(last, cur - last - 1);
-      else if (col_num == 4) { //4 - postag (3 - coarse postag)
+        std::string word_str_str = word_str.substr(0, word_str.find('_'));
+        //features.push_back(dict->convertTag(word_str_str, frozen));
+      } else if (col_num == 4) { //4 - postag (3 - coarse postag)
         tag_str = line.substr(last, cur - last - 1);
         features.push_back(dict->convertTag(tag_str, frozen));
       } else if (col_num == 6) //arc head index
@@ -51,7 +53,10 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
   /*if ((state == 1) && (col_num == n)) 
     sent_out->push_back(dict->convert(line.substr(last, cur - last), frozen)); */
   if (word_str != "") {
-    sent_out->push_back(dict->convert(word_str, frozen));
+    if (config_->lexicalised)
+      sent_out->push_back(dict->convert(word_str, frozen));
+    else
+      sent_out->push_back(dict->convert(tag_str, frozen));
     tags_out->push_back(features);
   }
 }

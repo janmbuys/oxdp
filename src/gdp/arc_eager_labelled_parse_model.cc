@@ -259,8 +259,8 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParseSente
         //shift
         Real tagp = weights->predictTag(beam_stack[j]->next_tag(), beam_stack[j]->tagContext());
         Real wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
-        std::cout << "(" <<  beam_stack[j]->next_tag() << ": " << tagp << ", " 
-               <<  beam_stack[j]->next_word() << ": " << wordp << ") ";
+        //std::cout << "(" <<  beam_stack[j]->next_tag() << ": " << tagp << ", " 
+        //       <<  beam_stack[j]->next_word() << ": " << wordp << ") ";
 
         beam_stack[j]->shift();
         beam_stack[j]->add_particle_weight(shiftp); 
@@ -280,10 +280,10 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParseSente
         beam_stack.pop_back();
     }
    
-    std::cout << std::endl;
-    for (unsigned j = 0; j < beam_stack.size(); ++j)  
-      std::cout << beam_stack[j]->particle_weight() << " ";
-    std::cout << std::endl;      
+    //std::cout << std::endl;
+    //for (unsigned j = 0; j < beam_stack.size(); ++j)  
+    //  std::cout << beam_stack[j]->particle_weight() << " ";
+    //std::cout << std::endl;      
    }
 
   //sum over identical parses in final beam 
@@ -346,10 +346,9 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
 
       Reals action_probs = weights->predictAction(beam_stack[j]->actionContext());
       int shift_count = 0;
-
       Real shiftp = action_probs[0];
 
-      //TODO proportional division of particles
+      //least effort now to affort to leak some prob mass to simplify things
       if ((!beam_stack[j]->stack_empty()) && (beam_stack[j]->last_action() != kAction::ra)) {
         //0 prob to invalid transitions
         if (!beam_stack[j]->reduce_valid())
@@ -363,41 +362,76 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
             action_probs[config_->num_labels+l+1] = L_MAX;
         }
 
-        //add reduce actions
+        Real reducep = L_MAX;
+        int reduce_count = 0;
+
+        std::vector<int> action_counts(action_probs.size(), 0); 
+        if (beam_stack[j]->left_arc_valid()) {
+          for (unsigned l = 1; l < config_->num_labels + 1; ++l) {
+            action_counts[l] = std::floor(std::exp(-action_probs[l])*num_samples);
+            reducep = neg_log_sum_exp(reducep, action_probs[l]);
+            reduce_count += action_counts[l];
+          }
+        }
         if (beam_stack[j]->reduce_valid()) {
+          action_counts.back() = std::floor(std::exp(-action_probs.back())*num_samples);
+          reducep = neg_log_sum_exp(reducep, action_probs.back());
+          reduce_count += action_counts.back();
+        }
+        
+        int res_reduce_count = std::round(std::exp(-reducep)*num_samples) - reduce_count;
+
+        if (!config_->root_first && (i == sent.size() - 1) && !config_->complete_parse) {
+          res_reduce_count = num_samples - reduce_count;
+        }
+
+        if (res_reduce_count > 0) {
+          if (beam_stack[j]->left_arc_valid()) {
+            unsigned max_la = arg_max(action_probs, 1, config_->num_labels + 1);
+            action_counts[max_la] += res_reduce_count;
+          } else if (beam_stack[j]->reduce_valid()) {
+            action_counts.back() += res_reduce_count;
+          }
+        }
+
+
+        if (config_->root_first || (i < sent.size() - 1) || config_->complete_parse) {
+          for (unsigned l = config_->num_labels + 1; l < 2*config_->num_labels + 1; ++l)
+            action_counts[l] = std::floor(std::exp(-action_probs[l])*num_samples);
+        }
+        shift_count = num_samples - std::accumulate(action_counts.begin(), action_counts.end(), 0);
+        std::cout << num_samples << "," << shift_count << " ";
+
+        //add reduce actions
+        if (action_counts.back() > 0) {
           Real reducep = action_probs.back();
           beam_stack.push_back(boost::make_shared<ArcEagerLabelledParser>(*beam_stack[j]));
           beam_stack.back()->reduce();
           beam_stack.back()->add_particle_weight(reducep);
-        } else if (beam_stack[j]->left_arc_valid()) {
-          //sort to find the best left-arc actions
-          std::vector<int> indices(config_->num_labels);
-          std::iota(indices.begin(), indices.end(), 1);
-          std::sort(indices.begin(), indices.end(), [&action_probs](const int i, const int j) 
-                {return (action_probs[i] < action_probs[j]);});
-          for (unsigned l = 0; (l < config_->beam_sizes[0] && l < config_->max_beam_increment); ++l) {
-            WordIndex reduce_pred = indices[l];
-            Real reducep = action_probs[reduce_pred];
-            WordId re_label = beam_stack[j]->lookup_label(reduce_pred);
+          beam_stack.back()->set_num_particles(action_counts.back());
+        } 
+        
+        //add left-arcs
+        for (unsigned l = 1; l < config_->num_labels + 1; ++l) {
+          if (action_counts[l] > 0) {
+            Real reducep = action_probs[l];
+            WordId re_label = beam_stack[j]->lookup_label(l);
             beam_stack.push_back(boost::make_shared<ArcEagerLabelledParser>(*beam_stack[j]));
             beam_stack.back()->leftArc(re_label);
             beam_stack.back()->add_particle_weight(reducep);
+            beam_stack.back()->set_num_particles(action_counts[l]);
           }
-        } 
+        }
 
         //right-arcs added and shifted when reached later in loop
-        if (config_->root_first || (i < sent.size() - 1)) {
-          std::vector<int> indices(config_->num_labels);
-          std::iota(indices.begin(), indices.end(), config_->num_labels + 1);
-          std::sort(indices.begin(), indices.end(), [&action_probs](const int i, const int j) 
-              {return (action_probs[i] < action_probs[j]);});
-          for (unsigned l = 0; (l < config_->beam_sizes[0] && l < config_->max_beam_increment); ++l) {
-            WordIndex reduce_pred = indices[l];
-            Real reducep = action_probs[reduce_pred];
-            WordId re_label = beam_stack[j]->lookup_label(reduce_pred);
+        for (unsigned l = config_->num_labels + 1; l < 2*config_->num_labels + 1; ++l) {
+          if (action_counts[l] > 0) {
+            Real reducep = action_probs[l];
+            WordId re_label = beam_stack[j]->lookup_label(l);
             beam_stack.push_back(boost::make_shared<ArcEagerLabelledParser>(*beam_stack[j]));
             beam_stack.back()->rightArc(re_label);
             beam_stack.back()->add_particle_weight(reducep);
+            beam_stack.back()->set_num_particles(action_counts[l]);
           }
         }
       } else {
@@ -405,8 +439,9 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
         shiftp = 0;
       }
 
+      //TODO DEBUG
       if ((shift_count > 0) && 
-               (config_->root_first || (i < sent.size() - 1) || beam_stack[j]->stack_empty())) {
+               (config_->root_first || !config_->complete_parse || (i < sent.size() - 1) || beam_stack[j]->stack_empty())) {
         //shift
         Real tagp = weights->predictTag(beam_stack[j]->next_tag(), beam_stack[j]->tagContext());
         Real wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
@@ -420,10 +455,27 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
         beam_stack[j]->set_num_particles(shift_count);
       } else {
         beam_stack[j]->set_num_particles(0);
+        std::cout << j << " ";
       }
     }
 
     reallocateParticles(&beam_stack, num_particles);
+    std::cout << std::endl;
+  }
+
+  //eliminate incomplete parses in root-first parser
+  if (config_->root_first && config_->complete_parse) {
+    for (unsigned j = 0; j < beam_stack.size(); ++j) { 
+      while ((beam_stack[j]->num_particles() > 0) && (beam_stack[j]->stack_depth() >= 2)) {
+        if (beam_stack[j]->reduce_valid()) {
+          Real reducep = weights->predictAction(config_->numActions()-1, beam_stack[j]->actionContext());
+          beam_stack[j]->reduce();
+          beam_stack[j]->add_particle_weight(reducep);
+        } else {
+          beam_stack[j]->set_num_particles(0);
+        }
+      }
+    }
   }
 
   //sum over identical parses in final beam 
@@ -440,28 +492,17 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
     } 
   }
 
-  //eliminate incomplete parses in root-first parser
-  if (config_->root_first) {
-    for (unsigned j = 0; j < beam_stack.size(); ++j) { 
-      while ((beam_stack[j]->num_particles() > 0) && (beam_stack[j]->stack_depth() >= 2)) {
-        if (beam_stack[j]->reduce_valid()) {
-          Real reducep = weights->predictAction(config_->numActions()-1, beam_stack[j]->actionContext());
-          beam_stack[j]->reduce();
-          beam_stack[j]->add_particle_weight(reducep);
-        } else {
-          beam_stack[j]->set_num_particles(0);
-        }
-      }
-    }
-  }
-
   if (beam_stack.size() > 0)
     std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_particle_weights); 
 
   //compute beam weight
-  for (unsigned i = 0; (i < beam_stack.size()); ++i)
+  std::cout << "===\n";
+  for (unsigned i = 0; (i < beam_stack.size()); ++i) {
+    std::cout << beam_stack[i]->num_particles() << " ";
     if (!duplicate[i] && (beam_stack[i]->num_particles() > 0)) 
       beam_stack[0]->add_beam_weight(beam_stack[i]->particle_weight()); 
+  }
+  std::cout << std::endl;
 
   if (beam_stack.size()==0 || beam_stack[0]->num_particles() == 0) {
     std::cout << "no parse found" << std::endl;
@@ -672,14 +713,15 @@ Parser ArcEagerLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedS
   if (beam_size == 0)
     parse = greedyParseSentence(sent, weights);
   else
-    parse = beamParseSentence(sent, weights, beam_size);
+    parse = beamParticleParseSentence(sent, weights, beam_size);
+    //parse = beamParseSentence(sent, weights, beam_size);
     //parse = beamParticleParseSentence(sent, weights, beam_size);
-  std::cout << parse.size() << std::endl;
-  parse.print_arcs();
-  parse.print_actions();
+  //std::cout << parse.size() << std::endl;
+  //parse.print_arcs();
+  //parse.print_actions();
 
   //resimulate the computation, recompute weight
-  ArcEagerLabelledParser simul(static_cast<TaggedSentence>(parse), config_); 
+/*  ArcEagerLabelledParser simul(static_cast<TaggedSentence>(parse), config_); 
   Real particle_weight = 0;
 
   for (unsigned i = 0; i < parse.actions().size(); ++i) {
@@ -697,8 +739,8 @@ Parser ArcEagerLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedS
     //WordId nextLabel = simul.oracleNextLabel(gold_parse);
     simul.executeAction(a, lab);
   }
-  std::cout << parse.weight() << ": " << particle_weight << std::endl;
-
+  //std::cout << parse.weight() << ": " << particle_weight << std::endl;
+*/
   acc_counts->countAccuracy(parse, sent);
   ArcEagerLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
   

@@ -33,7 +33,10 @@ class TaggedSentence: public Sentence {
   }
 
   WordId tag_at(WordIndex i) const {
-    return features_.at(i)[0];
+    if (features_.at(i).size() > 0)
+      return features_.at(i)[0];
+    else
+      return 0;
   }
 
   Words features_at(WordIndex i) const {

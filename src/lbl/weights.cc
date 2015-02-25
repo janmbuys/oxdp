@@ -151,6 +151,7 @@ void Weights::getContextVectors(
   int context_width = config->ngram_order - 1;
   int word_width = config->representation_size;
 
+  //std::cout << examples->size() << std::endl;
   contexts.resize(examples->size());
   features.resize(examples->size());
   context_vectors.resize(
@@ -158,11 +159,18 @@ void Weights::getContextVectors(
   for (size_t i = 0; i < examples->size(); ++i) {
     contexts[i] = examples->contextAt(i).words;
     features[i] = examples->contextAt(i).features;
+    //std::cout << i << " " << features[i].size() << std::endl;
     for (int j = 0; j < context_width; ++j) {
+      //std::cout << j << ":" << contexts[i][j] << std::endl;
+      // change back
       context_vectors[j].col(i) = Q.col(contexts[i][j]);
       if (config->compositional) {
+        //if (features[i][j].size() != 1)
+        //  std::cout << features[i][j].size() << ": " << contexts[i][j] << std::endl;
         for (auto feat: features[i][j]) {
           context_vectors[j].col(i) += P.col(feat);
+          //if (feat != contexts[i][j])
+          //  std::cout << feat << " " << contexts[i][j] << std::endl;
           //std::cout << feat << ",";
         }
         //std::cout << " ";
@@ -285,11 +293,14 @@ void Weights::getContextGradient(
   for (int j = 0; j < context_width; ++j) {
     context_gradients = getContextProduct(j, weighted_representations, true);
     for (size_t i = 0; i < prediction_size; ++i) {
+      // change back
       gradient->Q.col(contexts[i][j]) += context_gradients.col(i);
       if (config->compositional) {
+        //if (features[i][j].size() != 1)
+        //  std::cout << features[i][j].size() << ": " << contexts[i][j] << std::endl;
         for (auto feat: features[i][j]) {
-          //if (feat == 0)
-          //  std::cout << context_gradients.col(i) << " ";
+          //if (feat != contexts[i][j])
+          //  std::cout << feat << " " << contexts[i][j] << std::endl;
           gradient->P.col(feat) += context_gradients.col(i);
         }
       }
@@ -591,17 +602,23 @@ void Weights::clear(const MinibatchWords& words, bool parallel_update) {
   }
 }
 
-VectorReal Weights::getPredictionVector(const vector<int>& context) const {
+VectorReal Weights::getPredictionVector(const Context& context) const {
   int context_width = config->ngram_order - 1;
   int word_width = config->representation_size;
 
   VectorReal prediction_vector = VectorReal::Zero(word_width);
   for (int i = 0; i < context_width; ++i) {
+    VectorReal in_vector = Q.col(context.words[i]).array();
+    if (config->compositional) {
+      for (auto feat: context.features[i]) 
+        in_vector += P.col(feat);
+    }
+
     if (config->diagonal_contexts) {
-     VectorReal add_vector = C[i].array() * Q.col(context[i]).array();
-      prediction_vector += add_vector; 
+      //prediction_vector += C[i].array() * in_vector.array(); 
+      prediction_vector += C[i] * in_vector; 
     } else {
-      prediction_vector += C[i] * Q.col(context[i]);
+      prediction_vector += C[i] * in_vector;
     }
   }
 
@@ -609,32 +626,32 @@ VectorReal Weights::getPredictionVector(const vector<int>& context) const {
 }
 
 Real Weights::predict(int word, Context context) const {
-  VectorReal prediction_vector = getPredictionVector(context.words);
+  VectorReal prediction_vector = getPredictionVector(context);
   Real prob = 0;
 
-  auto ret = normalizerCache.get(context.words);
-  if (ret.second) {
-    prob = (R.col(word).dot(prediction_vector) + B(word) - ret.first);
-  } else {  
+  //auto ret = normalizerCache.get(context.words);
+  //if (ret.second) {
+  //  prob = (R.col(word).dot(prediction_vector) + B(word) - ret.first);
+  //} else {  
     Real normalizer = 0;
     VectorReal word_probs = logSoftMax(
         R.transpose() * prediction_vector + B, normalizer);
-    normalizerCache.set(context.words, normalizer);
+    //normalizerCache.set(context.words, normalizer);
     prob = word_probs(word);
-  }
+  //}
 
   //return negative log likelihood
   return -prob;
 }
 
 Reals Weights::predict(Context context) const {
-  VectorReal prediction_vector = getPredictionVector(context.words);
+  VectorReal prediction_vector = getPredictionVector(context);
   Reals probs(vocabSize(), 0);
 
   Real normalizer = 0;
   VectorReal word_probs = logSoftMax(
       R.transpose() * prediction_vector + B, normalizer);
-  normalizerCache.set(context.words, normalizer);
+  //normalizerCache.set(context.words, normalizer);
   for (int i = 0; i < vocabSize(); ++i)
     probs[i] = -word_probs(i);
   

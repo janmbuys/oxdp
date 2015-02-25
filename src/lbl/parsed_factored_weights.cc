@@ -91,7 +91,7 @@ Reals ParsedFactoredWeights::predictTag(Context context) const {
 }
   
 Real ParsedFactoredWeights::predictAction(WordId action, Context context) const {
-  VectorReal prediction_vector = getPredictionVector(context.words);
+  VectorReal prediction_vector = getPredictionVector(context);
   Real prob = 0;
 
   //TODO bug in cache
@@ -110,7 +110,7 @@ Real ParsedFactoredWeights::predictAction(WordId action, Context context) const 
 }
 
 Reals ParsedFactoredWeights::predictAction(Context context) const {
-  VectorReal prediction_vector = getPredictionVector(context.words);
+  VectorReal prediction_vector = getPredictionVector(context);
   Reals probs(numActions(), 0);
 
   Real normalizer = 0;

@@ -163,7 +163,20 @@ Context ArcStandardLabelledParser::wordContext() const {
 }
 
 Context ArcStandardLabelledParser::tagContext() const {
-  return Context(tag_children_context());  //order 8
+  if (pyp_model()) 
+    return Context(tag_children_context());  //order 8
+  else {
+    if (context_type() == "extended")
+      return map_context(extended_children_context()); //order 13
+    else if (context_type() == "more-extended")
+      return map_context(more_extended_children_context()); //order 17
+    else if (context_type() == "with-ngram")
+      return map_context(children_ngram_context()); //order 13
+    else if (context_type() == "lookahead")
+      return map_context(children_lookahead_context()); //order 10
+    else
+      return map_context(children_context()); //order 7
+  }
 }
 
 Context ArcStandardLabelledParser::actionContext() const {

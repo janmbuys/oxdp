@@ -121,6 +121,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
       size_t start = 0;
       while (start < training_corpus->size()) {
+        //std::cout << start << std::endl;
         size_t end = min(training_corpus->size(), start + minibatch_size);
 
         vector<int> minibatch(
@@ -167,6 +168,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             } else {
               weights->getGradient(
                   task_examples, gradient, objective, words);
+              //std::cout << " " << task_start;
               /* if (!weights->checkGradient(task_examples, global_gradient, EPS))  
                 std::cout << "gradient check failed" << std::endl;
               else
@@ -176,6 +178,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             break;
           }
         }
+        //std::cout << std::endl;
 
         global_gradient->syncUpdate(words, gradient);
         #pragma omp critical

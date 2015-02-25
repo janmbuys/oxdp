@@ -195,7 +195,16 @@ Context ArcEagerLabelledParser::wordContext() const {
 }
 
 Context ArcEagerLabelledParser::tagContext() const {
-  return Context(tag_next_children_context()); //order 7
+  if (pyp_model())
+    return Context(tag_next_children_context()); //order 7
+  else {
+    if (context_type() == "extended") 
+      return map_context(extended_next_children_context()); //order 14
+    else if (context_type() == "lookahead")
+      return map_context(next_children_lookahead_context()); //order 12
+    else
+      return map_context(next_children_context()); //order 8
+  }
 }
  
 Context ArcEagerLabelledParser::actionContext() const {
