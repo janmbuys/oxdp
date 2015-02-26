@@ -158,8 +158,12 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             //collect the training examples for the minibatch
             boost::shared_ptr<ParseDataSet> task_examples = boost::make_shared<ParseDataSet>();
             
-            for (int j: task) 
-              parse_model->extractSentence(training_corpus->sentence_at(j), task_examples);
+            for (int j: task) {
+              if (!config->bootstrap || (iter == 0))
+                parse_model->extractSentence(training_corpus->sentence_at(j), task_examples);
+              else
+                parse_model->extractSentence(training_corpus->sentence_at(j), weights, task_examples);
+            }
             num_examples += task_examples->word_example_size() + task_examples->action_example_size();
 
             if (config->noise_samples > 0) {
@@ -238,7 +242,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
              << "  Objective: " << global_objective / training_corpus->numTokens()
              << endl << endl;
       
-        if (iter%5 == 0)
+       //if (iter%5 == 0)
           evaluate(test_corpus, iteration_start, minibatch_counter,
                test_objective, best_perplexity);
       }

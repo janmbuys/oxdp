@@ -410,11 +410,166 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPars
 
 template<class ParsedWeights>
 ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamParticleParseSentence(
+        const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights, unsigned num_particles, const boost::shared_ptr<ParseDataSet>& examples) {
+  AslParserList beam_stack; 
+  beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(static_cast<TaggedSentence>(sent), static_cast<int>(num_particles), config_)); 
+
+  for (unsigned i = 0; ((config_->root_first && (i < sent.size())) 
+                         || (!config_->root_first && (i < sent.size() - 1))); ++i) {
+    for (unsigned j = 0; j < beam_stack.size(); ++j) { 
+      int num_samples = beam_stack[j]->num_particles();
+      if (num_samples == 0)
+        continue;
+
+      //extract training example
+      kAction gold_a = beam_stack[j]->oracleNext(sent);
+      WordId gold_lab = beam_stack[j]->oracleNextLabel(sent);
+
+      if (gold_a == kAction::sh) {
+        examples->add_tag_example(DataPoint(beam_stack[j]->next_tag(), beam_stack[j]->tagContext()));  
+        examples->add_word_example(DataPoint(beam_stack[j]->next_word(), beam_stack[j]->wordContext()));  
+      } 
+
+      if (gold_a != kAction::re) 
+        examples->add_action_example(DataPoint(beam_stack[j]->convert_action(gold_a, gold_lab), beam_stack[j]->actionContext()));
+
+      Reals action_probs = weights->predictAction(beam_stack[j]->actionContext());
+      int shift_count = 0;
+      int reduce_count = 0;
+
+      Real shiftp = action_probs[0];
+      Real tot_reducep = log_one_min(shiftp);
+
+      if (beam_stack[j]->stack_depth() < 2) {
+        shift_count = num_samples;
+        shiftp = 0;
+      } else { 
+        WordIndex reduce_pred = arg_min(action_probs, 1);
+        if (!beam_stack[j]->left_arc_valid()) 
+          reduce_pred = arg_min(action_probs, config_->num_labels + 1);
+
+        shift_count = std::round(std::exp(-shiftp)*num_samples); 
+        reduce_count = num_samples - shift_count; 
+        
+        if (reduce_count > 0) {
+          kAction re_act = beam_stack[j]->lookup_action(reduce_pred);
+          WordId re_label = beam_stack[j]->lookup_label(reduce_pred);
+
+          beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
+          if (re_act == kAction::la) 
+            beam_stack.back()->leftArc(re_label);
+	      else
+            beam_stack.back()->rightArc(re_label);
+          beam_stack.back()->add_particle_weight(action_probs[reduce_pred]);
+          beam_stack.back()->set_num_particles(reduce_count); 
+        }
+      } 
+
+      if (shift_count == 0)
+        beam_stack[j]->set_num_particles(0);
+      else {
+        Real tagp = weights->predictTag(beam_stack[j]->next_tag(), beam_stack[j]->tagContext());
+        Real wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+
+        beam_stack[j]->shift();
+        beam_stack[j]->add_particle_weight(shiftp); 
+        beam_stack[j]->add_particle_weight(wordp); 
+        beam_stack[j]->add_particle_weight(tagp); 
+        beam_stack[j]->add_importance_weight(wordp); 
+        beam_stack[j]->add_importance_weight(tagp); 
+        beam_stack[j]->set_num_particles(shift_count);
+      }
+    }
+ 
+    reallocateParticles(&beam_stack, num_particles);
+  }
+
+  //completion: greedily reduce each item
+  for (unsigned j = 0; (config_->complete_parse && (j < beam_stack.size())); ++j) { 
+    while ((beam_stack[j]->num_particles() > 0) && (beam_stack[j]->stack_depth() >= 2)) {
+      Reals action_probs = weights->predictAction(beam_stack[j]->actionContext());
+      int num_samples = beam_stack[j]->num_particles();
+
+      //extract training example
+      kAction gold_a = beam_stack[j]->oracleNext(sent);
+      WordId gold_lab = beam_stack[j]->oracleNextLabel(sent);
+      if (gold_a == kAction::la || gold_a == kAction::ra) 
+        examples->add_action_example(DataPoint(beam_stack[j]->convert_action(gold_a, gold_lab), beam_stack[j]->actionContext()));
+
+      WordIndex reduce_pred = arg_min(action_probs, 1);
+      if (!beam_stack[j]->left_arc_valid()) 
+        reduce_pred = arg_min(action_probs, config_->num_labels + 1);
+
+      Real reducep = action_probs[reduce_pred];
+      kAction act = beam_stack[j]->lookup_action(reduce_pred);
+      WordId label = beam_stack[j]->lookup_label(reduce_pred);
+      
+      if (act == kAction::la) 
+        beam_stack[j]->leftArc(label);
+      else
+        beam_stack[j]->rightArc(label);
+      beam_stack[j]->add_particle_weight(reducep);
+      beam_stack[j]->set_num_particles(num_samples);
+    } 
+
+    //for root-last: final shift and reduce
+    if (!config_->root_first) {
+      Real shiftp = weights->predictAction(0, beam_stack[j]->actionContext());
+      Real tagp = weights->predictTag(beam_stack[j]->next_tag(), beam_stack[j]->tagContext());
+      Real wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+
+      beam_stack[j]->shift();
+      beam_stack[j]->add_particle_weight(shiftp); 
+      beam_stack[j]->add_particle_weight(wordp); 
+      beam_stack[j]->add_particle_weight(tagp); 
+      beam_stack[j]->add_importance_weight(wordp); 
+      beam_stack[j]->add_importance_weight(tagp); 
+
+      Reals action_probs = weights->predictAction(beam_stack[j]->actionContext());
+      WordId reduce_pred = arg_min(action_probs, 1, config_->num_labels + 1); //only left-arc valid
+      WordId re_label = beam_stack[j]->lookup_label(reduce_pred);
+    
+      beam_stack[j]->leftArc(re_label);
+      beam_stack[j]->add_particle_weight(action_probs[reduce_pred]);
+    }
+  } 
+
+  //sum over identical parses in final beam 
+  vector<bool> duplicate(beam_stack.size(), false);
+  if (config_->sum_over_beam) {
+    for (unsigned i = 0; (i < beam_stack.size()-1); ++i) {
+      if (!duplicate[i])
+        for (unsigned j = i + 1; (j < beam_stack.size()); ++j) {
+          if (ParsedSentence::eq_arcs(beam_stack[i], beam_stack[j])) {
+            beam_stack[i]->add_log_particle_weight(beam_stack[j]->particle_weight());          
+            duplicate[j] = true;
+          }
+        }
+    } 
+  }
+
+  std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_particle_weights); 
+
+  //compute beam weight
+  for (unsigned i = 0; (i < beam_stack.size()); ++i)
+    if (!duplicate[i] && (beam_stack[i]->num_particles() > 0)) 
+      beam_stack[0]->add_beam_weight(beam_stack[i]->particle_weight()); 
+
+  if (beam_stack.size()==0) {
+    std::cout << "no parse found" << std::endl;
+    return ArcStandardLabelledParser(static_cast<TaggedSentence>(sent), config_);  
+  } else
+    return ArcStandardLabelledParser(*beam_stack[0]); 
+}
+
+
+
+template<class ParsedWeights>
+ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamParticleParseSentence(
         const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights, unsigned num_particles) {
   AslParserList beam_stack; 
   beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(static_cast<TaggedSentence>(sent), static_cast<int>(num_particles), config_)); 
 
-  //std::cout << sent.size() << ": " << std::endl;
   for (unsigned i = 0; ((config_->root_first && (i < sent.size())) 
                          || (!config_->root_first && (i < sent.size() - 1))); ++i) {
     for (unsigned j = 0; j < beam_stack.size(); ++j) { 
@@ -433,7 +588,6 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
         shift_count = num_samples;
         shiftp = 0;
       } else { 
-        //assume direction deterministic
         WordIndex reduce_pred = arg_min(action_probs, 1);
         if (!beam_stack[j]->left_arc_valid()) 
           reduce_pred = arg_min(action_probs, config_->num_labels + 1);
@@ -442,7 +596,6 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
         reduce_count = num_samples - shift_count; 
         
         if (reduce_count > 0) {
-          //std::cout << "re ";
           kAction re_act = beam_stack[j]->lookup_action(reduce_pred);
           WordId re_label = beam_stack[j]->lookup_label(reduce_pred);
 
@@ -459,7 +612,6 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
       if (shift_count == 0)
         beam_stack[j]->set_num_particles(0);
       else {
-        //std::cout << "sh ";
         Real tagp = weights->predictTag(beam_stack[j]->next_tag(), beam_stack[j]->tagContext());
         Real wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
 
@@ -474,7 +626,6 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
     }
  
     reallocateParticles(&beam_stack, num_particles);
-    //std::cout << std::endl;
   }
 
   //completion: greedily reduce each item
@@ -675,9 +826,11 @@ template<class ParsedWeights>
 void ArcStandardLabelledParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
-  unsigned beam_size = 8;
-  ArcStandardLabelledParser parse = staticGoldParseSentence(sent, weights);
+  beamParticleParseSentence(sent, weights, config_->num_particles, examples);
+ /* ArcStandardLabelledParser parse = staticGoldParseSentence(sent, weights);
   parse.extractExamples(examples);
+  ArcStandardLabelledParser beam_parse = beamParticleParseSentence(sent, weights, config_->num_particles);
+  beam_parse.extractExamples(examples, sent); */
 }
 
 template<class ParsedWeights>
@@ -714,10 +867,11 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
   ArcStandardLabelledParser parse(config_);
   if (beam_size == 0)
     parse = greedyParseSentence(sent, weights);
+  else if (config_->discriminative)
+    parse = beamDiscriminativeParseSentence(sent, weights, beam_size);
   else
-    //parse = beamParseSentence(sent, weights, beam_size);
     parse = beamParticleParseSentence(sent, weights, beam_size);
-    //parse = beamDiscriminativeParseSentence(sent, weights, beam_size);
+    //parse = beamParseSentence(sent, weights, beam_size);
 
   acc_counts->countAccuracy(parse, sent);
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
@@ -735,6 +889,8 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
   ArcStandardLabelledParser parse(config_);
   if (beam_size == 0)
     parse = greedyParseSentence(sent, weights);
+  else if (config_->discriminative)
+    parse = beamDiscriminativeParseSentence(sent, weights, beam_size);
   else 
     parse = beamParticleParseSentence(sent, weights, beam_size); 
   acc_counts->countAccuracy(parse, sent);

@@ -16,6 +16,8 @@ using namespace oxlm;
 #define lblOrderAS 7
 #define lblOrderASl 10
 #define lblOrderASn 13
+#define lblOrderASxn 16
+#define lblOrderASxl 16
 #define lblOrderASx 13
 #define lblOrderASxx 17
 #define lblOrderAE 8
@@ -80,6 +82,8 @@ int main(int argc, char** argv) {
         "Conditioning context used.")    
     ("labelled-parser", value<bool>()->default_value(false),
         "Predict arc labels.")
+    ("discriminative", value<bool>()->default_value(false),
+        "Discriminative rather than generative model.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
     ("compositional", value<bool>()->default_value(false),
@@ -92,6 +96,8 @@ int main(int argc, char** argv) {
         "Enforce complete tree-structured parse.")
     ("bootstrap", value<bool>()->default_value(false),
         "Extract training data with beam search.")
+    ("num-particles", value<int>()->default_value(100),
+        "Number of particles in training.")
     ("max-beam-size", value<int>()->default_value(8),
         "Maximum beam size for decoding (in powers of 2).")
     ("max-beam-increment", value<int>()->default_value(1),
@@ -165,8 +171,12 @@ int main(int argc, char** argv) {
       config->ngram_order = lblOrderASxx;
     else if (config->context_type == "with-ngram")
       config->ngram_order = lblOrderASn;
+    else if (config->context_type == "extended-with-ngram")
+      config->ngram_order = lblOrderASxn;
     else if (config->context_type == "lookahead")
       config->ngram_order = lblOrderASl;
+    else if (config->context_type == "extended-lookahead")
+      config->ngram_order = lblOrderASxl;
     else
       config->ngram_order = lblOrderAS;
   } else if (parser_type_str == "arceager") {
@@ -197,6 +207,7 @@ int main(int argc, char** argv) {
     config->activation = Activation::linear;
 
   config->labelled_parser = vm["labelled-parser"].as<bool>();
+  config->discriminative = vm["discriminative"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
   config->compositional = vm["compositional"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
@@ -205,6 +216,7 @@ int main(int argc, char** argv) {
   config->root_first = vm["root-first"].as<bool>();
   config->complete_parse = vm["complete-parse"].as<bool>();
   config->bootstrap = vm["bootstrap"].as<bool>();
+  config->num_particles = vm["num-particles"].as<int>();
   config->max_beam_increment = vm["max-beam-increment"].as<int>();
   config->generate_samples = vm["generate-samples"].as<int>();
 

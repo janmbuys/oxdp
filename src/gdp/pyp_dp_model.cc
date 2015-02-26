@@ -206,7 +206,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
         if (!config_->bootstrap || (iter == 0))
           parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
         else
-          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, sup_examples_list.at(j));
+          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, sup_examples_list.at(j));
         if (!sup_training_corpus->sentence_at(j).projective_dependency())
           ++non_projective_count;
         minibatch_examples->extend(sup_examples_list.at(j));
@@ -273,8 +273,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
              << "  Objective: " << weights_->likelihood() / total_size
            << "\n\n";
    
-    if (iter%5 == 0)
-      evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
+    //if (iter%5 == 0)
+    evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
   }
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;

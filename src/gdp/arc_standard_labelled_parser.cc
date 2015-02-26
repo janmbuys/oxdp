@@ -94,7 +94,7 @@ kAction ArcStandardLabelledParser::oracleNext(const ParsedSentence& gold_parse) 
   kAction a = kAction::re;
 
   //assume not in terminal configuration 
-  if (stack_depth() < 2)
+  if ((stack_depth() < 2) && !buffer_empty())
     a = kAction::sh; 
   else {
     WordIndex i = stack_top_second();
@@ -144,39 +144,36 @@ bool ArcStandardLabelledParser::executeAction(kAction a, WordId l) {
   }
 } 
 
+Indices ArcStandardLabelledParser::contextIndices() const {
+  if (context_type() == "extended")
+    return extended_children_context(); //order 13
+  else if (context_type() == "more-extended")
+    return more_extended_children_context(); //order 17
+  else if (context_type() == "with-ngram")
+    return children_ngram_context(); //order 13
+  else if (context_type() == "extended-with-ngram")
+    return extended_children_ngram_context(); //order 16
+  else if (context_type() == "lookahead")
+    return children_lookahead_context(); //order 10
+  else if (context_type() == "extended-lookahead")
+    return extended_children_lookahead_context(); //order 16
+  else
+    return children_context(); //order 7
+}
+
 Context ArcStandardLabelledParser::wordContext() const {
   if (pyp_model())
     return Context(word_tag_next_children_context()); //order 7
     //return word_tag_next_ngram_context(); // best perplexity
-  else {
-    if (context_type() == "extended")
-      return map_context(extended_children_context()); //order 13
-    else if (context_type() == "more-extended")
-      return map_context(more_extended_children_context()); //order 17
-    else if (context_type() == "with-ngram")
-      return map_context(children_ngram_context()); //order 13
-    else if (context_type() == "lookahead")
-      return map_context(children_lookahead_context()); //order 10
-    else
-      return map_context(children_context()); //order 7
-  }
+  else 
+    return map_context(contextIndices());
 }
 
 Context ArcStandardLabelledParser::tagContext() const {
   if (pyp_model()) 
     return Context(tag_children_context());  //order 8
-  else {
-    if (context_type() == "extended")
-      return map_context(extended_children_context()); //order 13
-    else if (context_type() == "more-extended")
-      return map_context(more_extended_children_context()); //order 17
-    else if (context_type() == "with-ngram")
-      return map_context(children_ngram_context()); //order 13
-    else if (context_type() == "lookahead")
-      return map_context(children_lookahead_context()); //order 10
-    else
-      return map_context(children_context()); //order 7
-  }
+  else 
+    return map_context(contextIndices());
 }
 
 Context ArcStandardLabelledParser::actionContext() const {
@@ -185,19 +182,37 @@ Context ArcStandardLabelledParser::actionContext() const {
       return Context(word_tag_children_context()); //order 10
     else
       return Context(tag_children_context()); //order 8
-  } else {
-    if (context_type() == "extended")
-      return map_context(extended_children_context()); //order 13
-    else if (context_type() == "more-extended")
-      return map_context(more_extended_children_context()); //order 17
-    else if (context_type() == "with-ngram")
-      return map_context(children_ngram_context()); //order 13
-    else if (context_type() == "lookahead")
-      return map_context(children_lookahead_context()); //order 10
-    else
-      return map_context(children_context()); //order 7
-  }
+  } else 
+    return map_context(contextIndices());
 }
+
+void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples, const ParsedSentence& gold_sent) const {
+  ArcStandardLabelledParser parser(static_cast<TaggedSentence>(*this), config()); 
+ 
+  for (unsigned i = 0; i < actions().size(); ++i) {
+    kAction a = actions().at(i);
+    WordId lab = action_label_at(i);
+  
+    //add oracle action as training example
+    kAction gold_a = parser.oracleNext(gold_sent);
+    WordId gold_lab = parser.oracleNextLabel(gold_sent);
+
+    if (gold_a == kAction::sh) {
+      //tag prediction
+      examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext()));  
+       
+      //word prediction
+      examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
+    } 
+
+    //labelled action prediction 
+    if (gold_a != kAction::re) //check that action is valid
+      examples->add_action_example(DataPoint(convert_action(gold_a, gold_lab), parser.actionContext()));
+
+    //take the next action
+    parser.executeAction(a, lab);
+  }
+} 
 
 void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
   ArcStandardLabelledParser parser(static_cast<TaggedSentence>(*this), config()); 

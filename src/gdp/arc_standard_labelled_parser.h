@@ -30,12 +30,16 @@ class ArcStandardLabelledParser : public TransitionParser {
 
   bool executeAction(kAction a, WordId l); 
  
+  Indices contextIndices() const;
+
   Context wordContext() const;
 
   Context tagContext() const;
  
   Context actionContext() const;
  
+  void extractExamples(const boost::shared_ptr<ParseDataSet>& examples, const ParsedSentence& gold_sent) const;
+
   void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
 
   void append_action_label(WordId l) {

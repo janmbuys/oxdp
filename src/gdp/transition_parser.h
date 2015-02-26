@@ -320,14 +320,15 @@ class TransitionParser: public Parser {
       ctx[4] = rightmost_child_at(stack_.at(stack_.size()-2));
       ctx[5] = leftmost_child_at(stack_.at(stack_.size()-2));
     }
-
-    if (buffer_next() >= 1)
-      ctx[6] = buffer_next()-1;
-    if (buffer_next() >= 2)
-      ctx[7] = buffer_next()-2;
-    if (buffer_next() >= 3)
-      ctx[8] = buffer_next()-3;
-    
+    if (buffer_next_ == static_cast<int>(size())+1)
+      ctx[6] = 0;
+    else if (buffer_next_ >= 1)
+      ctx[6] = buffer_next_ - 1;
+    if (buffer_next_ >= 2)
+      ctx[7] = buffer_next_ - 2;
+    if (buffer_next_ >= 3)
+      ctx[8] = buffer_next_ - 3;
+  
     return ctx;
   }
 
@@ -358,6 +359,76 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
+  Indices extended_children_ngram_context() const {
+    Indices ctx(15, -1);
+    if (stack_.size() >= 1) { 
+      ctx[0] = stack_.at(stack_.size()-1);
+      ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[2] = leftmost_child_at(stack_.at(stack_.size()-1));
+      ctx[3] = second_rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[4] = second_leftmost_child_at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[5] = stack_.at(stack_.size()-2);
+      ctx[6] = rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[7] = leftmost_child_at(stack_.at(stack_.size()-2));
+      ctx[8] = second_rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[9] = second_leftmost_child_at(stack_.at(stack_.size()-2));
+    }
+
+    if (stack_.size() >= 3) {
+      ctx[10] = stack_.at(stack_.size()-3);
+    }
+    if (stack_.size() >= 4) {
+      ctx[11] = stack_.at(stack_.size()-4);
+    } 
+
+    if (buffer_next_ == static_cast<int>(size())+1)
+      ctx[12] = 0;
+    else if (buffer_next_ >= 1)
+      ctx[12] = buffer_next_ - 1;
+    if (buffer_next_ >= 2)
+      ctx[13] = buffer_next_ - 2;
+    if (buffer_next_ >= 3)
+      ctx[14] = buffer_next_ - 3;
+
+    return ctx;
+  }
+
+  Indices extended_children_lookahead_context() const {
+    Indices ctx(15, -1);
+    if (stack_.size() >= 1) { 
+      ctx[0] = stack_.at(stack_.size()-1);
+      ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[2] = leftmost_child_at(stack_.at(stack_.size()-1));
+      ctx[3] = second_rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[4] = second_leftmost_child_at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[5] = stack_.at(stack_.size()-2);
+      ctx[6] = rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[7] = leftmost_child_at(stack_.at(stack_.size()-2));
+      ctx[8] = second_rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[9] = second_leftmost_child_at(stack_.at(stack_.size()-2));
+    }
+
+    if (stack_.size() >= 3) {
+      ctx[10] = stack_.at(stack_.size()-3);
+    }
+    if (stack_.size() >= 4) {
+      ctx[11] = stack_.at(stack_.size()-4);
+    } 
+
+    if (buffer_next() < size())
+      ctx[12] = buffer_next();
+    if (buffer_next() + 1 < size())
+      ctx[13] = buffer_next() + 1;
+    if (buffer_next() + 2 < size())
+      ctx[14] = buffer_next() + 2;
+
+    return ctx;
+  }
+
   Indices more_extended_children_context() const {
     Indices ctx(16, -1);
     if (stack_.size() >= 1) { 
@@ -380,10 +451,10 @@ class TransitionParser: public Parser {
     }
 
     if (stack_.size() >= 3) {
-      ctx[10] = stack_.at(stack_.size()-3);
+      ctx[14] = stack_.at(stack_.size()-3);
     }
     if (stack_.size() >= 4) {
-      ctx[11] = stack_.at(stack_.size()-4);
+      ctx[15] = stack_.at(stack_.size()-4);
     } 
 
     return ctx;
