@@ -26,8 +26,11 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
         continue;
       if (col_num == 1) { //1 - word
         word_str = line.substr(last, cur - last - 1);
-        std::string word_str_str = word_str.substr(0, word_str.find('_'));
+        //std::string word_str_str = word_str.substr(0, word_str.find('_'));
         //features.push_back(dict->convertTag(word_str_str, frozen));
+      } else if (col_num == 2) { //2 - unannotated word 
+        std::string unword_str = line.substr(last, cur - last - 1);
+        features.push_back(dict->convertTag(unword_str, frozen));
       } else if (col_num == 4) { //4 - postag (3 - coarse postag)
         tag_str = line.substr(last, cur - last - 1);
         features.push_back(dict->convertTag(tag_str, frozen));

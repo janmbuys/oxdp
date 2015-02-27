@@ -303,12 +303,28 @@ public:
     return beam_likelihood_/total_length_;
   }
   
+  Real cross_entropy_noeos() const {
+    return likelihood_/total_length_punc_;
+  }
+
+  Real beam_cross_entropy_noeos() const {
+    return beam_likelihood_/total_length_punc_;
+  }
+
   Real importance_cross_entropy() const {
     return importance_likelihood_/total_length_;
   }
   
   Real gold_cross_entropy() const {
     return gold_likelihood_/total_length_;
+  }
+
+  Real perplexity_noeos() const {
+    return std::exp(cross_entropy_noeos());
+  }
+
+  Real beam_perplexity_noeos() const {
+    return std::exp(beam_cross_entropy_noeos());
   }
 
   Real perplexity() const {

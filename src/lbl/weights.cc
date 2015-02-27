@@ -162,8 +162,7 @@ void Weights::getContextVectors(
     //std::cout << i << " " << features[i].size() << std::endl;
     for (int j = 0; j < context_width; ++j) {
       //std::cout << j << ":" << contexts[i][j] << std::endl;
-      // change back
-      context_vectors[j].col(i) = Q.col(contexts[i][j]);
+      //context_vectors[j].col(i) = Q.col(contexts[i][j]);
       if (config->compositional) {
         //if (features[i][j].size() != 1)
         //  std::cout << features[i][j].size() << ": " << contexts[i][j] << std::endl;
@@ -174,6 +173,8 @@ void Weights::getContextVectors(
           //std::cout << feat << ",";
         }
         //std::cout << " ";
+      } else {
+        context_vectors[j].col(i) = Q.col(contexts[i][j]);
       }
     }
     //std::cout << std::endl;    
@@ -293,8 +294,7 @@ void Weights::getContextGradient(
   for (int j = 0; j < context_width; ++j) {
     context_gradients = getContextProduct(j, weighted_representations, true);
     for (size_t i = 0; i < prediction_size; ++i) {
-      // change back
-      gradient->Q.col(contexts[i][j]) += context_gradients.col(i);
+      //gradient->Q.col(contexts[i][j]) += context_gradients.col(i);
       if (config->compositional) {
         //if (features[i][j].size() != 1)
         //  std::cout << features[i][j].size() << ": " << contexts[i][j] << std::endl;
@@ -303,6 +303,8 @@ void Weights::getContextGradient(
           //  std::cout << feat << " " << contexts[i][j] << std::endl;
           gradient->P.col(feat) += context_gradients.col(i);
         }
+      } else {
+        gradient->Q.col(contexts[i][j]) += context_gradients.col(i);
       }
     }
 
@@ -616,7 +618,8 @@ VectorReal Weights::getPredictionVector(const Context& context) const {
 
     if (config->diagonal_contexts) {
       //prediction_vector += C[i].array() * in_vector.array(); 
-      prediction_vector += C[i] * in_vector; 
+      //prediction_vector += C[i] * in_vector; 
+      prediction_vector += C[i].asDiagonal() * in_vector; 
     } else {
       prediction_vector += C[i] * in_vector;
     }

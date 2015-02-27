@@ -381,7 +381,8 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
         
         int res_reduce_count = std::round(std::exp(-reducep)*num_samples) - reduce_count;
 
-        if (!config_->root_first && (i == sent.size() - 1) && !config_->complete_parse) {
+        //only reduce
+        if (!config_->root_first && (i == sent.size() - 1) && config_->complete_parse) {
           res_reduce_count = num_samples - reduce_count;
         }
 
@@ -394,13 +395,13 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
           }
         }
 
-
-        if (config_->root_first || (i < sent.size() - 1) || config_->complete_parse) {
+        //right arc
+        if (config_->root_first || (i < sent.size() - 1) || !config_->complete_parse) {
           for (unsigned l = config_->num_labels + 1; l < 2*config_->num_labels + 1; ++l)
             action_counts[l] = std::floor(std::exp(-action_probs[l])*num_samples);
         }
         shift_count = num_samples - std::accumulate(action_counts.begin(), action_counts.end(), 0);
-        std::cout << num_samples << "," << shift_count << " ";
+        //std::cout << num_samples << "," << shift_count << " ";
 
         //add reduce actions
         if (action_counts.back() > 0) {
@@ -439,7 +440,6 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
         shiftp = 0;
       }
 
-      //TODO DEBUG
       if ((shift_count > 0) && 
                (config_->root_first || !config_->complete_parse || (i < sent.size() - 1) || beam_stack[j]->stack_empty())) {
         //shift
@@ -455,12 +455,12 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
         beam_stack[j]->set_num_particles(shift_count);
       } else {
         beam_stack[j]->set_num_particles(0);
-        std::cout << j << " ";
+        //std::cout << j << " ";
       }
     }
 
     reallocateParticles(&beam_stack, num_particles);
-    std::cout << std::endl;
+    //std::cout << std::endl;
   }
 
   //eliminate incomplete parses in root-first parser
@@ -496,23 +496,23 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::beamParticlePa
     std::sort(beam_stack.begin(), beam_stack.end(), TransitionParser::cmp_particle_weights); 
 
   //compute beam weight
-  std::cout << "===\n";
+  //std::cout << "===\n";
   for (unsigned i = 0; (i < beam_stack.size()); ++i) {
-    std::cout << beam_stack[i]->num_particles() << " ";
+    //std::cout << beam_stack[i]->num_particles() << " ";
     if (!duplicate[i] && (beam_stack[i]->num_particles() > 0)) 
       beam_stack[0]->add_beam_weight(beam_stack[i]->particle_weight()); 
   }
-  std::cout << std::endl;
+  //std::cout << std::endl;
 
   if (beam_stack.size()==0 || beam_stack[0]->num_particles() == 0) {
-    std::cout << "no parse found" << std::endl;
+    //std::cout << "no parse found" << std::endl;
     return ArcEagerLabelledParser(static_cast<TaggedSentence>(sent), config_);  
   } else {
     return ArcEagerLabelledParser(*beam_stack[0]); 
   }
 
   if (beam_stack.size()==0) {
-    std::cout << "no parse found" << std::endl;
+    //std::cout << "no parse found" << std::endl;
   return ArcEagerLabelledParser(static_cast<TaggedSentence>(sent), config_);  
   } else {
     return ArcEagerLabelledParser(*beam_stack[0]); 

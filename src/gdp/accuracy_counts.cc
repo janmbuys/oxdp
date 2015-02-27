@@ -255,9 +255,11 @@ void AccuracyCounts::printAccuracy() const {
 
   std::cerr << std::endl;
   std::cerr << "Perplexity: " << perplexity() << std::endl;   
+  std::cerr << "Perplexity No EOS: " << perplexity_noeos() << std::endl;   
   std::cerr << "Cross entropy: " << cross_entropy() << std::endl;   
   std::cerr << "Log likelihood: " << likelihood() << std::endl;   
   std::cerr << "Beam Perplexity: " << beam_perplexity() << std::endl;   
+  std::cerr << "Beam Perplexity No EOS: " << beam_perplexity_noeos() << std::endl;   
   std::cerr << "Beam Cross entropy: " << beam_cross_entropy() << std::endl;   
   std::cerr << "Beam Log likelihood: " << beam_likelihood() << std::endl;   
   std::cerr << "Importance Perplexity: " << importance_perplexity() << std::endl;   

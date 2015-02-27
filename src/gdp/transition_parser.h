@@ -208,7 +208,7 @@ class TransitionParser: public Parser {
         features.push_back(features_at(i));
       } else {
         words.push_back(0);
-        features.push_back(Words(1, 0));
+        features.push_back(Words(2, 0)); //word + pos
       }          
     }
     
