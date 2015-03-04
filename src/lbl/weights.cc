@@ -610,10 +610,12 @@ VectorReal Weights::getPredictionVector(const Context& context) const {
 
   VectorReal prediction_vector = VectorReal::Zero(word_width);
   for (int i = 0; i < context_width; ++i) {
-    VectorReal in_vector = Q.col(context.words[i]).array();
+    VectorReal in_vector = VectorReal::Zero(word_width);
     if (config->compositional) {
       for (auto feat: context.features[i]) 
         in_vector += P.col(feat);
+    } else {
+      in_vector += Q.col(context.words[i]); //.array();
     }
 
     if (config->diagonal_contexts) {

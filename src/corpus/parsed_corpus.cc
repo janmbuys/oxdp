@@ -30,7 +30,8 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
         //features.push_back(dict->convertTag(word_str_str, frozen));
       } else if (col_num == 2) { //2 - unannotated word 
         std::string unword_str = line.substr(last, cur - last - 1);
-        features.push_back(dict->convertTag(unword_str, frozen));
+        if (config_->compositional)
+          features.push_back(dict->convertTag(unword_str, frozen));
       } else if (col_num == 4) { //4 - postag (3 - coarse postag)
         tag_str = line.substr(last, cur - last - 1);
         features.push_back(dict->convertTag(tag_str, frozen));
