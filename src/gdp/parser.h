@@ -139,6 +139,14 @@ class Parser: public ParsedSentence {
     return (left_children_.at(j).size() + right_children_.at(j).size());
   }
 
+  size_t left_child_count_at(WordIndex j) const {
+    return left_children_.at(j).size();
+  }
+
+  size_t right_child_count_at(WordIndex j) const {
+    return right_children_.at(j).size();
+  }
+
   bool equal_arcs(const ParsedSentence& parse) const {
     for (WordIndex j = 1; j < size(); ++j) {
       if (arc_at(j) != parse.arc_at(j))

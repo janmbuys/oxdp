@@ -88,6 +88,14 @@ int main(int argc, char** argv) {
         "Predict words in addition to POS tags.")
     ("compositional", value<bool>()->default_value(false),
         "Compositional word representations including POS tags and other features.")
+    ("pos-annotated", value<bool>()->default_value(false),
+        "Use word_POS as input feature.")
+    ("label-features", value<bool>()->default_value(false),
+        "Include arc labels as input feature.")
+    ("morph-features", value<bool>()->default_value(false),
+        "Include conll morphological features.")
+    ("distance-features", value<bool>()->default_value(false),
+        "Include distance-based input features.")
     ("semi-supervised", value<bool>()->default_value(false),
         "Use additional, unlabelled training data.")
     ("root-first", value<bool>()->default_value(true),
@@ -119,6 +127,9 @@ int main(int argc, char** argv) {
         "Number of classes for factored output using frequency binning.")
     ("class-file", value<string>(),
         "File containing word to class mappings in the format "
+        "<class> <word> <frequence>.")
+    ("lower-class-file", value<string>(),
+        "File containing lower word to class mappings in the format "
         "<class> <word> <frequence>.");
   options_description config_options, cmdline_options;
   config_options.add(generic);
@@ -146,6 +157,7 @@ int main(int argc, char** argv) {
   }
 
   config->pyp_model = false;
+  config->distance_range = 5;
   config->iterations = vm["iterations"].as<int>();
   config->minibatch_size = vm["minibatch-size"].as<int>();
   config->ngram_order = vm["order"].as<int>();
@@ -210,6 +222,10 @@ int main(int argc, char** argv) {
   config->discriminative = vm["discriminative"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
   config->compositional = vm["compositional"].as<bool>();
+  config->pos_annotated = vm["pos-annotated"].as<bool>();
+  config->label_features = vm["label-features"].as<bool>();
+  config->morph_features = vm["morph-features"].as<bool>();
+  config->distance_features = vm["distance-features"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
   config->semi_supervised = vm["semi-supervised"].as<bool>();
@@ -238,6 +254,9 @@ int main(int argc, char** argv) {
   if (vm.count("class-file")) {
     config->class_file = vm["class-file"].as<string>();
   }
+  if (vm.count("lower-class-file")) {
+    config->lower_class_file = vm["lower-class-file"].as<string>();
+  }
 
   std::cerr << "################################" << std::endl;
   if (strlen(GIT_REVISION) > 0) {
@@ -248,6 +267,10 @@ int main(int argc, char** argv) {
   std::cerr << "# representation_size = " << config->representation_size << std::endl;
   std::cerr << "# class factored = " << config->factored << std::endl;
   std::cerr << "# compositional = " << config->compositional << std::endl;
+  std::cerr << "# pos annotated = " << config->pos_annotated << std::endl;
+  std::cerr << "# label features = " << config->label_features << std::endl;
+  std::cerr << "# morph features = " << config->morph_features << std::endl;
+  std::cerr << "# distance features = " << config->distance_features << std::endl;
   std::cerr << "# parser type = " << parser_type_str << std::endl;
   std::cerr << "# context type = " << config->context_type << std::endl;
   std::cerr << "# labelled parser = " << config->labelled_parser << std::endl;

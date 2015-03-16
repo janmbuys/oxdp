@@ -200,15 +200,36 @@ class TransitionParser: public Parser {
       if (i >= 0) {
         if (config_->lexicalised)
           words.push_back(word_at(i));
-        else {
+        else 
           words.push_back(tag_at(i));
-          //if (tag_at(i)==-1)
-          //  std::cout << i << " ";
-        }
-        features.push_back(features_at(i));
+        Words feats(features_at(i));
+
+        if (config_->label_features) 
+          feats.push_back(config_->label_feature_index + label_at(i));
+
+        if (config_->distance_features) {                
+          size_t range = config_->distance_range;
+          //left, right valency
+          feats.push_back(config_->distance_feature_index 
+                               + std::min(range - 1, left_child_count_at(i)));
+          feats.push_back(config_->distance_feature_index + range
+                               + std::min(range - 1, right_child_count_at(i)));
+          //distance to buffer next
+          feats.push_back(config_->distance_feature_index + 2*range - 1
+                               + std::min((int)(range), buffer_next_ - i));
+          //distance to head
+          if (arc_at(i) >= 0)
+            feats.push_back(config_->distance_feature_index + 3*range - 1 
+                               + std::min((int)(range), std::abs(arc_at(i) - i)));
+        } 
+        
+        features.push_back(feats);
       } else {
         words.push_back(0);
-        features.push_back(Words(2, 0)); //word + pos
+        if (config_->lexicalised && config_->compositional)
+          features.push_back(Words(2, 0)); //word + pos
+        else
+          features.push_back(Words(1, 0));
       }          
     }
     

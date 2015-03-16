@@ -60,6 +60,29 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   training_corpus->readFile(config->training_file, dict, false);
   std::cerr << "Done reading training corpus..." << endl;
 
+  if (config->label_features) {
+    //add labels to feature vocab
+    config->label_feature_index = dict->tag_size();
+    for (unsigned i = 0; i < dict->label_size(); ++i) 
+      dict->convertTag("LABEL_" + dict->lookupLabel(i), false);
+  }
+
+  if (config->distance_features) {
+    config->distance_feature_index = dict->tag_size();
+    size_t range = config->distance_range;
+    for (size_t i = 0; i < range; ++i)
+      dict->convertTag("LV_" + std::to_string(i), false);
+    for (size_t i = 0; i < range; ++i)
+      dict->convertTag("RV_" + std::to_string(i), false);
+    for (size_t i = 1; i <= range; ++i)
+      dict->convertTag("BufDist_" + std::to_string(i), false);
+    for (size_t i = 1; i <= range; ++i)
+      dict->convertTag("HeadDist_" + std::to_string(i), false);
+  }
+
+  //update vocab sizes
+  config->num_tags = dict->tag_size();
+
   std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
             << dict->size() << " word types, " << dict->tag_size() << " tags, "  
 	    << dict->label_size() << " labels)\n";  
@@ -87,7 +110,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   iota(indices.begin(), indices.end(), 0);
 
   Real best_perplexity = numeric_limits<Real>::infinity();
-  Real global_objective = 0, test_objective = 0;
+  Real best_global_objective = numeric_limits<Real>::infinity();
+  bool improve_objective = true;
+  Real global_objective = 0;
+  Real test_objective = 0;
   boost::shared_ptr<ParsedWeights> global_gradient =
       boost::make_shared<ParsedWeights>(config, metadata, false);
   boost::shared_ptr<ParsedWeights> adagrad =
@@ -106,7 +132,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
     boost::shared_ptr<ParsedWeights> gradient =
         boost::make_shared<ParsedWeights>(config, metadata, false);
 
-    for (int iter = 0; iter < config->iterations; ++iter) {
+    for (int iter = 0; (iter < config->iterations) && improve_objective; ++iter) {
       auto iteration_start = get_time();
 
       #pragma omp master
@@ -149,7 +175,6 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             task_start = shared_index;
             shared_index += task_size;
           }
-
 
           if (task_start < minibatch.size()) {
             size_t task_end = min(task_start + task_size, minibatch.size());
@@ -241,9 +266,15 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
              << "  Perplexity: " << perplexity(global_objective, training_corpus->numTokens())
              << "  Objective: " << global_objective / training_corpus->numTokens()
              << endl << endl;
-      
-       //if (iter%5 == 0)
-          evaluate(test_corpus, iteration_start, minibatch_counter,
+     
+        if (global_objective <= best_global_objective) {
+          best_global_objective = global_objective;
+        } else {
+          improve_objective = false;
+        }
+
+        //if (iter%5 == 0)
+        evaluate(test_corpus, iteration_start, minibatch_counter,
                test_objective, best_perplexity);
       }
     }
@@ -279,7 +310,9 @@ Real LblDpModel<ParseModel, ParsedWeights, Metadata>::regularize(
 
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate() const {
- //read test data 
+  #pragma omp master
+  {
+  //read test data 
   boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config);
   test_corpus->readFile(config->test_file, dict, true);
   std::cerr << "Done reading test corpus..." << std::endl;
@@ -290,20 +323,22 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate() const {
   size_t test_size = 3*test_corpus->numTokens(); //approx
   Real test_perplexity = perplexity(log_likelihood, test_size); 
   std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
+  }
 }
 
-//not sure if I should thread this: disable for now
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) const {
   if (test_corpus != nullptr) {
-        vector<int> indices(test_corpus->size());
+  #pragma omp master
+  {
+    vector<int> indices(test_corpus->size());
     iota(indices.begin(), indices.end(), 0);
     
     for (unsigned beam_size: config->beam_sizes) {
       std::ofstream outs;
       outs.open(config->test_output_file);
-      #pragma omp master
+      //#pragma omp master
       {
         std::cerr << "parsing with beam size " << beam_size << ":\n";
         accumulator = 0;
@@ -311,7 +346,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
 
       // Each thread must wait until the perplexity is set to 0.
       // Otherwise, partial results might get overwritten.
-      #pragma omp barrier
+      //#pragma omp barrier
       
       auto beam_start = get_time();
       boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>(dict);
@@ -337,17 +372,17 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
           outs << "\n";
         }
 
-        #pragma omp critical
+        //#pragma omp critical
         accumulator += objective;
         start = end;
       } 
     
       // Wait for all the threads to compute the perplexity for their slice of
       // test data.
-      #pragma omp barrier
+      //#pragma omp barrier
 
-      #pragma omp master
-      {
+      //#pragma omp master
+      //{
         outs.close();
         Real beam_time = get_duration(beam_start, get_time());
         Real sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
@@ -356,11 +391,12 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
                    static_cast<int>(sents_per_sec) << " sentences per second, " <<
                    static_cast<int>(tokens_per_sec) << " tokens per second)\n";
         acc_counts->printAccuracy();
-      }
+      //}
     }
     
-    #pragma omp barrier
+    //#pragma omp barrier
     weights->clearCache();
+  }
   }
 }
 

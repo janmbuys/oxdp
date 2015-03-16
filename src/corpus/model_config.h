@@ -35,6 +35,7 @@ struct ModelConfig {
   bool        factored;
   int         classes;
   std::string class_file;
+  std::string lower_class_file;
   bool        randomise;
   bool        diagonal_contexts;
   int         vocab_size;
@@ -47,6 +48,10 @@ struct ModelConfig {
   bool        discriminative;
   bool        lexicalised;
   bool        compositional;
+  bool        pos_annotated;
+  bool        label_features;
+  bool        morph_features;
+  bool        distance_features;
   bool        char_lexicalised;
   bool        semi_supervised;
   bool        direction_deterministic;
@@ -60,6 +65,9 @@ struct ModelConfig {
   int         generate_samples;
   int         num_tags;
   int         num_labels;
+  int         label_feature_index;
+  int         distance_feature_index;
+  size_t      distance_range;
   std::vector<unsigned> beam_sizes;
 
   bool operator==(const ModelConfig& other) const;
@@ -86,6 +94,7 @@ struct ModelConfig {
     ar & factored;
     ar & classes;
     ar & class_file;
+    ar & lower_class_file;
     ar & randomise;
     ar & diagonal_contexts;
     ar & vocab_size;
@@ -97,6 +106,10 @@ struct ModelConfig {
     ar & discriminative;
     ar & lexicalised;
     ar & compositional;
+    ar & pos_annotated;
+    ar & label_features;
+    ar & morph_features;
+    ar & distance_features;
     ar & char_lexicalised;
     ar & semi_supervised;
     ar & direction_deterministic;

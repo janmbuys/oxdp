@@ -17,6 +17,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
   int col_num = 0;
   
   std::string word_str; 
+  std::string feature_str;
   std::string tag_str; 
   Words features;
 
@@ -24,20 +25,30 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
     if (Dict::is_ws(line[cur++])) {
       if (state == 0) 
         continue;
-      if (col_num == 1) { //1 - word
+      if (col_num == 1) { //1 - annotated word
         word_str = line.substr(last, cur - last - 1);
-        //std::string word_str_str = word_str.substr(0, word_str.find('_'));
-        //features.push_back(dict->convertTag(word_str_str, frozen));
       } else if (col_num == 2) { //2 - unannotated word 
-        std::string unword_str = line.substr(last, cur - last - 1);
-        if (config_->compositional)
-          features.push_back(dict->convertTag(unword_str, frozen));
+        std::string pure_word_str = line.substr(last, cur - last - 1);
+        if (!config_->pyp_model && config_->lexicalised && config_->compositional)
+          features.push_back(dict->convertTag(pure_word_str, frozen));
+        if (config_->pyp_model || (!config_->compositional && !config_->pos_annotated))
+          word_str = pure_word_str;        
       } else if (col_num == 4) { //4 - postag (3 - coarse postag)
         tag_str = line.substr(last, cur - last - 1);
         features.push_back(dict->convertTag(tag_str, frozen));
-      } else if (col_num == 6) //arc head index
+      } else if (col_num == 5) { //5 morphological features (| seperated)
+        feature_str = line.substr(last, cur - last -1); //TODO split features
+        if (config_->morph_features) {
+          std::stringstream feature_stream(feature_str);
+          std::string feat;
+          while (std::getline(feature_stream, feat, '|')) {
+            if (!feat.empty()) 
+              features.push_back(dict->convertTag(feat, frozen));
+          }
+        }
+      } else if (col_num == 6) { //arc head index
         arcs_out->push_back(static_cast<WordIndex>(stoi(line.substr(last, cur - last - 1))));
-      else if (col_num == 7) { //label 
+      } else if (col_num == 7) { //label 
         if (config_->labelled_parser)
           labels_out->push_back(dict->convertLabel(line.substr(last, cur - last - 1), frozen));
         else
@@ -56,12 +67,17 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
   //in case we need to process last column (n):
   /*if ((state == 1) && (col_num == n)) 
     sent_out->push_back(dict->convert(line.substr(last, cur - last), frozen)); */
+
   if (word_str != "") {
     if (config_->lexicalised)
       sent_out->push_back(dict->convert(word_str, frozen));
     else
       sent_out->push_back(dict->convert(tag_str, frozen));
     tags_out->push_back(features);
+    
+    //make sure <unk>_POS words are added
+    //if (!frozen && (config_->compositional || config_->pos_annotated)) 
+    //  dict->convert("<unk>_" + tag_str, frozen);
   }
 }
 

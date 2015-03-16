@@ -62,11 +62,13 @@ WordId Dict::convert(const Word& word, bool frozen) {
     return bad0_id_;
 
   //assume unknown words have been removed by preprocessing
+  //map remaining exceptions to null
   auto i = d_.find(word);
   if (i == d_.end()) {
     if (frozen) {
-      std::cerr << "OOV:" << word << " ";
-      return bad0_id_;
+      //std::cerr << "OOV:" << word << " ";
+      //return bad0_id_;
+      return 0;
     }
     words_.push_back(word);
     d_[word] = words_.size()-1;
@@ -80,8 +82,9 @@ WordId Dict::convertTag(const Word& tag, bool frozen) {
   auto i = tag_d_.find(tag);
   if (i == tag_d_.end()) {
     if (frozen) {
-      std::cerr << "OOV:" << tag << " ";
-      return bad0_id_;
+      //std::cerr << "OOV:" << tag << " ";
+      //return bad0_id_;
+      return 0;
     }
     tags_.push_back(tag);
     tag_d_[tag] = tags_.size()-1;
@@ -95,8 +98,9 @@ WordId Dict::convertLabel(const Word& label, bool frozen) {
   auto i = label_d_.find(label);
   if (i == label_d_.end()) {
     if (frozen) {
-      std::cerr << "OOV:" << label << " ";
-      return bad0_id_;
+      //std::cerr << "OOV:" << label << " ";
+      //return bad0_id_;
+      return 0;
     }
     labels_.push_back(label);
     label_d_[label] = labels_.size()-1;
@@ -108,7 +112,7 @@ WordId Dict::convertLabel(const Word& label, bool frozen) {
 
 bool Dict::punctTag(WordId id) const {
   std::vector<Word> punct = {".", ",", "?", "!", ":", "''", "``", 
-                                   "(", ")", "-LRB-", "-RRB-", "#", "$"};
+                                   "(", ")", "-LRB-", "-RRB-", "#", "$", "PU"};
   Word word = lookupTag(id);
   for (auto punc: punct) {
     if (word == punc)

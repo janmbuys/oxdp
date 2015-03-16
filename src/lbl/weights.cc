@@ -151,7 +151,6 @@ void Weights::getContextVectors(
   int context_width = config->ngram_order - 1;
   int word_width = config->representation_size;
 
-  //std::cout << examples->size() << std::endl;
   contexts.resize(examples->size());
   features.resize(examples->size());
   context_vectors.resize(
@@ -159,25 +158,15 @@ void Weights::getContextVectors(
   for (size_t i = 0; i < examples->size(); ++i) {
     contexts[i] = examples->contextAt(i).words;
     features[i] = examples->contextAt(i).features;
-    //std::cout << i << " " << features[i].size() << std::endl;
     for (int j = 0; j < context_width; ++j) {
-      //std::cout << j << ":" << contexts[i][j] << std::endl;
-      //context_vectors[j].col(i) = Q.col(contexts[i][j]);
+      if (!config->compositional || config->pos_annotated) 
+        context_vectors[j].col(i) = Q.col(contexts[i][j]);
       if (config->compositional) {
-        //if (features[i][j].size() != 1)
-        //  std::cout << features[i][j].size() << ": " << contexts[i][j] << std::endl;
         for (auto feat: features[i][j]) {
           context_vectors[j].col(i) += P.col(feat);
-          //if (feat != contexts[i][j])
-          //  std::cout << feat << " " << contexts[i][j] << std::endl;
-          //std::cout << feat << ",";
         }
-        //std::cout << " ";
-      } else {
-        context_vectors[j].col(i) = Q.col(contexts[i][j]);
-      }
+      }  
     }
-    //std::cout << std::endl;    
   }
 }
 
@@ -294,18 +283,13 @@ void Weights::getContextGradient(
   for (int j = 0; j < context_width; ++j) {
     context_gradients = getContextProduct(j, weighted_representations, true);
     for (size_t i = 0; i < prediction_size; ++i) {
-      //gradient->Q.col(contexts[i][j]) += context_gradients.col(i);
+      if (!config->compositional || config->pos_annotated) 
+        gradient->Q.col(contexts[i][j]) += context_gradients.col(i);
       if (config->compositional) {
-        //if (features[i][j].size() != 1)
-        //  std::cout << features[i][j].size() << ": " << contexts[i][j] << std::endl;
         for (auto feat: features[i][j]) {
-          //if (feat != contexts[i][j])
-          //  std::cout << feat << " " << contexts[i][j] << std::endl;
           gradient->P.col(feat) += context_gradients.col(i);
         }
-      } else {
-        gradient->Q.col(contexts[i][j]) += context_gradients.col(i);
-      }
+      } 
     }
 
     if (config->diagonal_contexts) {
@@ -611,16 +595,14 @@ VectorReal Weights::getPredictionVector(const Context& context) const {
   VectorReal prediction_vector = VectorReal::Zero(word_width);
   for (int i = 0; i < context_width; ++i) {
     VectorReal in_vector = VectorReal::Zero(word_width);
+    if (!config->compositional || config->pos_annotated) 
+      in_vector = Q.col(context.words[i]); //.array();
     if (config->compositional) {
       for (auto feat: context.features[i]) 
         in_vector += P.col(feat);
-    } else {
-      in_vector += Q.col(context.words[i]); //.array();
-    }
-
+    } 
     if (config->diagonal_contexts) {
       //prediction_vector += C[i].array() * in_vector.array(); 
-      //prediction_vector += C[i] * in_vector; 
       prediction_vector += C[i].asDiagonal() * in_vector; 
     } else {
       prediction_vector += C[i] * in_vector;
