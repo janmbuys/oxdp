@@ -95,6 +95,10 @@ class TransitionParser: public Parser {
     return stack_.rbegin()[1];
   }
 
+  WordIndex stack_top_third() const {
+    return stack_.rbegin()[2];
+  }
+
   WordIndex buffer_next() const {
     if (!root_first() && (buffer_next_ == static_cast<int>(size())))
       return 0;
@@ -137,6 +141,10 @@ class TransitionParser: public Parser {
   bool root_first() const {
     return config_->root_first;
   }
+
+  bool non_projective() const {
+    return (config_->parser_type == ParserType::arcstandard2);
+  } 
 
   std::vector<std::string> action_str_list() const {
     const std::vector<std::string> action_names {"sh", "la", "ra", "re", "la2", "ra2"};

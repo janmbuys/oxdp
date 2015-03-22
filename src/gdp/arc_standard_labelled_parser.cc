@@ -68,24 +68,60 @@ bool ArcStandardLabelledParser::rightArc(WordId l) {
   append_action_label(l);
   return true;
 }
+
+bool ArcStandardLabelledParser::leftArc2(WordId l) {
+  WordIndex k = stack_top();
+  pop_stack();
+  WordIndex j = stack_top();
+  pop_stack();
+  WordIndex i = stack_top();
+  pop_stack();
+  push_stack(j);
+  push_stack(k);
+  set_arc(i, k);
+  set_label(i, l);
+  append_action(kAction::la2);
+  append_action_label(l);
+  return true;
+}
+
+bool ArcStandardLabelledParser::rightArc2(WordId l) {
+  WordIndex k = stack_top();
+  pop_stack();
+  WordIndex j = stack_top();
+  WordIndex i = stack_top_second();
+  set_arc(k, i);
+  set_label(k, l);
+  append_action(kAction::ra2);
+  append_action_label(l);
+  return true;
+}
  
+
 //Give the label for reduce action, if at all valid 
 WordId ArcStandardLabelledParser::oracleNextLabel(const ParsedSentence& gold_parse) const {
   WordId lab = -1;
 
+  kAction a = oracleNext(gold_parse);
+
   //assume not in terminal configuration 
-  if (stack_depth() >= 2) {
+  if (a != kAction::sh && a != kAction::re) {
     WordIndex i = stack_top_second();
     WordIndex j = stack_top();
 
-    if (gold_parse.has_arc(i, j)) {
+    if (a == kAction::la)
       lab = gold_parse.label_at(i);
-    }
-    else if (gold_parse.has_arc(j, i)) {
+    else if (a == kAction::ra)
       lab = gold_parse.label_at(j);
+    else {
+      WordIndex k = stack_top_third();  
+      if (a == kAction::la2)
+        lab = gold_parse.label_at(i);
+      else if (a == kAction::ra2)
+        lab = gold_parse.label_at(k);
     }
   }
-    
+ 
   return lab;
 }
 
@@ -102,8 +138,8 @@ kAction ArcStandardLabelledParser::oracleNext(const ParsedSentence& gold_parse) 
     if (gold_parse.has_arc(i, j)) {
       a = kAction::la;
       //check that i has all its children
-      for (WordIndex k = 1; k < size(); ++k) {
-        if (gold_parse.has_arc(k, i) && !has_arc(k, i)) {
+      for (WordIndex l = 1; l < size(); ++l) {
+        if (gold_parse.has_arc(l, i) && !has_arc(l, i)) {
           a = kAction::re;
           break;
         }
@@ -112,13 +148,35 @@ kAction ArcStandardLabelledParser::oracleNext(const ParsedSentence& gold_parse) 
     else if (gold_parse.has_arc(j, i)) {
       a = kAction::ra;
       //check that j has all its children
-      for (WordIndex k = 1; k < size(); ++k) {
-        if (gold_parse.has_arc(k, j) && !has_arc(k, j)) {
+      for (WordIndex l = 1; l < size(); ++l) {
+        if (gold_parse.has_arc(l, j) && !has_arc(l, j)) {
           a = kAction::re;
           break;
         }
       }
+    } else if (non_projective() && (stack_depth() >= 3)) {
+      WordIndex k = stack_top_third();
+      if (gold_parse.has_arc(i, k)) {
+        a = kAction::la2;
+        //check that i has all its children
+        for (WordIndex l = 1; l < size(); ++l) {
+          if (gold_parse.has_arc(l, i) && !has_arc(l, i)) {
+            a = kAction::re;
+            break;
+          }
+        }
+      } else if (gold_parse.has_arc(k, i)) {
+        a = kAction::ra2;
+        //check that k has all its children
+        for (WordIndex l = 1; l < size(); ++l) {
+          if (gold_parse.has_arc(l, k) && !has_arc(l, k)) {
+            a = kAction::re;
+            break;
+          }
+        }
+      }
     }
+
     if ((a == kAction::re) && !buffer_empty()) 
       a = kAction::sh;
   }
@@ -138,12 +196,17 @@ bool ArcStandardLabelledParser::executeAction(kAction a, WordId l) {
     return leftArc(l);
   case kAction::ra:
     return rightArc(l);
+  case kAction::la2:
+    return leftArc2(l);
+  case kAction::ra2:
+    return rightArc2(l);
   default: 
     std::cerr << "action not implemented" << std::endl;
     return false;
   }
 } 
 
+//TODO add or extend for 2nd order transitions
 Indices ArcStandardLabelledParser::contextIndices() const {
   if (context_type() == "extended")
     return extended_children_context(); //order 13

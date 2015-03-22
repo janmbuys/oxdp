@@ -22,6 +22,10 @@ class ArcStandardLabelledParser : public TransitionParser {
 
   bool rightArc(WordId l); 
   
+  bool leftArc2(WordId l); 
+
+  bool rightArc2(WordId l); 
+  
   kAction oracleNext(const ParsedSentence& gold_parse) const;
   
   WordId oracleNextLabel(const ParsedSentence& gold_parse) const;
@@ -64,6 +68,10 @@ class ArcStandardLabelledParser : public TransitionParser {
       return l + 1;
     else if (a == kAction::ra)
       return num_labels() + l + 1;
+    else if (a == kAction::la2)
+      return 2*num_labels() + l + 1;
+    else if (a == kAction::ra2)
+      return 3*num_labels() + l + 1;
     else 
       return -1;
   }
@@ -75,6 +83,10 @@ class ArcStandardLabelledParser : public TransitionParser {
       return kAction::la;
     else if (la <= 2*num_labels())
       return kAction::ra;
+    else if (la <= 3*num_labels())
+      return kAction::la2;
+    else if (la <= 4*num_labels())
+      return kAction::ra2;
     else
       return kAction::re;
   }
@@ -86,6 +98,10 @@ class ArcStandardLabelledParser : public TransitionParser {
       return la - 1;
     else if (la <= 2*num_labels())
       return la - num_labels() - 1;
+    else if (la <= 3*num_labels())
+      return la - 2*num_labels() - 1;
+    else if (la <= 4*num_labels())
+      return la - 3*num_labels() - 1;
     else
       return -1;
   }
