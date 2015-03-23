@@ -19,7 +19,7 @@ typedef std::vector<WordIndex> Indices;
 typedef std::vector<Words> WordsList; 
 typedef std::vector<Indices> IndicesList;
 
-typedef float Real;
+typedef double Real;
 typedef std::vector<Real> Reals;
 
 typedef std::chrono::high_resolution_clock Clock;

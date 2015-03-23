@@ -259,7 +259,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       } 
     }
 
-    if ((iter > 0) && (iter % 5 == 0))
+    //if ((iter > 0) && (iter % 5 == 0))
+    if (iter > 0) 
       weights_->resampleHyperparameters(eng);
 
     Real iteration_time = get_duration(iteration_start, get_time());

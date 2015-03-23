@@ -66,6 +66,14 @@ size_t SentenceCorpus::size() const {
   return sentences_.size();
 }
 
+size_t SentenceCorpus::numTokensS() const {
+  size_t total = 0;
+  for (auto sent: sentences_)
+    total += sent.size(); //exclude EOS
+
+  return total;
+}
+
 size_t SentenceCorpus::numTokens() const {
   size_t total = 0;
   for (auto sent: sentences_)

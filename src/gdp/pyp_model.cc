@@ -122,8 +122,10 @@ void PypModel::evaluate() const {
   evaluate(test_corpus, log_likelihood);
     
   Real test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
+  Real test_perplexity_s = perplexity(log_likelihood, test_corpus->numTokensS());
      
-  std::cerr << "Test Perplexity: " << test_perplexity << std::endl;
+  std::cerr << "Test Perplexity with EOS: " << test_perplexity_s << std::endl
+          << "Test Perplexity: " << test_perplexity << std::endl;
 }
 
 void PypModel::evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, int minibatch_counter, 
@@ -132,10 +134,12 @@ void PypModel::evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, in
     evaluate(test_corpus, log_likelihood);
     
     Real test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
+    Real test_perplexity_s = perplexity(log_likelihood, test_corpus->numTokensS());
     std::cerr << "\tMinibatch " << minibatch_counter << ", "
            << "Test Likelihood: " << log_likelihood << std::endl
            << "Test Size: " << test_corpus->numTokens() << std::endl
-         << "Test Perplexity: " << test_perplexity << std::endl;
+         <<  "Test Perplexity with EOS: " << test_perplexity_s << std::endl
+         << "Test Perplexity no EOS: " << test_perplexity << std::endl;
 
     if (test_perplexity < best_perplexity) 
       best_perplexity = test_perplexity;

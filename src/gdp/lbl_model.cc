@@ -56,13 +56,13 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   boost::shared_ptr<SentenceCorpus> training_corpus = boost::make_shared<SentenceCorpus>();
   training_corpus->readFile(config->training_file, dict, immutable_dict);
   config->vocab_size = dict->size();
-  cout << "Done reading training corpus..." << endl;
+  std::cout << "Done reading training corpus..." << endl;
 
   boost::shared_ptr<SentenceCorpus> test_corpus; 
   if (config->test_file.size()) {
     test_corpus = boost::make_shared<SentenceCorpus>();
     test_corpus->readFile(config->test_file, dict, true);
-    cout << "Done reading test corpus..." << endl;
+    std::cout << "Done reading test corpus..." << endl;
   }
 
   if (config->model_input_file.size() == 0) {
@@ -72,7 +72,7 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   } else {
     Real log_likelihood = 0;
     evaluate(test_corpus, log_likelihood);
-    cout << "Initial perplexity: "
+    std::cerr << "Initial perplexity: "
          << perplexity(log_likelihood, test_corpus->numTokens()) << endl;
   }
 
@@ -231,19 +231,20 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
       #pragma omp master
       {
         Real iteration_time = get_duration(iteration_start, get_time());
-        cout << "Iteration: " << iter << ", "
+        std::cerr << "Iteration: " << iter << ", "
              << "Time: " << iteration_time << " seconds, "
              << "  Likelihood: " << global_objective 
              << "  Size: " << training_corpus->numTokens()
-             << "  Perplexity: " << perplexity(global_objective, training_corpus->numTokens())
+             << "  Perplexity with EOS: " << perplexity(global_objective, training_corpus->numTokensS())
+             << "  Perplexity without EOS: " << perplexity(global_objective, training_corpus->numTokens())
              << "  Objective: " << global_objective / training_corpus->numTokens()
              << endl;
-        cout << endl;
+        std::cerr << endl;
       }
     }
   }
 
-  cout << "Overall minimum perplexity: " << best_perplexity << endl;
+  std::cerr << "Overall minimum perplexity: " << best_perplexity << endl;
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
@@ -268,7 +269,7 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
   if (test_corpus != nullptr) {
     #pragma omp master
     {
-      cout << "Calculating perplexity for " << test_corpus->numTokens()
+        std::cerr << "Calculating perplexity for " << test_corpus->numTokens()
            << " tokens..." << endl;
       accumulator = 0;
     }
@@ -307,7 +308,7 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
 
       start = end;
     }
-    std::cout << std::endl;
+    std::cerr << std::endl;
 
     // Wait for all the threads to compute the perplexity for their slice of
     // test data.
@@ -327,12 +328,14 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
     #pragma omp master
     {
       Real test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
+      Real test_perplexity_s = perplexity(log_likelihood, test_corpus->numTokensS());
       Real iteration_time = get_duration(iteration_start, get_time());
-      cout << "\tMinibatch " << minibatch_counter << ", "
+      std::cerr << "\tMinibatch " << minibatch_counter << ", "
            << "Time: " << get_duration(iteration_start, get_time()) << " seconds, "
            << "  Test Likelihood: " << log_likelihood 
            << "  Test Size: " << test_corpus->numTokens() 
-           << "  Test Perplexity: " << test_perplexity << endl;
+           << "  Test Perplexity with EOS: " << test_perplexity_s << std::endl
+           << "  Test Perplexity no EOS: " << test_perplexity << std::endl;
 
       if (test_perplexity < best_perplexity) {
         best_perplexity = test_perplexity;

@@ -34,6 +34,8 @@ class SentenceCorpus: public CorpusInterface {
 
   size_t numTokens() const override;
   
+  size_t numTokensS() const;
+  
   std::vector<int> unigramCounts() const override;
  
   private:

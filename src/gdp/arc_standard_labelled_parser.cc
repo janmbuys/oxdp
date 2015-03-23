@@ -143,7 +143,14 @@ kAction ArcStandardLabelledParser::oracleNext(const ParsedSentence& gold_parse) 
           a = kAction::re;
           break;
         }
-      }
+      } 
+      //check that j has all its right children
+      /* for (WordIndex l = j + 1; l < size(); ++l) {
+        if (gold_parse.has_arc(l, j) && !has_arc(l, j)) {
+          a = kAction::re;
+          break;
+        }
+      } */
     }
     else if (gold_parse.has_arc(j, i)) {
       a = kAction::ra;
@@ -153,7 +160,14 @@ kAction ArcStandardLabelledParser::oracleNext(const ParsedSentence& gold_parse) 
           a = kAction::re;
           break;
         }
-      }
+      } 
+      //check that j has all its right children
+      /*for (WordIndex l = j + 1; l < size(); ++l) {
+        if (gold_parse.has_arc(l, j) && !has_arc(l, j)) {
+          a = kAction::re;
+          break;
+        }
+      } */
     } else if (non_projective() && (stack_depth() >= 3)) {
       WordIndex k = stack_top_third();
       if (gold_parse.has_arc(i, k)) {
