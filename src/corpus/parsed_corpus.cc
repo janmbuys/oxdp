@@ -31,6 +31,8 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
         std::string pure_word_str = line.substr(last, cur - last - 1);
         if (!config_->pyp_model && config_->lexicalised && config_->compositional)
           features.push_back(dict->convertTag(pure_word_str, frozen));
+        else if (config_->pyp_model && !config_->lexicalised && !config_->pos_annotated)
+          features.push_back(dict->convertTag(pure_word_str, frozen));
         if (config_->pyp_model || (!config_->compositional && !config_->pos_annotated))
           word_str = pure_word_str;        
       } else if (col_num == 4) { //4 - postag (3 - coarse postag)
@@ -69,7 +71,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
     sent_out->push_back(dict->convert(line.substr(last, cur - last), frozen)); */
 
   if (word_str != "") {
-    if (config_->lexicalised)
+    if (config_->lexicalised || (config_->pyp_model && !config_->pos_annotated))
       sent_out->push_back(dict->convert(word_str, frozen));
     else
       sent_out->push_back(dict->convert(tag_str, frozen));

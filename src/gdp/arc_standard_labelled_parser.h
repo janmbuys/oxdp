@@ -54,7 +54,8 @@ class ArcStandardLabelledParser : public TransitionParser {
     if (stack_depth() < 2)
       return false;
     WordIndex i = stack_top_second();
-    return (!(root_first() && (i == 0)));
+    //return (!(root_first() && (i == 0)));
+    return (i != 0);
   }
 
   WordId action_label_at(int i) const {
