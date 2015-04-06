@@ -59,6 +59,7 @@ bool ArcStandardLabelledParser::leftArc(WordId l) {
 }
 
 bool ArcStandardLabelledParser::rightArc(WordId l) {
+  //std::cout << stack_depth() << std::endl;
   WordIndex j = stack_top();
   pop_stack();
   WordIndex i = stack_top();

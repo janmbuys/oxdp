@@ -13,7 +13,7 @@ ModelConfig::ModelConfig()
       discriminative(false), lexicalised(false), compositional(false), pos_annotated(false),
       label_features(false), morph_features(false), distance_features(false), char_lexicalised(false), 
       semi_supervised(false), direction_deterministic(false), sum_over_beam(false), resample(false), 
-      root_first(true), bootstrap(false), complete_parse(true), max_beam_increment(1), 
+      root_first(true), complete_parse(true), bootstrap(false), bootstrap_iter(0), max_beam_increment(1), 
       num_particles(1), generate_samples(0), num_tags(1), num_labels(1), beam_sizes(1, 1) {}
 
 int ModelConfig::numActions() const {

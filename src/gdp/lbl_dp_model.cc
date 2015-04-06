@@ -184,10 +184,13 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             boost::shared_ptr<ParseDataSet> task_examples = boost::make_shared<ParseDataSet>();
             
             for (int j: task) {
-              if (!config->bootstrap || (iter == 0))
+              if ((!config->bootstrap && (config->bootstrap_iter == 0)) || 
+                     (iter < config->bootstrap_iter))
                 parse_model->extractSentence(training_corpus->sentence_at(j), task_examples);
-              else
+              else if (config->bootstrap)
                 parse_model->extractSentence(training_corpus->sentence_at(j), weights, task_examples);
+              else 
+                parse_model->extractSentenceUnsupervised(training_corpus->sentence_at(j), weights, task_examples);
             }
             num_examples += task_examples->word_example_size() + task_examples->action_example_size();
 

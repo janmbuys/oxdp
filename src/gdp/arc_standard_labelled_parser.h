@@ -58,6 +58,13 @@ class ArcStandardLabelledParser : public TransitionParser {
     return (i != 0);
   }
 
+  bool left_arc2_valid() const {
+    if (stack_depth() < 3)
+      return false;
+    WordIndex i = stack_top_third();
+    return (i != 0);
+  }
+
   WordId action_label_at(int i) const {
     return action_labels_[i];
   }

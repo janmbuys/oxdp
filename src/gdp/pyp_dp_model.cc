@@ -203,10 +203,13 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       //THEN add new examples
       for (auto j: minibatch) {
         sup_examples_list.at(j)->clear();
-        if (!config_->bootstrap || (iter == 0))
+        if ((!config_->bootstrap && (config_->bootstrap_iter == 0)) || 
+                     (iter < config_->bootstrap_iter))
           parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
-        else
-          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, sup_examples_list.at(j));
+        else if (config_->bootstrap)
+          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, sup_examples_list.at(j));
+        else 
+          parse_model_->extractSentenceUnsupervised(sup_training_corpus->sentence_at(j), weights_, sup_examples_list.at(j));
         if (!sup_training_corpus->sentence_at(j).projective_dependency())
           ++non_projective_count;
         minibatch_examples->extend(sup_examples_list.at(j));

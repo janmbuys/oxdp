@@ -104,6 +104,8 @@ int main(int argc, char** argv) {
         "Enforce complete tree-structured parse.")
     ("bootstrap", value<bool>()->default_value(false),
         "Extract training data with beam search.")
+    ("bootstrap-iter", value<int>()->default_value(0),
+        "Number of supervised iterations before unsupervised training.")
     ("num-particles", value<int>()->default_value(100),
         "Number of particles in training.")
     ("max-beam-size", value<int>()->default_value(8),
@@ -232,6 +234,7 @@ int main(int argc, char** argv) {
   config->root_first = vm["root-first"].as<bool>();
   config->complete_parse = vm["complete-parse"].as<bool>();
   config->bootstrap = vm["bootstrap"].as<bool>();
+  config->bootstrap_iter = vm["bootstrap-iter"].as<int>();
   config->num_particles = vm["num-particles"].as<int>();
   config->max_beam_increment = vm["max-beam-increment"].as<int>();
   config->generate_samples = vm["generate-samples"].as<int>();
@@ -277,6 +280,7 @@ int main(int argc, char** argv) {
   std::cerr << "# lexicalised parser = " << config->lexicalised << std::endl;
   std::cerr << "# root first = " << config->root_first << std::endl;
   std::cerr << "# bootstrap = " << config->bootstrap << std::endl;
+  std::cerr << "# bootstrap iter = " << config->bootstrap_iter << std::endl;
   std::cerr << "# complete parse = " << config->complete_parse << std::endl;
   std::cerr << "# direction deterministic = " << config->direction_deterministic << std::endl;
   std::cerr << "# sum over beam = " << config->sum_over_beam << std::endl;
@@ -317,7 +321,7 @@ int main(int argc, char** argv) {
       model.learn();
     }
   } else if (config->lexicalised) {
-    if (config->parser_type == ParserType::arcstandard) {
+    if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) {
       train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else if (config->parser_type == ParserType::arceager) {
       train_dp<ArcEagerLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
@@ -325,7 +329,7 @@ int main(int argc, char** argv) {
       //train_dp<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     }
   } else {
-  if (config->parser_type == ParserType::arcstandard) {
+  if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) {
       train_dp<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
     } else if (config->parser_type == ParserType::arceager) {
       train_dp<ArcEagerLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);

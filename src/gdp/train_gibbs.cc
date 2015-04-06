@@ -59,6 +59,8 @@ int main(int argc, char** argv) {
         "Add root to the beginning (else end) of the sentence.")
     ("bootstrap", value<bool>()->default_value(false),
         "Extract training data with beam search.")
+    ("bootstrap-iter", value<int>()->default_value(0),
+        "Number of supervised iterations before unsupervised training.")
     ("complete-parse", value<bool>()->default_value(true),
         "Enforce complete tree-structured parse.")
     ("char-lexicalised", value<bool>()->default_value(false),
@@ -130,6 +132,8 @@ int main(int argc, char** argv) {
   std::string parser_type_str = vm["parser-type"].as<std::string>();
   if (parser_type_str == "arcstandard") 
     config->parser_type = ParserType::arcstandard; 
+  else if (parser_type_str == "arcstandard2") 
+    config->parser_type = ParserType::arcstandard2; 
   else if (parser_type_str == "arceager")
     config->parser_type = ParserType::arceager; 
   else if (parser_type_str == "eisner")
@@ -146,6 +150,7 @@ int main(int argc, char** argv) {
   config->resample = vm["particle-resample"].as<bool>();
   config->root_first = vm["root-first"].as<bool>();
   config->bootstrap = vm["bootstrap"].as<bool>();
+  config->bootstrap_iter = vm["bootstrap-iter"].as<int>();
   config->num_particles = vm["num-particles"].as<int>();
   config->max_beam_increment = vm["max-beam-increment"].as<int>();
   config->generate_samples = vm["generate-samples"].as<int>();
@@ -163,6 +168,7 @@ int main(int argc, char** argv) {
   std::cerr << "# lexicalised parser = " << config->lexicalised << std::endl;
   std::cerr << "# root first = " << config->root_first << std::endl;
   std::cerr << "# bootstrap = " << config->bootstrap << std::endl;
+  std::cerr << "# bootstrap iter = " << config->bootstrap_iter << std::endl;
   std::cerr << "# direction deterministic = " << config->direction_deterministic << std::endl;
   std::cerr << "# complete parse = " << config->complete_parse << std::endl;
   std::cerr << "# sum over beam = " << config->sum_over_beam << std::endl;
@@ -198,7 +204,7 @@ int main(int argc, char** argv) {
       //  train_dp<EisnerParseModel<ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>, ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>(config);
     } 
    else if (config->lexicalised) {
-      if ((config->parser_type == ParserType::arcstandard)) // && config->labelled_parser)
+      if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) // && config->labelled_parser)
         train_dp<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
       //else if (config->parser_type == ParserType::arcstandard)
       //  train_dp<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
@@ -209,7 +215,7 @@ int main(int argc, char** argv) {
       //else
       //  train_dp<EisnerParseModel<ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>, ParsedLexPypWeights<wordLMOrderE, tagLMOrderE, 1>>(config);
     } else {
-      if ((config->parser_type == ParserType::arcstandard)) // && config->labelled_parser)
+      if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) // && config->labelled_parser)
         train_dp<ArcStandardLabelledParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(config);
       //else if (config->parser_type == ParserType::arcstandard)
       //  train_dp<ArcStandardParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>, ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>(config);

@@ -60,6 +60,7 @@ struct ModelConfig {
   bool        root_first;
   bool        complete_parse;
   bool        bootstrap;
+  int         bootstrap_iter;
   int         max_beam_increment;
   int         num_particles;
   int         generate_samples;
@@ -118,6 +119,7 @@ struct ModelConfig {
     ar & root_first;
     ar & complete_parse;
     ar & bootstrap;
+    ar & bootstrap_iter;
     ar & max_beam_increment;
     ar & num_particles;
     ar & generate_samples;
