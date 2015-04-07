@@ -337,6 +337,27 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
+  Indices third_children_context() const {
+    Indices ctx(9, -1);
+    if (stack_.size() >= 1) { 
+      ctx[0] = stack_.at(stack_.size()-1);
+      ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[2] = leftmost_child_at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[3] = stack_.at(stack_.size()-2);
+      ctx[4] = rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[5] = leftmost_child_at(stack_.at(stack_.size()-2));
+    }
+    if (stack_.size() >= 3) {
+      ctx[3] = stack_.at(stack_.size()-3);
+      ctx[4] = rightmost_child_at(stack_.at(stack_.size()-3));
+      ctx[5] = leftmost_child_at(stack_.at(stack_.size()-3));
+    }
+
+    return ctx;
+  }
+
   Indices children_ngram_context() const {
     Indices ctx(9, -1);
     if (stack_.size() >= 1) { 
@@ -383,6 +404,40 @@ class TransitionParser: public Parser {
     }
     if (stack_.size() >= 4) {
       ctx[11] = stack_.at(stack_.size()-4);
+    } 
+
+    return ctx;
+  }
+
+  Indices third_extended_children_context() const {
+    Indices ctx(17, -1);
+    if (stack_.size() >= 1) { 
+      ctx[0] = stack_.at(stack_.size()-1);
+      ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[2] = leftmost_child_at(stack_.at(stack_.size()-1));
+      ctx[3] = second_rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[4] = second_leftmost_child_at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[5] = stack_.at(stack_.size()-2);
+      ctx[6] = rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[7] = leftmost_child_at(stack_.at(stack_.size()-2));
+      ctx[8] = second_rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[9] = second_leftmost_child_at(stack_.at(stack_.size()-2));
+    }
+    if (stack_.size() >= 3) {
+      ctx[10] = stack_.at(stack_.size()-3);
+      ctx[11] = rightmost_child_at(stack_.at(stack_.size()-3));
+      ctx[12] = leftmost_child_at(stack_.at(stack_.size()-3));
+      ctx[13] = second_rightmost_child_at(stack_.at(stack_.size()-3));
+      ctx[14] = second_leftmost_child_at(stack_.at(stack_.size()-3));
+    }
+
+    if (stack_.size() >= 4) {
+      ctx[15] = stack_.at(stack_.size()-4);
+    }
+    if (stack_.size() >= 5) {
+      ctx[16] = stack_.at(stack_.size()-5);
     } 
 
     return ctx;
@@ -489,7 +544,47 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
- Words tag_children_context() const {
+  Indices third_more_extended_children_context() const {
+    Indices ctx(23, -1);
+    if (stack_.size() >= 1) { 
+      ctx[0] = stack_.at(stack_.size()-1);
+      ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[2] = leftmost_child_at(stack_.at(stack_.size()-1));
+      ctx[3] = second_rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[4] = second_leftmost_child_at(stack_.at(stack_.size()-1));
+      ctx[5] = rightmost_grandchild_at(stack_.at(stack_.size()-1));
+      ctx[6] = leftmost_grandchild_at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[7] = stack_.at(stack_.size()-2);
+      ctx[8] = rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[9] = leftmost_child_at(stack_.at(stack_.size()-2));
+      ctx[10] = second_rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[11] = second_leftmost_child_at(stack_.at(stack_.size()-2));
+      ctx[12] = rightmost_grandchild_at(stack_.at(stack_.size()-2));
+      ctx[13] = leftmost_grandchild_at(stack_.at(stack_.size()-2));
+    }
+    if (stack_.size() >= 3) {
+      ctx[14] = stack_.at(stack_.size()-3);
+      ctx[15] = rightmost_child_at(stack_.at(stack_.size()-3));
+      ctx[16] = leftmost_child_at(stack_.at(stack_.size()-3));
+      ctx[17] = second_rightmost_child_at(stack_.at(stack_.size()-3));
+      ctx[18] = second_leftmost_child_at(stack_.at(stack_.size()-3));
+      ctx[19] = rightmost_grandchild_at(stack_.at(stack_.size()-3));
+      ctx[20] = leftmost_grandchild_at(stack_.at(stack_.size()-3));
+    }
+
+    if (stack_.size() >= 4) {
+      ctx[21] = stack_.at(stack_.size()-4);
+    }
+    if (stack_.size() >= 5) {
+      ctx[22] = stack_.at(stack_.size()-5);
+    } 
+
+    return ctx;
+  }
+
+  Words tag_children_context() const {
     Words ctx(7, 0);
     if (stack_.size() >= 1) { 
       WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));

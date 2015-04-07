@@ -82,10 +82,11 @@ WordId Dict::convertTag(const Word& tag, bool frozen) {
   auto i = tag_d_.find(tag);
   if (i == tag_d_.end()) {
     if (frozen) {
-      //std::cerr << "OOV:" << tag << " ";
+      //std::cerr << "OOV-tag:" << tag << " ";
       //return bad0_id_;
       return 0;
     }
+    //std::cout << tag << " ";
     tags_.push_back(tag);
     tag_d_[tag] = tags_.size()-1;
     return tags_.size()-1;
@@ -98,7 +99,7 @@ WordId Dict::convertLabel(const Word& label, bool frozen) {
   auto i = label_d_.find(label);
   if (i == label_d_.end()) {
     if (frozen) {
-      //std::cerr << "OOV:" << label << " ";
+      //std::cerr << "OOV-label:" << label << " ";
       //return bad0_id_;
       return 0;
     }

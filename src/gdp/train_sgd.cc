@@ -14,12 +14,15 @@ using namespace boost::program_options;
 using namespace oxlm;
 
 #define lblOrderAS 7
+#define lblOrderAS3 10
 #define lblOrderASl 10
 #define lblOrderASn 13
 #define lblOrderASxn 16
 #define lblOrderASxl 16
 #define lblOrderASx 13
+#define lblOrderASx3 18
 #define lblOrderASxx 17
+#define lblOrderASxx3 24
 #define lblOrderAE 8
 #define lblOrderAEl 12
 #define lblOrderAEx 14
@@ -177,12 +180,18 @@ int main(int argc, char** argv) {
 
   config->context_type = vm["context-type"].as<std::string>();
   std::string parser_type_str = vm["parser-type"].as<std::string>();
-  if (parser_type_str == "arcstandard") {
+  if (parser_type_str == "arcstandard" || parser_type_str == "arcstandard2") {
     config->parser_type = ParserType::arcstandard; 
+    if (parser_type_str == "arcstandard2")
+      config->parser_type = ParserType::arcstandard2; 
     if (config->context_type == "extended")
       config->ngram_order = lblOrderASx;
+    else if (config->context_type == "extended-3rd")
+      config->ngram_order = lblOrderASx3;
     else if (config->context_type == "more-extended")
       config->ngram_order = lblOrderASxx;
+    else if (config->context_type == "more-extended-3rd")
+      config->ngram_order = lblOrderASxx3;
     else if (config->context_type == "with-ngram")
       config->ngram_order = lblOrderASn;
     else if (config->context_type == "extended-with-ngram")
@@ -191,6 +200,8 @@ int main(int argc, char** argv) {
       config->ngram_order = lblOrderASl;
     else if (config->context_type == "extended-lookahead")
       config->ngram_order = lblOrderASxl;
+    else if (config->context_type == "standard-3rd")
+      config->ngram_order = lblOrderAS3;
     else
       config->ngram_order = lblOrderAS;
   } else if (parser_type_str == "arceager") {

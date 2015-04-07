@@ -419,7 +419,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
              || ((config_->root_first || !config_->complete_parse) && (i == sent.size() - 1))); ++i) {
     for (unsigned j = 0; j < beam_stack.size(); ++j) { 
       int num_samples = beam_stack[j]->num_particles();
-      std::cout << i << ", " << j << " " << num_samples << std::endl;
+      //std::cout << i << ", " << j << " " << num_samples << std::endl;
       if (num_samples == 0)
         continue;
 
@@ -475,8 +475,8 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
               beam_stack.back()->leftArc2(re_label);
   	        else if (re_act == kAction::ra2) 
               beam_stack.back()->rightArc2(re_label);
-            else
-              std::cout << "bla" << std::endl;
+            //else
+            //  std::cout << "bla" << std::endl;
             beam_stack.back()->add_particle_weight(action_probs[reduce_pred]);
             beam_stack.back()->set_num_particles(reduce_count); 
           }
@@ -487,10 +487,10 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
             WordIndex right_reduce2_pred = arg_min(action_probs, 3*config_->num_labels + 1, 
                                                                4*config_->num_labels + 1);
             Real left_reduce2p = L_MAX;
-            for (unsigned l = 1; l < config_->num_labels + 1; ++l) 
+            for (unsigned l = 2*config_->num_labels + 1; l < 3*config_->num_labels + 1; ++l) 
               left_reduce2p = neg_log_sum_exp(left_reduce2p, action_probs[l]);
             Real right_reduce2p = L_MAX;
-            for (unsigned l = 1; l < config_->num_labels + 1; ++l) 
+            for (unsigned l = 3*config_->num_labels + 1; l < 4*config_->num_labels + 1; ++l) 
               right_reduce2p = neg_log_sum_exp(right_reduce2p, action_probs[l]);
 
             int left_reduce2_count = std::round(std::exp(-left_reduce2p)*num_samples); 
@@ -500,6 +500,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
             reduce_count = reduce_count - left_reduce2_count - right_reduce2_count;
           
             if (left_reduce2_count > 0) {
+              //std::cout << std::exp(-tot_reducep) << ";" << std::exp(-left_reduce2p) << "," << std::exp(-right_reduce2p) << " ";
               WordId re_label = beam_stack[j]->lookup_label(left_reduce2_pred);
 
               beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
@@ -509,6 +510,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
             }
 
             if (right_reduce2_count > 0) {
+              //std::cout << right_reduce2_count << " ";
               WordId re_label = beam_stack[j]->lookup_label(right_reduce2_pred);
 
               beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
@@ -525,7 +527,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
           for (unsigned l = 1; l < config_->num_labels + 1; ++l) 
             left_reducep = neg_log_sum_exp(left_reducep, action_probs[l]);
           Real right_reducep = L_MAX;
-          for (unsigned l = 1; l < config_->num_labels + 1; ++l) 
+          for (unsigned l = config_->num_labels + 1; l < 2*config_->num_labels + 1; ++l) 
             right_reducep = neg_log_sum_exp(right_reducep, action_probs[l]);
 
           int left_reduce_count = std::round(std::exp(-left_reducep)*num_samples); 
@@ -573,13 +575,13 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
     reallocateParticles(&beam_stack, num_particles);
   }
 
-  std::cout << "completion" << std::endl;
+  //std::cout << "completion" << std::endl;
   //completion: greedily reduce each item
   for (unsigned j = 0; (j < beam_stack.size()); ++j) { 
     while ((beam_stack[j]->num_particles() > 0) && (beam_stack[j]->stack_depth() >= 2)) {  //&& config_->complete_parse
       Reals action_probs = weights->predictAction(beam_stack[j]->actionContext());
       int num_samples = beam_stack[j]->num_particles();
-      std::cout << j << " " << beam_stack[j]->stack_depth() << std::endl;
+      //std::cout << j << " " << beam_stack[j]->stack_depth() << std::endl;
 
       /*
       //extract training example
@@ -610,8 +612,8 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
         beam_stack[j]->leftArc2(re_label);
   	  else if (re_act == kAction::ra2) 
         beam_stack[j]->rightArc2(re_label);
-      else
-        std::cout << "bla" << std::endl;
+      //else
+      //  std::cout << "bla" << std::endl;
 
       beam_stack[j]->add_particle_weight(reducep);
       beam_stack[j]->set_num_particles(num_samples);
@@ -1079,8 +1081,14 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::staticGo
   while (!parser.inTerminalConfiguration() && (a != kAction::re)) {
     a = parser.oracleNext(sent);  
     WordId lab = parser.oracleNextLabel(sent);
+    //if (a == kAction::la2 || a == kAction::ra2)
+    //  std::cout << lab << " ";
     if (a != kAction::re) 
       parser.executeAction(a, lab);
+    //else {
+    //  sent.print_arcs();
+    //  parser.print_arcs();
+    //}
   }
 
   return parser;
@@ -1191,6 +1199,7 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentence(const ParsedS
           const boost::shared_ptr<ParseDataSet>& examples) {
   ArcStandardLabelledParser parse = staticGoldParseSentence(sent); 
   parse.extractExamples(examples);
+  //parse.print_actions();
 }
 
 template<class ParsedWeights>

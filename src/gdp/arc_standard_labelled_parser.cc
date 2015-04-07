@@ -169,22 +169,26 @@ kAction ArcStandardLabelledParser::oracleNext(const ParsedSentence& gold_parse) 
           break;
         }
       } */
-    } else if (non_projective() && (stack_depth() >= 3)) {
+    } 
+    
+    if ((a == kAction::re) && non_projective() && (stack_depth() >= 3)) {
       WordIndex k = stack_top_third();
-      if (gold_parse.has_arc(i, k)) {
+      if (gold_parse.has_arc(k, j)) {
         a = kAction::la2;
-        //check that i has all its children
+        //std::cout << "la2 ";
+        //check that k has all its children
         for (WordIndex l = 1; l < size(); ++l) {
-          if (gold_parse.has_arc(l, i) && !has_arc(l, i)) {
+          if (gold_parse.has_arc(l, k) && !has_arc(l, k)) {
             a = kAction::re;
             break;
           }
         }
-      } else if (gold_parse.has_arc(k, i)) {
+      } else if (gold_parse.has_arc(j, k)) {
+        //std::cout << "ra2 ";
         a = kAction::ra2;
-        //check that k has all its children
+        //check that j has all its children
         for (WordIndex l = 1; l < size(); ++l) {
-          if (gold_parse.has_arc(l, k) && !has_arc(l, k)) {
+          if (gold_parse.has_arc(l, j) && !has_arc(l, j)) {
             a = kAction::re;
             break;
           }
@@ -221,12 +225,15 @@ bool ArcStandardLabelledParser::executeAction(kAction a, WordId l) {
   }
 } 
 
-//TODO add or extend for 2nd order transitions
 Indices ArcStandardLabelledParser::contextIndices() const {
   if (context_type() == "extended")
     return extended_children_context(); //order 13
+  if (context_type() == "extended-3rd")
+    return third_extended_children_context(); //order 18
   else if (context_type() == "more-extended")
     return more_extended_children_context(); //order 17
+  else if (context_type() == "more-extended-3rd")
+    return third_more_extended_children_context(); //order 24
   else if (context_type() == "with-ngram")
     return children_ngram_context(); //order 13
   else if (context_type() == "extended-with-ngram")
@@ -235,6 +242,8 @@ Indices ArcStandardLabelledParser::contextIndices() const {
     return children_lookahead_context(); //order 10
   else if (context_type() == "extended-lookahead")
     return extended_children_lookahead_context(); //order 16
+  else if (context_type() == "standard-3rd")
+    return third_children_context(); //order 10
   else
     return children_context(); //order 7
 }

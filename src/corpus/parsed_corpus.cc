@@ -29,17 +29,27 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
         word_str = line.substr(last, cur - last - 1);
       } else if (col_num == 2) { //2 - unannotated word 
         std::string pure_word_str = line.substr(last, cur - last - 1);
-        if (!config_->pyp_model && config_->lexicalised && config_->compositional)
-          features.push_back(dict->convertTag(pure_word_str, frozen));
+        if (!config_->pyp_model && config_->lexicalised && config_->compositional) {
+          //split stem as feature if present
+          std::stringstream feature_stream(pure_word_str);
+          std::string feat;
+          while (std::getline(feature_stream, feat, '|')) {
+            if (!feat.empty()) 
+              features.push_back(dict->convertTag(feat, frozen));
+          }
+        }
         else if (config_->pyp_model && !config_->lexicalised && !config_->pos_annotated)
           features.push_back(dict->convertTag(pure_word_str, frozen));
         if (config_->pyp_model || (!config_->compositional && !config_->pos_annotated))
           word_str = pure_word_str;        
-      } else if (col_num == 4) { //4 - postag (3 - coarse postag)
+      } else if (col_num == 3) { //3 - coarse postag
+        if (!config_->pyp_model && config_->lexicalised && config_->compositional)
+          features.push_back(dict->convertTag(line.substr(last, cur - last - 1), frozen));
+      }  else if (col_num == 4) { //4 - postag 
         tag_str = line.substr(last, cur - last - 1);
         features.push_back(dict->convertTag(tag_str, frozen));
       } else if (col_num == 5) { //5 morphological features (| seperated)
-        feature_str = line.substr(last, cur - last -1); //TODO split features
+        feature_str = line.substr(last, cur - last -1); 
         if (config_->morph_features) {
           std::stringstream feature_stream(feature_str);
           std::string feat;
@@ -184,7 +194,7 @@ std::vector<int> ParsedCorpus::actionCounts() const {
     if (config_->parser_type == ParserType::arceager) {
       counts[0] += sent.size() - 1 - ra_count; //shift
       counts[counts.size() - 1] += sent.size() - 1 - la_count; //reduce
-    } else if (config_->parser_type == ParserType::arcstandard) {
+    } else if (config_->parser_type == ParserType::arcstandard || config_->parser_type == ParserType::arcstandard2) {
       counts[0] += sent.size() - 1;
     }
   }
