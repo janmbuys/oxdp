@@ -10,6 +10,7 @@
 #include "pyp/parsed_chlex_pyp_weights.h"
 #include "lbl/parsed_factored_weights.h"
 #include "lbl/parsed_weights.h"
+#include "lbl/discriminative_weights.h"
 
 namespace oxlm {
 

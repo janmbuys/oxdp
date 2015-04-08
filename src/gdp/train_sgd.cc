@@ -4,6 +4,7 @@
 #include "lbl/weights.h"
 #include "lbl/factored_metadata.h"
 #include "lbl/factored_weights.h"
+#include "lbl/discriminative_weights.h"
 #include "lbl/parsed_factored_weights.h"
 #include "utils/git_revision.h"
 
@@ -331,6 +332,8 @@ int main(int argc, char** argv) {
       LblModel<Weights, Weights, Metadata> model(config);
       model.learn();
     }
+  } else if (config->discriminative) { 
+      train_dp<ArcStandardLabelledParseModel<DiscriminativeWeights>, DiscriminativeWeights, DiscriminativeMetadata>(config);
   } else if (config->lexicalised) {
     if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) {
       train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);

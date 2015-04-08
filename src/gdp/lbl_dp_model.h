@@ -13,6 +13,7 @@
 #include "lbl/model_utils.h"
 #include "lbl/parsed_factored_weights.h"
 #include "lbl/parsed_weights.h"
+#include "lbl/discriminative_weights.h"
 #include "lbl/utils.h"
 #include "lbl/weights.h"
 

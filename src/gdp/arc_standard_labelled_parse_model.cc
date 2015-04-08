@@ -2144,6 +2144,7 @@ template class ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, 
 template class ArcStandardLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>;
 template class ArcStandardLabelledParseModel<ParsedPypWeights<tagLMOrderAS, actionLMOrderAS>>;
 template class ArcStandardLabelledParseModel<ParsedFactoredWeights>;
+template class ArcStandardLabelledParseModel<DiscriminativeWeights>;
 template class ArcStandardLabelledParseModel<ParsedWeights>;
 
 }

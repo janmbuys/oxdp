@@ -6,6 +6,8 @@ add_libraries(lbl
   class_distribution.cc
   context_cache.cc
   context_processor.cc
+  discriminative_metadata.cc
+  discriminative_weights.cc
   factored_metadata.cc
   factored_weights.cc
   metadata.cc

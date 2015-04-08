@@ -492,5 +492,6 @@ template class LblDpModel<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWe
 template class LblDpModel<ArcEagerLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 //template class LblDpModel<EisnerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 
+template class LblDpModel<ArcStandardLabelledParseModel<DiscriminativeWeights>, DiscriminativeWeights, DiscriminativeMetadata>;
 } // namespace oxlm
 
