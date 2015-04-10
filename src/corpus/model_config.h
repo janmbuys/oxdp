@@ -46,6 +46,7 @@ struct ModelConfig {
   std::string context_type;
   bool        labelled_parser;
   bool        discriminative;
+  bool        predict_pos;
   bool        lexicalised;
   bool        compositional;
   bool        pos_annotated;
@@ -105,6 +106,7 @@ struct ModelConfig {
     ar & pyp_model;
     ar & labelled_parser;
     ar & discriminative;
+    ar & predict_pos;
     ar & lexicalised;
     ar & compositional;
     ar & pos_annotated;

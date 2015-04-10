@@ -46,6 +46,8 @@ class ParsedWeights : public Weights {
   
   Real predictWord(int word, Context context) const;
 
+  Reals predictWordOverTags(int word, Context context) const;
+  
   Reals predictWord(Context context) const;
 
   Real predictTag(int tag, Context context) const;

@@ -20,6 +20,11 @@ Reals ParsedPypWeights<tOrder, aOrder>::predictWord(Context context) const {
 }
 
 template<unsigned tOrder, unsigned aOrder>
+Reals ParsedPypWeights<tOrder, aOrder>::predictWordOverTags(WordId word, Context context) const {
+  return Reals(numTags(), 0);
+}
+
+template<unsigned tOrder, unsigned aOrder>
 Real ParsedPypWeights<tOrder, aOrder>::predictTag(WordId tag, Context context) const {
   return PypWeights<tOrder>::predict(tag, context);
 }

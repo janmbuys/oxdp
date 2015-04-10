@@ -50,6 +50,8 @@ class ParsedFactoredWeights : public FactoredWeights {
 
   Reals predictWord(Context context) const;
 
+  Reals predictWordOverTags(int word, Context context) const;
+
   Real predictTag(int tag, Context context) const;
   
   Reals predictTag(Context context) const;

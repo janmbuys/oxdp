@@ -422,6 +422,10 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
       //std::cout << i << ", " << j << " " << num_samples << std::endl;
       if (num_samples == 0)
         continue;
+      else if (num_samples < 0) {
+        beam_stack[j]->set_num_particles(-num_samples);
+        continue;
+      }
 
       /*
       //extract training example
@@ -559,16 +563,71 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
       if (shift_count == 0)
         beam_stack[j]->set_num_particles(0);
       else {
+        if (config_->predict_pos) {
+          Reals tag_probs = weights->predictTag(beam_stack[j]->tagContext());
+          Reals word_probs = weights->predictWordOverTags(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
+          for (unsigned k = 0; k < tag_probs.size(); ++k)
+            tag_probs[k] += word_probs[k];
+
+          //sort tag+word prob
+          std::vector<int> indices(tag_probs.size());
+          std::iota(indices.begin(), indices.end(), 0);
+          std::sort(indices.begin(), indices.end(), [&tag_probs](const int i, const int j) 
+                {return (tag_probs[i] < tag_probs[j]);});
+
+          //most likely tag
+          WordIndex tag_pred = indices[0]; // arg_min(tag_probs, 0);
+          beam_stack[j]->set_tag_at(i, tag_pred);
+
+          //add second most likely tag if prob is high enough 
+          WordIndex tag2_pred = indices[1]; 
+          WordIndex tag3_pred = indices[2]; 
+          //int shift2_count = std::floor(std::exp(-tag_probs[tag2_pred] 
+          //                   + neg_log_sum_exp(tag_probs[tag_pred], tag_probs[tag2_pred]))*shift_count);
+          double pred_sum = neg_log_sum_exp(neg_log_sum_exp(tag_probs[tag_pred], tag_probs[tag2_pred]),
+                                 tag_probs[tag3_pred]);
+
+          int shift2_count = std::floor(std::exp(-tag_probs[tag2_pred] + pred_sum)*shift_count);
+          int shift3_count = std::floor(std::exp(-tag_probs[tag3_pred] + pred_sum)*shift_count);
+          
+          if (shift2_count > 0) {
+            beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
+            beam_stack.back()->set_tag_at(i, tag2_pred);
+            beam_stack.back()->shift();
+            beam_stack.back()->add_particle_weight(shiftp); 
+            beam_stack.back()->set_num_particles(-shift2_count); //hack to communicate it should be skipped
+        
+            beam_stack.back()->add_particle_weight(tag_probs[tag2_pred]); 
+            beam_stack.back()->add_importance_weight(tag_probs[tag2_pred]); 
+            shift_count -= shift2_count;    
+          } 
+
+          //add third most likely tag if prob is high enough 
+         if (shift3_count > 0) {
+            beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
+            beam_stack.back()->set_tag_at(i, tag3_pred);
+            beam_stack.back()->shift();
+            beam_stack.back()->add_particle_weight(shiftp); 
+            beam_stack.back()->set_num_particles(-shift3_count); //hack to communicate it should be skipped
+        
+            beam_stack.back()->add_particle_weight(tag_probs[tag3_pred]); 
+            beam_stack.back()->add_importance_weight(tag_probs[tag3_pred]); 
+            shift_count -= shift3_count;    
+          } 
+        } 
+
         Real tagp = weights->predictTag(beam_stack[j]->next_tag(), beam_stack[j]->tagContext());
         Real wordp = weights->predictWord(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
 
         beam_stack[j]->shift();
         beam_stack[j]->add_particle_weight(shiftp); 
+        beam_stack[j]->set_num_particles(shift_count);
+        
         beam_stack[j]->add_particle_weight(wordp); 
         beam_stack[j]->add_particle_weight(tagp); 
         beam_stack[j]->add_importance_weight(wordp); 
         beam_stack[j]->add_importance_weight(tagp); 
-        beam_stack[j]->set_num_particles(shift_count);
+
       }
     }
  
@@ -1151,6 +1210,9 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::generate
       multinomial_distribution_log<Real> mult(action_probs); 
       pred = mult(eng);
       parser.add_particle_weight(action_probs[pred]);
+      //for (auto p: action_probs)
+      //  std::cout << std::exp(-p) << " ";
+      //std::cout << ": " << pred << std::endl;
     }
       
     kAction act = parser.lookup_action(pred);
@@ -1158,9 +1220,12 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::generate
 
     if (act == kAction::la) {
       parser.leftArc(lab);
+      std::cout << "la ";
     } else if (act == kAction::ra) {
       parser.rightArc(lab);
+      std::cout << "ra ";
     } else if (act == kAction::sh) {
+      std::cout << "sh ";
       //sample a tag
       Reals tag_distr = weights->predictTag(parser.tagContext());
       tag_distr[0] = L_MAX;  
@@ -1190,7 +1255,8 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::generate
     }
     
   } while (!parser.inTerminalConfiguration()); 
-
+  
+  std::cout << std::endl;
   return parser;
 } 
 

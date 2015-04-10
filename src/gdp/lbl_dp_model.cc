@@ -288,10 +288,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   //generate from model
   for (int i = 0; i < config->generate_samples; ++i) {
     Parser parse = parse_model->generateSentence(weights, eng);
-    std::cout << parse.weight() << "  ";
+    //std::cout << parse.weight() << "  ";
     parse.print_sentence(dict);
     parse.print_arcs();
-    parse.print_labels();
+    //parse.print_labels();
   }  
 }
 

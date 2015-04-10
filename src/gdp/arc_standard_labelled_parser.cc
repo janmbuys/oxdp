@@ -250,7 +250,8 @@ Indices ArcStandardLabelledParser::contextIndices() const {
 
 Context ArcStandardLabelledParser::wordContext() const {
   if (pyp_model())
-    return Context(word_tag_next_children_context()); //order 7
+    return Context(word_tag_next_children_context()); //order 8
+    //return Context(word_next_children_context()); //order 8
     //return word_tag_next_ngram_context(); // best perplexity
   else 
     return map_context(contextIndices());
@@ -259,6 +260,7 @@ Context ArcStandardLabelledParser::wordContext() const {
 Context ArcStandardLabelledParser::tagContext() const {
   if (pyp_model()) 
     return Context(tag_children_context());  //order 8
+    //return Context(tag_children_third_context());  //order 11
   else 
     return map_context(contextIndices());
 }
@@ -267,6 +269,8 @@ Context ArcStandardLabelledParser::actionContext() const {
   if (pyp_model()) {
     if (lexicalised())
       return Context(word_tag_children_context()); //order 10
+      //return Context(tag_children_context()); //order 8
+      //return Context(tag_children_third_context());  //order 11
     else
       return Context(tag_children_context()); //order 8
   } else 

@@ -51,6 +51,8 @@ int main(int argc, char** argv) {
         "Conditioning context used.")    
     ("labelled-parser", value<bool>()->default_value(false),
         "Predict arc labels.")
+    ("predict-pos", value<bool>()->default_value(false),
+        "Predict POS during decoding.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
     ("pos-annotated", value<bool>()->default_value(false),
@@ -142,6 +144,7 @@ int main(int argc, char** argv) {
     config->parser_type = ParserType::ngram; 
 
   config->labelled_parser = vm["labelled-parser"].as<bool>();
+  config->predict_pos = vm["predict-pos"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
   config->char_lexicalised = vm["char-lexicalised"].as<bool>();
   config->semi_supervised = vm["semi-supervised"].as<bool>();

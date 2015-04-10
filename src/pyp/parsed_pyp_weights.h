@@ -19,6 +19,8 @@ class ParsedPypWeights: public PypWeights<tOrder> {
 
   virtual Real predictWord(WordId word, Context context) const;
   
+  virtual Reals predictWordOverTags(WordId word, Context context) const;
+  
   virtual Reals predictWord(Context context) const;
 
   Real predictTag(WordId tag, Context context) const;

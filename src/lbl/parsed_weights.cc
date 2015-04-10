@@ -83,6 +83,11 @@ Reals ParsedWeights::predictWord(Context context) const {
   return Reals(numWords(), 0.0);
 }
 
+Reals ParsedWeights::predictWordOverTags(int word, Context context) const {
+  //implement as unlexicalised model
+  return Reals(numTags(), 0.0);
+}
+
 Real ParsedWeights::predictTag(int tag, Context context) const {
   return Weights::predict(tag, context);
 }

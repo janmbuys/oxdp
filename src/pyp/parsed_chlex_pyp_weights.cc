@@ -28,6 +28,16 @@ Reals ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predictWord(Context
 }
 
 template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
+Reals ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predictWordOverTags(WordId word, Context context) const {
+  Reals weights(ParsedPypWeights<tOrder,aOrder>::numTags(), 0);
+  for (int i = 0; i < ParsedPypWeights<tOrder,aOrder>::numTags(); ++i) {
+    context.words.back() = i;
+    weights[i] = -std::log(lex_lm_.prob(dict_->lookup(word), context.words));
+  }
+  return weights;
+}
+
+template<unsigned wOrder, unsigned cOrder, unsigned tOrder, unsigned aOrder>
 Real ParsedChLexPypWeights<wOrder, cOrder, tOrder, aOrder>::predictWord(WordId word, Context context) const {
   return -std::log(lex_lm_.prob(dict_->lookup(word), context.words));
 }

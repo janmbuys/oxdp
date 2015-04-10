@@ -82,6 +82,11 @@ Reals ParsedFactoredWeights::predictWord(Context context) const {
   return FactoredWeights::predict(context);
 }
 
+Reals ParsedFactoredWeights::predictWordOverTags(int word, Context context) const {
+  //don't actually predict tags at the moment
+  return Reals(numTags(), FactoredWeights::predict(word, context));
+}
+
 Real ParsedFactoredWeights::predictTag(int tag, Context context) const {
   return 0.0;
 }

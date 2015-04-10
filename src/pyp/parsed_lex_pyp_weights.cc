@@ -33,6 +33,16 @@ Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::predictWord(WordId word, Conte
 }
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
+Reals ParsedLexPypWeights<wOrder, tOrder, aOrder>::predictWordOverTags(WordId word, Context context) const {
+  Reals weights(ParsedPypWeights<tOrder,aOrder>::numTags(), 0);
+  for (int i = 0; i < ParsedPypWeights<tOrder,aOrder>::numTags(); ++i) {
+    context.words.back() = i;
+    weights[i] = -std::log(lex_lm_.prob(word, context.words));
+  }
+  return weights;
+}
+
+template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 Real ParsedLexPypWeights<wOrder, tOrder, aOrder>::likelihood() const {
   return wordLikelihood() + ParsedPypWeights<tOrder, aOrder>::tagLikelihood() + ParsedPypWeights<tOrder, aOrder>::actionLikelihood();
 }

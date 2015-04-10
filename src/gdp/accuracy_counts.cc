@@ -18,6 +18,7 @@ AccuracyCounts::AccuracyCounts(boost::shared_ptr<Dict> dict):
   total_length_punc_headed_{0},
   total_length_nopunc_{0},
   total_length_nopunc_headed_{0},
+  tag_count_{0},
   directed_count_{0},
   directed_count_lab_{0},
   directed_count_nopunc_{0},
@@ -73,6 +74,8 @@ void AccuracyCounts::parseCountAccuracy(const Parser& prop_parse, const ParsedSe
         inc_undirected_count_nopunc(); 
     }
 
+    if (prop_parse.tag_at(j)==gold_parse.tag_at(j))
+      inc_tag_count();
     if (prop_parse.has_arc(j, 0) && gold_parse.has_arc(j, 0)) 
       inc_root_count();
     if (prop_parse.has_parent_at(j))
@@ -271,6 +274,7 @@ void AccuracyCounts::printAccuracy() const {
   std::cerr << "Gold more likely: " << gold_more_likely() << std::endl;   
 
   std::cerr << std::endl;
+  std::cerr << "Tag Accuracy With Punct: " << tag_accuracy() << std::endl;
   std::cerr << "Labelled Accuracy With Punct: " << directed_accuracy_lab() << std::endl;
   std::cerr << "Unlabelled Accuracy With Punct: " << directed_accuracy() << std::endl;
   std::cerr << "Labelled Precision With Punct: " << directed_precision_lab() << std::endl;

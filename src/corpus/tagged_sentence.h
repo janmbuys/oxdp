@@ -24,6 +24,10 @@ class TaggedSentence: public Sentence {
    features_.push_back(Words(1, t));
   }
 
+  void set_tag_at(WordIndex i, WordId t) {
+    features_.at(i)[0] = t;
+  }
+
   size_t size() const override {
     return features_.size();
   }

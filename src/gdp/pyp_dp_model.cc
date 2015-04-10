@@ -204,7 +204,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       for (auto j: minibatch) {
         if (!sup_training_corpus->sentence_at(j).projective_dependency()) {
           ++non_projective_count;
-          std::cout << "Non-projective.\n";
+          //std::cout << "Non-projective.\n";
         }
 
         sup_examples_list.at(j)->clear();
@@ -265,8 +265,8 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       } 
     }
 
-    //if ((iter > 0) && (iter % 5 == 0))
-    if (iter > 0) 
+    if ((iter > 0) && (iter % 5 == 0))
+    //if (iter > 0) 
       weights_->resampleHyperparameters(eng);
 
     Real iteration_time = get_duration(iteration_start, get_time());
@@ -289,10 +289,10 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   //generate from model
   for (int i = 0; i < config_->generate_samples; ++i) {
     Parser parse = parse_model_->generateSentence(weights_, eng);
-    std::cout << parse.weight() << "  ";
+    //std::cout << parse.weight() << "  ";
     parse.print_sentence(dict_);
     parse.print_arcs();
-    parse.print_labels();
+    //parse.print_labels();
   }  
 }
 

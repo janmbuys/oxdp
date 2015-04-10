@@ -61,6 +61,8 @@ class DiscriminativeWeights {
 
   Real predictWord(int word, Context context) const;
 
+  Reals predictWordOverTags(WordId word, Context context) const;
+
   Reals predictWord(Context context) const;
 
   Real predictTag(int tag, Context context) const;

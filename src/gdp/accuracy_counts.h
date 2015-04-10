@@ -61,6 +61,10 @@ public:
   void inc_directed_count() {
     ++directed_count_;
   }
+  
+  void inc_tag_count() {
+    ++tag_count_;
+  }
 
   void inc_directed_count_lab() {
     ++directed_count_lab_;
@@ -170,6 +174,10 @@ public:
 
   Real directed_accuracy() const {
     return (directed_count_ + 0.0)/total_length_punc_;
+  }
+
+  Real tag_accuracy() const {
+    return (tag_count_ + 0.0)/total_length_punc_;
   }
 
   Real directed_precision() const {
@@ -359,6 +367,7 @@ private:
     int total_length_punc_headed_;
     int total_length_nopunc_;
     int total_length_nopunc_headed_;
+    int tag_count_;
     int directed_count_;
     int directed_count_lab_;
     int directed_count_nopunc_;
