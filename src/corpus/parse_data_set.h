@@ -39,6 +39,18 @@ class ParseDataSet {
     action_examples_->clear();
   }
 
+  void clear_word_examples() {
+    word_examples_->clear();
+  }
+
+  void clear_tag_examples() {
+    tag_examples_->clear();
+  }
+
+  void clear_action_examples() {
+    action_examples_->clear();
+  }
+
   DataPoint word_example_at(unsigned i) const {
     return word_examples_->exampleAt(i);
   }

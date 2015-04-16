@@ -5,14 +5,14 @@
 namespace oxlm {
 
 ModelConfig::ModelConfig()
-    : iterations(0), minibatch_size(0), minibatch_size_unsup(0), ngram_order(0), 
+    : iterations(0), iterations_unsup(0), minibatch_size(0), minibatch_size_unsup(0), ngram_order(0), 
       l2_lbl(0), representation_size(0), threads(1), step_size(0), 
       factored(true), classes(0), randomise(false), diagonal_contexts(false),
       vocab_size(0), noise_samples(0), parser_type(ParserType::arcstandard), 
       activation(Activation::linear), pyp_model(false), labelled_parser(false), 
       discriminative(false), predict_pos(false), lexicalised(false), compositional(false), 
-      pos_annotated(false),
-      label_features(false), morph_features(false), distance_features(false), char_lexicalised(false), 
+      pos_annotated(false), label_features(false), morph_features(false), distance_features(false), 
+      char_lexicalised(false), adapt_word_context(false),
       semi_supervised(false), direction_deterministic(false), sum_over_beam(false), resample(false), 
       root_first(true), complete_parse(true), bootstrap(false), bootstrap_iter(0), max_beam_increment(1), 
       num_particles(1), generate_samples(0), num_tags(1), num_labels(1), beam_sizes(1, 1) {}
@@ -57,6 +57,7 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
       && morph_features == other.morph_features
       && distance_features == other.distance_features
       && char_lexicalised == other.char_lexicalised
+      && adapt_word_context == other.adapt_word_context 
       && semi_supervised == other.semi_supervised
       && root_first == other.root_first
       && complete_parse == other.complete_parse

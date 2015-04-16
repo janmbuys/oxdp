@@ -15,6 +15,7 @@
 #include "pyp/constants.h"
 #include "pyp/parsed_pyp_weights.h"
 #include "pyp/parsed_lex_pyp_weights.h"
+#include "pyp/parsed_calex_pyp_weights.h"
 #include "pyp/parsed_chlex_pyp_weights.h"
 
 #include "gdp/transition_parser.h"
@@ -34,6 +35,10 @@ class PypDpModel {
 
   PypDpModel(const boost::shared_ptr<ModelConfig>& config);
 
+  void learn_semisup1();
+  
+  void learn_semisup2();
+  
   void learn();
 
   void evaluate() const;

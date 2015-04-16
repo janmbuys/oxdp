@@ -37,8 +37,9 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
             if (!feat.empty()) 
               features.push_back(dict->convertTag(feat, frozen));
           }
-        }
-        else if (config_->pyp_model && !config_->lexicalised && !config_->pos_annotated)
+        } 
+        //else if (config_->pyp_model && !config_->lexicalised && !config_->pos_annotated)
+        else if (config_->pyp_model && config_->lexicalised && config_->pos_annotated)
           features.push_back(dict->convertTag(pure_word_str, frozen));
         if (config_->pyp_model || (!config_->compositional && !config_->pos_annotated))
           word_str = pure_word_str;        
@@ -148,6 +149,72 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
   config_->vocab_size = dict->size();
   config_->num_tags = dict->tag_size();
   config_->num_labels = dict->label_size();
+}
+
+Words ParsedCorpus::convertWhitespaceDelimitedTxtLine(const std::string& line, 
+        const boost::shared_ptr<Dict>& dict, bool frozen) {
+  Words out;
+
+  size_t cur = 0;
+  size_t last = 0;
+  int state = 0;
+     
+  //add start of sentence symbol if defined
+  if (dict->sos() != -1)
+    out.push_back(dict->sos()); 
+
+  while (cur < line.size()) {
+    if (Dict::is_ws(line[cur++])) {
+      if (state == 0) 
+        continue;
+      out.push_back(dict->convert(line.substr(last, cur - last - 1), frozen));
+      state = 0;
+    } else {
+      if (state == 1) 
+        continue;
+      last = cur - 1;
+      state = 1;
+    }
+  }
+
+  if (state == 1)
+    out.push_back(dict->convert(line.substr(last, cur - last), frozen));
+
+  //add end of sentence symbol if defined 
+  if (dict->eos() != -1) 
+    out.push_back(dict->eos()); 
+
+  return out;
+}
+
+void ParsedCorpus::readTxtFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) {
+  std::cerr << "Reading from " << filename << std::endl;
+  std::ifstream in(filename);
+  assert(in);
+  std::string line;
+
+  WordsList features;
+  Indices arcs;
+  Words labels;
+
+  while(getline(in, line)) {
+    //start of sentence
+    features.clear();
+    arcs.clear();
+    labels.clear();
+
+    Words sent = convertWhitespaceDelimitedTxtLine(line, dict, frozen);
+
+    for (unsigned i = 0; i < sent.size(); ++i) {
+      features.push_back(Words(1, 0));
+      arcs.push_back(-1);
+      labels.push_back(-1);
+    }
+
+    sentences_.push_back(ParsedSentence(sent, features, arcs, labels)); 
+  }
+
+  config_->vocab_size = dict->size();
 }
 
 size_t ParsedCorpus::size() const {

@@ -6,6 +6,7 @@ add_libraries(pyp
   pyp_weights.cc
   parsed_pyp_weights.cc
   parsed_lex_pyp_weights.cc
+  parsed_calex_pyp_weights.cc
   parsed_chlex_pyp_weights.cc
 )
 

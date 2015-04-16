@@ -52,6 +52,7 @@ class ParsedPypWeights: public PypWeights<tOrder> {
   int numActions() const;
 
   private:
+  PYPLM<aOrder> shre_lm_;
   PYPLM<aOrder> action_lm_;
   int num_actions_;
 };

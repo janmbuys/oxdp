@@ -21,8 +21,12 @@ struct ModelConfig {
   std::string training_file_unsup;
   std::string training_file_ques;
   std::string test_file;
+  std::string test_file2;
+  std::string test_file_unsup;
   std::string test_output_file;
+  std::string test_output_file2;
   int         iterations;
+  int         iterations_unsup;
   int         minibatch_size;
   int         minibatch_size_unsup;
   int         ngram_order; 
@@ -54,6 +58,7 @@ struct ModelConfig {
   bool        morph_features;
   bool        distance_features;
   bool        char_lexicalised;
+  bool        adapt_word_context;
   bool        semi_supervised;
   bool        direction_deterministic;
   bool        sum_over_beam;
@@ -83,8 +88,12 @@ struct ModelConfig {
     ar & training_file_unsup;
     ar & training_file_ques;
     ar & test_file;
+    ar & test_file2;
+    ar & test_file_unsup;
     ar & test_output_file;
+    ar & test_output_file2;
     ar & iterations;
+    ar & iterations_unsup;
     ar & minibatch_size;
     ar & minibatch_size_unsup;
     ar & ngram_order;
@@ -114,6 +123,7 @@ struct ModelConfig {
     ar & morph_features;
     ar & distance_features;
     ar & char_lexicalised;
+    ar & adapt_word_context;
     ar & semi_supervised;
     ar & direction_deterministic;
     ar & sum_over_beam;

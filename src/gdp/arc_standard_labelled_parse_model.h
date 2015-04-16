@@ -7,6 +7,7 @@
 
 #include "pyp/parsed_pyp_weights.h"
 #include "pyp/parsed_lex_pyp_weights.h"
+#include "pyp/parsed_calex_pyp_weights.h"
 #include "pyp/parsed_chlex_pyp_weights.h"
 #include "lbl/parsed_factored_weights.h"
 #include "lbl/parsed_weights.h"
@@ -36,9 +37,6 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
   ArcStandardLabelledParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
                 unsigned beam_size) override;
 
-  /* ArcStandardLabelledParser beamParticleParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
-                unsigned num_particles); */
-
   ArcStandardLabelledParser beamParticleGoldParseSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, unsigned num_particles);
 
@@ -50,22 +48,18 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
           const boost::shared_ptr<ParsedWeights>& weights, unsigned num_particles, 
           const boost::shared_ptr<ParseDataSet>& examples);
 
+  ArcStandardLabelledParser particleParseSentence(const ParsedSentence& sent, 
+        const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
+          const boost::shared_ptr<ParseDataSet>& examples);
+
   /*
   ArcStandardLabelledParser particlePosteriorParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
         bool resample);
 
-  ArcStandardLabelledParser particleParseSentence(const ParsedSentence& sent, 
-        const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
-        bool resample) override;
-
   ArcStandardLabelledParser particleMaxParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles);
-
-  ArcStandardLabelledParser particleGoldParseSentence(const ParsedSentence& sent, 
-          const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, 
-          unsigned num_particles, bool resample) override;  
-*/
+ */
 
   ArcStandardLabelledParser staticGoldParseSentence(const ParsedSentence& sent, 
                                              const boost::shared_ptr<ParsedWeights>& weights) override;

@@ -105,6 +105,12 @@ template <unsigned N> struct PYPLM {
   }
 
   template<typename Engine>
+  void increment(WordId w, const std::vector<WordId>& in_context, 
+                             const std::vector<WordId>& out_context, Engine& eng) {
+      increment(w, out_context, eng); 
+  }
+
+  template<typename Engine>
   void decrement(WordId w, const std::vector<WordId>& context, Engine& eng) {
     copy_context(context, lookup);
 
@@ -125,6 +131,13 @@ template <unsigned N> struct PYPLM {
       backoff.decrement(w, context, eng);
   }
 
+
+  template<typename Engine>
+  void decrement(WordId w, const std::vector<WordId>& in_context, 
+                             const std::vector<WordId>& out_context, Engine& eng) {
+      decrement(w, out_context, eng);
+  }
+
   double prob(WordId w, const std::vector<WordId>& context) const {
     copy_context(context, lookup);
     const double bo = backoff.prob(w, context);
@@ -142,6 +155,12 @@ template <unsigned N> struct PYPLM {
       return bo;
     }
     return it->second.prob(w, bo);
+  }
+
+
+  double prob(WordId w, const std::vector<WordId>& in_context,
+                          const std::vector<WordId>& out_context) const {
+      return prob(w, out_context);
   }
 
   double log_likelihood() const {

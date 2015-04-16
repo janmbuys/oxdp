@@ -13,7 +13,10 @@ using namespace oxlm;
 template<class ParseModel, class ParsedWeights>
 void train_dp(const boost::shared_ptr<ModelConfig>& config) {
   PypDpModel<ParseModel, ParsedWeights> model(config);
-  model.learn();
+  if (config->semi_supervised)
+    model.learn_semisup2();
+  else
+    model.learn();
   if (config->iterations > 1)
     model.evaluate();
 }
@@ -35,10 +38,18 @@ int main(int argc, char** argv) {
         "corpus of parsed questions for semi-supervised training, conll format")
     ("test-set,t", value<std::string>(),
         "corpus of test sentences to be evaluated at each iteration")
+    ("test-set2,t", value<std::string>(),
+        "corpus of unlab test sentences to be evaluated at each iteration")
+    ("test-set-unsup,t", value<std::string>(),
+        "corpus of test sentences to be evaluated at each iteration")
     ("test-out-file,o", value<std::string>()->default_value("system.out.conll"),
         "conll output file for system parsing the test set")
+    ("test-out-file2,o", value<std::string>()->default_value("system.out2.conll"),
+        "conll output file for system parsing test set 2")
     ("iterations", value<int>()->default_value(1),
         "number of passes through the data")
+    ("iterations-unsup", value<int>()->default_value(1),
+        "number of passes through the unlabelled data")
     ("minibatch-size", value<int>()->default_value(1),
         "number of sentences per minibatch")
     ("minibatch-size-unsup", value<int>()->default_value(1),
@@ -67,6 +78,8 @@ int main(int argc, char** argv) {
         "Enforce complete tree-structured parse.")
     ("char-lexicalised", value<bool>()->default_value(false),
         "Predict words with character-based LM.")
+    ("adapt-word-context", value<bool>()->default_value(false),
+        "Adapt word context between lex and unlex models")
     ("semi-supervised", value<bool>()->default_value(false),
         "Use additional, unlabelled training data.")
     ("max-beam-size", value<int>()->default_value(8),
@@ -119,12 +132,22 @@ int main(int argc, char** argv) {
   if (vm.count("test-set")) {
     config->test_file = vm["test-set"].as<std::string>();
   }
+  if (vm.count("test-set2")) {
+    config->test_file2 = vm["test-set2"].as<std::string>();
+  }
+  if (vm.count("test-set-unsup")) {
+    config->test_file_unsup = vm["test-set-unsup"].as<std::string>();
+  }
   if (vm.count("test-out-file")) {
     config->test_output_file = vm["test-out-file"].as<std::string>();
+  }
+  if (vm.count("test-out-file2")) {
+    config->test_output_file2 = vm["test-out-file2"].as<std::string>();
   }
 
   config->pyp_model = true;
   config->iterations = vm["iterations"].as<int>();
+  config->iterations_unsup = vm["iterations-unsup"].as<int>();
   config->minibatch_size = vm["minibatch-size"].as<int>();
   config->minibatch_size_unsup = vm["minibatch-size-unsup"].as<int>();
   config->randomise = vm["randomise"].as<bool>();
@@ -147,6 +170,7 @@ int main(int argc, char** argv) {
   config->predict_pos = vm["predict-pos"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
   config->char_lexicalised = vm["char-lexicalised"].as<bool>();
+  config->adapt_word_context = vm["adapt-word-context"].as<bool>();
   config->semi_supervised = vm["semi-supervised"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
@@ -182,13 +206,13 @@ int main(int argc, char** argv) {
   std::cerr << "# question training data = " << config->training_file_ques << std::endl;
   std::cerr << "# semi-supervised = " << config->semi_supervised << std::endl;
   std::cerr << "# character LM = " << config->char_lexicalised << std::endl;
+  std::cerr << "# adapt word context = " << config->adapt_word_context << std::endl;
   std::cerr << "# minibatch size = " << config->minibatch_size << std::endl;
   std::cerr << "# particle resample = " << config->resample << std::endl;
   std::cerr << "# number of particles = " << config->num_particles << std::endl;
   std::cerr << "# iterations = " << config->iterations << std::endl;
+  std::cerr << "# iterations unsup = " << config->iterations_unsup << std::endl;
   std::cerr << "# randomise = " << config->randomise << std::endl;
-
-
 
   std::cerr << "################################" << std::endl;
 
@@ -197,7 +221,7 @@ int main(int argc, char** argv) {
     model.learn();
   } else {
    if (config->char_lexicalised) {
-      if (config->parser_type == ParserType::arcstandard)
+      if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2)
         train_dp<ArcStandardLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>(config);
       //else if (config->parser_type == ParserType::arcstandard)
       //  train_dp<ArcStandardParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>(config);
@@ -207,8 +231,12 @@ int main(int argc, char** argv) {
       //  train_dp<EisnerParseModel<ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>, ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>(config);
     } 
    else if (config->lexicalised) {
-      if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) // && config->labelled_parser)
-        train_dp<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
+      if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) // && config->labelled_parser) {
+        if (config->adapt_word_context)
+          train_dp<ArcStandardLabelledParseModel<ParsedCALexPypWeights<wordLMOrderAS, wordTagLMOrderAS,  tagLMOrderAS, actionLMOrderAS>>, ParsedCALexPypWeights<wordLMOrderAS, wordTagLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
+        else
+          train_dp<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
+   
       //else if (config->parser_type == ParserType::arcstandard)
       //  train_dp<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
       else if (config->parser_type == ParserType::arceager) //&& config->labelled_parser)

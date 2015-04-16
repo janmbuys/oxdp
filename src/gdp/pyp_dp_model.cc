@@ -22,6 +22,480 @@ PypDpModel<ParseModel, ParsedWeights>::PypDpModel(const boost::shared_ptr<ModelC
 }
 
 template<class ParseModel, class ParsedWeights>
+void PypDpModel<ParseModel, ParsedWeights>::learn_semisup2() {
+  MT19937 eng;
+  //read training data
+  boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>(config_);
+  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>(config_);
+ 
+  if (config_->training_file.size()) { 
+    std::cerr << "Reading supervised training corpus...\n";
+    sup_training_corpus->readFile(config_->training_file, dict_, false);
+     std::cerr << "Corpus size: " << sup_training_corpus->size() << " sentences\t (" 
+              << dict_->size() << " word types, " << dict_->tag_size() << " tags, " 
+	      << dict_->label_size() << " labels)\n";  
+  } else {
+    std::cerr << "No supervised training corpus.\n";
+  } 
+
+  if (config_->training_file_unsup.size()) { 
+    std::cerr << "Reading unsupervised training corpus...\n";
+    unsup_training_corpus->readTxtFile(config_->training_file_unsup, dict_, false);
+     std::cerr << "Corpus size: " << unsup_training_corpus->size() << " sentences\t (" 
+              << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
+	      << dict_->label_size() << " labels)\n";  
+  } else {
+    std::cerr << "No unsupervised training corpus.\n";
+  }
+
+  //construct character dictionary
+  for (size_t j = 0; j < dict_->size(); ++j) {
+    const Word w = dict_->lookup(j);
+    for (size_t i = 0; i < w.size(); ++i)
+        ch_dict_->convert(w.substr(i,1), false);
+  }
+
+  //read test data 
+  std::cerr << "Reading test corpus...\n";
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_);
+  if (config_->test_file.size()) {
+    test_corpus->readFile(config_->test_file, dict_, true);
+    std::cerr << "Done reading test corpus..." << std::endl;
+    std::cerr << "Corpus size: " << test_corpus->size() << " sentences,\t" 
+                 << test_corpus->numTokens() << " tokens\n";
+  }
+
+  std::cerr << "Reading test corpus unsup...\n";
+  boost::shared_ptr<ParsedCorpus> test_corpus_unsup = boost::make_shared<ParsedCorpus>(config_);
+  if (config_->test_file_unsup.size()) {
+    test_corpus_unsup->readTxtFile(config_->test_file_unsup, dict_, true);
+    std::cerr << "Done reading unsup test corpus..." << std::endl;
+    std::cerr << "Corpus size: " << test_corpus_unsup->size() << " sentences,\t" 
+                 << test_corpus_unsup->numTokens() << " tokens\n";
+  }
+ 
+  //instantiate weights
+  weights_ = boost::make_shared<ParsedWeights>(dict_, ch_dict_, config_->numActions());
+
+  std::vector<int> sup_indices(sup_training_corpus->size());
+  std::iota(sup_indices.begin(), sup_indices.end(), 0);
+
+  std::vector<int> unsup_indices(unsup_training_corpus->size());
+  std::iota(unsup_indices.begin(), unsup_indices.end(), 0);
+
+  Real best_perplexity = std::numeric_limits<Real>::infinity();
+  Real best_perplexity_unsup = std::numeric_limits<Real>::infinity();
+  Real test_objective = 0; 
+  Real test_objective_unsup = 0; 
+
+  int minibatch_counter = 1;
+  int minibatch_size = config_->minibatch_size;
+  int minibatch_size_unsup = config_->minibatch_size_unsup;
+
+  std::vector<boost::shared_ptr<ParseDataSet>> sup_examples_list;
+  for (int i = 0; i < sup_training_corpus->size(); ++i)
+    sup_examples_list.push_back(boost::make_shared<ParseDataSet>());
+          
+  std::vector<boost::shared_ptr<ParseDataSet>> unsup_examples_list;
+  for (int i = 0; i < unsup_training_corpus->size(); ++i)
+    unsup_examples_list.push_back(boost::make_shared<ParseDataSet>());
+
+  for (int iter = 0; iter < config_->iterations; ++iter) {
+    std::cerr << "Training iteration " << iter << std::endl;
+    auto iteration_start = get_time(); 
+    int non_projective_count = 0;
+
+    if (config_->randomise) {
+      std::random_shuffle(sup_indices.begin(), sup_indices.end());
+    }
+
+    size_t start = 0;
+    //loop over supervised minibatches
+    while (start < sup_training_corpus->size()) {
+      size_t end = std::min(sup_training_corpus->size(), start + minibatch_size);
+      
+      std::vector<int> minibatch(sup_indices.begin() + start, sup_indices.begin() + end);
+      boost::shared_ptr<ParseDataSet> minibatch_examples = boost::make_shared<ParseDataSet>();
+      boost::shared_ptr<ParseDataSet> old_minibatch_examples = boost::make_shared<ParseDataSet>();
+       
+      //FIRST remove old examples
+      if (iter > 0) {
+        for (auto j: minibatch) {
+          old_minibatch_examples->extend(sup_examples_list.at(j));
+        }
+
+        weights_->updateRemove(old_minibatch_examples, eng); 
+      }
+
+      //THEN add new examples
+      for (auto j: minibatch) {
+        if (!sup_training_corpus->sentence_at(j).projective_dependency()) {
+          ++non_projective_count;
+          //std::cout << "Non-projective.\n";
+        }
+
+        sup_examples_list.at(j)->clear();
+        if ((!config_->bootstrap && (config_->bootstrap_iter == 0)) || 
+                     (iter < config_->bootstrap_iter))
+          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
+        else if (config_->bootstrap)
+          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, sup_examples_list.at(j));
+        else 
+          parse_model_->extractSentenceUnsupervised(sup_training_corpus->sentence_at(j), weights_, sup_examples_list.at(j));
+
+        minibatch_examples->extend(sup_examples_list.at(j));
+      }     
+
+      weights_->updateInsert(minibatch_examples, eng); 
+
+      ++minibatch_counter;
+      start = end;
+    }     
+   
+    if ((iter > 0) && ((!config_->bootstrap && (config_->bootstrap_iter == 0)) || (iter < config_->bootstrap_iter)))
+      weights_->resampleHyperparameters(eng);
+    else if ((iter > 0) && (iter % 5 == 0))
+      weights_->resampleHyperparameters(eng);
+
+    Real iteration_time = get_duration(iteration_start, get_time());
+    unsigned total_size = sup_training_corpus->numTokens() + unsup_training_corpus->numTokens();
+
+    std::cerr << "Iteration: " << iter << ", "
+             << "Time: " << iteration_time << " seconds, "
+             << "  Non-projective: " << (non_projective_count + 0.0)/sup_training_corpus->size() << ", "
+             << "  Size: " << total_size
+             << "  Likelihood: " << weights_->likelihood() 
+             << "  Objective: " << weights_->likelihood() / total_size
+           << "\n\n";
+   
+    //if (iter%5 == 0)
+    evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
+  }
+
+  std::cerr << "Parsing unlabelled data" << std::endl;
+
+
+  boost::shared_ptr<AccuracyCounts> temp_acc_counts = boost::make_shared<AccuracyCounts>(dict_);
+  for (unsigned j = 0; j < unsup_training_corpus->size(); ++j) {
+    Parser parse = parse_model_->evaluateSentence(unsup_training_corpus->sentence_at(j), weights_, temp_acc_counts, config_->num_particles); 
+    unsup_training_corpus->set_arcs_at(j, parse);
+  }
+
+  for (int iter = 0; iter < config_->iterations_unsup; ++iter) {
+    std::cerr << "Unsup Training iteration " << iter << std::endl;
+    auto iteration_start = get_time(); 
+
+    if (config_->randomise) {
+      std::random_shuffle(unsup_indices.begin(), unsup_indices.end());
+    }
+
+    size_t start = 0;
+
+    //loop over unsupervised minibatches
+    while (start < unsup_training_corpus->size()) {
+      if (minibatch_counter % 5000 == 0)
+        std::cerr << minibatch_counter << std::endl;
+      size_t end = std::min(unsup_training_corpus->size(), start + minibatch_size_unsup);
+      
+      std::vector<int> minibatch(unsup_indices.begin() + start, unsup_indices.begin() + end);
+      boost::shared_ptr<ParseDataSet> minibatch_examples = boost::make_shared<ParseDataSet>();
+      boost::shared_ptr<ParseDataSet> old_minibatch_examples = boost::make_shared<ParseDataSet>();
+      
+      //FIRST remove old examples
+      if (iter > 0) {
+        for (auto j: minibatch) {
+          old_minibatch_examples->extend(unsup_examples_list.at(j));
+        }
+        weights_->updateRemove(old_minibatch_examples, eng); 
+      }
+
+      //THEN add new examples
+      for (auto j: minibatch) {
+        unsup_examples_list.at(j)->clear();
+        parse_model_->extractSentence(unsup_training_corpus->sentence_at(j),
+                            weights_, unsup_examples_list.at(j));
+
+        unsup_examples_list.at(j)->clear_tag_examples();
+        unsup_examples_list.at(j)->clear_action_examples();
+        minibatch_examples->extend(unsup_examples_list.at(j));
+      }     
+
+      weights_->updateInsert(minibatch_examples, eng); 
+
+      ++minibatch_counter;
+      start = end;
+
+      if ((iter == 0) && (minibatch_counter % 20000 == 0)) {
+        evaluate(test_corpus_unsup, minibatch_counter, test_objective, best_perplexity);
+      } 
+    }
+
+    if ((iter > 0) && (iter % 5 == 0))
+      weights_->resampleHyperparameters(eng);
+
+    Real iteration_time = get_duration(iteration_start, get_time());
+    unsigned total_size = sup_training_corpus->numTokens() + unsup_training_corpus->numTokens();
+
+    std::cerr << "Iteration: " << iter << ", "
+             << "Time: " << iteration_time << " seconds, "
+             << "  Size: " << total_size
+             << "  Likelihood: " << weights_->likelihood() 
+             << "  Objective: " << weights_->likelihood() / total_size
+           << "\n\n";
+   
+    //if (iter%5 == 0)
+    evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
+    evaluate(test_corpus_unsup, minibatch_counter, test_objective_unsup, best_perplexity_unsup);
+  }
+
+  std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;
+
+  //generate from model
+  for (int i = 0; i < config_->generate_samples; ++i) {
+    Parser parse = parse_model_->generateSentence(weights_, eng);
+    //std::cout << parse.weight() << "  ";
+    parse.print_sentence(dict_);
+    parse.print_arcs();
+    //parse.print_labels();
+  }  
+}
+
+
+
+template<class ParseModel, class ParsedWeights>
+void PypDpModel<ParseModel, ParsedWeights>::learn_semisup1() {
+  MT19937 eng;
+  //read training data
+  boost::shared_ptr<ParsedCorpus> sup_training_corpus = boost::make_shared<ParsedCorpus>(config_);
+  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>(config_);
+ 
+  if (config_->training_file.size()) { 
+    std::cerr << "Reading supervised training corpus...\n";
+    sup_training_corpus->readFile(config_->training_file, dict_, false);
+     std::cerr << "Corpus size: " << sup_training_corpus->size() << " sentences\t (" 
+              << dict_->size() << " word types, " << dict_->tag_size() << " tags, " 
+	      << dict_->label_size() << " labels)\n";  
+  } else {
+    std::cerr << "No supervised training corpus.\n";
+  } 
+
+  if (config_->training_file_unsup.size()) { 
+    std::cerr << "Reading unsupervised training corpus...\n";
+    unsup_training_corpus->readTxtFile(config_->training_file_unsup, dict_, false);
+     std::cerr << "Corpus size: " << unsup_training_corpus->size() << " sentences\t (" 
+              << dict_->size() << " word types, " << dict_->tag_size() << " tags, "  
+	      << dict_->label_size() << " labels)\n";  
+  } else {
+    std::cerr << "No unsupervised training corpus.\n";
+  }
+
+  //construct character dictionary
+  for (size_t j = 0; j < dict_->size(); ++j) {
+    const Word w = dict_->lookup(j);
+    for (size_t i = 0; i < w.size(); ++i)
+        ch_dict_->convert(w.substr(i,1), false);
+  }
+
+  //read test data 
+  std::cerr << "Reading test corpus...\n";
+  boost::shared_ptr<ParsedCorpus> test_corpus = boost::make_shared<ParsedCorpus>(config_);
+  if (config_->test_file.size()) {
+    test_corpus->readFile(config_->test_file, dict_, true);
+    std::cerr << "Done reading test corpus..." << std::endl;
+    std::cerr << "Corpus size: " << test_corpus->size() << " sentences,\t" 
+                 << test_corpus->numTokens() << " tokens\n";
+  }
+
+  std::cerr << "Reading test corpus unsup...\n";
+  boost::shared_ptr<ParsedCorpus> test_corpus_unsup = boost::make_shared<ParsedCorpus>(config_);
+  if (config_->test_file_unsup.size()) {
+    test_corpus_unsup->readTxtFile(config_->test_file_unsup, dict_, true);
+    std::cerr << "Done reading unsup test corpus..." << std::endl;
+    std::cerr << "Corpus size: " << test_corpus_unsup->size() << " sentences,\t" 
+                 << test_corpus_unsup->numTokens() << " tokens\n";
+  }
+ 
+  //instantiate weights
+  weights_ = boost::make_shared<ParsedWeights>(dict_, ch_dict_, config_->numActions());
+
+  std::vector<int> sup_indices(sup_training_corpus->size());
+  std::iota(sup_indices.begin(), sup_indices.end(), 0);
+
+  std::vector<int> unsup_indices(unsup_training_corpus->size());
+  std::iota(unsup_indices.begin(), unsup_indices.end(), 0);
+
+  Real best_perplexity = std::numeric_limits<Real>::infinity();
+  Real best_perplexity_unsup = std::numeric_limits<Real>::infinity();
+  Real test_objective = 0; 
+  Real test_objective_unsup = 0; 
+
+  int minibatch_counter = 1;
+  int minibatch_size = config_->minibatch_size;
+  int minibatch_size_unsup = config_->minibatch_size_unsup;
+
+  std::vector<boost::shared_ptr<ParseDataSet>> sup_examples_list;
+  for (int i = 0; i < sup_training_corpus->size(); ++i)
+    sup_examples_list.push_back(boost::make_shared<ParseDataSet>());
+          
+  std::vector<boost::shared_ptr<ParseDataSet>> unsup_examples_list;
+  for (int i = 0; i < unsup_training_corpus->size(); ++i)
+    unsup_examples_list.push_back(boost::make_shared<ParseDataSet>());
+
+  for (int iter = 0; iter < config_->iterations; ++iter) {
+    std::cerr << "Training iteration " << iter << std::endl;
+    auto iteration_start = get_time(); 
+    int non_projective_count = 0;
+
+    if (config_->randomise) {
+      std::random_shuffle(sup_indices.begin(), sup_indices.end());
+    }
+
+    size_t start = 0;
+    //loop over supervised minibatches
+    while (start < sup_training_corpus->size()) {
+      size_t end = std::min(sup_training_corpus->size(), start + minibatch_size);
+      
+      std::vector<int> minibatch(sup_indices.begin() + start, sup_indices.begin() + end);
+      boost::shared_ptr<ParseDataSet> minibatch_examples = boost::make_shared<ParseDataSet>();
+      boost::shared_ptr<ParseDataSet> old_minibatch_examples = boost::make_shared<ParseDataSet>();
+       
+      //FIRST remove old examples
+      if (iter > 0) {
+        for (auto j: minibatch) {
+          old_minibatch_examples->extend(sup_examples_list.at(j));
+        }
+
+        weights_->updateRemove(old_minibatch_examples, eng); 
+      }
+
+      //THEN add new examples
+      for (auto j: minibatch) {
+        if (!sup_training_corpus->sentence_at(j).projective_dependency()) {
+          ++non_projective_count;
+          //std::cout << "Non-projective.\n";
+        }
+
+        sup_examples_list.at(j)->clear();
+        if ((!config_->bootstrap && (config_->bootstrap_iter == 0)) || 
+                     (iter < config_->bootstrap_iter))
+          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), sup_examples_list.at(j));
+        else if (config_->bootstrap)
+          parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, sup_examples_list.at(j));
+        else 
+          parse_model_->extractSentenceUnsupervised(sup_training_corpus->sentence_at(j), weights_, sup_examples_list.at(j));
+
+        minibatch_examples->extend(sup_examples_list.at(j));
+      }     
+
+      weights_->updateInsert(minibatch_examples, eng); 
+
+      ++minibatch_counter;
+      start = end;
+    }     
+   
+    if ((iter > 0) && ((!config_->bootstrap && (config_->bootstrap_iter == 0)) || (iter < config_->bootstrap_iter)))
+      weights_->resampleHyperparameters(eng);
+    else if ((iter > 0) && (iter % 5 == 0))
+      weights_->resampleHyperparameters(eng);
+
+    Real iteration_time = get_duration(iteration_start, get_time());
+    unsigned total_size = sup_training_corpus->numTokens() + unsup_training_corpus->numTokens();
+
+    std::cerr << "Iteration: " << iter << ", "
+             << "Time: " << iteration_time << " seconds, "
+             << "  Non-projective: " << (non_projective_count + 0.0)/sup_training_corpus->size() << ", "
+             << "  Size: " << total_size
+             << "  Likelihood: " << weights_->likelihood() 
+             << "  Objective: " << weights_->likelihood() / total_size
+           << "\n\n";
+   
+    //if (iter%5 == 0)
+    evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
+  }
+
+  for (int iter = 0; iter < config_->iterations_unsup; ++iter) {
+    std::cerr << "Unsup Training iteration " << iter << std::endl;
+    auto iteration_start = get_time(); 
+
+    if (config_->randomise) {
+      std::random_shuffle(unsup_indices.begin(), unsup_indices.end());
+    }
+
+    size_t start = 0;
+
+    //loop over unsupervised minibatches
+    while (start < unsup_training_corpus->size()) {
+      if (minibatch_counter % 5000 == 0)
+        std::cerr << minibatch_counter << std::endl;
+      size_t end = std::min(unsup_training_corpus->size(), start + minibatch_size_unsup);
+      
+      std::vector<int> minibatch(unsup_indices.begin() + start, unsup_indices.begin() + end);
+      boost::shared_ptr<ParseDataSet> minibatch_examples = boost::make_shared<ParseDataSet>();
+      boost::shared_ptr<ParseDataSet> old_minibatch_examples = boost::make_shared<ParseDataSet>();
+      
+      //FIRST remove old examples
+      if (iter > 0) {
+        for (auto j: minibatch) {
+          old_minibatch_examples->extend(unsup_examples_list.at(j));
+        }
+        weights_->updateRemove(old_minibatch_examples, eng); 
+      }
+
+      //THEN add new examples
+      for (auto j: minibatch) {
+        unsup_examples_list.at(j)->clear();
+        if (iter == 0)
+          parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
+                            weights_, unsup_examples_list.at(j));
+        else 
+          parse_model_->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j),
+                            weights_, eng, unsup_examples_list.at(j));
+        minibatch_examples->extend(unsup_examples_list.at(j));
+      }     
+
+      weights_->updateInsert(minibatch_examples, eng); 
+
+      ++minibatch_counter;
+      start = end;
+
+      if ((iter == 0) && (minibatch_counter % 20000 == 0)) {
+        evaluate(test_corpus_unsup, minibatch_counter, test_objective, best_perplexity);
+      } 
+    }
+
+    if ((iter > 0) && (iter % 5 == 0))
+      weights_->resampleHyperparameters(eng);
+
+    Real iteration_time = get_duration(iteration_start, get_time());
+    unsigned total_size = sup_training_corpus->numTokens() + unsup_training_corpus->numTokens();
+
+    std::cerr << "Iteration: " << iter << ", "
+             << "Time: " << iteration_time << " seconds, "
+             << "  Size: " << total_size
+             << "  Likelihood: " << weights_->likelihood() 
+             << "  Objective: " << weights_->likelihood() / total_size
+           << "\n\n";
+   
+    //if (iter%5 == 0)
+    evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
+    evaluate(test_corpus_unsup, minibatch_counter, test_objective_unsup, best_perplexity_unsup);
+  }
+
+  std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;
+
+  //generate from model
+  for (int i = 0; i < config_->generate_samples; ++i) {
+    Parser parse = parse_model_->generateSentence(weights_, eng);
+    //std::cout << parse.weight() << "  ";
+    parse.print_sentence(dict_);
+    parse.print_arcs();
+    //parse.print_labels();
+  }  
+}
+
+
+
+template<class ParseModel, class ParsedWeights>
 void PypDpModel<ParseModel, ParsedWeights>::learn() {
   MT19937 eng;
   //read training data
@@ -215,6 +689,9 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
           parse_model_->extractSentence(sup_training_corpus->sentence_at(j), weights_, eng, sup_examples_list.at(j));
         else 
           parse_model_->extractSentenceUnsupervised(sup_training_corpus->sentence_at(j), weights_, sup_examples_list.at(j));
+       //if (config_->semi_supervised)
+       //   sup_examples_list.at(j)->clear_word_examples();
+
         minibatch_examples->extend(sup_examples_list.at(j));
       }     
 
@@ -265,8 +742,9 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       } 
     }
 
-    if ((iter > 0) && (iter % 5 == 0))
-    //if (iter > 0) 
+    if ((iter > 0) && ((!config_->bootstrap && (config_->bootstrap_iter == 0)) || (iter < config_->bootstrap_iter)))
+      weights_->resampleHyperparameters(eng);
+    else if ((iter > 0) && (iter % 5 == 0))
       weights_->resampleHyperparameters(eng);
 
     Real iteration_time = get_duration(iteration_start, get_time());
@@ -386,6 +864,7 @@ template class PypDpModel<ArcStandardLabelledParseModel<ParsedChLexPypWeights<wo
 template class PypDpModel<ArcEagerLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>, ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>;
 //template class PypDpModel<EisnerParseModel<ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>, ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>;
 
+template class PypDpModel<ArcStandardLabelledParseModel<ParsedCALexPypWeights<wordLMOrderAS, wordTagLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedCALexPypWeights<wordLMOrderAS, wordTagLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
 //template class PypDpModel<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
 template class PypDpModel<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>;
 //template class PypDpModel<ArcEagerParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>, ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>;

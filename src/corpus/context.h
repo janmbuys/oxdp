@@ -10,6 +10,8 @@ struct Context {
 
   Context(const std::vector<int>& words, const std::vector<std::vector<int>> features);
 
+  Context(const std::vector<int>& words, const std::vector<int> tags);
+
   std::vector<int> words;
   std::vector<std::vector<int>> features;
 };

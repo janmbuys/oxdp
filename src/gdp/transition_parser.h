@@ -142,6 +142,10 @@ class TransitionParser: public Parser {
     return config_->root_first;
   }
 
+  bool adapt_word_context() const {
+    return config_->adapt_word_context;
+  }
+
   bool non_projective() const {
     return (config_->parser_type == ParserType::arcstandard2);
   } 
@@ -247,34 +251,29 @@ class TransitionParser: public Parser {
   /*  functions for context vectors  */
 
   Words word_next_children_context() const {
-    Words ctx(6, 0);
+    Words ctx(5, 0);
     
     if (stack_.size() >= 1) { 
       WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
       WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
-      ctx[4] = word_at(stack_.at(stack_.size()-1));
+      ctx[3] = word_at(stack_.at(stack_.size()-1));
       if (l1 >= 0) 
-        ctx[1] = word_at(l1);
+        ctx[0] = word_at(l1);
       if (r1 >= 0) 
-        ctx[2] = word_at(r1);
+        ctx[1] = word_at(r1);
     }
 
     if (stack_.size() >= 2) { 
-      WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
+      //WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
       
-      ctx[3] = word_at(stack_.at(stack_.size()-2));
-      if (r2 >= 0) 
-        ctx[0] = word_at(r2);
+      ctx[2] = word_at(stack_.at(stack_.size()-2));
+      //if (r2 >= 0) 
+      //  ctx[0] = word_at(r2);
     }
 
     if (!buffer_empty()) {
-      ctx[5] = tag_at(buffer_next());
-      //WordIndex p = arc_at(buffer_next());
-      //if (p >= 0) {
-      //  ctx[6] = tag_at(p);
-      //  //ctx[1] = word_at(p);
-      //}
+      ctx[4] = tag_at(buffer_next());
     }
 
     return ctx;
@@ -692,7 +691,7 @@ class TransitionParser: public Parser {
       ctx[1] = tag_at(stack_.at(stack_.size()-3));
     }
     if (stack_.size() >= 4) {
-      //ctx[0] = tag_at(stack_.at(stack_.size()-4));
+      ctx[0] = tag_at(stack_.at(stack_.size()-4));
     }  
     return ctx;
   }
@@ -816,32 +815,26 @@ class TransitionParser: public Parser {
   }
 
   Words tag_next_children_context() const {
-    Words ctx(6, 0);
+    Words ctx(5, 0);
     
     if (stack_.size() >= 1) { 
       WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
       WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
-      ctx[5] = tag_at(stack_.at(stack_.size()-1));
+      ctx[3] = tag_at(stack_.at(stack_.size()-1));
       if (l1 >= 0)
-        ctx[2] = tag_at(l1); 
+        ctx[0] = tag_at(l1); 
       if (r1 >= 0 && (r1 != buffer_next())) 
-        ctx[3] = tag_at(r1); 
+        ctx[1] = tag_at(r1); 
 
     }
 
-    if (!buffer_empty()) {
-      WordIndex bl1 = leftmost_child_at(buffer_next());
-      if (bl1 >= 0)
-        ctx[4] = tag_at(bl1); 
-    }
-    
     if (stack_.size() >= 2) { 
-      ctx[1] = tag_at(stack_.at(stack_.size()-2)); 
+      ctx[2] = tag_at(stack_.at(stack_.size()-2)); 
     }
     
-    if (stack_.size() >= 3) { 
-      ctx[0] = tag_at(stack_.at(stack_.size()-3)); 
+    if (!buffer_empty()) {
+      ctx[4] = tag_at(buffer_next());
     }
 
     return ctx;

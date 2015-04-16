@@ -249,11 +249,14 @@ Indices ArcStandardLabelledParser::contextIndices() const {
 }
 
 Context ArcStandardLabelledParser::wordContext() const {
-  if (pyp_model())
-    return Context(word_tag_next_children_context()); //order 8
+  if (pyp_model()) {
+    if (adapt_word_context()) 
+      return Context(word_next_children_context(), tag_next_children_context()); //order 8
+     else 
+      return Context(word_tag_next_children_context()); //order 8
     //return Context(word_next_children_context()); //order 8
     //return word_tag_next_ngram_context(); // best perplexity
-  else 
+  } else 
     return map_context(contextIndices());
 }
 

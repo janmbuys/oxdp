@@ -12,8 +12,13 @@ struct UniformVocabulary {
   template<typename Engine>
   void increment(int, const std::vector<int>&, Engine&) { ++draws; }
   template<typename Engine>
+  void increment(int, const std::vector<int>&, const std::vector<int>&, Engine&) { ++draws; }
+  template<typename Engine>
   void decrement(int, const std::vector<int>&, Engine&) { --draws; assert(draws >= 0); }
+  template<typename Engine>
+  void decrement(int, const std::vector<int>&, const std::vector<int>&, Engine&) { --draws; assert(draws >= 0); }
   double prob(int, const std::vector<int>&) const { return p0; }
+  double prob(int, const std::vector<int>&, const std::vector<int>&) const { return p0; }
   template<typename Engine>
   void resample_hyperparameters(Engine&) {}
   double log_likelihood() const { return draws * log(p0); }

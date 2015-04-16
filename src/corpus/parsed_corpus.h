@@ -23,7 +23,12 @@ class ParsedCorpus: public CorpusInterface {
   void convertWhitespaceDelimitedConllLine(const std::string& line, 
       const boost::shared_ptr<Dict>& dict, Words* sent_out, WordsList* tags_out, Indices* arcs_out, Words* labels_out, bool frozen);
 
+  Words convertWhitespaceDelimitedTxtLine(const std::string& line, 
+        const boost::shared_ptr<Dict>& dict, bool frozen);
+
   void readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) override;
+
+  void readTxtFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen);
 
   ParsedSentence sentence_at(unsigned i) const {
     return sentences_.at(i);
@@ -31,6 +36,12 @@ class ParsedCorpus: public CorpusInterface {
 
   void add_sentence(ParsedSentence sent) {
     sentences_.push_back(sent);
+  }
+
+  void set_arcs_at(unsigned i, const ParsedSentence& parse) {
+    for (unsigned i = 0; i < parse.size(); ++i) {
+      sentences_.at(i).set_arc(i, parse.arc_at(i));
+    }
   }
 
   size_t size() const override;

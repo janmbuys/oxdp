@@ -8,12 +8,13 @@
 #include <utility>
 #include <unordered_map>
 #include <functional>
-#include "random.h"
-#include "slice_sampler.h"
-#include "crp_table_manager.h"
-#include "m.h"
 
-namespace pyp {
+#include "utils/random.h"
+#include "utils/m.h"
+#include "pyp/slice_sampler.h"
+#include "pyp/crp_table_manager.h"
+
+namespace oxlm {
 
 // Chinese restaurant process (Pitman-Yor parameters) histogram-based table tracking
 // based on the implementation proposed by Blunsom et al. 2009
