@@ -7,7 +7,7 @@ ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(boost::shared_ptr<Dict> dict,
         boost::shared_ptr<Dict> ch_dict, size_t num_actions):
   PypWeights<tOrder>(dict->tag_size()),    
   shre_lm_(2, 1, 1, 1, 1),
-  action_lm_(num_actions, 1, 1, 1, 1),  //-1
+  action_lm_(num_actions, 1, 1, 1, 1), //-1
   num_actions_(num_actions) {}
 
 template<unsigned tOrder, unsigned aOrder>
@@ -40,7 +40,7 @@ Reals ParsedPypWeights<tOrder, aOrder>::predictTag(Context context) const {
 
 template<unsigned tOrder, unsigned aOrder>
 Real ParsedPypWeights<tOrder, aOrder>::predictAction(WordId action, Context context) const {
- /* if (action == 0) {
+  /*if (action == 0) {
     return -std::log(shre_lm_.prob(0, context.words));
   } else {
     return -std::log(shre_lm_.prob(1, context.words)) 
@@ -92,12 +92,12 @@ template<unsigned tOrder, unsigned aOrder>
 void ParsedPypWeights<tOrder, aOrder>::updateInsert(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
   PypWeights<tOrder>::updateInsert(examples->tag_examples(), eng);
   for (unsigned i = 0; i < examples->action_example_size(); ++i) {
-   /* if (examples->action_at(i) == 0) 
-      shre_lm_.increment(0, examples->action_context_at(i).words, eng);
+   /*if (examples->action_at(i) == 0) 
+      shre_lm_.increment(0, examples->action_context_at(i).features[0], eng);
     else { 
-      shre_lm_.increment(1, examples->action_context_at(i).words, eng);
+      shre_lm_.increment(1, examples->action_context_at(i).features[0], eng);
       action_lm_.increment(examples->action_at(i) - 1, examples->action_context_at(i).words, eng);
-    } */
+    } */ 
     action_lm_.increment(examples->action_at(i), examples->action_context_at(i).words, eng);
   }
 }
@@ -107,10 +107,10 @@ template<unsigned tOrder, unsigned aOrder>
 void ParsedPypWeights<tOrder, aOrder>::updateRemove(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) {
   PypWeights<tOrder>::updateRemove(examples->tag_examples(), eng);
   for (unsigned i = 0; i < examples->action_example_size(); ++i) {
-    /*  if (examples->action_at(i) == 0) 
-      shre_lm_.decrement(0, examples->action_context_at(i).words, eng);
+    /*if (examples->action_at(i) == 0) 
+      shre_lm_.decrement(0, examples->action_context_at(i).features[0], eng);
     else { 
-      shre_lm_.decrement(1, examples->action_context_at(i).words, eng);
+      shre_lm_.decrement(1, examples->action_context_at(i).features[0], eng);
       action_lm_.decrement(examples->action_at(i) - 1, examples->action_context_at(i).words, eng);
     } */
     action_lm_.decrement(examples->action_at(i), examples->action_context_at(i).words, eng);
