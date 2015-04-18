@@ -253,18 +253,21 @@ Context ArcStandardLabelledParser::wordContext() const {
     if (adapt_word_context()) 
       return Context(word_next_children_context(), tag_next_children_context()); //order 8
      else 
-      //return Context(word_tag_next_children_context()); //order 6
-      return Context(word_next_children_context()); //order 6
+      return Context(word_tag_next_children_context()); //order 6
+      //return Context(word_next_children_context()); //order 6
     //return word_tag_next_ngram_context(); // best perplexity
   } else 
     return map_context(contextIndices());
 }
 
 Context ArcStandardLabelledParser::tagContext() const {
-  if (pyp_model()) 
-    return Context(word_tag_children_context());  //order 8
+  if (pyp_model()) {
+    if (lexicalised())
+      return Context(word_tag_children_context());  //order 9
+    else 
+      return Context(tag_children_context());  //order 7
     //return Context(tag_children_third_context());  //order 11
-  else 
+  } else 
     return map_context(contextIndices());
 }
 
@@ -272,11 +275,10 @@ Context ArcStandardLabelledParser::actionContext() const {
   if (pyp_model()) {
     if (lexicalised())
       //return Context(word_tag_children_context(), word_tag_children_local_context()); //order 10
-      return Context(word_tag_children_context()); //order 10
-      //return Context(tag_children_context()); //order 8
-      //return Context(tag_children_third_context());  //order 11
+      return Context(word_tag_children_context()); //order 9
     else
-      return Context(tag_children_context()); //order 8
+      return Context(tag_children_context()); //order 7
+      //return Context(tag_children_third_context());  //order 11
   } else 
     return map_context(contextIndices());
 }

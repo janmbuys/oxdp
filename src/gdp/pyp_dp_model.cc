@@ -560,6 +560,16 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
                  << test_corpus->numTokens() << " tokens\n";
   }
 
+  std::cerr << "Reading test corpus 2...\n";
+  boost::shared_ptr<ParsedCorpus> test_corpus2 = boost::make_shared<ParsedCorpus>(config_);
+  if (config_->test_file2.size()) {
+    test_corpus2->readFile(config_->test_file2, dict_, true);
+    std::cerr << "Done reading test corpus 2..." << std::endl;
+    std::cerr << "Corpus size: " << test_corpus2->size() << " sentences,\t" 
+                 << test_corpus2->numTokens() << " tokens\n";
+  }
+ 
+
   bool write_data = false;
 
   if (write_data) {
@@ -633,7 +643,9 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   std::iota(unsup_indices.begin(), unsup_indices.end(), 0);
 
   Real best_perplexity = std::numeric_limits<Real>::infinity();
+  Real best_perplexity2 = std::numeric_limits<Real>::infinity();
   Real test_objective = 0; 
+  Real test_objective2 = 0; 
   int minibatch_counter = 1;
   int minibatch_size = config_->minibatch_size;
   int minibatch_size_unsup = config_->minibatch_size_unsup;
@@ -760,6 +772,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
    
     //if (iter%5 == 0)
     evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
+    evaluate(test_corpus2, minibatch_counter, test_objective2, best_perplexity2);
   }
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;

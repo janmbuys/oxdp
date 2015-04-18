@@ -257,14 +257,14 @@ class TransitionParser: public Parser {
       WordIndex r1 = rightmost_child_at(stack_.at(stack_.size()-1));
       WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
-      ctx[3] = word_at(stack_.at(stack_.size()-1));
+      ctx[1] = word_at(stack_.at(stack_.size()-1));
       if (l1 >= 0) {
         //ctx[0] = word_at(l1);
         ctx[2] = tag_at(l1);
       }
       if (r1 >= 0) {
         //ctx[1] = word_at(r1);
-        ctx[1] = tag_at(r1);
+        ctx[3] = tag_at(r1);
       }
     }
 
@@ -292,7 +292,7 @@ class TransitionParser: public Parser {
       WordIndex l1 = leftmost_child_at(stack_.at(stack_.size()-1));
       
       ctx[1] = word_at(stack_.at(stack_.size()-1));
-      //ctx[3] = tag_at(stack_.at(stack_.size()-1));
+      //ctx[1] = tag_at(stack_.at(stack_.size()-1));
       if (l1 >= 0) {
         ctx[2] = tag_at(l1);
         //ctx[0] = word_at(l1);
@@ -305,7 +305,7 @@ class TransitionParser: public Parser {
 
     if (stack_.size() >= 2) { 
       ctx[0] = word_at(stack_.at(stack_.size()-2));
-      //ctx[4] = tag_at(stack_.at(stack_.size()-2));
+      //ctx[0] = tag_at(stack_.at(stack_.size()-2));
     }
 
     if (!buffer_empty()) {
@@ -686,8 +686,8 @@ class TransitionParser: public Parser {
       WordIndex r2 = rightmost_child_at(stack_.at(stack_.size()-2));
 
       ctx[6] = tag_at(stack_.at(stack_.size()-2));
-      if (l2 >= 0)
-        ctx[1] = tag_at(l2);
+      //if (l2 >= 0)
+      //  ctx[1] = tag_at(l2);
       if (r2 >= 0)
         ctx[2] = tag_at(r2); //
     }
@@ -695,7 +695,7 @@ class TransitionParser: public Parser {
       ctx[3] = tag_at(stack_.at(stack_.size()-3));
     }
     if (stack_.size() >= 4) {
-      ctx[0] = tag_at(stack_.at(stack_.size()-4));
+      //ctx[0] = tag_at(stack_.at(stack_.size()-4));
     }  
     return ctx;
   }
@@ -759,13 +759,13 @@ class TransitionParser: public Parser {
 
       ctx[6] = tag_at(stack_.at(stack_.size()-2));
       ctx[0] = word_at(stack_.at(stack_.size()-2));
-      if (l2 >= 0)
-        ctx[2] = tag_at(l2);
+      //if (l2 >= 0)
+      //  ctx[2] = tag_at(l2);
       if (r2 >= 0)
-        ctx[3] = tag_at(r2); //
+        ctx[2] = tag_at(r2); //
     }
     if (stack_.size() >= 3) {
-      //ctx[3] = tag_at(stack_.at(stack_.size()-3));
+      ctx[3] = tag_at(stack_.at(stack_.size()-3));
     } 
     if (stack_.size() >= 4) {
       //ctx[2] = tag_at(stack_.at(stack_.size()-3));
