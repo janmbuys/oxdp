@@ -14,7 +14,7 @@ template<class ParseModel, class ParsedWeights>
 void train_dp(const boost::shared_ptr<ModelConfig>& config) {
   PypDpModel<ParseModel, ParsedWeights> model(config);
   if (config->semi_supervised)
-    model.learn_semisup2();
+    model.learn_semisup1();
   else
     model.learn();
   if (config->iterations > 1)
