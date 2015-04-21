@@ -5,6 +5,7 @@
 #include "corpus/sentence.h"
 #include "corpus/data_set.h"
 #include "corpus/corpus.h"
+#include "gdp/parser.h"
 
 #include "pyp/pyp_weights.h"
 #include "lbl/weights.h"
@@ -32,7 +33,7 @@ class NGramModel {
   Real evaluateSentence(const Sentence& sent, 
           const boost::shared_ptr<Weights>& weights);
 
-  Sentence generateSentence(const boost::shared_ptr<Weights>& weights, MT19937& eng);
+  Parser generateSentence(const boost::shared_ptr<Weights>& weights, MT19937& eng);
 
   private:
   unsigned order_;

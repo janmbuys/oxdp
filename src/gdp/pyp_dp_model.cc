@@ -249,15 +249,6 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semisup2() {
   }
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;
-
-  //generate from model
-  for (int i = 0; i < config_->generate_samples; ++i) {
-    Parser parse = parse_model_->generateSentence(weights_, eng);
-    //std::cout << parse.weight() << "  ";
-    parse.print_sentence(dict_);
-    parse.print_arcs();
-    //parse.print_labels();
-  }  
 }
 
 
@@ -482,15 +473,6 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semisup1() {
   }
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;
-
-  //generate from model
-  for (int i = 0; i < config_->generate_samples; ++i) {
-    Parser parse = parse_model_->generateSentence(weights_, eng);
-    //std::cout << parse.weight() << "  ";
-    parse.print_sentence(dict_);
-    parse.print_arcs();
-    //parse.print_labels();
-  }  
 }
 
 
@@ -778,13 +760,17 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
   std::cerr << "Overall minimum perplexity: " << best_perplexity << std::endl;
 
   //generate from model
+  std::vector<boost::shared_ptr<Parser>> generated_list; 
   for (int i = 0; i < config_->generate_samples; ++i) {
-    Parser parse = parse_model_->generateSentence(weights_, eng);
-    //std::cout << parse.weight() << "  ";
-    parse.print_sentence(dict_);
-    parse.print_arcs();
+    generated_list.push_back(boost::make_shared<Parser>(parse_model_->generateSentence(weights_, eng)));
+  } 
+  
+  std::sort(generated_list.begin(), generated_list.end(), Parser::cmp_weights); 
+  for (int i = 0; i < config_->generate_samples; ++i) {
+    generated_list[i]->print_sentence(dict_);
+    //parse.print_arcs();
     //parse.print_labels();
-  }  
+  }
 }
 
 template<class ParseModel, class ParsedWeights>

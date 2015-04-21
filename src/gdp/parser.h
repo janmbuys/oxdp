@@ -11,7 +11,9 @@ namespace oxlm {
 class Parser: public ParsedSentence {
   public:
   Parser();
-  
+ 
+  Parser(const Words& sent);
+
   Parser(const TaggedSentence& parse);
 
   void push_arc() override {
@@ -175,6 +177,11 @@ class Parser: public ParsedSentence {
 
   Real weight() const {
     return weight_;
+  }
+
+  static bool cmp_weights(const boost::shared_ptr<Parser>& p1, 
+                          const boost::shared_ptr<Parser>& p2) {
+      return (p1->weight() < p2->weight());
   }
 
   private:

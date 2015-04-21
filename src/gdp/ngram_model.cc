@@ -77,7 +77,7 @@ Real NGramModel<Weights>::evaluateSentence(const Sentence& sent,
 }
 
 template<class Weights>
-Sentence NGramModel<Weights>::generateSentence(const boost::shared_ptr<Weights>& weights, MT19937& eng) {
+Parser NGramModel<Weights>::generateSentence(const boost::shared_ptr<Weights>& weights, MT19937& eng) {
   unsigned sent_limit = 100;
   Words sent(order_ - 1, sos_);
   bool terminate = false;
@@ -92,8 +92,10 @@ Sentence NGramModel<Weights>::generateSentence(const boost::shared_ptr<Weights>&
     sent.push_back(word);
    
   }
-  std::cout << weight << "  ";
-  return Sentence(sent);
+  //std::cout << weight << "  ";
+  Parser parse = Parser(sent);
+  parse.set_weight(weight);
+  return parse;
 }
 
 template class NGramModel<PypWeights<wordLMOrder>>;

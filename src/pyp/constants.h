@@ -15,7 +15,7 @@ namespace oxlm {
 #define wordLMOrderE 6 
 #define tagLMOrderE 7 
 
-#define wordLMOrder 5
+#define wordLMOrder 3
 #define charLMOrder 10
 
 }

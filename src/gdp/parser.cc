@@ -12,6 +12,14 @@ Parser::Parser():
   push_arc();
 }
 
+Parser::Parser(const Words& sent):
+  ParsedSentence(sent, WordsList(sent.size(), Words())),
+  left_children_(),
+  right_children_(),
+  weight_{0}
+{
+} 
+
 Parser::Parser(const TaggedSentence& parse):
   ParsedSentence(parse),
   left_children_(parse.size(), Indices()),  
