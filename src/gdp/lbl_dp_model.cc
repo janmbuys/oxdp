@@ -62,30 +62,36 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
   if (config->label_features) {
     //add labels to feature vocab
-    config->label_feature_index = dict->tag_size();
+    config->label_feature_index = dict->feature_size();
     for (unsigned i = 0; i < dict->label_size(); ++i) 
-      dict->convertTag("LABEL_" + dict->lookupLabel(i), false);
+      dict->convertFeature("LABEL_" + dict->lookupLabel(i), false);
   }
 
   if (config->distance_features) {
-    config->distance_feature_index = dict->tag_size();
+    config->distance_feature_index = dict->feature_size();
     size_t range = config->distance_range;
     for (size_t i = 0; i < range; ++i)
-      dict->convertTag("LV_" + std::to_string(i), false);
+      dict->convertFeature("LV_" + std::to_string(i), false);
     for (size_t i = 0; i < range; ++i)
-      dict->convertTag("RV_" + std::to_string(i), false);
+      dict->convertFeature("RV_" + std::to_string(i), false);
     for (size_t i = 1; i <= range; ++i)
-      dict->convertTag("BufDist_" + std::to_string(i), false);
+      dict->convertFeature("BufDist_" + std::to_string(i), false);
     for (size_t i = 1; i <= range; ++i)
-      dict->convertTag("HeadDist_" + std::to_string(i), false);
+      dict->convertFeature("HeadDist_" + std::to_string(i), false);
   }
 
   //update vocab sizes
-  config->num_tags = dict->tag_size();
+  config->num_features = dict->feature_size();
+  config->num_train_sentences = training_corpus->size();
 
   std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
-            << dict->size() << " word types, " << dict->tag_size() << " tags, "  
+            << dict->size() << " word types, " << dict->feature_size() << " features, "  
 	    << dict->label_size() << " labels)\n";  
+
+  //copy word feature map
+  for (unsigned i = 0; i < dict->size(); ++i) {
+    config->addWordFeatures(dict->getWordFeatures(i));
+  }
 
   //TODO read unsup corpus
 

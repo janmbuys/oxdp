@@ -116,24 +116,18 @@ class DiscriminativeWeights {
 
   Real getObjective(
       const boost::shared_ptr<ParseDataSet>& examples,
-      vector<vector<int>>& contexts,
-      vector<WordsList>& features,
+      vector<WordsList>& contexts,
       vector<MatrixReal>& context_vectors,
       MatrixReal& prediction_vectors,
       MatrixReal& word_probs) const;
 
   void getContextVectors(
       const boost::shared_ptr<ParseDataSet>& examples,
-      vector<vector<int>>& contexts,
-      vector<WordsList>& features,
+      vector<WordsList>& contexts,
       vector<MatrixReal>& context_vectors) const;
   
-  void setFeatureWords(
-      const vector<WordsList>& features,
-      MinibatchWords& words) const;
-
   void setContextWords(
-      const vector<vector<int>>& contexts,
+      const vector<WordsList>& contexts,
       MinibatchWords& words) const;
 
   MatrixReal getPredictionVectors(
@@ -155,8 +149,7 @@ class DiscriminativeWeights {
 
   void getFullGradient(
       const boost::shared_ptr<ParseDataSet>& examples,
-      const vector<vector<int>>& contexts,
-      const vector<WordsList>& features,
+      const vector<WordsList>& contexts,
       const vector<MatrixReal>& context_vectors,
       const MatrixReal& prediction_vectors,
       const MatrixReal& weighted_representations,
@@ -166,8 +159,7 @@ class DiscriminativeWeights {
 
   void getContextGradient(
       size_t prediction_size,
-      const vector<vector<int>>& contexts,
-      const vector<WordsList>& features,
+      const vector<WordsList>& contexts,
       const vector<MatrixReal>& context_vectors,
       const MatrixReal& weighted_representations,
       const boost::shared_ptr<DiscriminativeWeights>& gradient) const;

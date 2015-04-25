@@ -94,10 +94,8 @@ class ParsedFactoredWeights : public FactoredWeights {
  protected:
    Real getObjective(
       const boost::shared_ptr<ParseDataSet>& examples,
-      vector<vector<int>>& word_contexts,
-      vector<vector<int>>& action_contexts,
-      vector<WordsList>& word_features,
-      vector<WordsList>& action_features,
+      vector<WordsList>& word_contexts,
+      vector<WordsList>& action_contexts,
       vector<MatrixReal>& word_context_vectors,
       vector<MatrixReal>& action_context_vectors,
       MatrixReal& word_prediction_vectors,
@@ -108,8 +106,8 @@ class ParsedFactoredWeights : public FactoredWeights {
 
   void getProbabilities(
       const boost::shared_ptr<ParseDataSet>& examples,
-      const vector<vector<int>>& word_contexts,
-      const vector<vector<int>>& action_contexts,
+      const vector<WordsList>& word_contexts,
+      const vector<WordsList>& action_contexts,
       const MatrixReal& word_prediction_vectors,
       const MatrixReal& action_prediction_vectors,
       MatrixReal& class_probs,
@@ -123,10 +121,8 @@ class ParsedFactoredWeights : public FactoredWeights {
 
   void getFullGradient(
       const boost::shared_ptr<ParseDataSet>& examples,
-      const vector<vector<int>>& word_contexts,
-      const vector<vector<int>>& action_contexts,
-      const vector<WordsList>& word_features,
-      const vector<WordsList>& action_features,
+      const vector<WordsList>& word_contexts,
+      const vector<WordsList>& action_contexts,
       const vector<MatrixReal>& word_context_vectors,
       const vector<MatrixReal>& action_context_vectors,
       const MatrixReal& word_prediction_vectors,

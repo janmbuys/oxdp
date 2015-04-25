@@ -11,13 +11,13 @@ class ParsedSentence: public TaggedSentence {
 
   ParsedSentence();
   
-  ParsedSentence(WordsList tags);
+  ParsedSentence(WordsList features);
 
-  ParsedSentence(Words sent, WordsList tags);
+  ParsedSentence(Words sent, Words tags, WordsList features);
 
-  ParsedSentence(Words sent, WordsList tags, Indices arcs);
+  ParsedSentence(Words sent, Words tags, WordsList features, Indices arcs, int id);
 
-  ParsedSentence(Words sent, WordsList tags, Indices arcs, Words labels);
+  ParsedSentence(Words sent, Words tags, WordsList features, Indices arcs, Words labels, int id);
 
   ParsedSentence(const TaggedSentence& parse);
 
@@ -51,6 +51,14 @@ class ParsedSentence: public TaggedSentence {
   virtual void push_arc() {
     arcs_.push_back(-1);
     labels_.push_back(-1);
+  }
+
+  void set_id(int id) {
+    id_ = id;
+  }
+
+  int id() const {
+    return id_;
   }
 
   WordIndex arc_at(WordIndex i) const {
@@ -111,6 +119,7 @@ class ParsedSentence: public TaggedSentence {
   private:
   Indices arcs_;
   Words labels_;
+  int id_;
 };
 
 

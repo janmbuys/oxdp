@@ -10,15 +10,16 @@ ParsedCorpus::ParsedCorpus(const boost::shared_ptr<ModelConfig>& config):
 }
 
 void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line, 
-      const boost::shared_ptr<Dict>& dict, Words* sent_out, WordsList* tags_out, Indices* arcs_out, Words* labels_out, bool frozen) {
+      const boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, WordsList* features_out, Indices* arcs_out, Words* labels_out, bool frozen) {
   size_t cur = 0;
   size_t last = 0;
   int state = 0;
   int col_num = 0;
   
-  std::string word_str; 
-  std::string feature_str;
-  std::string tag_str; 
+  //std::string word_str; 
+  //std::string feature_str;
+  //std::string tag_str; 
+  WordId word_id = -1;
   Words features;
 
   while(cur < line.size()) {
@@ -26,37 +27,42 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
       if (state == 0) 
         continue;
       if (col_num == 1) { //1 - annotated word
-        word_str = line.substr(last, cur - last - 1);
+        if ((config_->lexicalised && config_->compositional) || (config_->pyp_model && !config_->pos_annotated)) {
+          std::string word_str = line.substr(last, cur - last - 1);
+          word_id = dict->convert(word_str, frozen);
+          sent_out->push_back(word_id);
+        }
       } else if (col_num == 2) { //2 - unannotated word 
-        std::string pure_word_str = line.substr(last, cur - last - 1);
+        std::string word_str = line.substr(last, cur - last - 1);
+        if ((!config_->lexicalised || !config_->compositional) && (!config_->pyp_model || config_->pos_annotated)) {
+          word_id = dict->convert(word_str, frozen);
+          sent_out->push_back(word_id);
+        }
         if (!config_->pyp_model && config_->lexicalised && config_->compositional) {
           //split stem as feature if present
-          std::stringstream feature_stream(pure_word_str);
+          std::stringstream feature_stream(word_str);
           std::string feat;
           while (std::getline(feature_stream, feat, '|')) {
             if (!feat.empty()) 
-              features.push_back(dict->convertTag(feat, frozen));
+              features.push_back(dict->convertFeature(feat, frozen));
           }
         } 
-        //else if (config_->pyp_model && !config_->lexicalised && !config_->pos_annotated)
-        else if (config_->pyp_model && config_->lexicalised && config_->pos_annotated)
-          features.push_back(dict->convertTag(pure_word_str, frozen));
-        if (config_->pyp_model || (!config_->compositional && !config_->pos_annotated))
-          word_str = pure_word_str;        
       } else if (col_num == 3) { //3 - coarse postag
-        if (!config_->pyp_model && config_->lexicalised && config_->compositional)
-          features.push_back(dict->convertTag(line.substr(last, cur - last - 1), frozen));
-      }  else if (col_num == 4) { //4 - postag 
-        tag_str = line.substr(last, cur - last - 1);
-        features.push_back(dict->convertTag(tag_str, frozen));
+        if (config_->morph_features)
+          features.push_back(dict->convertFeature(line.substr(last, cur - last - 1), frozen));
+      } else if (col_num == 4) { //4 - postag 
+          std::string tag_str = line.substr(last, cur - last - 1);
+        tags_out->push_back(dict->convertTag(tag_str, frozen));
+        if (config_->pyp_model || config_->compositional)
+          features.push_back(dict->convertFeature(tag_str, frozen));
       } else if (col_num == 5) { //5 morphological features (| seperated)
-        feature_str = line.substr(last, cur - last -1); 
+          std::string feature_str = line.substr(last, cur - last -1); 
         if (config_->morph_features) {
           std::stringstream feature_stream(feature_str);
           std::string feat;
           while (std::getline(feature_stream, feat, '|')) {
             if (!feat.empty()) 
-              features.push_back(dict->convertTag(feat, frozen));
+              features.push_back(dict->convertFeature(feat, frozen));
           }
         }
       } else if (col_num == 6) { //arc head index
@@ -81,22 +87,15 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
   /*if ((state == 1) && (col_num == n)) 
     sent_out->push_back(dict->convert(line.substr(last, cur - last), frozen)); */
 
-  if (word_str != "") {
-    if (config_->lexicalised || (config_->pyp_model && !config_->pos_annotated))
-      sent_out->push_back(dict->convert(word_str, frozen));
-    else
-      sent_out->push_back(dict->convert(tag_str, frozen));
-    tags_out->push_back(features);
-    
-    //make sure <unk>_POS words are added
-    //if (!frozen && (config_->compositional || config_->pos_annotated)) 
-    //  dict->convert("<unk>_" + tag_str, frozen);
+  if (word_id >= 0) {
+    features_out->push_back(features);
   }
 }
 
 void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, 
                                 bool frozen) {
   Words sent;
+  Words tags;
   WordsList features;
   Indices arcs;
   Words labels;
@@ -116,17 +115,24 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
       //add end of sentence symbol if defined
       if (dict->eos() != -1) {
         sent.push_back(dict->eos()); 
+        tags.push_back(dict->eos()); 
         features.push_back(Words(1, dict->eos())); 
         arcs.push_back(-1);
         labels.push_back(-1);
       }
 
-      sentences_.push_back(ParsedSentence(sent, features, arcs, labels)); 
+      //word word-to-feature mapping
+      for (unsigned i = 0; i < sent.size(); ++i) {
+        dict->setWordFeatures(sent[i], features[i]);
+      }
+
+      sentences_.push_back(ParsedSentence(sent, tags, features, arcs, labels, sentences_.size() + 1)); 
       state = 1;
     } else {
       if (state==1) {
         //start of sentence
         sent.clear();
+        tags.clear();
         features.clear();
         arcs.clear();
         labels.clear();
@@ -134,6 +140,7 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         //add start of sentence symbol if defined
         if (dict->sos() != -1) {
           sent.push_back(dict->sos()); 
+          tags.push_back(dict->sos()); 
           features.push_back(Words(1, dict->sos()));
           arcs.push_back(-1);
           labels.push_back(-1);
@@ -141,13 +148,14 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         state = 0;
       }
 
-      convertWhitespaceDelimitedConllLine(line, dict, &sent, &features, &arcs, &labels, frozen); 
+      convertWhitespaceDelimitedConllLine(line, dict, &sent, &tags, &features, &arcs, &labels, frozen); 
     }
   }
 
   //update vocab sizes
   config_->vocab_size = dict->size();
   config_->num_tags = dict->tag_size();
+  config_->num_features = dict->feature_size();
   config_->num_labels = dict->label_size();
 }
 
@@ -194,12 +202,14 @@ void ParsedCorpus::readTxtFile(const std::string& filename, const boost::shared_
   std::string line;
 
   WordsList features;
+  Words tags;
   Indices arcs;
   Words labels;
 
   while(getline(in, line)) {
     //start of sentence
     features.clear();
+    tags.clear();
     arcs.clear();
     labels.clear();
 
@@ -207,11 +217,12 @@ void ParsedCorpus::readTxtFile(const std::string& filename, const boost::shared_
 
     for (unsigned i = 0; i < sent.size(); ++i) {
       features.push_back(Words(1, 0));
+      tags.push_back(1);
       arcs.push_back(-1);
       labels.push_back(-1);
     }
 
-    sentences_.push_back(ParsedSentence(sent, features, arcs, labels)); 
+    sentences_.push_back(ParsedSentence(sent, tags, features, arcs, labels, sentences_.size() + 1)); 
   }
 
   config_->vocab_size = dict->size();

@@ -1737,6 +1737,7 @@ template<class ParsedWeights>
 void ArcStandardLabelledParseModel<ParsedWeights>::extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParseDataSet>& examples) {
   ArcStandardLabelledParser parse = staticGoldParseSentence(sent); 
+  parse.set_id(sent.id());
   parse.extractExamples(examples);
   //parse.print_actions();
 }
@@ -1753,8 +1754,9 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentence(const ParsedS
   ArcStandardLabelledParser beam_parse = beamParticleParseSentence(sent, weights, config_->num_particles);
   beam_parse.extractExamples(examples, sent); */
 
-  ArcStandardLabelledParser beam_parse = beamParticleGoldParseSentence(sent, weights, config_->num_particles);
-  beam_parse.extractExamples(examples); 
+  ArcStandardLabelledParser parse = beamParticleGoldParseSentence(sent, weights, config_->num_particles);
+  parse.set_id(sent.id());
+  parse.extractExamples(examples); 
 }
 
 template<class ParsedWeights>
@@ -1763,6 +1765,7 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentence(const ParsedS
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
   ArcStandardLabelledParser parse = particleGoldParseSentence(sent, weights, eng, config_->num_particles);
+  parse.set_id(sent.id());
   parse.extractExamples(examples);
 }
 
@@ -1772,6 +1775,7 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentenceUnsupervised(c
           MT19937& eng,
           const boost::shared_ptr<ParseDataSet>& examples) {
   ArcStandardLabelledParser parse = particleParseSentence(sent, weights, eng, config_->num_particles, examples);
+  parse.set_id(sent.id());
   parse.extractExamples(examples);
 }
 
@@ -1780,6 +1784,7 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentenceUnsupervised(c
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<ParseDataSet>& examples) {
   ArcStandardLabelledParser parse = beamParticleParseSentence(sent, weights, config_->num_particles, examples);
+  parse.set_id(sent.id());
   parse.extractExamples(examples);
 }
 

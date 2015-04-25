@@ -45,11 +45,13 @@ Dict::Dict(bool root_first):
   words_.reserve(1000);
   convert(null_, false); //let null map to 0
   convertTag(null_, false);
+  convertFeature(null_, false);
   convertLabel(null_, false);
 
   //allways put root token in front
   sos_= "<s>";
   convert(sos_, false);
+  convertFeature(sos_, false);
   convertTag(sos_, false);
   
   //  eos_= "</s>";
@@ -72,6 +74,7 @@ WordId Dict::convert(const Word& word, bool frozen) {
     }
     words_.push_back(word);
     d_[word] = words_.size()-1;
+    word_to_features_.push_back(std::vector<WordId>()); 
     return words_.size()-1;
   } else {
     return i->second;
@@ -95,6 +98,22 @@ WordId Dict::convertTag(const Word& tag, bool frozen) {
   }
 }
 
+WordId Dict::convertFeature(const Word& feat, bool frozen) {
+  auto i = feature_d_.find(feat);
+  if (i == feature_d_.end()) {
+    if (frozen) {
+      //std::cerr << "OOV-feature:" << feat << " ";
+      //return bad0_id_;
+      return 0;
+    }
+    features_.push_back(feat);
+    feature_d_[feat] = features_.size()-1;
+    return features_.size()-1;
+  } else {
+    return i->second;
+  }
+}
+
 WordId Dict::convertLabel(const Word& label, bool frozen) {
   auto i = label_d_.find(label);
   if (i == label_d_.end()) {
@@ -111,6 +130,12 @@ WordId Dict::convertLabel(const Word& label, bool frozen) {
   }
 }
 
+void Dict::setWordFeatures(WordId id, const std::vector<WordId>& features) {
+  if (valid(id) && (word_to_features_[id].empty()))
+    for (auto feat: features)
+      word_to_features_[id].push_back(feat); 
+}
+
 bool Dict::punctTag(WordId id) const {
   std::vector<Word> punct = {".", ",", "?", "!", ":", "''", "``", 
                                    "(", ")", "-LRB-", "-RRB-", "#", "$", "PU"};
@@ -123,6 +148,12 @@ bool Dict::punctTag(WordId id) const {
   return false;
 }
 
+std::vector<WordId> Dict::getWordFeatures(WordId id) const {
+  if (!valid(id))
+    return std::vector<WordId>();
+  return word_to_features_[id];
+}
+
 Word Dict::lookup(WordId id) const {
   if (!valid(id)) 
     return b0_;
@@ -133,6 +164,12 @@ Word Dict::lookupTag(WordId id) const {
   if (!valid(id)) 
     return b0_;
   return tags_[id];
+}
+ 
+Word Dict::lookupFeature(WordId id) const {
+  if (!valid(id)) 
+    return b0_;
+  return features_[id];
 }
  
 Word Dict::lookupLabel(WordId id) const {

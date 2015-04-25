@@ -314,22 +314,29 @@ void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDat
 void ArcStandardLabelledParser::extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const {
   ArcStandardLabelledParser parser(static_cast<TaggedSentence>(*this), config()); 
  
+  //std::cout << actions().size() << std::endl;
+  //std::cout << action_labels_.size() << std::endl;
   //note that we are extracting the initial shift as an example
   for (unsigned i = 0; i < actions().size(); ++i) {
     kAction a = actions().at(i);
     WordId lab = action_label_at(i);
+    //std::cout << i << " " << static_cast<int>(a) << " " << lab << std::endl;
 
     if (a == kAction::sh) {
+      //std::cout << "sh" << std::endl;
+      //std::cout << parser.buffer_next() << std::endl;
+      //std::cout << parser.next_tag() << std::endl;
+      //std::cout << parser.next_word() << std::endl;
       //tag prediction
-      examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext()));  
+      examples->add_tag_example(DataPoint(parser.next_tag(), parser.tagContext(), id()));  
        
       //word prediction
-      examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext()));  
+      examples->add_word_example(DataPoint(parser.next_word(), parser.wordContext(), id()));  
     } 
 
     //labelled action prediction 
     WordId lab_act = convert_action(a, lab);
-    examples->add_action_example(DataPoint(lab_act, parser.actionContext()));
+    examples->add_action_example(DataPoint(lab_act, parser.actionContext(), id()));
     parser.executeAction(a, lab);
   }
 } 

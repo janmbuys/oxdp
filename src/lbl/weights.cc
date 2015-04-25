@@ -33,8 +33,7 @@ Weights::Weights(
 
   cout << "===============================" << endl;
   cout << " Model parameters: " << endl;
-  cout << "  Context vocab size = " << config->vocab_size << endl;
-  cout << "  Feature vocab size = " << config->num_tags << endl;
+  cout << "  Context vocab size = " << config->num_features << endl;
   cout << "  Output vocab size = " << config->vocab_size << endl;
   cout << "  Total parameters = " << numParameters() << endl;
   cout << "===============================" << endl;
@@ -51,13 +50,19 @@ Weights::Weights(const Weights& other)
 }
 
 void Weights::allocate() {
-  int num_feature_words = config->num_tags;
-  int num_context_words = config->vocab_size;
+  int num_sentence_vectors = 1;
+  if (config->sentence_vector)
+    num_sentence_vectors += config->num_train_sentences;
+  int num_context_words = config->num_features;
   int num_output_words = config->vocab_size;
+  if (config->output_compositional)
+    num_output_words = config->num_features;
   int word_width = config->representation_size;
   int context_width = config->ngram_order - 1;
+  if (config->sentence_vector)
+    ++context_width;
 
-  int P_size = word_width * num_feature_words;
+  int P_size = word_width * num_sentence_vectors;
   int Q_size = word_width * num_context_words;
   int R_size = word_width * num_output_words;
   int C_size = config->diagonal_contexts ? word_width : word_width * word_width;
@@ -66,7 +71,7 @@ void Weights::allocate() {
   size = P_size + Q_size + R_size + context_width * C_size + B_size;
   data = new Real[size];
 
-  for (int i = 0; i < num_feature_words; ++i) {
+  for (int i = 0; i < num_sentence_vectors; ++i) {
     mutexesP.push_back(boost::make_shared<mutex>());
   }
   for (int i = 0; i < num_context_words; ++i) {
@@ -84,13 +89,19 @@ void Weights::allocate() {
 }
 
 void Weights::setModelParameters() {
-  int num_feature_words = config->num_tags;
-  int num_context_words = config->vocab_size;
+  int num_sentence_vectors = 1;
+  if (config->sentence_vector)
+    num_sentence_vectors += config->num_train_sentences;
+  int num_context_words = config->num_features;
   int num_output_words = config->vocab_size;
+  if (config->output_compositional)
+    num_output_words = config->num_features;
   int word_width = config->representation_size;
   int context_width = config->ngram_order - 1;
+  if (config->sentence_vector)
+    ++context_width;
 
-  int P_size = word_width * num_feature_words;
+  int P_size = word_width * num_sentence_vectors;
   int Q_size = word_width * num_context_words;
   int R_size = word_width * num_output_words;
   int C_size = config->diagonal_contexts ? word_width : word_width * word_width;
@@ -98,7 +109,7 @@ void Weights::setModelParameters() {
 
   new (&W) WeightsType(data, size);
 
-  new (&P) WordVectorsType(data, word_width, num_feature_words);
+  new (&P) WordVectorsType(data, word_width, num_sentence_vectors);
   new (&Q) WordVectorsType(data + P_size, word_width, num_context_words);
   new (&R) WordVectorsType(data + P_size + Q_size, word_width, num_output_words);
 
@@ -124,78 +135,81 @@ void Weights::getGradient(
     const boost::shared_ptr<Weights>& gradient,
     Real& objective,
     MinibatchWords& words) const {
-  vector<vector<int>> contexts;
-  vector<WordsList> features;
+  vector<WordsList> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
   MatrixReal word_probs;
   objective += getObjective(examples,
-      contexts, features, context_vectors, prediction_vectors, word_probs);
+      contexts, context_vectors, prediction_vectors, word_probs);
 
   setContextWords(contexts, words);
-  setFeatureWords(features, words);
 
   MatrixReal weighted_representations = getWeightedRepresentations(
       examples, prediction_vectors, word_probs);
 
   getFullGradient(
-      examples, contexts, features, context_vectors, prediction_vectors,
+      examples, contexts, context_vectors, prediction_vectors,
       weighted_representations, word_probs, gradient, words);
 }
 
 void Weights::getContextVectors(
     const boost::shared_ptr<DataSet>& examples,
-    vector<vector<int>>& contexts,
-    vector<WordsList>& features,
+    vector<WordsList>& contexts,
     vector<MatrixReal>& context_vectors) const {
   int context_width = config->ngram_order - 1;
+  if (config->sentence_vector)
+    ++context_width;
   int word_width = config->representation_size;
 
   contexts.resize(examples->size());
-  features.resize(examples->size());
   context_vectors.resize(
       context_width, MatrixReal::Zero(word_width, examples->size()));
   for (size_t i = 0; i < examples->size(); ++i) {
-    contexts[i] = examples->contextAt(i).words;
-    features[i] = examples->contextAt(i).features;
+    contexts[i] = examples->contextAt(i).features;
+    //for (int j = 0; j < context_width - 1; ++j) 
+    //  contexts[i].push_back(examples->contextAt(i).features[j]);
+    if (config->sentence_vector)
+      contexts[i].push_back(Words(1, examples->sentenceIdAt(i)));
+    //else
+    //  contexts[i].push_back(examples->contextAt(i).features[context_width-1]);
+
     for (int j = 0; j < context_width; ++j) {
-      if (!config->compositional || config->pos_annotated) 
-        context_vectors[j].col(i) = Q.col(contexts[i][j]);
-      if (config->compositional) {
-        for (auto feat: features[i][j]) {
-          context_vectors[j].col(i) += P.col(feat);
-        }
-      }  
-    }
-  }
-}
-
-void Weights::setContextWords(
-    const vector<vector<int>>& contexts,
-    MinibatchWords& words) const {
-  for (const auto& context: contexts) {
-    for (int word_id: context) {
-      words.addContextWord(word_id);
-    }
-  }
-}
-
-void Weights::setFeatureWords(
-    const vector<WordsList>& features,
-    MinibatchWords& words) const {
-  for (const auto& context: features) {
-    for (const auto& item: context) {
-      for (int word_id: item) {
-        words.addFeatureWord(word_id);
+      if (config->sentence_vector && (j == context_width - 1)) {
+        //std::cout << context_width << ":" << contexts[i].size() << std::endl;
+        //std::cout << examples->sentenceIdAt(i) << std::endl;
+        //std::cout << contexts[i][j][0] << std::endl;
+        context_vectors[j].col(i) += P.col(contexts[i][j][0]); 
+      } else {   
+        for (auto feat: contexts[i][j]) 
+          context_vectors[j].col(i) += Q.col(feat);
       }
     }
   }
 }
 
+void Weights::setContextWords(
+    const vector<WordsList>& contexts,
+    MinibatchWords& words) const {
+  for (const auto& context: contexts) {
+   for (int i = 0; i < context.size(); ++i) {
+      if (config->sentence_vector && (i == context.size() - 1))
+        words.addSentenceWord(context[i][0]);
+      else {
+        for (int word_id: context[i]) {
+          words.addContextWord(word_id);
+        }
+      }
+    }
+  }
+}
+
+//During training
 MatrixReal Weights::getPredictionVectors(
     size_t prediction_size,
     const vector<MatrixReal>& context_vectors) const {
   int context_width = config->ngram_order - 1;
+  if (config->sentence_vector)
+    ++context_width;
   int word_width = config->representation_size;
   MatrixReal prediction_vectors = MatrixReal::Zero(word_width, prediction_size);
 
@@ -209,11 +223,14 @@ MatrixReal Weights::getPredictionVectors(
 MatrixReal Weights::getContextProduct(
     int index, const MatrixReal& representations, bool transpose) const {
   if (config->diagonal_contexts) {
+    //std::cout << C[index].size() << " " << representations.col(0).size() << std::endl;
     return C[index].asDiagonal() * representations;
   } else {
     if (transpose) {
+      //std::cout << C[index].col(0).size() << " " << representations.col(0).size() << std::endl;
       return C[index].transpose() * representations;
     } else {
+      //std::cout << C[index].row(0).size() << " " << representations.col(0).size() << std::endl;
       return C[index] * representations;
     }
   }
@@ -247,8 +264,7 @@ MatrixReal Weights::getWeightedRepresentations(
 
 void Weights::getFullGradient(
     const boost::shared_ptr<DataSet>& examples,
-    const vector<vector<int>>& contexts,
-    const vector<WordsList>& features,
+    const vector<WordsList>& contexts,
     const vector<MatrixReal>& context_vectors,
     const MatrixReal& prediction_vectors,
     const MatrixReal& weighted_representations,
@@ -267,29 +283,32 @@ void Weights::getFullGradient(
   gradient->B += word_probs.rowwise().sum();
 
   getContextGradient(
-      examples->size(), contexts, features, context_vectors, weighted_representations, gradient);
+      examples->size(), contexts, context_vectors, weighted_representations, gradient);
 }
 
 void Weights::getContextGradient(
     size_t prediction_size,
-    const vector<vector<int>>& contexts,
-    const vector<WordsList>& features,
+    const vector<WordsList>& contexts,
     const vector<MatrixReal>& context_vectors,
     const MatrixReal& weighted_representations,
     const boost::shared_ptr<Weights>& gradient) const {
   int context_width = config->ngram_order - 1;
+  if (config->sentence_vector)
+    ++context_width;
+
   int word_width = config->representation_size;
   MatrixReal context_gradients = MatrixReal::Zero(word_width, prediction_size);
   for (int j = 0; j < context_width; ++j) {
+    //std::cout << j << ": " << prediction_size << std::endl;
     context_gradients = getContextProduct(j, weighted_representations, true);
     for (size_t i = 0; i < prediction_size; ++i) {
-      if (!config->compositional || config->pos_annotated) 
-        gradient->Q.col(contexts[i][j]) += context_gradients.col(i);
-      if (config->compositional) {
-        for (auto feat: features[i][j]) {
-          gradient->P.col(feat) += context_gradients.col(i);
+      if (config->sentence_vector && (j == context_width - 1)) {
+        gradient->P.col(contexts[i][j][0]) += context_gradients.col(i); 
+      } else {
+        for (auto feat: contexts[i][j]) {
+          gradient->Q.col(feat) += context_gradients.col(i);
         }
-      } 
+      }
     }
 
     if (config->diagonal_contexts) {
@@ -298,7 +317,6 @@ void Weights::getContextGradient(
       gradient->C[j] += weighted_representations * context_vectors[j].transpose();
     }
   }
-  //std::cout << std::endl;
 }
 
 bool Weights::checkGradient(
@@ -309,8 +327,6 @@ bool Weights::checkGradient(
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
   MatrixReal word_probs;
-  int P_size = config->representation_size * config->num_tags;
-  //std::cout << P_size << std::endl;
 
   for (int i = 0; i < size; ++i) {
     W(i) += eps;
@@ -333,23 +349,21 @@ bool Weights::checkGradient(
 
 Real Weights::getObjective(
     const boost::shared_ptr<DataSet>& examples) const {
-  vector<vector<int>> contexts;
-  vector<WordsList> features;
+  vector<WordsList> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
   MatrixReal word_probs;
   return getObjective(
-      examples, contexts, features, context_vectors, prediction_vectors, word_probs);
+      examples, contexts, context_vectors, prediction_vectors, word_probs);
 }
 
 Real Weights::getObjective(
     const boost::shared_ptr<DataSet>& examples,
-    vector<vector<int>>& contexts,
-    vector<WordsList>& features,
+    vector<WordsList>& contexts,
     vector<MatrixReal>& context_vectors,
     MatrixReal& prediction_vectors,
     MatrixReal& word_probs) const {
-  getContextVectors(examples, contexts, features, context_vectors);
+  getContextVectors(examples, contexts, context_vectors);
   prediction_vectors = getPredictionVectors(examples->size(), context_vectors);
   
   word_probs = getProbabilities(examples, prediction_vectors);
@@ -439,13 +453,11 @@ void Weights::estimateGradient(
     const boost::shared_ptr<Weights>& gradient,
     Real& objective,
     MinibatchWords& words) const {
-  vector<vector<int>> contexts;
-  vector<WordsList> features;
+  vector<WordsList> contexts;
   vector<MatrixReal> context_vectors;
-  getContextVectors(examples, contexts, features, context_vectors);
+  getContextVectors(examples, contexts, context_vectors);
 
   setContextWords(contexts, words);
-  setFeatureWords(features, words);
 
   MatrixReal prediction_vectors =
       getPredictionVectors(examples->size(), context_vectors);
@@ -458,13 +470,13 @@ void Weights::estimateGradient(
   weighted_representations.array() *= activationDerivative(config->activation, prediction_vectors);
 
   getContextGradient(
-      examples->size(), contexts, features, context_vectors, weighted_representations, gradient);
+      examples->size(), contexts, context_vectors, weighted_representations, gradient);
 }
 
 void Weights::syncUpdate(
     const MinibatchWords& words,
     const boost::shared_ptr<Weights>& gradient) {
-  for (int word_id: words.getFeatureWordsSet()) {
+  for (int word_id: words.getSentenceWordsSet()) {
     lock_guard<mutex> lock(*mutexesP[word_id]);
     P.col(word_id) += gradient->P.col(word_id);
   }
@@ -500,7 +512,7 @@ Block Weights::getBlock(int start, int size) const {
 void Weights::updateSquared(
     const MinibatchWords& global_words,
     const boost::shared_ptr<Weights>& global_gradient) {
-  for (int word_id: global_words.getFeatureWords()) {
+  for (int word_id: global_words.getSentenceWords()) {
     P.col(word_id).array() += global_gradient->P.col(word_id).array().square();
   }
 
@@ -521,7 +533,7 @@ void Weights::updateAdaGrad(
     const MinibatchWords& global_words,
     const boost::shared_ptr<Weights>& global_gradient,
     const boost::shared_ptr<Weights>& adagrad) {
-  for (int word_id: global_words.getFeatureWords()) {
+  for (int word_id: global_words.getSentenceWords()) {
     P.col(word_id) -= global_gradient->P.col(word_id).binaryExpr(
         adagrad->P.col(word_id), CwiseAdagradUpdateOp<Real>(config->step_size));
   }
@@ -557,7 +569,7 @@ Real Weights::regularizerUpdate(
 
 void Weights::clear(const MinibatchWords& words, bool parallel_update) {
   if (parallel_update) {
-    for (int word_id: words.getFeatureWords()) {
+    for (int word_id: words.getSentenceWords()) {
       P.col(word_id).setZero();
     }
 
@@ -572,7 +584,7 @@ void Weights::clear(const MinibatchWords& words, bool parallel_update) {
     Block block = getBlock(P.size() + Q.size() + R.size(), W.size() - (P.size() + Q.size() + R.size()));
     W.segment(block.first, block.second).setZero();
   } else {
-    for (int word_id: words.getFeatureWordsSet()) {
+    for (int word_id: words.getSentenceWordsSet()) {
       P.col(word_id).setZero();
     }
 
@@ -588,19 +600,23 @@ void Weights::clear(const MinibatchWords& words, bool parallel_update) {
   }
 }
 
+//At test time
 VectorReal Weights::getPredictionVector(const Context& context) const {
   int context_width = config->ngram_order - 1;
+  if (config->sentence_vector)
+    ++context_width;
   int word_width = config->representation_size;
 
   VectorReal prediction_vector = VectorReal::Zero(word_width);
   for (int i = 0; i < context_width; ++i) {
     VectorReal in_vector = VectorReal::Zero(word_width);
-    if (!config->compositional || config->pos_annotated) 
-      in_vector = Q.col(context.words[i]); //.array();
-    if (config->compositional) {
+    if (config->sentence_vector && i == (context_width - 1))
+      in_vector += P.col(0); 
+    else {
       for (auto feat: context.features[i]) 
-        in_vector += P.col(feat);
-    } 
+        in_vector += Q.col(feat);
+    }
+
     if (config->diagonal_contexts) {
       //prediction_vector += C[i].array() * in_vector.array(); 
       prediction_vector += C[i].asDiagonal() * in_vector; 
@@ -608,7 +624,7 @@ VectorReal Weights::getPredictionVector(const Context& context) const {
       prediction_vector += C[i] * in_vector;
     }
   }
-
+    
   return applyActivation<VectorReal>(config->activation, prediction_vector);
 }
 
@@ -654,7 +670,7 @@ void Weights::clearCache() {
 }
 
 MatrixReal Weights::getWordVectors() const {
-  return R; //why not Q?
+  return R; 
 }
 
 bool Weights::operator==(const Weights& other) const {

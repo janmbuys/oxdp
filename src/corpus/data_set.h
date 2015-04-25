@@ -16,6 +16,10 @@ class DataSet {
   DataPoint exampleAt(unsigned i) const;
 
   WordId wordAt(unsigned i) const;
+  
+  WordId tagAt(unsigned i) const;
+  
+  int sentenceIdAt(unsigned i) const;
 
   Context contextAt(unsigned i) const;
 

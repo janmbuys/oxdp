@@ -10,12 +10,13 @@ ModelConfig::ModelConfig()
       factored(true), classes(0), randomise(false), diagonal_contexts(false),
       vocab_size(0), noise_samples(0), parser_type(ParserType::arcstandard), 
       activation(Activation::linear), pyp_model(false), labelled_parser(false), 
-      discriminative(false), predict_pos(false), lexicalised(false), compositional(false), 
-      pos_annotated(false), label_features(false), morph_features(false), distance_features(false), 
-      char_lexicalised(false), adapt_word_context(false),
+      discriminative(false), predict_pos(false), lexicalised(false), sentence_vector(false),
+      compositional(false), output_compositional(false), pos_annotated(false), label_features(false), 
+      morph_features(false), 
+      distance_features(false), char_lexicalised(false), adapt_word_context(false),
       semi_supervised(false), direction_deterministic(false), sum_over_beam(false), resample(false), 
       root_first(true), complete_parse(true), bootstrap(false), bootstrap_iter(0), max_beam_increment(1), 
-      num_particles(1), generate_samples(0), num_tags(1), num_labels(1), beam_sizes(1, 1) {}
+      num_particles(1), generate_samples(0), num_tags(1), num_features(1), num_labels(1), beam_sizes(1, 1) {}
 
 int ModelConfig::numActions() const {
   if (parser_type == ParserType::arcstandard)
@@ -26,6 +27,18 @@ int ModelConfig::numActions() const {
     return 2*num_labels + 2;
   else
     return 1;
+}
+
+void ModelConfig::addWordFeatures(const std::vector<int>& features) {
+  word_to_features.push_back(std::vector<int>());
+  for (auto feat: features)
+    word_to_features.back().push_back(feat); 
+}
+
+std::vector<int> ModelConfig::getWordFeatures(int id) const {
+  if (id < 0)
+    return std::vector<int>();
+  return word_to_features[id];
 }
 
 bool ModelConfig::operator==(const ModelConfig& other) const {
@@ -51,7 +64,9 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
       && labelled_parser == other.labelled_parser
       && discriminative == other.discriminative
       && lexicalised == other.lexicalised
+      && sentence_vector == other.sentence_vector
       && compositional == other.compositional
+      && output_compositional == other.output_compositional
       && pos_annotated == other.pos_annotated
       && label_features == other.label_features
       && morph_features == other.morph_features
@@ -62,6 +77,7 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
       && root_first == other.root_first
       && complete_parse == other.complete_parse
       && num_tags == other.num_tags
+      && num_features == other.num_features
       && num_labels == other.num_labels);
 }
 

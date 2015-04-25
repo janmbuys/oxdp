@@ -6,16 +6,18 @@ Context::Context(const std::vector<int>& words):
  words(words), 
  features() {}
 
-Context::Context(const std::vector<int>& words, const std::vector<std::vector<int>> features):
+Context::Context(const std::vector<int>& words, const std::vector<int>& tags):
+ words(words), 
+ tags(tags) {}
+
+Context::Context(const std::vector<int>& words, const std::vector<std::vector<int>>& features):
  words(words), 
  features(features) {}
 
-Context::Context(const std::vector<int>& words, const std::vector<int> tags):
+Context::Context(const std::vector<int>& words, const std::vector<int>& tags, const std::vector<std::vector<int>>& features):
  words(words), 
- features(1, tags) {
-   //for (auto tag: tags)
-   //  features.push_back(std::vector<int>(1, tag));
- }
+ tags(tags),
+ features(features) {}
 
 } // namespace oxlm
 

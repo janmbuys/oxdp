@@ -30,7 +30,7 @@ Reals ParsedCALexPypWeights<wOrder, waOrder, tOrder, aOrder>::predictWord(Contex
 
 template<unsigned wOrder, unsigned waOrder, unsigned tOrder, unsigned aOrder>
 Real ParsedCALexPypWeights<wOrder, waOrder, tOrder, aOrder>::predictWord(WordId word, Context context) const {
-  return -std::log(lex_lm_.prob(word, context.words, context.features[0]));
+  return -std::log(lex_lm_.prob(word, context.words, context.tags));
 }
 
 template<unsigned wOrder, unsigned waOrder, unsigned tOrder, unsigned aOrder>
@@ -38,7 +38,7 @@ Reals ParsedCALexPypWeights<wOrder, waOrder, tOrder, aOrder>::predictWordOverTag
   Reals weights(ParsedPypWeights<tOrder,aOrder>::numTags(), 0);
   for (int i = 0; i < ParsedPypWeights<tOrder,aOrder>::numTags(); ++i) {
     context.words.back() = i;
-    weights[i] = -std::log(lex_lm_.prob(word, context.words, context.features[0]));
+    weights[i] = -std::log(lex_lm_.prob(word, context.words, context.tags));
   }
   return weights;
 }
@@ -67,7 +67,7 @@ void ParsedCALexPypWeights<wOrder, waOrder, tOrder, aOrder>::updateInsert(const 
   ParsedPypWeights<tOrder, aOrder>::updateInsert(examples, eng);
   for (unsigned i = 0; i < examples->word_example_size(); ++i)
     lex_lm_.increment(examples->word_at(i), examples->word_context_at(i).words, 
-                                            examples->word_context_at(i).features[0], eng);
+                                            examples->word_context_at(i).tags, eng);
 }
 
 //update PYP model to remove old training examples
@@ -76,7 +76,7 @@ void ParsedCALexPypWeights<wOrder, waOrder, tOrder, aOrder>::updateRemove(const 
   ParsedPypWeights<tOrder, aOrder>::updateRemove(examples, eng);
   for (unsigned i = 0; i < examples->word_example_size(); ++i)
     lex_lm_.decrement(examples->word_at(i), examples->word_context_at(i).words, 
-                                            examples->word_context_at(i).features[0], eng);
+                                            examples->word_context_at(i).tags, eng);
 }
 
 template<unsigned wOrder, unsigned waOrder, unsigned tOrder, unsigned aOrder>

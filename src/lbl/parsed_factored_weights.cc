@@ -145,10 +145,8 @@ void ParsedFactoredWeights::getGradient(
     const boost::shared_ptr<ParsedFactoredWeights>& gradient,
     Real& objective,
     MinibatchWords& words) const {
-  vector<vector<int>> word_contexts;
-  vector<vector<int>> action_contexts;
-  vector<WordsList> word_features;
-  vector<WordsList> action_features;
+  vector<WordsList> word_contexts;
+  vector<WordsList> action_contexts;
   vector<MatrixReal> word_context_vectors;
   vector<MatrixReal> action_context_vectors;
   MatrixReal word_prediction_vectors;
@@ -156,14 +154,12 @@ void ParsedFactoredWeights::getGradient(
   MatrixReal class_probs;
   vector<VectorReal> word_probs;
   MatrixReal action_probs;
-  objective += getObjective(examples, word_contexts, action_contexts, word_features, action_features,
+  objective += getObjective(examples, word_contexts, action_contexts, 
           word_context_vectors, action_context_vectors, word_prediction_vectors, 
           action_prediction_vectors, class_probs, word_probs, action_probs); 
 
   setContextWords(word_contexts, words); 
-  setFeatureWords(word_features, words); 
   setContextWords(action_contexts, words); 
-  setFeatureWords(action_features, words); 
 
   MatrixReal word_weighted_representations = FactoredWeights::getWeightedRepresentations(
       examples->word_examples(), word_prediction_vectors, class_probs, word_probs);
@@ -172,7 +168,7 @@ void ParsedFactoredWeights::getGradient(
       examples, action_prediction_vectors, action_probs);
 
   getFullGradient(
-      examples, word_contexts, action_contexts, word_features, action_features, 
+      examples, word_contexts, action_contexts, 
       word_context_vectors, action_context_vectors,
       word_prediction_vectors, action_prediction_vectors, word_weighted_representations,
       action_weighted_representations, class_probs, word_probs, action_probs, gradient, words);
@@ -216,10 +212,8 @@ void ParsedFactoredWeights::estimateGradient(
 
 Real ParsedFactoredWeights::getObjective(
     const boost::shared_ptr<ParseDataSet>& examples) const {
-  vector<vector<int>> word_contexts;
-  vector<vector<int>> action_contexts;
-  vector<WordsList> word_features;
-  vector<WordsList> action_features;
+  vector<WordsList> word_contexts;
+  vector<WordsList> action_contexts;
   vector<MatrixReal> word_context_vectors;
   vector<MatrixReal> action_context_vectors;
   MatrixReal word_prediction_vectors;
@@ -228,17 +222,15 @@ Real ParsedFactoredWeights::getObjective(
   vector<VectorReal> word_probs;
   MatrixReal action_probs;
   return getObjective(
-      examples, word_contexts, action_contexts, word_features, action_features, 
+      examples, word_contexts, action_contexts, 
       word_context_vectors, action_context_vectors, word_prediction_vectors, action_prediction_vectors, 
       class_probs, word_probs, action_probs);
 }
 
 Real ParsedFactoredWeights::getObjective(
     const boost::shared_ptr<ParseDataSet>& examples,
-    vector<vector<int>>& word_contexts,
-    vector<vector<int>>& action_contexts,
-    vector<WordsList>& word_features,
-    vector<WordsList>& action_features,
+    vector<WordsList>& word_contexts,
+    vector<WordsList>& action_contexts,
     vector<MatrixReal>& word_context_vectors,
     vector<MatrixReal>& action_context_vectors,
     MatrixReal& word_prediction_vectors,
@@ -246,8 +238,8 @@ Real ParsedFactoredWeights::getObjective(
     MatrixReal& class_probs,
     vector<VectorReal>& word_probs,
     MatrixReal& action_probs) const {
-  getContextVectors(examples->word_examples(), word_contexts, word_features, word_context_vectors);
-  getContextVectors(examples->action_examples(), action_contexts, action_features, action_context_vectors);
+  getContextVectors(examples->word_examples(), word_contexts, word_context_vectors);
+  getContextVectors(examples->action_examples(), action_contexts, action_context_vectors);
   word_prediction_vectors = getPredictionVectors(examples->word_example_size(), word_context_vectors); 
   action_prediction_vectors = getPredictionVectors(examples->action_example_size(), 
                                                    action_context_vectors); 
@@ -285,8 +277,8 @@ Real ParsedFactoredWeights::getObjective(
 
 void ParsedFactoredWeights::getProbabilities(
     const boost::shared_ptr<ParseDataSet>& examples,
-    const vector<vector<int>>& word_contexts,
-    const vector<vector<int>>& action_contexts,
+    const vector<WordsList>& word_contexts,
+    const vector<WordsList>& action_contexts,
     const MatrixReal& word_prediction_vectors,
     const MatrixReal& action_prediction_vectors,
     MatrixReal& class_probs,
@@ -319,10 +311,8 @@ MatrixReal ParsedFactoredWeights::getActionWeightedRepresentations(
 
 void ParsedFactoredWeights::getFullGradient(
     const boost::shared_ptr<ParseDataSet>& examples,
-    const vector<vector<int>>& word_contexts,
-    const vector<vector<int>>& action_contexts,
-    const vector<WordsList>& word_features,
-    const vector<WordsList>& action_features,
+    const vector<WordsList>& word_contexts,
+    const vector<WordsList>& action_contexts,
     const vector<MatrixReal>& word_context_vectors,
     const vector<MatrixReal>& action_context_vectors,
     const MatrixReal& word_prediction_vectors,
@@ -368,9 +358,9 @@ void ParsedFactoredWeights::getFullGradient(
   gradient->L += action_probs.rowwise().sum();
 
   getContextGradient(
-      examples->word_example_size(), word_contexts, word_features, word_context_vectors, word_weighted_representations, gradient);
+      examples->word_example_size(), word_contexts, word_context_vectors, word_weighted_representations, gradient);
   getContextGradient(
-      examples->action_example_size(), action_contexts, action_features, action_context_vectors, action_weighted_representations, gradient);
+      examples->action_example_size(), action_contexts, action_context_vectors, action_weighted_representations, gradient);
 }
 
 std::vector<Words> ParsedFactoredWeights::getNoiseWords(

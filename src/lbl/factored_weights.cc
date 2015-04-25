@@ -78,26 +78,24 @@ void FactoredWeights::setModelParameters() {
 
 Real FactoredWeights::getObjective(
     const boost::shared_ptr<DataSet>& examples) const {
-  vector<vector<int>> contexts;
-  vector<WordsList> features;
+  vector<WordsList> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
   MatrixReal class_probs;
   vector<VectorReal> word_probs;
   return getObjective(
-      examples, contexts, features, context_vectors, prediction_vectors,
+      examples, contexts, context_vectors, prediction_vectors,
       class_probs, word_probs);
 }
 
 Real FactoredWeights::getObjective(
     const boost::shared_ptr<DataSet>& examples,
-    vector<vector<int>>& contexts,
-    vector<WordsList>& features,
+    vector<WordsList>& contexts,
     vector<MatrixReal>& context_vectors,
     MatrixReal& prediction_vectors,
     MatrixReal& class_probs,
     vector<VectorReal>& word_probs) const {
-  getContextVectors(examples, contexts, features, context_vectors);
+  getContextVectors(examples, contexts, context_vectors);
   prediction_vectors = getPredictionVectors(examples->size(), context_vectors);
   getProbabilities(
       examples, contexts, prediction_vectors, class_probs, word_probs);
@@ -125,23 +123,21 @@ void FactoredWeights::getGradient(
     const boost::shared_ptr<FactoredWeights>& gradient,
     Real& objective,
     MinibatchWords& words) const {
-  vector<vector<int>> contexts;
-  vector<WordsList> features;
+  vector<WordsList> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors, class_probs;
   vector<VectorReal> word_probs;
   objective += getObjective(
-      examples, contexts, features, context_vectors, prediction_vectors,
+      examples, contexts, context_vectors, prediction_vectors,
       class_probs, word_probs);
 
   setContextWords(contexts, words);
-  setFeatureWords(features, words);
 
   MatrixReal weighted_representations = getWeightedRepresentations(
       examples, prediction_vectors, class_probs, word_probs);
 
   getFullGradient(
-      examples, contexts, features, context_vectors, prediction_vectors,
+      examples, contexts, context_vectors, prediction_vectors,
       weighted_representations, class_probs, word_probs, gradient, words);
 }
 
@@ -159,7 +155,7 @@ VectorReal FactoredWeights::classB(int class_id) const {
 
 void FactoredWeights::getProbabilities(
     const boost::shared_ptr<DataSet>& examples,
-    const vector<vector<int>>& contexts,
+    const vector<WordsList>& contexts,
     const MatrixReal& prediction_vectors,
     MatrixReal& class_probs,
     vector<VectorReal>& word_probs) const {
@@ -201,8 +197,7 @@ MatrixReal FactoredWeights::getWeightedRepresentations(
 
 void FactoredWeights::getFullGradient(
     const boost::shared_ptr<DataSet>& examples,
-    const vector<vector<int>>& contexts,
-    const vector<WordsList>& features,
+    const vector<WordsList>& contexts,
     const vector<MatrixReal>& context_vectors,
     const MatrixReal& prediction_vectors,
     const MatrixReal& weighted_representations,
@@ -236,7 +231,7 @@ void FactoredWeights::getFullGradient(
   }
 
   getContextGradient(
-      examples->size(), contexts, features, context_vectors, weighted_representations, gradient);
+      examples->size(), contexts, context_vectors, weighted_representations, gradient);
 }
 
 bool FactoredWeights::checkGradient(
@@ -356,13 +351,11 @@ void FactoredWeights::estimateGradient(
     const boost::shared_ptr<FactoredWeights>& gradient,
     Real& objective,
     MinibatchWords& words) const {
-  vector<vector<int>> contexts;
-  vector<WordsList> features;
+  vector<WordsList> contexts;
   vector<MatrixReal> context_vectors;
-  getContextVectors(examples, contexts, features, context_vectors);
+  getContextVectors(examples, contexts, context_vectors);
 
   setContextWords(contexts, words);
-  setFeatureWords(features, words);
 
   MatrixReal prediction_vectors =
       getPredictionVectors(examples->size(), context_vectors);
@@ -375,7 +368,7 @@ void FactoredWeights::estimateGradient(
   weighted_representations.array() *= activationDerivative(config->activation, prediction_vectors);
 
   getContextGradient(
-      examples->size(), contexts, features, context_vectors, weighted_representations, gradient);
+      examples->size(), contexts, context_vectors, weighted_representations, gradient);
 }
 
 void FactoredWeights::syncUpdate(

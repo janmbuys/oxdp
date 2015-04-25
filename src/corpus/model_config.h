@@ -52,7 +52,9 @@ struct ModelConfig {
   bool        discriminative;
   bool        predict_pos;
   bool        lexicalised;
+  bool        sentence_vector;
   bool        compositional;
+  bool        output_compositional;
   bool        pos_annotated;
   bool        label_features;
   bool        morph_features;
@@ -71,15 +73,20 @@ struct ModelConfig {
   int         num_particles;
   int         generate_samples;
   int         num_tags;
+  int         num_features;
   int         num_labels;
+  int         num_train_sentences;
   int         label_feature_index;
   int         distance_feature_index;
   size_t      distance_range;
   std::vector<unsigned> beam_sizes;
+  std::vector<std::vector<int>> word_to_features;
 
   bool operator==(const ModelConfig& other) const;
 
   int numActions() const;
+  void addWordFeatures(const std::vector<int>& features);
+  std::vector<int> getWordFeatures(int id) const;
 
   friend class boost::serialization::access;
   template<class Archive>
@@ -117,7 +124,9 @@ struct ModelConfig {
     ar & discriminative;
     ar & predict_pos;
     ar & lexicalised;
+    ar & sentence_vector;
     ar & compositional;
+    ar & output_compositional;
     ar & pos_annotated;
     ar & label_features;
     ar & morph_features;
@@ -136,7 +145,9 @@ struct ModelConfig {
     ar & num_particles;
     ar & generate_samples;
     ar & num_tags;
+    ar & num_features;
     ar & num_labels;
+    ar & word_to_features;
   }
 };
 

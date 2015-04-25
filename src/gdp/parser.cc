@@ -13,7 +13,7 @@ Parser::Parser():
 }
 
 Parser::Parser(const Words& sent):
-  ParsedSentence(sent, WordsList(sent.size(), Words())),
+  ParsedSentence(sent, Words(), WordsList(sent.size(), Words())),
   left_children_(),
   right_children_(),
   weight_{0}

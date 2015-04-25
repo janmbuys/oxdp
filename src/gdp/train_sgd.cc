@@ -86,12 +86,18 @@ int main(int argc, char** argv) {
         "Conditioning context used.")    
     ("labelled-parser", value<bool>()->default_value(false),
         "Predict arc labels.")
+    ("predict-pos", value<bool>()->default_value(false),
+        "Predict POS during decoding.")
     ("discriminative", value<bool>()->default_value(false),
         "Discriminative rather than generative model.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
+    ("sentence-vector", value<bool>()->default_value(false),
+        "Learn sentence vectors.")
     ("compositional", value<bool>()->default_value(false),
         "Compositional word representations including POS tags and other features.")
+    ("output-compositional", value<bool>()->default_value(false),
+        "Compositional output word representations including POS tags and other features.")
     ("pos-annotated", value<bool>()->default_value(false),
         "Use word_POS as input feature.")
     ("label-features", value<bool>()->default_value(false),
@@ -235,7 +241,10 @@ int main(int argc, char** argv) {
   config->labelled_parser = vm["labelled-parser"].as<bool>();
   config->discriminative = vm["discriminative"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
+  config->predict_pos = vm["predict-pos"].as<bool>();
+  config->sentence_vector = vm["sentence-vector"].as<bool>();
   config->compositional = vm["compositional"].as<bool>();
+  config->output_compositional = vm["output-compositional"].as<bool>();
   config->pos_annotated = vm["pos-annotated"].as<bool>();
   config->label_features = vm["label-features"].as<bool>();
   config->morph_features = vm["morph-features"].as<bool>();
@@ -282,6 +291,8 @@ int main(int argc, char** argv) {
   std::cerr << "# representation_size = " << config->representation_size << std::endl;
   std::cerr << "# class factored = " << config->factored << std::endl;
   std::cerr << "# compositional = " << config->compositional << std::endl;
+  std::cerr << "# output compositional = " << config->output_compositional << std::endl;
+  std::cerr << "# sentence vector = " << config->sentence_vector << std::endl;
   std::cerr << "# pos annotated = " << config->pos_annotated << std::endl;
   std::cerr << "# label features = " << config->label_features << std::endl;
   std::cerr << "# morph features = " << config->morph_features << std::endl;

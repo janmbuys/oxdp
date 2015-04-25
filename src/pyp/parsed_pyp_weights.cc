@@ -93,9 +93,9 @@ void ParsedPypWeights<tOrder, aOrder>::updateInsert(const boost::shared_ptr<Pars
   PypWeights<tOrder>::updateInsert(examples->tag_examples(), eng);
   for (unsigned i = 0; i < examples->action_example_size(); ++i) {
    /*if (examples->action_at(i) == 0) 
-      shre_lm_.increment(0, examples->action_context_at(i).features[0], eng);
+      shre_lm_.increment(0, examples->action_context_at(i).tags, eng);
     else { 
-      shre_lm_.increment(1, examples->action_context_at(i).features[0], eng);
+      shre_lm_.increment(1, examples->action_context_at(i).tags, eng);
       action_lm_.increment(examples->action_at(i) - 1, examples->action_context_at(i).words, eng);
     } */ 
     action_lm_.increment(examples->action_at(i), examples->action_context_at(i).words, eng);
@@ -108,9 +108,9 @@ void ParsedPypWeights<tOrder, aOrder>::updateRemove(const boost::shared_ptr<Pars
   PypWeights<tOrder>::updateRemove(examples->tag_examples(), eng);
   for (unsigned i = 0; i < examples->action_example_size(); ++i) {
     /*if (examples->action_at(i) == 0) 
-      shre_lm_.decrement(0, examples->action_context_at(i).features[0], eng);
+      shre_lm_.decrement(0, examples->action_context_at(i).tags, eng);
     else { 
-      shre_lm_.decrement(1, examples->action_context_at(i).features[0], eng);
+      shre_lm_.decrement(1, examples->action_context_at(i).tags, eng);
       action_lm_.decrement(examples->action_at(i) - 1, examples->action_context_at(i).words, eng);
     } */
     action_lm_.decrement(examples->action_at(i), examples->action_context_at(i).words, eng);

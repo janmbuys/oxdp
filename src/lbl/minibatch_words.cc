@@ -5,8 +5,8 @@
 namespace oxlm {
 
 void MinibatchWords::transform() {
-  for (int word_id: featureWordsSet) {
-    featureWords.push_back(word_id);
+  for (int word_id: sentenceWordsSet) {
+    sentenceWords.push_back(word_id);
   }
 
   for (int word_id: contextWordsSet) {
@@ -19,8 +19,8 @@ void MinibatchWords::transform() {
 }
 
 void MinibatchWords::merge(const MinibatchWords& words) {
-  for (int word_id: words.featureWordsSet) {
-    featureWordsSet.insert(word_id);
+  for (int word_id: words.sentenceWordsSet) {
+    sentenceWordsSet.insert(word_id);
   }
 
   for (int word_id: words.contextWordsSet) {
@@ -32,8 +32,8 @@ void MinibatchWords::merge(const MinibatchWords& words) {
   }
 }
 
-void MinibatchWords::addFeatureWord(int word_id) {
-  featureWordsSet.insert(word_id);
+void MinibatchWords::addSentenceWord(int word_id) {
+  sentenceWordsSet.insert(word_id);
 }
 
 void MinibatchWords::addContextWord(int word_id) {
@@ -55,8 +55,8 @@ vector<int> MinibatchWords::scatterWords(const vector<int>& words) const {
   return result;
 }
 
-vector<int> MinibatchWords::getFeatureWords() const {
-  return scatterWords(featureWords);
+vector<int> MinibatchWords::getSentenceWords() const {
+  return scatterWords(sentenceWords);
 }
 
 vector<int> MinibatchWords::getContextWords() const {
@@ -67,8 +67,8 @@ vector<int> MinibatchWords::getOutputWords() const {
   return scatterWords(outputWords);
 }
 
-unordered_set<int> MinibatchWords::getFeatureWordsSet() const {
-  return featureWordsSet;
+unordered_set<int> MinibatchWords::getSentenceWordsSet() const {
+  return sentenceWordsSet;
 }
 
 unordered_set<int> MinibatchWords::getContextWordsSet() const {

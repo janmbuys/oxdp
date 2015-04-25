@@ -12,20 +12,20 @@ class TaggedSentence: public Sentence {
   
   TaggedSentence(WordsList features);
 
-  TaggedSentence(Words sent, WordsList features);
+  TaggedSentence(Words sent, Words tags, WordsList features);
 
   void print_tags(const boost::shared_ptr<Dict>& dict) const {
-    for (auto item: features_)
-      std::cout << dict->lookupTag(item[0]) << " ";
+    for (auto tag: tags_)
+      std::cout << dict->lookupTag(tag) << " ";
     std::cout << std::endl;
   }
   
   void push_tag(WordId t) {
-   features_.push_back(Words(1, t));
+   tags_.push_back(t);
   }
 
   void set_tag_at(WordIndex i, WordId t) {
-    features_.at(i)[0] = t;
+    tags_.at(i) = t;
   }
 
   size_t size() const override {
@@ -33,14 +33,15 @@ class TaggedSentence: public Sentence {
   }
  
   size_t tags_length() const {
+    return tags_.size();
+  }
+
+  size_t features_length() const {
     return features_.size();
   }
 
   WordId tag_at(WordIndex i) const {
-    if (features_.at(i).size() > 0)
-      return features_.at(i)[0];
-    else
-      return 0;
+    return tags_.at(i);
   }
 
   Words features_at(WordIndex i) const {
@@ -48,6 +49,7 @@ class TaggedSentence: public Sentence {
   }
 
  private:
+  Words tags_;
   WordsList features_;
 
 };

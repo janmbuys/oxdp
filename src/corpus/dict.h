@@ -31,14 +31,22 @@ public:
  
   WordId convertTag(const Word& tag, bool frozen);
 
+  WordId convertFeature(const Word& feat, bool frozen);
+
   WordId convertLabel(const Word& label, bool frozen);
+
+  void setWordFeatures(WordId id, const std::vector<WordId>& features);
 
   Word lookup(WordId id) const;
 
   Word lookupTag(WordId id) const;
 
+  Word lookupFeature(WordId id) const;
+
   Word lookupLabel(WordId id) const;
  
+  std::vector<WordId> getWordFeatures(WordId id) const;
+
   bool punctTag(WordId id) const;
 
   WordId min() const {
@@ -67,6 +75,10 @@ public:
 
   size_t tag_size() const {
     return tags_.size();
+  }
+
+  size_t feature_size() const {
+    return features_.size();
   }
 
   size_t label_size() const {
@@ -104,6 +116,9 @@ public:
     ar & tag_d_;
     ar & labels_;
     ar & label_d_;
+    ar & features_;
+    ar & feature_d_;
+    ar & word_to_features_;
   }
 
 private:
@@ -119,6 +134,9 @@ private:
   std::map<std::string, WordId> tag_d_;
   std::vector<Word> labels_;
   std::map<std::string, WordId> label_d_;
+  std::vector<Word> features_;
+  std::map<std::string, WordId> feature_d_;
+  std::vector<std::vector<WordId>> word_to_features_;
 };
 
 }
