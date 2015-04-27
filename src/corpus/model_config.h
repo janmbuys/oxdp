@@ -27,6 +27,7 @@ struct ModelConfig {
   std::string test_output_file2;
   int         iterations;
   int         iterations_unsup;
+  int         iterations_test;
   int         minibatch_size;
   int         minibatch_size_unsup;
   int         ngram_order; 
@@ -100,6 +101,7 @@ struct ModelConfig {
     ar & test_output_file;
     ar & test_output_file2;
     ar & iterations;
+    ar & iterations_test;
     ar & iterations_unsup;
     ar & minibatch_size;
     ar & minibatch_size_unsup;

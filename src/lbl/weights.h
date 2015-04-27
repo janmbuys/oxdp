@@ -59,6 +59,8 @@ class Weights {
       Real& objective,
       MinibatchWords& words) const;
 
+  void updateSentenceVectorGradient(const VectorReal& sentence_vector_gradient);
+
   void syncUpdate(
       const MinibatchWords& words,
       const boost::shared_ptr<Weights>& gradient);
@@ -75,6 +77,8 @@ class Weights {
   Real regularizerUpdate(
       const boost::shared_ptr<Weights>& global_gradient,
       Real minibatch_factor);
+
+  void resetSentenceVector();
 
   void clear(const MinibatchWords& words, bool parallel_update);
 

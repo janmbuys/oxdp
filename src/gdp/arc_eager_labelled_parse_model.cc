@@ -708,6 +708,7 @@ template<class ParsedWeights>
 Parser ArcEagerLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          bool acc,
           size_t beam_size) {
   ArcEagerLabelledParser parse(config_);
   if (beam_size == 0)
@@ -741,10 +742,12 @@ Parser ArcEagerLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedS
   }
   //std::cout << parse.weight() << ": " << particle_weight << std::endl;
 */
-  acc_counts->countAccuracy(parse, sent);
-  ArcEagerLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
+  if (acc) {
+    acc_counts->countAccuracy(parse, sent);
+    ArcEagerLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
   
-  acc_counts->countGoldLikelihood(parse.weight(), gold_parse.weight());
+    acc_counts->countGoldLikelihood(parse.weight(), gold_parse.weight());
+  }
   return parse;
 }
 

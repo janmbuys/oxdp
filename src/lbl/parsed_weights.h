@@ -24,6 +24,8 @@ class ParsedWeights : public Weights {
 
   size_t numParameters() const override;
 
+  VectorReal getSentenceVectorGradient(const boost::shared_ptr<ParseDataSet>& examples, Real& objective) const;
+
   void getGradient(
       const boost::shared_ptr<ParseDataSet>& examples,
       const boost::shared_ptr<ParsedWeights>& gradient,

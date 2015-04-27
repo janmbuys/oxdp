@@ -5,7 +5,8 @@
 namespace oxlm {
 
 ModelConfig::ModelConfig()
-    : iterations(0), iterations_unsup(0), minibatch_size(0), minibatch_size_unsup(0), ngram_order(0), 
+    : iterations(0), iterations_unsup(0), iterations_test(0), minibatch_size(0), 
+      minibatch_size_unsup(0), ngram_order(0), 
       l2_lbl(0), representation_size(0), threads(1), step_size(0), 
       factored(true), classes(0), randomise(false), diagonal_contexts(false),
       vocab_size(0), noise_samples(0), parser_type(ParserType::arcstandard), 

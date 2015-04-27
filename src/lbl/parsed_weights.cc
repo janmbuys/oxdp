@@ -141,6 +141,11 @@ int ParsedWeights::numActions() const {
   return config->numActions();
 }
  
+
+VectorReal ParsedWeights::getSentenceVectorGradient(const boost::shared_ptr<ParseDataSet>& examples, Real& objective) const {
+  return VectorReal::Zero(config->representation_size);
+}
+
 void ParsedWeights::getGradient(
     const boost::shared_ptr<ParseDataSet>& examples,
     const boost::shared_ptr<ParsedWeights>& gradient,

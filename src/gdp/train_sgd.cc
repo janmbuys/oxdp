@@ -58,6 +58,8 @@ int main(int argc, char** argv) {
         "conll output file for system parsing the test set")
     ("iterations", value<int>()->default_value(1),
         "number of passes through the data")
+    ("iterations-test", value<int>()->default_value(1),
+        "number of iterations for test inference")
     ("minibatch-size", value<int>()->default_value(10000),
         "number of sentences per minibatch")
     ("minibatch-size-unsup", value<int>()->default_value(1),
@@ -171,6 +173,7 @@ int main(int argc, char** argv) {
   config->pyp_model = false;
   config->distance_range = 5;
   config->iterations = vm["iterations"].as<int>();
+  config->iterations_test = vm["iterations-test"].as<int>();
   config->minibatch_size = vm["minibatch-size"].as<int>();
   config->ngram_order = vm["order"].as<int>();
 
@@ -320,6 +323,7 @@ int main(int argc, char** argv) {
   std::cerr << "# lambda = " << config->l2_lbl << std::endl;
   std::cerr << "# step size = " << config->step_size << std::endl;
   std::cerr << "# iterations = " << config->iterations << std::endl;
+  std::cerr << "# test iterations = " << config->iterations_test << std::endl;
   std::cerr << "# threads = " << config->threads << std::endl;
   std::cerr << "# randomise = " << config->randomise << std::endl;
   std::cerr << "# diagonal contexts = " << config->diagonal_contexts << std::endl;

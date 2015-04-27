@@ -59,6 +59,11 @@ class DiscriminativeWeights {
       Real& objective,
       MinibatchWords& words) const;
 
+
+  VectorReal getSentenceVectorGradient(
+      const boost::shared_ptr<ParseDataSet>& examples,
+      Real& objective) const;
+
   Real predictWord(int word, Context context) const;
 
   Reals predictWordOverTags(WordId word, Context context) const;
@@ -83,6 +88,8 @@ class DiscriminativeWeights {
       const MinibatchWords& words,
       const boost::shared_ptr<DiscriminativeWeights>& gradient);
 
+  void updateSentenceVectorGradient(const VectorReal& sentence_vector_gradient);
+
   void updateSquared(
       const MinibatchWords& global_words,
       const boost::shared_ptr<DiscriminativeWeights>& global_gradient);
@@ -97,6 +104,8 @@ class DiscriminativeWeights {
       Real minibatch_factor);
 
   void clear(const MinibatchWords& words, bool parallel_update);
+
+  void resetSentenceVector();
 
   Real predict(int word, Context context) const;
 

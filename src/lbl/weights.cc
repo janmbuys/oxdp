@@ -55,8 +55,8 @@ void Weights::allocate() {
     num_sentence_vectors += config->num_train_sentences;
   int num_context_words = config->num_features;
   int num_output_words = config->vocab_size;
-  if (config->output_compositional)
-    num_output_words = config->num_features;
+  //if (config->output_compositional)
+  //  num_output_words = config->num_features;
   int word_width = config->representation_size;
   int context_width = config->ngram_order - 1;
   if (config->sentence_vector)
@@ -94,8 +94,8 @@ void Weights::setModelParameters() {
     num_sentence_vectors += config->num_train_sentences;
   int num_context_words = config->num_features;
   int num_output_words = config->vocab_size;
-  if (config->output_compositional)
-    num_output_words = config->num_features;
+  //if (config->output_compositional)
+  //  num_output_words = config->num_features;
   int word_width = config->representation_size;
   int context_width = config->ngram_order - 1;
   if (config->sentence_vector)
@@ -509,6 +509,15 @@ Block Weights::getBlock(int start, int size) const {
   return make_pair(block_start, block_size);
 }
 
+void Weights::updateSentenceVectorGradient(const VectorReal& sentence_vector_gradient) {
+  VectorReal adagrad = sentence_vector_gradient.array().square();
+  P.col(0) -= sentence_vector_gradient.binaryExpr(adagrad, CwiseAdagradUpdateOp<Real>(config->step_size));
+  
+  //regularize
+  Real sigma = config->step_size * config->l2_lbl;
+  P.col(0) -= P.col(0)*sigma;
+}
+
 void Weights::updateSquared(
     const MinibatchWords& global_words,
     const boost::shared_ptr<Weights>& global_gradient) {
@@ -565,6 +574,15 @@ Real Weights::regularizerUpdate(
 
   Real sum = W.segment(block.first, block.second).array().square().sum();
   return 0.5 * minibatch_factor * config->l2_lbl * sum;
+}
+
+void Weights::resetSentenceVector() {
+  P.col(0).setZero();
+  mt19937 gen(1);
+  normal_distribution<Real> gaussian(0, 0.1);
+  for (int i = 0; i < config->representation_size; ++i) {
+    P(i, 0) = gaussian(gen);
+  }
 }
 
 void Weights::clear(const MinibatchWords& words, bool parallel_update) {

@@ -177,7 +177,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semisup2() {
 
   boost::shared_ptr<AccuracyCounts> temp_acc_counts = boost::make_shared<AccuracyCounts>(dict_);
   for (unsigned j = 0; j < unsup_training_corpus->size(); ++j) {
-    Parser parse = parse_model_->evaluateSentence(unsup_training_corpus->sentence_at(j), weights_, temp_acc_counts, config_->num_particles); 
+    Parser parse = parse_model_->evaluateSentence(unsup_training_corpus->sentence_at(j), weights_, temp_acc_counts, true, config_->num_particles); 
     unsup_training_corpus->set_arcs_at(j, parse);
   }
 
@@ -829,7 +829,7 @@ void PypDpModel<ParseModel, ParsedWeights>::evaluate(const boost::shared_ptr<Par
             
         for (auto j: minibatch) {
           //Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, eng, acc_counts, beam_size); 
-          Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, beam_size); 
+          Parser parse = parse_model_->evaluateSentence(test_corpus->sentence_at(j), weights_, acc_counts, true, beam_size); 
           objective += parse.weight();
 
           //write output to conll-format file

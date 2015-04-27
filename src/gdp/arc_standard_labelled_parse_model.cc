@@ -1792,6 +1792,7 @@ template<class ParsedWeights>
 Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          bool acc,
           size_t beam_size) {
   ArcStandardLabelledParser parse(config_);
   boost::shared_ptr<ParseDataSet> examples = boost::make_shared<ParseDataSet>();
@@ -1803,10 +1804,13 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
     parse = beamParticleParseSentence(sent, weights, beam_size, examples);
     //parse = beamParseSentence(sent, weights, beam_size);
 
-  acc_counts->countAccuracy(parse, sent);
-  ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
+  if (acc) {
+    acc_counts->countAccuracy(parse, sent);
+    ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
+    acc_counts->countGoldLikelihood(parse.weight(), gold_parse.weight());
+  }
 
-  acc_counts->countGoldLikelihood(parse.weight(), gold_parse.weight());
+  parse.set_id(sent.id());
   return parse;
 }
 
@@ -1828,6 +1832,7 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::evaluateSentence(const Pars
   ArcStandardLabelledParser gold_parse = staticGoldParseSentence(sent, weights);
   
   acc_counts->countGoldLikelihood(parse.weight(), gold_parse.weight());
+  parse.set_id(sent.id());
   return parse;
 }
 

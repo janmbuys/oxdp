@@ -126,7 +126,12 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         dict->setWordFeatures(sent[i], features[i]);
       }
 
-      sentences_.push_back(ParsedSentence(sent, tags, features, arcs, labels, sentences_.size() + 1)); 
+
+      int index = sentences_.size() + 1;
+      if (frozen)
+        index = 0;
+
+      sentences_.push_back(ParsedSentence(sent, tags, features, arcs, labels, index)); 
       state = 1;
     } else {
       if (state==1) {
@@ -221,8 +226,12 @@ void ParsedCorpus::readTxtFile(const std::string& filename, const boost::shared_
       arcs.push_back(-1);
       labels.push_back(-1);
     }
+ 
+    int index = sentences_.size() + 1;
+    if (frozen)
+      index = 0;
 
-    sentences_.push_back(ParsedSentence(sent, tags, features, arcs, labels, sentences_.size() + 1)); 
+    sentences_.push_back(ParsedSentence(sent, tags, features, arcs, labels, index)); 
   }
 
   config_->vocab_size = dict->size();

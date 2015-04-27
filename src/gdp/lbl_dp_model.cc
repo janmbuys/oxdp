@@ -99,6 +99,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   if (config->test_file.size()) {
     test_corpus = boost::make_shared<ParsedCorpus>(config);
     test_corpus->readFile(config->test_file, dict, true);
+
     std::cerr << "Done reading test corpus..." << endl;
   }
 
@@ -360,31 +361,70 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
       auto beam_start = get_time();
       boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>(dict);
 
-      size_t start = 0;
-      while (start < test_corpus->size()) {
-        size_t end = std::min(start + config->minibatch_size, test_corpus->size());
+      for (int j = 0; j < test_corpus->size(); ++j) {
 
-        std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
-        minibatch = scatterMinibatch(minibatch);
-
+      //size_t start = 0;
+      //while (start < test_corpus->size()) {
+      //  size_t end = std::min(start + config->minibatch_size, test_corpus->size());
+        //std::vector<int> minibatch(indices.begin() + start, indices.begin() + end);
+        //minibatch = scatterMinibatch(minibatch);
         Real objective = 0;
-        for (auto j: minibatch) {
-          Parser parse = parse_model->evaluateSentence(test_corpus->sentence_at(j), weights, acc_counts, beam_size);
-          objective += parse.weight();
+      //  for (auto j: minibatch) {
+        Parser parse;
+          
+        if (config->sentence_vector) {
+          Real best_sentence_objective = numeric_limits<Real>::infinity();
+            //boost::shared_ptr<ParsedWeights> global_gradient =
+            //  boost::make_shared<ParsedWeights>(config, metadata, false);
+            //boost::shared_ptr<ParsedWeights> adagrad =
+            //  boost::make_shared<ParsedWeights>(config, metadata, false);
+            //boost::shared_ptr<ParsedWeights> gradient =
+            //  boost::make_shared<ParsedWeights>(config, metadata, false);
 
-          //write output to conll-format file
-          for (unsigned i = 1; i < parse.size(); ++i) { 
-            outs << i << "\t" << dict->lookup(parse.word_at(i)) << "\t_\t_\t" 
-                 << dict->lookupTag(parse.tag_at(i)) << "\t_\t" << parse.arc_at(i) << "\t"
-                 << dict->lookupLabel(parse.label_at(i)) << "\t_\t_\n";
+          weights->resetSentenceVector();
+          for (int i = 0; i < config->iterations_test; ++i) {
+            VectorReal sentence_vector_gradient = VectorReal::Zero(config->representation_size);
+            parse = parse_model->evaluateSentence(test_corpus->sentence_at(j), weights, acc_counts, (i == config->iterations_test - 1), beam_size);
+
+            if (i < config->iterations_test - 1) {
+              boost::shared_ptr<ParseDataSet> examples = boost::make_shared<ParseDataSet>();
+
+              parse_model->extractSentence(parse, weights, examples);
+              //int num_examples = task_examples->word_example_size() + task_examples->action_example_size();
+
+              Real sentence_objective = 0;
+              sentence_vector_gradient += weights->getSentenceVectorGradient(examples, sentence_objective);
+              weights->updateSentenceVectorGradient(sentence_vector_gradient);
+
+              //global_gradient->syncUpdate(words, gradient);
+              //update(global_words, global_gradient, adagrad);
+              //Real minibatch_factor = static_cast<Real>(num_examples) / (3*training_corpus->numTokens());
+              //objective = regularize(global_gradient, 1);
+
+              if (sentence_objective <= best_sentence_objective) 
+                best_sentence_objective = sentence_objective;
+            }
           }
-          outs << "\n";
+        } else {
+          parse = parse_model->evaluateSentence(test_corpus->sentence_at(j), weights, acc_counts, true, beam_size);
         }
 
-        //#pragma omp critical
+        objective += parse.weight();
+
+        //write output to conll-format file
+        for (unsigned i = 1; i < parse.size(); ++i) { 
+          outs << i << "\t" << dict->lookup(parse.word_at(i)) << "\t_\t_\t" 
+               << dict->lookupTag(parse.tag_at(i)) << "\t_\t" << parse.arc_at(i) << "\t"
+               << dict->lookupLabel(parse.label_at(i)) << "\t_\t_\n";
+        }
+        outs << "\n";
+      
         accumulator += objective;
-        start = end;
-      } 
+      }
+
+        //#pragma omp critical
+      //start = end;
+      //} 
     
       // Wait for all the threads to compute the perplexity for their slice of
       // test data.
@@ -392,14 +432,14 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
 
       //#pragma omp master
       //{
-        outs.close();
-        Real beam_time = get_duration(beam_start, get_time());
-        Real sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
-        Real tokens_per_sec = static_cast<int>(test_corpus->numTokens())/beam_time;
-        std::cerr << "(" << beam_time << "s, " <<
-                   static_cast<int>(sents_per_sec) << " sentences per second, " <<
-                   static_cast<int>(tokens_per_sec) << " tokens per second)\n";
-        acc_counts->printAccuracy();
+      outs.close();
+      Real beam_time = get_duration(beam_start, get_time());
+      Real sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
+      Real tokens_per_sec = static_cast<int>(test_corpus->numTokens())/beam_time;
+      std::cerr << "(" << beam_time << "s, " <<
+                 static_cast<int>(sents_per_sec) << " sentences per second, " <<
+                 static_cast<int>(tokens_per_sec) << " tokens per second)\n";
+      acc_counts->printAccuracy();
       //}
     }
     

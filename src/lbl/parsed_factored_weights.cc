@@ -140,6 +140,39 @@ int ParsedFactoredWeights::numActions() const {
   return config->numActions();
 }
  
+VectorReal ParsedFactoredWeights::getSentenceVectorGradient(const boost::shared_ptr<ParseDataSet>& examples, Real& objective) const {
+  VectorReal sentence_gradient = VectorReal::Zero(config->representation_size);
+
+  vector<WordsList> word_contexts;
+  vector<WordsList> action_contexts;
+  vector<MatrixReal> word_context_vectors;
+  vector<MatrixReal> action_context_vectors;
+  MatrixReal word_prediction_vectors;
+  MatrixReal action_prediction_vectors;
+  MatrixReal class_probs;
+  vector<VectorReal> word_probs;
+  MatrixReal action_probs;
+
+  getObjective(examples, word_contexts, action_contexts, 
+          word_context_vectors, action_context_vectors, word_prediction_vectors, 
+          action_prediction_vectors, class_probs, word_probs, action_probs); 
+
+  MatrixReal word_weighted_representations = FactoredWeights::getWeightedRepresentations(
+      examples->word_examples(), word_prediction_vectors, class_probs, word_probs);
+  MatrixReal action_weighted_representations = getActionWeightedRepresentations(
+      examples, action_prediction_vectors, action_probs);
+
+  int context_width = config->ngram_order;
+  MatrixReal word_context_gradients = getContextProduct(context_width - 1, word_weighted_representations, true);
+  MatrixReal action_context_gradients = getContextProduct(context_width - 1, action_weighted_representations, true);
+  for (size_t i = 0; i < examples->word_example_size(); ++i) 
+    sentence_gradient += word_context_gradients.col(i); 
+  for (size_t i = 0; i < examples->action_example_size(); ++i) 
+    sentence_gradient += action_context_gradients.col(i); 
+
+  return sentence_gradient;
+}
+
 void ParsedFactoredWeights::getGradient(
     const boost::shared_ptr<ParseDataSet>& examples,
     const boost::shared_ptr<ParsedFactoredWeights>& gradient,

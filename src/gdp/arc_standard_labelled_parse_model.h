@@ -90,6 +90,7 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
   Parser evaluateSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParsedWeights>& weights, 
           const boost::shared_ptr<AccuracyCounts>& acc_counts,
+          bool acc,
           size_t beam_size); 
 
   Parser evaluateSentence(const ParsedSentence& sent, 

@@ -156,6 +156,12 @@ int DiscriminativeWeights::numActions() const {
   return config->numActions();
 }
  
+VectorReal DiscriminativeWeights::getSentenceVectorGradient(
+      const boost::shared_ptr<ParseDataSet>& examples,
+      Real& objective) const {
+  return VectorReal::Zero(config->representation_size);
+}
+
 void DiscriminativeWeights::getGradient(
     const boost::shared_ptr<ParseDataSet>& examples,
     const boost::shared_ptr<DiscriminativeWeights>& gradient,
@@ -497,6 +503,8 @@ Block DiscriminativeWeights::getBlock(int start, int size) const {
   return make_pair(block_start, block_size);
 }
 
+void DiscriminativeWeights::updateSentenceVectorGradient(const VectorReal& sentence_vector_gradient) {}
+
 void DiscriminativeWeights::updateSquared(
     const MinibatchWords& global_words,
     const boost::shared_ptr<DiscriminativeWeights>& global_gradient) {
@@ -627,6 +635,8 @@ Reals DiscriminativeWeights::predict(Context context) const {
   
   return probs;
 }
+
+void DiscriminativeWeights::resetSentenceVector() {}
 
 int DiscriminativeWeights::vocabSize() const {
   return config->numActions();
