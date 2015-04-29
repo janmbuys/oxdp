@@ -6,6 +6,7 @@
 #include "lbl/factored_weights.h"
 #include "lbl/discriminative_weights.h"
 #include "lbl/parsed_factored_weights.h"
+#include "lbl/tagged_parsed_factored_weights.h"
 #include "utils/git_revision.h"
 
 #include "gdp/lbl_model.h"
@@ -228,6 +229,10 @@ int main(int argc, char** argv) {
   } else {
     config->parser_type = ParserType::ngram; 
   }
+  
+  config->pos_annotated = vm["pos-annotated"].as<bool>();
+  if (!config->pos_annotated)
+    config->ngram_order += 1;
 
   std::string activation_str = vm["activation"].as<std::string>();
   if (activation_str == "linear") 
@@ -248,7 +253,6 @@ int main(int argc, char** argv) {
   config->sentence_vector = vm["sentence-vector"].as<bool>();
   config->compositional = vm["compositional"].as<bool>();
   config->output_compositional = vm["output-compositional"].as<bool>();
-  config->pos_annotated = vm["pos-annotated"].as<bool>();
   config->label_features = vm["label-features"].as<bool>();
   config->morph_features = vm["morph-features"].as<bool>();
   config->distance_features = vm["distance-features"].as<bool>();
@@ -351,7 +355,11 @@ int main(int argc, char** argv) {
       train_dp<ArcStandardLabelledParseModel<DiscriminativeWeights>, DiscriminativeWeights, DiscriminativeMetadata>(config);
   } else if (config->lexicalised) {
     if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) {
-      train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
+      if (config->pos_annotated)
+        train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
+      else 
+        train_dp<ArcStandardLabelledParseModel<TaggedParsedFactoredWeights>, TaggedParsedFactoredWeights, TaggedParsedFactoredMetadata>(config);
+
     } else if (config->parser_type == ParserType::arceager) {
       train_dp<ArcEagerLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
     } else {

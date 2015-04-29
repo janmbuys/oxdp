@@ -351,6 +351,17 @@ public:
     return std::exp(gold_cross_entropy());
   }
 
+  static double sentence_uas(const Parser& prop_parse, const ParsedSentence& gold_parse) {
+    double count = 0;
+    for (WordIndex j = 1; j < gold_parse.size(); ++j) {
+      if (prop_parse.arc_at(j)==gold_parse.arc_at(j)) {
+        ++count;
+      }
+    }
+
+    return count/gold_parse.size();
+  }
+
 private:
     boost::shared_ptr<Dict> dict_;
     Real likelihood_;  

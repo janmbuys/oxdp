@@ -116,7 +116,10 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
       if (dict->eos() != -1) {
         sent.push_back(dict->eos()); 
         tags.push_back(dict->eos()); 
-        features.push_back(Words(1, dict->eos())); 
+        if (!config_->pyp_model && config_->lexicalised && config_->compositional) 
+          features.push_back(Words(2, dict->eos()));
+        else
+          features.push_back(Words(1, dict->eos()));
         arcs.push_back(-1);
         labels.push_back(-1);
       }
@@ -146,7 +149,10 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         if (dict->sos() != -1) {
           sent.push_back(dict->sos()); 
           tags.push_back(dict->sos()); 
-          features.push_back(Words(1, dict->sos()));
+          if (!config_->pyp_model && config_->lexicalised && config_->compositional) 
+            features.push_back(Words(2, dict->sos()));
+          else
+            features.push_back(Words(1, dict->sos()));
           arcs.push_back(-1);
           labels.push_back(-1);
         }
@@ -254,6 +260,16 @@ std::vector<int> ParsedCorpus::unigramCounts() const {
   for (auto sent: sentences_) {
     for (size_t j = 0; j < sent.size(); ++j)
       counts[sent.word_at(j)] += 1;
+  }
+
+  return counts;
+}
+
+std::vector<int> ParsedCorpus::tagCounts() const {
+  std::vector<int> counts(config_->num_tags, 0);
+  for (auto sent: sentences_) {
+    for (size_t j = 0; j < sent.size(); ++j)
+      counts[sent.tag_at(j)] += 1;
   }
 
   return counts;

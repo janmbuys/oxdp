@@ -17,6 +17,8 @@ add_libraries(lbl
   parsed_factored_weights.cc
   parsed_metadata.cc
   parsed_weights.cc
+  tagged_parsed_factored_metadata.cc
+  tagged_parsed_factored_weights.cc
   weights.cc
   word_distributions.cc
   word_to_class_index.cc

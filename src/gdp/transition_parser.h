@@ -244,6 +244,9 @@ class TransitionParser: public Parser {
           features.push_back(Words(1, 0));
       }          
     }
+
+    if (!config_->pos_annotated)
+      features.push_back(Words());
     
     return Context(words, features);
   }

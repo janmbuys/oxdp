@@ -205,11 +205,12 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
               weights->estimateGradient(
                   task_examples, gradient, objective, words);
             } else {
+              //std::cout << " " << task_start;
               weights->getGradient(
                   task_examples, gradient, objective, words);
-              //std::cout << " " << task_start;
-              /* if (!weights->checkGradient(task_examples, global_gradient, EPS))  
-                std::cout << "gradient check failed" << std::endl;
+              
+           /* if (!weights->checkGradient(task_examples, global_gradient, EPS))  
+               std::cout << "gradient check failed" << std::endl;
               else
                std::cout << "gradient OK" << std::endl; */
             }
@@ -393,7 +394,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
               //int num_examples = task_examples->word_example_size() + task_examples->action_example_size();
 
               Real sentence_objective = 0;
-              sentence_vector_gradient += weights->getSentenceVectorGradient(examples, sentence_objective);
+              sentence_vector_gradient = weights->getSentenceVectorGradient(examples, sentence_objective);
+              std::cout << AccuracyCounts::sentence_uas(parse, test_corpus->sentence_at(j)) << " " << parse.weight() << " " <<  sentence_vector_gradient.norm() << std::endl;
               weights->updateSentenceVectorGradient(sentence_vector_gradient);
 
               //global_gradient->syncUpdate(words, gradient);
@@ -526,6 +528,7 @@ bool LblDpModel<ParseModel, ParsedWeights, Metadata>::operator==(
       && *weights == *other.weights;
 }
 
+template class LblDpModel<ArcStandardLabelledParseModel<TaggedParsedFactoredWeights>, TaggedParsedFactoredWeights, TaggedParsedFactoredMetadata>;
 //template class LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 template class LblDpModel<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 //template class LblDpModel<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;

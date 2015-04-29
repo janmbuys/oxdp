@@ -52,6 +52,8 @@ class ParsedCorpus: public CorpusInterface {
 
   std::vector<int> actionCounts() const;
 
+  std::vector<int> tagCounts() const;
+
  private:
   std::vector<ParsedSentence> sentences_;
   boost::shared_ptr<ModelConfig> config_;

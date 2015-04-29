@@ -256,8 +256,14 @@ Context ArcStandardLabelledParser::wordContext() const {
       return Context(word_tag_next_children_context()); //order 6
       //return Context(word_next_children_context()); //order 6
     //return word_tag_next_ngram_context(); // best perplexity
-  } else 
-    return map_context(contextIndices());
+  } else {
+    Context ctx = map_context(contextIndices());
+    //std::cout << ctx.features.size() << ", " << ctx.features.back().size() << std::endl;
+    ctx.features.back().push_back(features_at(buffer_next())[1]); //next tag (as feature)
+    //std::cout << ctx.features.size() << ": " << ctx.features.back().size() << std::endl;
+    //std::cout << buffer_next() << " " << features_at(buffer_next())[1] << std::endl;
+    return ctx;
+  }
 }
 
 Context ArcStandardLabelledParser::tagContext() const {
