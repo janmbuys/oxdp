@@ -55,6 +55,8 @@ int main(int argc, char** argv) {
         "corpus of unparsed sentences for semi-supervised training, conll format")
     ("test-set,t", value<string>(),
         "corpus of test sentences")
+    ("test-set2,t", value<string>(),
+        "corpus of test sentences")
     ("test-out-file,o", value<std::string>()->default_value("system.out.conll"),
         "conll output file for system parsing the test set")
     ("iterations", value<int>()->default_value(1),
@@ -169,6 +171,9 @@ int main(int argc, char** argv) {
   config->training_file = vm["training-set"].as<std::string>();
   if (vm.count("test-set")) {
     config->test_file = vm["test-set"].as<string>();
+  }
+  if (vm.count("test-set2")) {
+    config->test_file2 = vm["test-set2"].as<string>();
   }
 
   config->pyp_model = false;

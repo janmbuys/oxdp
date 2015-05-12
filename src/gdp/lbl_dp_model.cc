@@ -103,6 +103,15 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
     std::cerr << "Done reading test corpus..." << endl;
   }
 
+  std::cerr << "Reading test corpus 2...\n";
+  boost::shared_ptr<ParsedCorpus> test_corpus2 = boost::make_shared<ParsedCorpus>(config);
+  if (config->test_file2.size()) {
+    test_corpus2->readFile(config->test_file2, dict, true);
+    std::cerr << "Done reading test corpus 2..." << std::endl;
+    std::cerr << "Corpus size: " << test_corpus2->size() << " sentences,\t" 
+                 << test_corpus2->numTokens() << " tokens\n";
+  }
+
   if (config->model_input_file.size() == 0) {
     metadata->initialize(training_corpus);
     weights = boost::make_shared<ParsedWeights>(config, metadata, true);
@@ -117,10 +126,12 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   iota(indices.begin(), indices.end(), 0);
 
   Real best_perplexity = numeric_limits<Real>::infinity();
+  Real best_perplexity2 = numeric_limits<Real>::infinity();
   Real best_global_objective = numeric_limits<Real>::infinity();
   bool improve_objective = true;
   Real global_objective = 0;
   Real test_objective = 0;
+  Real test_objective2 = 0;
   boost::shared_ptr<ParsedWeights> global_gradient =
       boost::make_shared<ParsedWeights>(config, metadata, false);
   boost::shared_ptr<ParsedWeights> adagrad =
@@ -287,6 +298,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         //if (iter%5 == 0)
         evaluate(test_corpus, iteration_start, minibatch_counter,
                test_objective, best_perplexity);
+        evaluate(test_corpus2, iteration_start, minibatch_counter,
+               test_objective2, best_perplexity2);
       }
     }
   }
