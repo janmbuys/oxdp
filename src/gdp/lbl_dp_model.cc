@@ -57,8 +57,22 @@ template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   MT19937 eng;
   boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>(config);
+  boost::shared_ptr<ParsedCorpus> unsup_training_corpus = boost::make_shared<ParsedCorpus>(config);
   training_corpus->readFile(config->training_file, dict, false);
-  std::cerr << "Done reading training corpus..." << endl;
+  std::cerr << "Done reading training corpus..." << std::endl;
+  std::cerr << "Corpus size: " << training_corpus->size() << " sentences" << std::endl; 
+
+  if (config->semi_supervised && config->training_file_unsup.size()) { 
+    std::cerr << "Reading unsupervised training corpus...\n";
+    unsup_training_corpus->readTxtFile(config->training_file_unsup, dict, false);
+    std::cerr << "Corpus size: " << unsup_training_corpus->size() << " sentences" << std::endl;
+  } else {
+    std::cerr << "No unsupervised training corpus.\n";
+  }
+
+  //copy tag feature map
+  for (unsigned i = 0; i < dict->tag_size(); ++i) 
+    config->tag_to_feature.push_back(dict->tagToFeature(i));
 
   if (config->label_features) {
     //add labels to feature vocab
@@ -84,16 +98,13 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   config->num_features = dict->feature_size();
   config->num_train_sentences = training_corpus->size();
 
-  std::cerr << "Corpus size: " << training_corpus->size() << " sentences\t (" 
-            << dict->size() << " word types, " << dict->feature_size() << " features, "  
-	    << dict->label_size() << " labels)\n";  
-
   //copy word feature map
   for (unsigned i = 0; i < dict->size(); ++i) {
     config->addWordFeatures(dict->getWordFeatures(i));
   }
 
-  //TODO read unsup corpus
+  std::cerr << dict->size() << " word types, " << dict->feature_size() << " features, "  
+	    << dict->label_size() << " labels)\n";  
 
   boost::shared_ptr<ParsedCorpus> test_corpus; 
   if (config->test_file.size()) {
@@ -125,13 +136,18 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   vector<int> indices(training_corpus->size());
   iota(indices.begin(), indices.end(), 0);
 
+  vector<int> unsup_indices(unsup_training_corpus->size());
+  iota(unsup_indices.begin(), unsup_indices.end(), 0);
+
   Real best_perplexity = numeric_limits<Real>::infinity();
   Real best_perplexity2 = numeric_limits<Real>::infinity();
+  Real test_objective = 0;
+  Real test_objective2 = 0;
+
   Real best_global_objective = numeric_limits<Real>::infinity();
   bool improve_objective = true;
   Real global_objective = 0;
-  Real test_objective = 0;
-  Real test_objective2 = 0;
+
   boost::shared_ptr<ParsedWeights> global_gradient =
       boost::make_shared<ParsedWeights>(config, metadata, false);
   boost::shared_ptr<ParsedWeights> adagrad =
@@ -287,6 +303,173 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
              << "  Size: " << training_corpus->numTokens()
              << "  Perplexity: " << perplexity(global_objective, training_corpus->numTokens())
              << "  Objective: " << global_objective / training_corpus->numTokens()
+             << endl << endl;
+     
+        if (global_objective <= best_global_objective) {
+          best_global_objective = global_objective;
+        } else {
+          improve_objective = false;
+        }
+
+        //if (iter%5 == 0)
+        evaluate(test_corpus, iteration_start, minibatch_counter,
+               test_objective, best_perplexity);
+        evaluate(test_corpus2, iteration_start, minibatch_counter,
+               test_objective2, best_perplexity2);
+      }
+    }
+
+    if (config->semi_supervised) {
+      std::cerr << "Parsing unlabelled data" << std::endl;
+
+      boost::shared_ptr<AccuracyCounts> temp_acc_counts = boost::make_shared<AccuracyCounts>(dict);
+      for (unsigned j = 0; j < unsup_training_corpus->size(); ++j) {
+        Parser parse = parse_model->evaluateSentence(unsup_training_corpus->sentence_at(j), weights, temp_acc_counts, false, config->num_particles); 
+        unsup_training_corpus->set_arcs_at(j, parse);
+      }
+  
+      #pragma omp master
+      Real best_global_objective = numeric_limits<Real>::infinity();
+    }
+
+    for (int iter = 0; (iter < config->iterations_unsup) && config->semi_supervised; ++iter) {
+      std::cerr << "Unsup Training iteration " << iter << std::endl;
+      auto iteration_start = get_time();
+
+      #pragma omp master
+      {
+        if (config->randomise) {
+          random_shuffle(unsup_indices.begin(), unsup_indices.end());
+        }
+        global_objective = 0;
+      }
+      // Wait until the master thread finishes shuffling the indices.
+      #pragma omp barrier
+
+      size_t start = 0;
+      while (start < unsup_training_corpus->size()) {
+        //std::cout << start << std::endl;
+        size_t end = min(unsup_training_corpus->size(), start + minibatch_size);
+
+        vector<int> minibatch(
+            unsup_indices.begin() + start,
+            min(unsup_indices.begin() + end, unsup_indices.end()));
+
+        // Reset the set of minibatch words shared across all threads.
+        #pragma omp master
+        {
+          global_words = MinibatchWords();
+          shared_index = 0;
+        }
+
+        // Wait until the global gradient is initialized. Otherwise, some
+        // gradient updates may be ignored.
+        #pragma omp barrier
+
+        Real objective = 0;
+        int num_examples = 0;
+        MinibatchWords words;
+        size_t task_start;
+        while (true) {
+          #pragma omp critical
+          {
+            task_start = shared_index;
+            shared_index += task_size;
+          }
+
+          if (task_start < minibatch.size()) {
+            size_t task_end = min(task_start + task_size, minibatch.size());
+            vector<int> task(
+                minibatch.begin() + task_start, minibatch.begin() + task_end);
+            //collect the training examples for the minibatch
+            boost::shared_ptr<ParseDataSet> task_examples = boost::make_shared<ParseDataSet>();
+            
+            for (int j: task) {
+              if ((!config->bootstrap && (config->bootstrap_iter == 0)) || 
+                     (iter < config->bootstrap_iter))
+                parse_model->extractSentence(unsup_training_corpus->sentence_at(j), task_examples);
+              else if (config->bootstrap)
+                parse_model->extractSentence(unsup_training_corpus->sentence_at(j), weights, task_examples);
+              else 
+                parse_model->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j), weights, task_examples);
+            }
+            num_examples += task_examples->word_example_size() + task_examples->action_example_size();
+
+            if (config->noise_samples > 0) {
+              weights->estimateGradient(
+                  task_examples, gradient, objective, words);
+            } else {
+              //std::cout << " " << task_start;
+              weights->getGradient(
+                  task_examples, gradient, objective, words);
+              
+           /* if (!weights->checkGradient(task_examples, global_gradient, EPS))  
+               std::cout << "gradient check failed" << std::endl;
+              else
+               std::cout << "gradient OK" << std::endl; */
+            }
+          } else {
+            break;
+          }
+        }
+        //std::cout << std::endl;
+
+        global_gradient->syncUpdate(words, gradient);
+        #pragma omp critical
+        {
+          global_objective += objective;
+          global_words.merge(words);
+        }
+
+        // Wait until the global gradient is fully updated by all threads and
+        // the global words are fully merged.
+        #pragma omp barrier
+
+        // Prepare minibatch words for parallel processing.
+        #pragma omp master
+        global_words.transform();
+
+        // Wait until the minibatch words are fully prepared for parallel
+        // processing.
+        #pragma omp barrier
+        update(global_words, global_gradient, adagrad);
+
+        // Wait for all threads to finish making the model gradient update.
+        #pragma omp barrier
+        Real minibatch_factor =
+            static_cast<Real>(num_examples) / (3*unsup_training_corpus->numTokens());
+        //approx total number of predictions
+        
+        objective = regularize(global_gradient, minibatch_factor);
+        #pragma omp critical
+        global_objective += objective;
+
+        // Clear gradients.
+        gradient->clear(words, false);
+        global_gradient->clear(global_words, true);
+
+        // Wait the regularization update to finish and make sure the global
+        // words are reset only after the global gradient is fully cleared.
+        #pragma omp barrier
+
+        /* if (minibatch_counter % 1000 == 0) {
+          evaluate(test_corpus, iteration_start, minibatch_counter,
+                   test_objective, best_perplexity);
+        } */
+
+        ++minibatch_counter;
+        start = end;
+      }
+
+      #pragma omp master
+      {
+        Real iteration_time = get_duration(iteration_start, get_time());
+        std::cerr << "Iteration: " << iter << ", "
+             << "Time: " << iteration_time << " seconds, "
+             << "  Likelihood: " << global_objective 
+             << "  Size: " << unsup_training_corpus->numTokens()
+             << "  Perplexity: " << perplexity(global_objective, unsup_training_corpus->numTokens())
+             << "  Objective: " << global_objective / unsup_training_corpus->numTokens()
              << endl << endl;
      
         if (global_objective <= best_global_objective) {

@@ -44,7 +44,9 @@ public:
   Word lookupFeature(WordId id) const;
 
   Word lookupLabel(WordId id) const;
- 
+
+  WordId tagToFeature(WordId tag_id) const;
+
   std::vector<WordId> getWordFeatures(WordId id) const;
 
   bool punctTag(WordId id) const;
@@ -119,6 +121,7 @@ public:
     ar & features_;
     ar & feature_d_;
     ar & word_to_features_;
+    ar & tag_to_feature_;
   }
 
 private:
@@ -137,6 +140,7 @@ private:
   std::vector<Word> features_;
   std::map<std::string, WordId> feature_d_;
   std::vector<std::vector<WordId>> word_to_features_;
+  std::vector<WordId> tag_to_feature_;
 };
 
 }

@@ -174,10 +174,9 @@ void PypDpModel<ParseModel, ParsedWeights>::learn_semisup2() {
 
   std::cerr << "Parsing unlabelled data" << std::endl;
 
-
   boost::shared_ptr<AccuracyCounts> temp_acc_counts = boost::make_shared<AccuracyCounts>(dict_);
   for (unsigned j = 0; j < unsup_training_corpus->size(); ++j) {
-    Parser parse = parse_model_->evaluateSentence(unsup_training_corpus->sentence_at(j), weights_, temp_acc_counts, true, config_->num_particles); 
+    Parser parse = parse_model_->evaluateSentence(unsup_training_corpus->sentence_at(j), weights_, temp_acc_counts, false, config_->num_particles); 
     unsup_training_corpus->set_arcs_at(j, parse);
   }
 

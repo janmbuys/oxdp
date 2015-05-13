@@ -41,6 +41,12 @@ class TransitionParser: public Parser {
     actions_.push_back(a);
   }
 
+  void update_tag(WordIndex i, WordId tag) {
+    //std::cout << tag << " " << config_->tag_to_feature[tag] << std::endl;
+    set_tag_at(i, tag);
+    set_tag_feature_at(i, config_->tag_to_feature[tag]);
+  }
+
   void reset_importance_weight() {
     importance_weight_ = 0;
   }

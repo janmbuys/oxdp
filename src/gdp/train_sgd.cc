@@ -61,6 +61,8 @@ int main(int argc, char** argv) {
         "conll output file for system parsing the test set")
     ("iterations", value<int>()->default_value(1),
         "number of passes through the data")
+    ("iterations-unsup", value<int>()->default_value(1),
+        "number of passes through the unlabelled data")
     ("iterations-test", value<int>()->default_value(1),
         "number of iterations for test inference")
     ("minibatch-size", value<int>()->default_value(10000),
@@ -179,6 +181,7 @@ int main(int argc, char** argv) {
   config->pyp_model = false;
   config->distance_range = 5;
   config->iterations = vm["iterations"].as<int>();
+  config->iterations_unsup = vm["iterations-unsup"].as<int>();
   config->iterations_test = vm["iterations-test"].as<int>();
   config->minibatch_size = vm["minibatch-size"].as<int>();
   config->ngram_order = vm["order"].as<int>();

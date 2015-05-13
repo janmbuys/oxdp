@@ -82,6 +82,7 @@ struct ModelConfig {
   size_t      distance_range;
   std::vector<unsigned> beam_sizes;
   std::vector<std::vector<int>> word_to_features;
+  std::vector<int> tag_to_feature;
 
   bool operator==(const ModelConfig& other) const;
 

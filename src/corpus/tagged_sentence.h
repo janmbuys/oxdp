@@ -28,6 +28,10 @@ class TaggedSentence: public Sentence {
     tags_.at(i) = t;
   }
 
+  void set_tag_feature_at(WordIndex i, WordId t) {
+    features_.at(i)[0] = t;
+  }
+
   size_t size() const override {
     return features_.size();
   }

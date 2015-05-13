@@ -21,6 +21,8 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
   //std::string tag_str; 
   WordId word_id = -1;
   Words features;
+  if (config_->pyp_model || config_->compositional)
+    features.push_back(-1); //placeholder for tag
 
   while(cur < line.size()) {
     if (Dict::is_ws(line[cur++])) {
@@ -54,7 +56,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
           std::string tag_str = line.substr(last, cur - last - 1);
         tags_out->push_back(dict->convertTag(tag_str, frozen));
         if (config_->pyp_model || config_->compositional)
-          features.push_back(dict->convertFeature(tag_str, frozen));
+          features[0] = dict->convertFeature(tag_str, frozen);
       } else if (col_num == 5) { //5 morphological features (| seperated)
           std::string feature_str = line.substr(last, cur - last -1); 
         if (config_->morph_features) {

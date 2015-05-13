@@ -344,13 +344,13 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPars
 
           //most likely tag
           WordIndex tag_pred = indices[0]; // arg_min(tag_probs, 0);
-          beam_stack[j]->set_tag_at(i, tag_pred);
+          beam_stack[j]->update_tag(i, tag_pred);
 
           //second most likely tag 
           WordIndex tag2_pred = indices[1]; 
           
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-            beam_stack.back()->set_tag_at(i, tag2_pred);
+            beam_stack.back()->update_tag(i, tag2_pred);
             beam_stack.back()->shift();
             beam_stack.back()->add_particle_weight(shiftp); 
             beam_stack.back()->set_num_particles(-1); //hack to communicate it should be skipped
@@ -617,7 +617,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
 
           //most likely tag
           WordIndex tag_pred = indices[0]; // arg_min(tag_probs, 0);
-          beam_stack[j]->set_tag_at(i, tag_pred);
+          beam_stack[j]->update_tag(i, tag_pred);
 
           //add second most likely tag if prob is high enough 
           WordIndex tag2_pred = indices[1]; 
@@ -632,7 +632,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
           
           if (shift2_count > 0) {
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-            beam_stack.back()->set_tag_at(i, tag2_pred);
+            beam_stack.back()->update_tag(i, tag2_pred);
             beam_stack.back()->shift();
             beam_stack.back()->add_particle_weight(shiftp); 
             beam_stack.back()->set_num_particles(-shift2_count); //hack to communicate it should be skipped
@@ -645,7 +645,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
           //add third most likely tag if prob is high enough 
           if (shift3_count > 0) {
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-            beam_stack.back()->set_tag_at(i, tag3_pred);
+            beam_stack.back()->update_tag(i, tag3_pred);
             beam_stack.back()->shift();
             beam_stack.back()->add_particle_weight(shiftp); 
             beam_stack.back()->set_num_particles(-shift3_count); //hack to communicate it should be skipped
@@ -935,7 +935,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
 
           //most likely tag
           WordIndex tag_pred = indices[0]; // arg_min(tag_probs, 0);
-          beam_stack[j]->set_tag_at(i, tag_pred);
+          beam_stack[j]->update_tag(i, tag_pred);
 
           //add second most likely tag if prob is high enough 
           WordIndex tag2_pred = indices[1]; 
@@ -950,7 +950,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
           
           if (shift2_count > 0) {
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-            beam_stack.back()->set_tag_at(i, tag2_pred);
+            beam_stack.back()->update_tag(i, tag2_pred);
             beam_stack.back()->shift();
             beam_stack.back()->add_particle_weight(shiftp); 
             beam_stack.back()->set_num_particles(-shift2_count); //hack to communicate it should be skipped
@@ -963,7 +963,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
           //add third most likely tag if prob is high enough 
          if (shift3_count > 0) {
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-            beam_stack.back()->set_tag_at(i, tag3_pred);
+            beam_stack.back()->update_tag(i, tag3_pred);
             beam_stack.back()->shift();
             beam_stack.back()->add_particle_weight(shiftp); 
             beam_stack.back()->set_num_particles(-shift3_count); //hack to communicate it should be skipped
@@ -1171,7 +1171,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
 
           //most likely tag
           WordIndex tag_pred = indices[0]; // arg_min(tag_probs, 0);
-          beam_stack[j]->set_tag_at(i, tag_pred);
+          beam_stack[j]->update_tag(i, tag_pred);
 
           //add second most likely tag if prob is high enough 
           WordIndex tag2_pred = indices[1]; 
@@ -1186,7 +1186,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
           
           if (shift2_count > 0) {
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-            beam_stack.back()->set_tag_at(i, tag2_pred);
+            beam_stack.back()->update_tag(i, tag2_pred);
             beam_stack.back()->shift();
             beam_stack.back()->add_particle_weight(shiftp); 
             beam_stack.back()->set_num_particles(-shift2_count); //hack to communicate it should be skipped
@@ -1199,7 +1199,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
           //add third most likely tag if prob is high enough 
          if (shift3_count > 0) {
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-            beam_stack.back()->set_tag_at(i, tag3_pred);
+            beam_stack.back()->update_tag(i, tag3_pred);
             beam_stack.back()->shift();
             beam_stack.back()->add_particle_weight(shiftp); 
             beam_stack.back()->set_num_particles(-shift3_count); //hack to communicate it should be skipped
@@ -1347,7 +1347,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
 
           //most likely tag
           WordIndex tag_pred = indices[0]; // arg_min(tag_probs, 0);
-          beam_stack[j]->set_tag_at(i, tag_pred);
+          beam_stack[j]->update_tag(i, tag_pred);
 
           //add second most likely tag if prob is high enough 
           WordIndex tag2_pred = indices[1]; 
@@ -1362,7 +1362,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
           
           if (shift2_count > 0) {
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-            beam_stack.back()->set_tag_at(i, tag2_pred);
+            beam_stack.back()->update_tag(i, tag2_pred);
             beam_stack.back()->shift();
             beam_stack.back()->add_particle_weight(shiftp); 
             beam_stack.back()->set_num_particles(-shift2_count); //hack to communicate it should be skipped
@@ -1375,7 +1375,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
           //add third most likely tag if prob is high enough 
          if (shift3_count > 0) {
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-            beam_stack.back()->set_tag_at(i, tag3_pred);
+            beam_stack.back()->update_tag(i, tag3_pred);
             beam_stack.back()->shift();
             beam_stack.back()->add_particle_weight(shiftp); 
             beam_stack.back()->set_num_particles(-shift3_count); //hack to communicate it should be skipped

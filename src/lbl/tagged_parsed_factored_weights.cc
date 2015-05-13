@@ -78,7 +78,7 @@ Reals TaggedParsedFactoredWeights::predictWordOverTags(int word, Context context
   //don't actually predict tags at the moment
   Reals weights(numTags(), 0);
   for (int i = 0; i < numTags(); ++i) {
-    context.tags.back() = i; //TODO check
+    context.features.back()[0] = config->tag_to_feature[i]; //TODO check
     weights[i] = predictWord(word, context);
   }
   return weights;

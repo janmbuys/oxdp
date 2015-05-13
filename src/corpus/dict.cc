@@ -92,6 +92,7 @@ WordId Dict::convertTag(const Word& tag, bool frozen) {
     //std::cout << tag << " ";
     tags_.push_back(tag);
     tag_d_[tag] = tags_.size()-1;
+    tag_to_feature_.push_back(convertFeature(tag, frozen));
     return tags_.size()-1;
   } else {
     return i->second;
@@ -178,5 +179,11 @@ Word Dict::lookupLabel(WordId id) const {
   return labels_[id];
 }
  
+WordId Dict::tagToFeature(WordId tag_id) const {
+  if (!valid(tag_id)) 
+    return 0;
+  return tag_to_feature_[tag_id];
+}
+
 }
 
