@@ -244,14 +244,14 @@ class TransitionParser: public Parser {
         features.push_back(feats);
       } else {
         words.push_back(0);
-        if (config_->lexicalised && config_->compositional)
+        if (config_->lexicalised && config_->predict_pos)
           features.push_back(Words(2, 0)); //word + pos
         else
           features.push_back(Words(1, 0));
       }          
     }
 
-    if (!config_->pos_annotated)
+    if (config_->predict_pos)
       features.push_back(Words());
     
     return Context(words, features);

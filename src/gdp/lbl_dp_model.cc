@@ -123,6 +123,15 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
                  << test_corpus2->numTokens() << " tokens\n";
   }
 
+  std::cerr << "Reading test corpus unsup...\n";
+  boost::shared_ptr<ParsedCorpus> test_corpus_unsup = boost::make_shared<ParsedCorpus>(config);
+  if (config->test_file_unsup.size()) {
+    test_corpus_unsup->readTxtFile(config->test_file_unsup, dict, true);
+    std::cerr << "Done reading unsup test corpus..." << std::endl;
+    std::cerr << "Corpus size: " << test_corpus_unsup->size() << " sentences,\t" 
+                 << test_corpus_unsup->numTokens() << " tokens\n";
+  }
+  
   if (config->model_input_file.size() == 0) {
     metadata->initialize(training_corpus);
     weights = boost::make_shared<ParsedWeights>(config, metadata, true);
@@ -141,11 +150,14 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
   Real best_perplexity = numeric_limits<Real>::infinity();
   Real best_perplexity2 = numeric_limits<Real>::infinity();
+  Real best_perplexity_unsup = numeric_limits<Real>::infinity();
   Real test_objective = 0;
   Real test_objective2 = 0;
+  Real test_objective_unsup = 0;
 
   Real best_global_objective = numeric_limits<Real>::infinity();
-  bool improve_objective = true;
+  bool objective_improved = true;
+  bool stop_training = false;
   Real global_objective = 0;
 
   boost::shared_ptr<ParsedWeights> global_gradient =
@@ -166,7 +178,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
     boost::shared_ptr<ParsedWeights> gradient =
         boost::make_shared<ParsedWeights>(config, metadata, false);
 
-    for (int iter = 0; (iter < config->iterations) && improve_objective; ++iter) {
+    for (int iter = 0; (iter < config->iterations) && !stop_training; ++iter) {
       auto iteration_start = get_time();
 
       #pragma omp master
@@ -307,14 +319,21 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
      
         if (global_objective <= best_global_objective) {
           best_global_objective = global_objective;
+          objective_improved = true;
         } else {
-          improve_objective = false;
+          if (!objective_improved)
+            stop_training = true;
+          objective_improved = false;
         }
 
         //if (iter%5 == 0)
         evaluate(test_corpus, iteration_start, minibatch_counter,
                test_objective, best_perplexity);
-        evaluate(test_corpus2, iteration_start, minibatch_counter,
+        if (config->semi_supervised)
+          evaluate(test_corpus_unsup, iteration_start, minibatch_counter,
+               test_objective_unsup, best_perplexity_unsup);
+        else
+          evaluate(test_corpus2, iteration_start, minibatch_counter,
                test_objective2, best_perplexity2);
       }
     }
@@ -451,11 +470,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         // Wait the regularization update to finish and make sure the global
         // words are reset only after the global gradient is fully cleared.
         #pragma omp barrier
-
-        /* if (minibatch_counter % 1000 == 0) {
-          evaluate(test_corpus, iteration_start, minibatch_counter,
-                   test_objective, best_perplexity);
-        } */
+        if ((iter == 0) && (minibatch_counter % 10000 == 0)) {
+          evaluate(test_corpus_unsup, iteration_start, minibatch_counter,
+             test_objective_unsup, best_perplexity_unsup);
+        } 
 
         ++minibatch_counter;
         start = end;
@@ -474,15 +492,15 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
      
         if (global_objective <= best_global_objective) {
           best_global_objective = global_objective;
-        } else {
+        } /*else {
           improve_objective = false;
-        }
+        } */
 
         //if (iter%5 == 0)
         evaluate(test_corpus, iteration_start, minibatch_counter,
                test_objective, best_perplexity);
-        evaluate(test_corpus2, iteration_start, minibatch_counter,
-               test_objective2, best_perplexity2);
+        evaluate(test_corpus_unsup, iteration_start, minibatch_counter,
+             test_objective_unsup, best_perplexity_unsup);
       }
     }
   }
@@ -591,7 +609,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
 
               Real sentence_objective = 0;
               sentence_vector_gradient = weights->getSentenceVectorGradient(examples, sentence_objective);
-              std::cout << AccuracyCounts::sentence_uas(parse, test_corpus->sentence_at(j)) << " " << parse.weight() << " " <<  sentence_vector_gradient.norm() << std::endl;
+              //std::cout << AccuracyCounts::sentence_uas(parse, test_corpus->sentence_at(j)) << " " << parse.weight() << " " <<  sentence_vector_gradient.norm() << std::endl;
               weights->updateSentenceVectorGradient(sentence_vector_gradient);
 
               //global_gradient->syncUpdate(words, gradient);

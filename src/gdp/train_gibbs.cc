@@ -66,8 +66,8 @@ int main(int argc, char** argv) {
         "Predict POS during decoding.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
-    ("pos-annotated", value<bool>()->default_value(false),
-        "Use word_POS as input feature.")
+    //("pos-annotated", value<bool>()->default_value(false),
+     //   "Use word_POS as input feature.")
     ("root-first", value<bool>()->default_value(true),
         "Add root to the beginning (else end) of the sentence.")
     ("bootstrap", value<bool>()->default_value(false),
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
   config->minibatch_size = vm["minibatch-size"].as<int>();
   config->minibatch_size_unsup = vm["minibatch-size-unsup"].as<int>();
   config->randomise = vm["randomise"].as<bool>();
-  config->pos_annotated = vm["pos-annotated"].as<bool>();
+  //config->pos_annotated = vm["pos-annotated"].as<bool>();
 
   config->context_type = vm["context-type"].as<std::string>(); //not currently used
   std::string parser_type_str = vm["parser-type"].as<std::string>();

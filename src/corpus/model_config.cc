@@ -12,8 +12,8 @@ ModelConfig::ModelConfig()
       vocab_size(0), noise_samples(0), parser_type(ParserType::arcstandard), 
       activation(Activation::linear), pyp_model(false), labelled_parser(false), 
       discriminative(false), predict_pos(false), lexicalised(false), sentence_vector(false),
-      compositional(false), output_compositional(false), pos_annotated(false), label_features(false), 
-      morph_features(false), 
+      //compositional(false), output_compositional(false), pos_annotated(false), 
+      label_features(false), morph_features(false), 
       distance_features(false), char_lexicalised(false), adapt_word_context(false),
       semi_supervised(false), direction_deterministic(false), sum_over_beam(false), resample(false), 
       root_first(true), complete_parse(true), bootstrap(false), bootstrap_iter(0), max_beam_increment(1), 
@@ -66,9 +66,9 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
       && discriminative == other.discriminative
       && lexicalised == other.lexicalised
       && sentence_vector == other.sentence_vector
-      && compositional == other.compositional
-      && output_compositional == other.output_compositional
-      && pos_annotated == other.pos_annotated
+     // && compositional == other.compositional
+    //  && output_compositional == other.output_compositional
+    //  && pos_annotated == other.pos_annotated
       && label_features == other.label_features
       && morph_features == other.morph_features
       && distance_features == other.distance_features

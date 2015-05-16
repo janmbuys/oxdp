@@ -21,7 +21,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
   //std::string tag_str; 
   WordId word_id = -1;
   Words features;
-  if (config_->pyp_model || config_->compositional)
+  if (config_->pyp_model || config_->predict_pos)
     features.push_back(-1); //placeholder for tag
 
   while(cur < line.size()) {
@@ -29,18 +29,18 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
       if (state == 0) 
         continue;
       if (col_num == 1) { //1 - annotated word
-        if ((config_->lexicalised && config_->compositional) || (config_->pyp_model && !config_->pos_annotated)) {
+        if (config_->lexicalised || config_->pyp_model) {
           std::string word_str = line.substr(last, cur - last - 1);
           word_id = dict->convert(word_str, frozen);
           sent_out->push_back(word_id);
         }
       } else if (col_num == 2) { //2 - unannotated word 
         std::string word_str = line.substr(last, cur - last - 1);
-        if ((!config_->lexicalised || !config_->compositional) && (!config_->pyp_model || config_->pos_annotated)) {
+        if (!config_->lexicalised && !config_->pyp_model) {
           word_id = dict->convert(word_str, frozen);
           sent_out->push_back(word_id);
         }
-        if (!config_->pyp_model && config_->lexicalised && config_->compositional) {
+        if (!config_->pyp_model && config_->lexicalised) {
           //split stem as feature if present
           std::stringstream feature_stream(word_str);
           std::string feat;
@@ -55,7 +55,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(const std::string& line,
       } else if (col_num == 4) { //4 - postag 
           std::string tag_str = line.substr(last, cur - last - 1);
         tags_out->push_back(dict->convertTag(tag_str, frozen));
-        if (config_->pyp_model || config_->compositional)
+        if (config_->pyp_model || config_->predict_pos)
           features[0] = dict->convertFeature(tag_str, frozen);
       } else if (col_num == 5) { //5 morphological features (| seperated)
           std::string feature_str = line.substr(last, cur - last -1); 
@@ -118,7 +118,7 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
       if (dict->eos() != -1) {
         sent.push_back(dict->eos()); 
         tags.push_back(dict->eos()); 
-        if (!config_->pyp_model && config_->lexicalised && config_->compositional) 
+        if (!config_->pyp_model && config_->lexicalised && config_->predict_pos) 
           features.push_back(Words(2, dict->eos()));
         else
           features.push_back(Words(1, dict->eos()));
@@ -151,7 +151,7 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
         if (dict->sos() != -1) {
           sent.push_back(dict->sos()); 
           tags.push_back(dict->sos()); 
-          if (!config_->pyp_model && config_->lexicalised && config_->compositional) 
+          if (!config_->pyp_model && config_->lexicalised && config_->predict_pos) 
             features.push_back(Words(2, dict->sos()));
           else
             features.push_back(Words(1, dict->sos()));

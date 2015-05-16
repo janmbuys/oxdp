@@ -57,6 +57,8 @@ int main(int argc, char** argv) {
         "corpus of test sentences")
     ("test-set2,t", value<string>(),
         "corpus of test sentences")
+    ("test-set-unsup,t", value<std::string>(),
+        "corpus of test sentences to be evaluated at each iteration")
     ("test-out-file,o", value<std::string>()->default_value("system.out.conll"),
         "conll output file for system parsing the test set")
     ("iterations", value<int>()->default_value(1),
@@ -101,12 +103,12 @@ int main(int argc, char** argv) {
         "Predict words in addition to POS tags.")
     ("sentence-vector", value<bool>()->default_value(false),
         "Learn sentence vectors.")
-    ("compositional", value<bool>()->default_value(false),
-        "Compositional word representations including POS tags and other features.")
-    ("output-compositional", value<bool>()->default_value(false),
-        "Compositional output word representations including POS tags and other features.")
-    ("pos-annotated", value<bool>()->default_value(false),
-        "Use word_POS as input feature.")
+    //("compositional", value<bool>()->default_value(false),
+    //    "Compositional word representations including POS tags and other features.")
+    //("output-compositional", value<bool>()->default_value(false),
+    //    "Compositional output word representations including POS tags and other features.")
+    //("pos-annotated", value<bool>()->default_value(false),
+    //    "Use word_POS as input feature.")
     ("label-features", value<bool>()->default_value(false),
         "Include arc labels as input feature.")
     ("morph-features", value<bool>()->default_value(false),
@@ -171,11 +173,17 @@ int main(int argc, char** argv) {
   boost::shared_ptr<ModelConfig> config = boost::make_shared<ModelConfig>();
 
   config->training_file = vm["training-set"].as<std::string>();
+  if (vm.count("training-set-unsup")) {
+    config->training_file_unsup = vm["training-set-unsup"].as<std::string>();
+  }
   if (vm.count("test-set")) {
     config->test_file = vm["test-set"].as<string>();
   }
   if (vm.count("test-set2")) {
     config->test_file2 = vm["test-set2"].as<string>();
+  }
+  if (vm.count("test-set-unsup")) {
+    config->test_file_unsup = vm["test-set-unsup"].as<std::string>();
   }
 
   config->pyp_model = false;
@@ -238,8 +246,9 @@ int main(int argc, char** argv) {
     config->parser_type = ParserType::ngram; 
   }
   
-  config->pos_annotated = vm["pos-annotated"].as<bool>();
-  if (!config->pos_annotated)
+  //config->pos_annotated = vm["pos-annotated"].as<bool>();
+  config->predict_pos = vm["predict-pos"].as<bool>();
+  if (config->predict_pos)
     config->ngram_order += 1;
 
   std::string activation_str = vm["activation"].as<std::string>();
@@ -257,10 +266,9 @@ int main(int argc, char** argv) {
   config->labelled_parser = vm["labelled-parser"].as<bool>();
   config->discriminative = vm["discriminative"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
-  config->predict_pos = vm["predict-pos"].as<bool>();
   config->sentence_vector = vm["sentence-vector"].as<bool>();
-  config->compositional = vm["compositional"].as<bool>();
-  config->output_compositional = vm["output-compositional"].as<bool>();
+  //config->compositional = vm["compositional"].as<bool>();
+  //config->output_compositional = vm["output-compositional"].as<bool>();
   config->label_features = vm["label-features"].as<bool>();
   config->morph_features = vm["morph-features"].as<bool>();
   config->distance_features = vm["distance-features"].as<bool>();
@@ -305,10 +313,10 @@ int main(int argc, char** argv) {
   std::cerr << "# order = " << config->ngram_order << std::endl;
   std::cerr << "# representation_size = " << config->representation_size << std::endl;
   std::cerr << "# class factored = " << config->factored << std::endl;
-  std::cerr << "# compositional = " << config->compositional << std::endl;
-  std::cerr << "# output compositional = " << config->output_compositional << std::endl;
+  //std::cerr << "# compositional = " << config->compositional << std::endl;
+  //std::cerr << "# output compositional = " << config->output_compositional << std::endl;
   std::cerr << "# sentence vector = " << config->sentence_vector << std::endl;
-  std::cerr << "# pos annotated = " << config->pos_annotated << std::endl;
+  std::cerr << "# predict pos = " << config->predict_pos << std::endl;
   std::cerr << "# label features = " << config->label_features << std::endl;
   std::cerr << "# morph features = " << config->morph_features << std::endl;
   std::cerr << "# distance features = " << config->distance_features << std::endl;
@@ -363,10 +371,10 @@ int main(int argc, char** argv) {
       train_dp<ArcStandardLabelledParseModel<DiscriminativeWeights>, DiscriminativeWeights, DiscriminativeMetadata>(config);
   } else if (config->lexicalised) {
     if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) {
-      if (config->pos_annotated)
-        train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
-      else 
+      if (config->predict_pos)
         train_dp<ArcStandardLabelledParseModel<TaggedParsedFactoredWeights>, TaggedParsedFactoredWeights, TaggedParsedFactoredMetadata>(config);
+      else 
+        train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
 
     } else if (config->parser_type == ParserType::arceager) {
       train_dp<ArcEagerLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);

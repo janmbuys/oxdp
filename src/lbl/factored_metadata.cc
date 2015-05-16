@@ -12,12 +12,13 @@ FactoredMetadata::FactoredMetadata(
     const boost::shared_ptr<ModelConfig>& config, boost::shared_ptr<Dict>& dict)
     : Metadata(config, dict) {
   vector<int> classes;
-  if (config->lower_class_file.size() && !config->compositional && !config->pos_annotated) {
+  //for now don't need seperate lower classes
+  /*if (config->lower_class_file.size() && !config->compositional && !config->pos_annotated) {
     cout << "--lower-class-file set, ignoring --classes." << endl;
     loadClassesFromFile(
         config->lower_class_file, config->training_file, classes, dict, classBias);
-  }
-  else if (config->class_file.size()) {
+  } else */
+  if (config->class_file.size()) {
     cout << "--class-file set, ignoring --classes." << endl;
     loadClassesFromFile(
         config->class_file, config->training_file, classes, dict, classBias);

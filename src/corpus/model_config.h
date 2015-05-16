@@ -54,9 +54,9 @@ struct ModelConfig {
   bool        predict_pos;
   bool        lexicalised;
   bool        sentence_vector;
-  bool        compositional;
-  bool        output_compositional;
-  bool        pos_annotated;
+ // bool        compositional;
+ // bool        output_compositional;
+ // bool        pos_annotated;
   bool        label_features;
   bool        morph_features;
   bool        distance_features;
@@ -128,9 +128,9 @@ struct ModelConfig {
     ar & predict_pos;
     ar & lexicalised;
     ar & sentence_vector;
-    ar & compositional;
-    ar & output_compositional;
-    ar & pos_annotated;
+    //ar & compositional;
+    //ar & output_compositional;
+    //ar & pos_annotated;
     ar & label_features;
     ar & morph_features;
     ar & distance_features;
