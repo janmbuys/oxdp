@@ -172,23 +172,24 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
   config_->num_labels = dict->label_size();
 }
 
-Words ParsedCorpus::convertWhitespaceDelimitedTxtLine(const std::string& line, 
-        const boost::shared_ptr<Dict>& dict, bool frozen) {
-  Words out;
-
+void ParsedCorpus::convertWhitespaceDelimitedTxtLine(const std::string& line, 
+      const boost::shared_ptr<Dict>& dict, Words* sent_out, WordsList* features_out, bool frozen) {
   size_t cur = 0;
   size_t last = 0;
   int state = 0;
      
   //add start of sentence symbol if defined
-  if (dict->sos() != -1)
-    out.push_back(dict->sos()); 
+  if (dict->sos() != -1) {
+    sent_out->push_back(dict->sos()); 
+    features_out->push_back(Words(1, dict->sos())); 
+  }
 
   while (cur < line.size()) {
     if (Dict::is_ws(line[cur++])) {
       if (state == 0) 
         continue;
-      out.push_back(dict->convert(line.substr(last, cur - last - 1), frozen));
+      sent_out->push_back(dict->convert(line.substr(last, cur - last - 1), frozen));
+      features_out->push_back(Words(1, dict->convertFeature(line.substr(last, cur - last - 1), frozen)));
       state = 0;
     } else {
       if (state == 1) 
@@ -198,14 +199,16 @@ Words ParsedCorpus::convertWhitespaceDelimitedTxtLine(const std::string& line,
     }
   }
 
-  if (state == 1)
-    out.push_back(dict->convert(line.substr(last, cur - last), frozen));
+  if (state == 1) {
+    sent_out->push_back(dict->convert(line.substr(last, cur - last), frozen));
+    features_out->push_back(Words(1, dict->convertFeature(line.substr(last, cur - last), frozen)));
+  }
 
   //add end of sentence symbol if defined 
-  if (dict->eos() != -1) 
-    out.push_back(dict->eos()); 
-
-  return out;
+  if (dict->eos() != -1) {
+    sent_out->push_back(dict->eos()); 
+    features_out->push_back(Words(1, dict->eos())); 
+  }
 }
 
 void ParsedCorpus::readTxtFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) {
@@ -214,22 +217,22 @@ void ParsedCorpus::readTxtFile(const std::string& filename, const boost::shared_
   assert(in);
   std::string line;
 
+  Words sent;
   WordsList features;
   Words tags;
   Indices arcs;
   Words labels;
 
   while(getline(in, line)) {
-    //start of sentence
+    sent.clear();
     features.clear();
     tags.clear();
     arcs.clear();
     labels.clear();
 
-    Words sent = convertWhitespaceDelimitedTxtLine(line, dict, frozen);
+    convertWhitespaceDelimitedTxtLine(line, dict, &sent, &features, frozen);
 
     for (unsigned i = 0; i < sent.size(); ++i) {
-      features.push_back(Words(1, 0));
       tags.push_back(1);
       arcs.push_back(-1);
       labels.push_back(-1);

@@ -259,7 +259,8 @@ Context ArcStandardLabelledParser::wordContext() const {
   } else {
     Context ctx = map_context(contextIndices());
     //std::cout << ctx.features.size() << ", " << ctx.features.back().size() << std::endl;
-    ctx.features.back().push_back(features_at(buffer_next())[0]); //next tag (as feature)
+    if (predict_pos())
+      ctx.features.back().push_back(features_at(buffer_next())[0]); //next tag (as feature)
     //std::cout << ctx.features.size() << ": " << ctx.features.back().size() << std::endl;
     //std::cout << buffer_next() << " " << features_at(buffer_next())[1] << std::endl;
     return ctx;

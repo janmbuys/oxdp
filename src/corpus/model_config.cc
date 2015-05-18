@@ -11,7 +11,7 @@ ModelConfig::ModelConfig()
       factored(true), classes(0), randomise(false), diagonal_contexts(false),
       vocab_size(0), noise_samples(0), parser_type(ParserType::arcstandard), 
       activation(Activation::linear), pyp_model(false), labelled_parser(false), 
-      discriminative(false), predict_pos(false), lexicalised(false), sentence_vector(false),
+      discriminative(false), tag_pos(false), predict_pos(false), lexicalised(false), sentence_vector(false),
       //compositional(false), output_compositional(false), pos_annotated(false), 
       label_features(false), morph_features(false), 
       distance_features(false), char_lexicalised(false), adapt_word_context(false),

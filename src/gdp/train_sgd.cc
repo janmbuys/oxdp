@@ -96,7 +96,9 @@ int main(int argc, char** argv) {
     ("labelled-parser", value<bool>()->default_value(false),
         "Predict arc labels.")
     ("predict-pos", value<bool>()->default_value(false),
-        "Predict POS during decoding.")
+        "Predict POS in model.")
+    ("tag-pos", value<bool>()->default_value(false),
+        "Tag POS during decoding.")
     ("discriminative", value<bool>()->default_value(false),
         "Discriminative rather than generative model.")
     ("lexicalised", value<bool>()->default_value(true),
@@ -247,6 +249,7 @@ int main(int argc, char** argv) {
   }
   
   //config->pos_annotated = vm["pos-annotated"].as<bool>();
+  config->tag_pos = vm["tag-pos"].as<bool>();
   config->predict_pos = vm["predict-pos"].as<bool>();
   if (config->predict_pos)
     config->ngram_order += 1;

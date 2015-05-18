@@ -330,7 +330,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPars
         worst_weight = beam_stack[j]->particle_weight();
 
       //shift
-      if (config_->predict_pos) {
+      if (config_->tag_pos) {
           Reals tag_probs = weights->predictTag(beam_stack[j]->tagContext());
           Reals word_probs = weights->predictWordOverTags(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
           for (unsigned k = 0; k < tag_probs.size(); ++k)
@@ -603,7 +603,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
       if (shift_count == 0)
         beam_stack[j]->set_num_particles(0);
       else {
-        if (config_->predict_pos) {
+        if (config_->tag_pos) {
           Reals tag_probs = weights->predictTag(beam_stack[j]->tagContext());
           Reals word_probs = weights->predictWordOverTags(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
           for (unsigned k = 0; k < tag_probs.size(); ++k)
@@ -921,7 +921,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
       if (shift_count == 0)
         beam_stack[j]->set_num_particles(0);
       else {
-        if (config_->predict_pos) {
+        if (config_->tag_pos) {
           Reals tag_probs = weights->predictTag(beam_stack[j]->tagContext());
           Reals word_probs = weights->predictWordOverTags(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
           for (unsigned k = 0; k < tag_probs.size(); ++k)
@@ -1157,7 +1157,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
       if (shift_count == 0)
         beam_stack[j]->set_num_particles(0);
       else {
-        /*if (config_->predict_pos) {
+        /*if (config_->tag_pos) {
           Reals tag_probs = weights->predictTag(beam_stack[j]->tagContext());
           Reals word_probs = weights->predictWordOverTags(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
           for (unsigned k = 0; k < tag_probs.size(); ++k)
@@ -1333,7 +1333,7 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::particle
       if (shift_count == 0)
         beam_stack[j]->set_num_particles(0);
       else {
-        /*if (config_->predict_pos) {
+        /*if (config_->tag_pos) {
           Reals tag_probs = weights->predictTag(beam_stack[j]->tagContext());
           Reals word_probs = weights->predictWordOverTags(beam_stack[j]->next_word(), beam_stack[j]->wordContext());
           for (unsigned k = 0; k < tag_probs.size(); ++k)

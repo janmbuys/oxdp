@@ -148,6 +148,10 @@ class TransitionParser: public Parser {
     return config_->root_first;
   }
 
+  bool predict_pos() const {
+    return config_->predict_pos;
+  }
+
   bool adapt_word_context() const {
     return config_->adapt_word_context;
   }
