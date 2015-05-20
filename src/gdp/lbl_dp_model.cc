@@ -64,8 +64,11 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
   if (config->semi_supervised && config->training_file_unsup.size()) { 
     std::cerr << "Reading unsupervised training corpus...\n";
+    //unsup_training_corpus->readTxtFile(config->training_file + ".txt", dict, false);
     unsup_training_corpus->readTxtFile(config->training_file_unsup, dict, false);
     std::cerr << "Corpus size: " << unsup_training_corpus->size() << " sentences" << std::endl;
+
+    
   } else {
     std::cerr << "No unsupervised training corpus.\n";
   }
@@ -169,7 +172,23 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   int shared_index = 0;
   // For no particular reason. It just looks like this works best.
   int task_size = sqrt(config->minibatch_size) / 4; //to imitate word-level behaviour
-    
+ 
+  /* boost::shared_ptr<AccuracyCounts> temp_acc_counts = boost::make_shared<AccuracyCounts>(dict);
+  for (unsigned j = 0; j < unsup_training_corpus->size(); ++j) {
+        //std::cout << j << std::endl;
+        ParsedSentence temp = unsup_training_corpus->sentence_at(j);
+        //std::cout << temp.size() << std::endl;
+        Parser parse = parse_model->evaluateSentence(temp, weights, temp_acc_counts, false, config->num_particles); 
+        //std::cout << parse.size() << std::endl;
+        //if (j > 50) {
+        //for (unsigned i = 0; i < parse.size(); ++i)
+        //  std::cout << " " << parse.arc_at(i) << std::endl;
+          //if (j != 38)
+          unsup_training_corpus->set_arcs_at(j, parse);
+        //}
+        std::cout << "parsed" << std::endl;
+    } */ 
+
   omp_set_num_threads(config->threads);
   #pragma omp parallel
   {
@@ -183,6 +202,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
       #pragma omp master
       {
+        std::cerr << "Training iteration " << iter << std::endl;
         if (config->randomise) {
           random_shuffle(indices.begin(), indices.end());
         }
@@ -239,6 +259,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
                 parse_model->extractSentenceUnsupervised(training_corpus->sentence_at(j), weights, task_examples);
             }
             num_examples += task_examples->word_example_size() + task_examples->action_example_size();
+            if (config->predict_pos)
+              num_examples += task_examples->tag_example_size();
 
             if (config->noise_samples > 0) {
               weights->estimateGradient(
@@ -283,6 +305,9 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         #pragma omp barrier
         Real minibatch_factor =
             static_cast<Real>(num_examples) / (3*training_corpus->numTokens());
+        if (config->predict_pos)
+          minibatch_factor =
+            static_cast<Real>(num_examples) / (4*unsup_training_corpus->numTokens());
         //approx total number of predictions
         
         objective = regularize(global_gradient, minibatch_factor);
@@ -339,12 +364,24 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
     }
 
     if (config->semi_supervised) {
-      std::cerr << "Parsing unlabelled data" << std::endl;
+      #pragma omp master
+      {
+        std::cerr << "Parsing unlabelled data" << std::endl;
+      }
 
       boost::shared_ptr<AccuracyCounts> temp_acc_counts = boost::make_shared<AccuracyCounts>(dict);
       for (unsigned j = 0; j < unsup_training_corpus->size(); ++j) {
+        //ParsedSentence temp = unsup_training_corpus->sentence_at(j);
+        //Parser parse = parse_model->evaluateSentence(temp, weights, temp_acc_counts, false, config->num_particles); 
         Parser parse = parse_model->evaluateSentence(unsup_training_corpus->sentence_at(j), weights, temp_acc_counts, false, config->num_particles); 
         unsup_training_corpus->set_arcs_at(j, parse);
+        unsup_training_corpus->set_labels_at(j, parse);
+        
+        //unsup_training_corpus->sentence_at(j).print_arcs();
+        //unsup_training_corpus->sentence_at(j).print_sentence(dict);
+        //for (unsigned i = 0; i < parse.size(); ++i)
+        //  std::cout << unsup_training_corpus->sentence_at(j).arc_at(i) << " ";
+        //std::cout << std::endl;
       }
   
       #pragma omp master
@@ -352,11 +389,11 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
     }
 
     for (int iter = 0; (iter < config->iterations_unsup) && config->semi_supervised; ++iter) {
-      std::cerr << "Unsup Training iteration " << iter << std::endl;
       auto iteration_start = get_time();
 
       #pragma omp master
       {
+        std::cerr << "Unsup Training iteration " << iter << std::endl;
         if (config->randomise) {
           random_shuffle(unsup_indices.begin(), unsup_indices.end());
         }
@@ -404,15 +441,16 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             boost::shared_ptr<ParseDataSet> task_examples = boost::make_shared<ParseDataSet>();
             
             for (int j: task) {
-              if ((!config->bootstrap && (config->bootstrap_iter == 0)) || 
-                     (iter < config->bootstrap_iter))
-                parse_model->extractSentence(unsup_training_corpus->sentence_at(j), task_examples);
-              else if (config->bootstrap)
-                parse_model->extractSentence(unsup_training_corpus->sentence_at(j), weights, task_examples);
-              else 
-                parse_model->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j), weights, task_examples);
+              //unsup_training_corpus->sentence_at(j).print_arcs();
+              parse_model->extractSentence(unsup_training_corpus->sentence_at(j), task_examples);
+              //std::cout << std::endl;
+              //for (unsigned i = 0; i < task_examples->action_example_size(); ++i) 
+              //  std::cout << task_examples->action_at(i) << " ";
+              //std::cout << std::endl;
             }
             num_examples += task_examples->word_example_size() + task_examples->action_example_size();
+            if (config->predict_pos)
+              num_examples += task_examples->tag_example_size();
 
             if (config->noise_samples > 0) {
               weights->estimateGradient(
@@ -457,6 +495,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         #pragma omp barrier
         Real minibatch_factor =
             static_cast<Real>(num_examples) / (3*unsup_training_corpus->numTokens());
+        if (config->predict_pos)
+          minibatch_factor =
+            static_cast<Real>(num_examples) / (4*unsup_training_corpus->numTokens());
+
         //approx total number of predictions
         
         objective = regularize(global_gradient, minibatch_factor);
@@ -482,7 +524,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
       #pragma omp master
       {
         Real iteration_time = get_duration(iteration_start, get_time());
-        std::cerr << "Iteration: " << iter << ", "
+        std::cerr << "Unsup Iteration: " << iter << ", "
              << "Time: " << iteration_time << " seconds, "
              << "  Likelihood: " << global_objective 
              << "  Size: " << unsup_training_corpus->numTokens()

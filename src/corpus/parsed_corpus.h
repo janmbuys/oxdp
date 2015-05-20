@@ -31,6 +31,7 @@ class ParsedCorpus: public CorpusInterface {
   void readTxtFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen);
 
   ParsedSentence sentence_at(unsigned i) const {
+    //std::cout << i << " " << sentences_.at(i).word_at(1) << std::endl;
     return sentences_.at(i);
   }
 
@@ -38,11 +39,18 @@ class ParsedCorpus: public CorpusInterface {
     sentences_.push_back(sent);
   }
 
-  void set_arcs_at(unsigned i, const ParsedSentence& parse) {
+  void set_arcs_at(unsigned j, const ParsedSentence& parse) {
     for (unsigned i = 0; i < parse.size(); ++i) {
-      sentences_.at(i).set_arc(i, parse.arc_at(i));
+      sentences_.at(j).set_arc(i, parse.arc_at(i));
     }
   }
+
+  void set_labels_at(unsigned j, const ParsedSentence& parse) {
+    for (unsigned i = 0; i < parse.size(); ++i) {
+      sentences_.at(j).set_label(i, parse.label_at(i));
+    }
+  }
+
 
   size_t size() const override;
 
