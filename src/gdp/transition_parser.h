@@ -47,6 +47,10 @@ class TransitionParser: public Parser {
     set_tag_feature_at(i, config_->tag_to_feature[tag]);
   }
 
+  void append_action_label(WordId l) {
+    action_labels_.push_back(l);
+  }
+
   void reset_importance_weight() {
     importance_weight_ = 0;
   }
@@ -174,6 +178,10 @@ class TransitionParser: public Parser {
     std::cout << std::endl;
   }
 
+  WordId action_label_at(int i) const {
+    return action_labels_[i];
+  }
+
   Real particle_weight() const {
     return weight();
   }
@@ -213,6 +221,23 @@ class TransitionParser: public Parser {
 
   std::string context_type() const {
     return config_->context_type;
+  }
+
+  WordId convert_action(kAction a, WordId l) const {
+    if (a == kAction::sh)
+      return 0;
+    else if (a == kAction::la)
+      return l + 1;
+    else if (a == kAction::ra)
+      return num_labels() + l + 1;
+    else if (a == kAction::re) //assume valid 
+      return 2*num_labels() + 1;
+    else if (a == kAction::la2)
+      return 2*num_labels() + l + 1;
+    else if (a == kAction::ra2)
+      return 3*num_labels() + l + 1;
+    else 
+      return -1;
   }
 
   Context map_context(Indices ind) const {
@@ -262,6 +287,70 @@ class TransitionParser: public Parser {
   }
 
   /*  functions for context vectors  */
+
+  Context stack_action_context() const {
+    WordsList features;
+    
+    //stack features
+    for (int i = static_cast<int>(stack_.size()) - config_->stack_ctx_size; i < static_cast<int>(stack_.size()); ++i) {
+        Indices ctx;
+        WordIndex pos = -1;
+        if (i >= 0) 
+          pos = stack_.at(i);
+        //features.push_back(features_at(pos));
+        ctx.push_back(pos);
+        bool allow_children = (static_cast<int>(stack_.size()) - i == 1) || (static_cast<int>(stack_.size()) - i == 2);
+
+        if (allow_children && (config_->child_ctx_level >= 1)) {
+          ctx.push_back(leftmost_child_at(pos));
+          ctx.push_back(rightmost_child_at(pos));
+        } 
+        if (allow_children && (config_->child_ctx_level >= 2)) {
+          ctx.push_back(second_leftmost_child_at(pos));
+          ctx.push_back(second_rightmost_child_at(pos));
+        } 
+        if (allow_children && (config_->child_ctx_level >= 3)) {
+          ctx.push_back(leftmost_grandchild_at(pos));
+          ctx.push_back(rightmost_grandchild_at(pos));
+        }  
+
+        for (WordIndex ctx_pos: ctx) {
+          if (ctx_pos >= 0) {
+            //std::cout << ctx_pos << std::endl;
+            Words feats(features_at(ctx_pos));
+            if (config_->label_features) 
+              feats.push_back(config_->label_feature_index + label_at(ctx_pos));
+            features.push_back(feats);
+          } else {
+            //if (config_->lexicalised && config_->predict_pos)
+            //  features.push_back(Words(2, 0)); //word + pos
+            //else
+              features.push_back(Words(1, 0));
+          }
+        }
+      //} else {
+        //if (config_->lexicalised && config_->predict_pos)
+        //  features.push_back(Words(2, 0)); //word + pos
+        //else
+        //  features.push_back(Words(1, 0));
+      //}
+    }
+
+    //action features
+    for (int i = static_cast<int>(actions_.size()) - config_->action_ctx_size; i < static_cast<int>(actions_.size()); ++i) {
+      if (i >= 0) {
+        features.push_back(Words(1, config_->action_feature_index + convert_action(actions_[i], action_label_at(i))));
+      } else {
+        features.push_back(Words(1, config_->action_feature_index - 1));
+      }
+    } 
+    
+    if (config_->predict_pos)
+      features.push_back(Words());
+
+    //std::cout << features.size() << std::endl;
+    return Context(Words(), features);
+  }
 
   Words word_next_children_context() const {
     Words ctx(5, 0);
@@ -960,6 +1049,7 @@ class TransitionParser: public Parser {
   Indices stack_;
   WordIndex buffer_next_;
   ActList actions_;
+  Words action_labels_;  
   Real importance_weight_; 
   Real beam_weight_; 
   int num_particles_;

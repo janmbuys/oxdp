@@ -15,6 +15,7 @@
 using namespace boost::program_options;
 using namespace oxlm;
 
+#define lblOrderASa 12
 #define lblOrderAS 7
 #define lblOrderAS3 10
 #define lblOrderASl 10
@@ -121,6 +122,12 @@ int main(int argc, char** argv) {
         "Use additional, unlabelled training data.")
     ("root-first", value<bool>()->default_value(true),
         "Add root to the beginning (else end) of the sentence.")
+    ("stack-context-size", value<int>()->default_value(2),
+        "Stack elements context size.")
+    ("action-context-size", value<int>()->default_value(0),
+        "Action history elements context size.")
+    ("child-context-level", value<int>()->default_value(0),
+        "Stack elements context size.")
     ("complete-parse", value<bool>()->default_value(true),
         "Enforce complete tree-structured parse.")
     ("bootstrap", value<bool>()->default_value(false),
@@ -213,7 +220,13 @@ int main(int argc, char** argv) {
     config->parser_type = ParserType::arcstandard; 
     if (parser_type_str == "arcstandard2")
       config->parser_type = ParserType::arcstandard2; 
-    if (config->context_type == "extended")
+    if (config->context_type == "stack-action") {
+      config->stack_ctx_size = vm["stack-context-size"].as<int>();
+      config->action_ctx_size = vm["action-context-size"].as<int>();
+      config->child_ctx_level = vm["child-context-level"].as<int>();
+      config->ngram_order = config->stack_ctx_size + config->action_ctx_size + 4*config->child_ctx_level + 1;
+    }
+    else if (config->context_type == "extended")
       config->ngram_order = lblOrderASx;
     else if (config->context_type == "extended-3rd")
       config->ngram_order = lblOrderASx3;

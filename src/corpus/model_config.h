@@ -78,9 +78,13 @@ struct ModelConfig {
   int         num_features;
   int         num_labels;
   int         num_train_sentences;
+  int         action_feature_index;
   int         label_feature_index;
   int         distance_feature_index;
   size_t      distance_range;
+  int         stack_ctx_size;
+  int         action_ctx_size;
+  int         child_ctx_level;
   std::vector<unsigned> beam_sizes;
   std::vector<std::vector<int>> word_to_features;
   std::vector<int> tag_to_feature;

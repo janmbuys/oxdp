@@ -46,10 +46,6 @@ class ArcStandardLabelledParser : public TransitionParser {
 
   void extractExamples(const boost::shared_ptr<ParseDataSet>& examples) const;
 
-  void append_action_label(WordId l) {
-    action_labels_.push_back(l);
-  }
-
   bool left_arc_valid() const {
     if (stack_depth() < 2)
       return false;
@@ -63,25 +59,6 @@ class ArcStandardLabelledParser : public TransitionParser {
       return false;
     WordIndex i = stack_top_third();
     return (i != 0);
-  }
-
-  WordId action_label_at(int i) const {
-    return action_labels_[i];
-  }
-
-  WordId convert_action(kAction a, WordId l) const {
-    if (a == kAction::sh)
-      return 0;
-    else if (a == kAction::la)
-      return l + 1;
-    else if (a == kAction::ra)
-      return num_labels() + l + 1;
-    else if (a == kAction::la2)
-      return 2*num_labels() + l + 1;
-    else if (a == kAction::ra2)
-      return 3*num_labels() + l + 1;
-    else 
-      return -1;
   }
 
   kAction lookup_action(WordId la) const {
@@ -113,9 +90,6 @@ class ArcStandardLabelledParser : public TransitionParser {
     else
       return -1;
   }
-
-  private:
-  Words action_labels_;  
 };
 
 }

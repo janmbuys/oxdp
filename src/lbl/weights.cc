@@ -174,14 +174,16 @@ void Weights::getContextVectors(
     //  contexts[i].push_back(examples->contextAt(i).features[context_width-1]);
 
     for (int j = 0; j < context_width; ++j) {
+      //std::cout << context_width << ":" << contexts[i].size() << std::endl;
       if (config->sentence_vector && (j == context_width - 1)) {
-        //std::cout << context_width << ":" << contexts[i].size() << std::endl;
         //std::cout << examples->sentenceIdAt(i) << std::endl;
         //std::cout << contexts[i][j][0] << std::endl;
         context_vectors[j].col(i) += P.col(contexts[i][j][0]); 
       } else {   
-        for (auto feat: contexts[i][j]) 
+        for (auto feat: contexts[i][j]) {
+          //std::cout << feat << "--" << std::endl;
           context_vectors[j].col(i) += Q.col(feat);
+        }
       }
     }
   }

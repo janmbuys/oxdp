@@ -10,13 +10,12 @@ using namespace boost::program_options;
 using namespace oxlm;
 using namespace std;
 
-//TODO correct
-template<class Model>
-void ExtractWordVectors(
+template<class Model, class Weights, class Metadata>
+void extract_word_vectors(
     const string& model_file,
     const string& vocab_file,
     const string& vectors_file) {
-  Model model;
+  LblDpModel<Model, Weights, Metadata> model; //TODO LblModel
   model.load(model_file);
 
   boost::shared_ptr<Dict> dict = model.getDict();
@@ -57,14 +56,17 @@ int main(int argc, char** argv) {
   string vectors_file = vm["vectors"].as<string>();
 
   switch (model_type) {
-    case NLM:
-      ExtractWordVectors<LblLM>(model_file, vocab_file, vectors_file);
+    /*case NLM:
+      extract_word_vectors<LblLM>(model_file, vocab_file, vectors_file);
       return 0;
     case FACTORED_NLM:
-      ExtractWordVectors<FactoredLblLM>(model_file, vocab_file, vectors_file);
-      return 0;
-    case AS_PARSE_NLM:
-      ExtractWordVectors<ASParsedFactoredLblLM>(model_file, vocab_file, vectors_file);
+      extract_word_vectors<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(model_file, vocab_file, vectors_file);
+      extract_word_vectors<FactoredLblLM>(model_file, vocab_file, vectors_file);
+      return 0; */
+    case 2:
+      extract_word_vectors<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(model_file, vocab_file, vectors_file);
+    case 3:
+      extract_word_vectors<ArcStandardLabelledParseModel<TagegdParsedFactoredWeights>, TaggedParsedFactoredWeights, TaggedParsedFactoredMetadata>(model_file, vocab_file, vectors_file);
       return 0;
     default:
       cout << "Unknown model type" << endl;

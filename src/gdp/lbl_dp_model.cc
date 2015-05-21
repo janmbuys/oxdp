@@ -77,6 +77,13 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   for (unsigned i = 0; i < dict->tag_size(); ++i) 
     config->tag_to_feature.push_back(dict->tagToFeature(i));
 
+  //add transitions as features
+  dict->convertFeature("ACTION_NULL", false);
+  config->action_feature_index = dict->feature_size();
+  for (unsigned i = 0; i < config->numActions(); ++i) 
+    dict->convertFeature("ACTION_" + std::to_string(i), false);
+
+
   if (config->label_features) {
     //add labels to feature vocab
     config->label_feature_index = dict->feature_size();
@@ -248,7 +255,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
                 minibatch.begin() + task_start, minibatch.begin() + task_end);
             //collect the training examples for the minibatch
             boost::shared_ptr<ParseDataSet> task_examples = boost::make_shared<ParseDataSet>();
-            
+                        
             for (int j: task) {
               if ((!config->bootstrap && (config->bootstrap_iter == 0)) || 
                      (iter < config->bootstrap_iter))
@@ -259,6 +266,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
                 parse_model->extractSentenceUnsupervised(training_corpus->sentence_at(j), weights, task_examples);
             }
             num_examples += task_examples->word_example_size() + task_examples->action_example_size();
+            //std::cout << task_examples->tag_example_size() << std::endl;
             if (config->predict_pos)
               num_examples += task_examples->tag_example_size();
 
@@ -307,7 +315,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             static_cast<Real>(num_examples) / (3*training_corpus->numTokens());
         if (config->predict_pos)
           minibatch_factor =
-            static_cast<Real>(num_examples) / (4*unsup_training_corpus->numTokens());
+            static_cast<Real>(num_examples) / (4*training_corpus->numTokens());
         //approx total number of predictions
         
         objective = regularize(global_gradient, minibatch_factor);

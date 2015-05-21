@@ -88,19 +88,25 @@ class Parser: public ParsedSentence {
   }
   
   WordIndex leftmost_child_at(WordIndex j) const {
-    if ((j >= size()) || (left_children_.at(j).empty())) 
+    if ((j < 0) || (j >= size()))
+      return -1;
+    if (left_children_.at(j).empty()) 
       return -1;
     else
       return left_children_.at(j).front();
   }
 
   WordIndex rightmost_child_at(WordIndex j) const {
-    if ((j >= size()) || (right_children_.at(j).empty())) 
+    if ((j < 0) || (j >= size()))
+      return -1;
+    if (right_children_.at(j).empty()) 
       return -1;
     return right_children_.at(j).back();
   }
 
   WordIndex leftmost_grandchild_at(WordIndex j) const {
+    if ((j < 0) || (j >= size()))
+      return -1;
     WordIndex i = leftmost_child_at(j);
     if (i >= 0)
       return leftmost_child_at(i);
@@ -109,6 +115,8 @@ class Parser: public ParsedSentence {
   }
 
   WordIndex rightmost_grandchild_at(WordIndex j) const {
+    if ((j < 0) || (j >= size()))
+      return -1;
     WordIndex i = rightmost_child_at(j);
     if (i >= 0)
       return rightmost_child_at(i);
@@ -117,14 +125,18 @@ class Parser: public ParsedSentence {
   }
 
   WordIndex second_leftmost_child_at(WordIndex j) const {
-    if ((j >= size()) || (left_children_.at(j).size() < 2)) 
+    if ((j < 0) || (j >= size()))
+      return -1;
+    if (left_children_.at(j).size() < 2) 
       return -1;
     else
       return left_children_.at(j).at(1);
   }
 
   WordIndex second_rightmost_child_at(WordIndex j) const {
-    if ((j >= size()) || (right_children_.at(j).size() < 2)) 
+    if ((j < 0) || (j >= size()))
+      return -1;
+    if (right_children_.at(j).size() < 2) 
       return -1;
     return right_children_.at(j).rbegin()[1];
   }

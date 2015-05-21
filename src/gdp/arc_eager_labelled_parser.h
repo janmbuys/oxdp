@@ -81,19 +81,6 @@ class ArcEagerLabelledParser : public TransitionParser {
     return (p1->particle_weight() < p2->particle_weight());
   }
 
-  WordId convert_action(kAction a, WordId l) const {
-    if (a == kAction::sh)
-      return 0;
-    else if (a == kAction::la)
-      return l + 1;
-    else if (a == kAction::ra)
-      return num_labels() + l + 1;
-    else if (a == kAction::re)
-      return 2*num_labels() + 1;
-    else
-      return -1;
-  }
-
   kAction lookup_action(WordId l) const {
     if (l == 0)
       return kAction::sh;

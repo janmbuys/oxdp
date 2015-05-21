@@ -3,20 +3,17 @@
 namespace oxlm {
 
 ArcStandardLabelledParser::ArcStandardLabelledParser(const boost::shared_ptr<ModelConfig>& config):
-  TransitionParser(config),
-  action_labels_()
+  TransitionParser(config)
 {
 }
 
 ArcStandardLabelledParser::ArcStandardLabelledParser(const TaggedSentence& parse, const boost::shared_ptr<ModelConfig>& config):
-  TransitionParser(parse, config),
-  action_labels_()
+  TransitionParser(parse, config)
 {
 }
 
 ArcStandardLabelledParser::ArcStandardLabelledParser(const TaggedSentence& parse, int num_particles, const boost::shared_ptr<ModelConfig>& config):
-  TransitionParser(parse, num_particles, config),
-  action_labels_()
+  TransitionParser(parse, num_particles, config)
 {
 }
 
@@ -256,8 +253,13 @@ Context ArcStandardLabelledParser::wordContext() const {
       return Context(word_tag_next_children_context()); //order 6
       //return Context(word_next_children_context()); //order 6
     //return word_tag_next_ngram_context(); // best perplexity
+  } else if (context_type() == "stack-action") {
+    Context ctx = stack_action_context();
+    if (predict_pos())
+      ctx.features.back().push_back(features_at(buffer_next())[0]); //next tag (as feature)
+    return ctx;
   } else {
-    Context ctx = map_context(contextIndices());
+    Context ctx = map_context(contextIndices()); //order 9
     //std::cout << ctx.features.size() << ", " << ctx.features.back().size() << std::endl;
     if (predict_pos())
       ctx.features.back().push_back(features_at(buffer_next())[0]); //next tag (as feature)
@@ -274,6 +276,8 @@ Context ArcStandardLabelledParser::tagContext() const {
     else 
       return Context(tag_children_context());  //order 7
     //return Context(tag_children_third_context());  //order 11
+  } else if (context_type() == "stack-action") {
+    return stack_action_context(); //order 9
   } else 
     return map_context(contextIndices());
 }
@@ -286,6 +290,8 @@ Context ArcStandardLabelledParser::actionContext() const {
     else
       return Context(tag_children_context()); //order 7
       //return Context(tag_children_third_context());  //order 11
+  } else if (context_type() == "stack-action") {
+    return stack_action_context(); //order 9
   } else 
     return map_context(contextIndices());
 }
