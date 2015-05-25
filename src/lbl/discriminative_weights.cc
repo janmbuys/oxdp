@@ -166,7 +166,8 @@ void DiscriminativeWeights::getGradient(
     const boost::shared_ptr<ParseDataSet>& examples,
     const boost::shared_ptr<DiscriminativeWeights>& gradient,
     Real& objective,
-    MinibatchWords& words) const {
+    MinibatchWords& words,
+    bool sentences_only) const {
   vector<WordsList> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
@@ -473,7 +474,8 @@ void DiscriminativeWeights::estimateGradient(
 
 void DiscriminativeWeights::syncUpdate(
     const MinibatchWords& words,
-    const boost::shared_ptr<DiscriminativeWeights>& gradient) {
+    const boost::shared_ptr<DiscriminativeWeights>& gradient,
+    bool sentences_only) {
 
   for (int word_id: words.getContextWordsSet()) {
     lock_guard<mutex> lock(*mutexesQ[word_id]);
@@ -507,7 +509,8 @@ void DiscriminativeWeights::updateSentenceVectorGradient(const VectorReal& sente
 
 void DiscriminativeWeights::updateSquared(
     const MinibatchWords& global_words,
-    const boost::shared_ptr<DiscriminativeWeights>& global_gradient) {
+    const boost::shared_ptr<DiscriminativeWeights>& global_gradient,
+    bool sentences_only) {
 
   for (int word_id: global_words.getContextWords()) {
     Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square();
@@ -525,7 +528,8 @@ void DiscriminativeWeights::updateSquared(
 void DiscriminativeWeights::updateAdaGrad(
     const MinibatchWords& global_words,
     const boost::shared_ptr<DiscriminativeWeights>& global_gradient,
-    const boost::shared_ptr<DiscriminativeWeights>& adagrad) {
+    const boost::shared_ptr<DiscriminativeWeights>& adagrad,
+    bool sentences_only) {
   for (int word_id: global_words.getContextWords()) {
     Q.col(word_id) -= global_gradient->Q.col(word_id).binaryExpr(
         adagrad->Q.col(word_id), CwiseAdagradUpdateOp<Real>(config->step_size));
@@ -545,7 +549,8 @@ void DiscriminativeWeights::updateAdaGrad(
 
 Real DiscriminativeWeights::regularizerUpdate(
     const boost::shared_ptr<DiscriminativeWeights>& global_gradient,
-    Real minibatch_factor) {
+    Real minibatch_factor,
+    bool sentences_only) {
   Real sigma = minibatch_factor * config->step_size * config->l2_lbl;
   Block block = getBlock(0, W.size());
   W.segment(block.first, block.second) -=

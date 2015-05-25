@@ -34,7 +34,8 @@ class ParsedFactoredWeights : public FactoredWeights {
       const boost::shared_ptr<ParseDataSet>& examples,
       const boost::shared_ptr<ParsedFactoredWeights>& gradient,
       Real& objective,
-      MinibatchWords& words) const;
+      MinibatchWords& words,
+      bool sentences_only = false) const;
 
   virtual Real getObjective(
       const boost::shared_ptr<ParseDataSet>& examples) const;
@@ -66,20 +67,24 @@ class ParsedFactoredWeights : public FactoredWeights {
 
   void syncUpdate(
       const MinibatchWords& words,
-      const boost::shared_ptr<ParsedFactoredWeights>& gradient);
+      const boost::shared_ptr<ParsedFactoredWeights>& gradient,
+      bool sentences_only = false);
 
   void updateSquared(
       const MinibatchWords& global_words,
-      const boost::shared_ptr<ParsedFactoredWeights>& global_gradient);
+      const boost::shared_ptr<ParsedFactoredWeights>& global_gradient,
+      bool sentences_only = false);
 
   void updateAdaGrad(
       const MinibatchWords& global_words,
       const boost::shared_ptr<ParsedFactoredWeights>& global_gradient,
-      const boost::shared_ptr<ParsedFactoredWeights>& adagrad);
+      const boost::shared_ptr<ParsedFactoredWeights>& adagrad,
+      bool sentences_only = false);
 
   Real regularizerUpdate(
       const boost::shared_ptr<ParsedFactoredWeights>& global_gradient,
-      Real minibatch_factor);
+      Real minibatch_factor,
+      bool sentences_only = false);
 
   void clear(const MinibatchWords& words, bool parallel_update);
 
@@ -137,7 +142,8 @@ class ParsedFactoredWeights : public FactoredWeights {
       vector<VectorReal>& word_probs,
       MatrixReal& action_probs,
       const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-      MinibatchWords& words) const;
+      MinibatchWords& words,
+      bool sentences_only = false) const;
 
   std::vector<Words> getNoiseWords(
       const boost::shared_ptr<ParseDataSet>& examples) const; 

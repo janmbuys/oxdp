@@ -134,7 +134,8 @@ void Weights::getGradient(
     const boost::shared_ptr<DataSet>& examples,
     const boost::shared_ptr<Weights>& gradient,
     Real& objective,
-    MinibatchWords& words) const {
+    MinibatchWords& words,
+    bool sentences_only) const {
   vector<WordsList> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors;
@@ -149,7 +150,7 @@ void Weights::getGradient(
 
   getFullGradient(
       examples, contexts, context_vectors, prediction_vectors,
-      weighted_representations, word_probs, gradient, words);
+      weighted_representations, word_probs, gradient, words, sentences_only);
 }
 
 void Weights::getContextVectors(
@@ -272,7 +273,8 @@ void Weights::getFullGradient(
     const MatrixReal& weighted_representations,
     MatrixReal& word_probs,
     const boost::shared_ptr<Weights>& gradient,
-    MinibatchWords& words) const {
+    MinibatchWords& words,
+    bool sentences_only) const {
   for (size_t i = 0; i < examples->size(); ++i) {
     word_probs(examples->wordAt(i), i) -= 1;
   }
@@ -281,11 +283,13 @@ void Weights::getFullGradient(
     words.addOutputWord(word_id);
   }
 
-  gradient->R += prediction_vectors * word_probs.transpose();
-  gradient->B += word_probs.rowwise().sum();
+  if (!sentences_only) {
+    gradient->R += prediction_vectors * word_probs.transpose();
+    gradient->B += word_probs.rowwise().sum();
+  }
 
   getContextGradient(
-      examples->size(), contexts, context_vectors, weighted_representations, gradient);
+      examples->size(), contexts, context_vectors, weighted_representations, gradient, sentences_only);
 }
 
 void Weights::getContextGradient(
@@ -293,7 +297,8 @@ void Weights::getContextGradient(
     const vector<WordsList>& contexts,
     const vector<MatrixReal>& context_vectors,
     const MatrixReal& weighted_representations,
-    const boost::shared_ptr<Weights>& gradient) const {
+    const boost::shared_ptr<Weights>& gradient,
+    bool sentences_only) const {
   int context_width = config->ngram_order - 1;
   if (config->sentence_vector)
     ++context_width;
@@ -306,17 +311,19 @@ void Weights::getContextGradient(
     for (size_t i = 0; i < prediction_size; ++i) {
       if (config->sentence_vector && (j == context_width - 1)) {
         gradient->P.col(contexts[i][j][0]) += context_gradients.col(i); 
-      } else {
+      } else if (!sentences_only) {
         for (auto feat: contexts[i][j]) {
           gradient->Q.col(feat) += context_gradients.col(i);
         }
       }
     }
-
-    if (config->diagonal_contexts) {
-      gradient->C[j] += context_vectors[j].cwiseProduct(weighted_representations).rowwise().sum();
-    } else {
-      gradient->C[j] += weighted_representations * context_vectors[j].transpose();
+    
+    if (!sentences_only) {
+      if (config->diagonal_contexts) {
+        gradient->C[j] += context_vectors[j].cwiseProduct(weighted_representations).rowwise().sum();
+      } else {
+        gradient->C[j] += weighted_representations * context_vectors[j].transpose();
+      }
     }
   }
 }
@@ -477,29 +484,32 @@ void Weights::estimateGradient(
 
 void Weights::syncUpdate(
     const MinibatchWords& words,
-    const boost::shared_ptr<Weights>& gradient) {
+    const boost::shared_ptr<Weights>& gradient,
+    bool sentences_only) {
   for (int word_id: words.getSentenceWordsSet()) {
     lock_guard<mutex> lock(*mutexesP[word_id]);
     P.col(word_id) += gradient->P.col(word_id);
   }
 
-  for (int word_id: words.getContextWordsSet()) {
-    lock_guard<mutex> lock(*mutexesQ[word_id]);
-    Q.col(word_id) += gradient->Q.col(word_id);
-  }
+  if (!sentences_only) {
+    for (int word_id: words.getContextWordsSet()) {
+      lock_guard<mutex> lock(*mutexesQ[word_id]);
+      Q.col(word_id) += gradient->Q.col(word_id);
+    }
 
-  for (int word_id: words.getOutputWordsSet()) {
-    lock_guard<mutex> lock(*mutexesR[word_id]);
-    R.col(word_id) += gradient->R.col(word_id);
-  }
+    for (int word_id: words.getOutputWordsSet()) {
+      lock_guard<mutex> lock(*mutexesR[word_id]);
+      R.col(word_id) += gradient->R.col(word_id);
+    }
 
-  for (int i = 0; i < C.size(); ++i) {
-    lock_guard<mutex> lock(*mutexesC[i]);
-    C[i] += gradient->C[i];
-  }
+    for (int i = 0; i < C.size(); ++i) {
+      lock_guard<mutex> lock(*mutexesC[i]);
+      C[i] += gradient->C[i];
+    }
 
-  lock_guard<mutex> lock(*mutexB);
-  B += gradient->B;
+    lock_guard<mutex> lock(*mutexB);
+    B += gradient->B;
+  }
 }
 
 Block Weights::getBlock(int start, int size) const {
@@ -522,60 +532,78 @@ void Weights::updateSentenceVectorGradient(const VectorReal& sentence_vector_gra
 
 void Weights::updateSquared(
     const MinibatchWords& global_words,
-    const boost::shared_ptr<Weights>& global_gradient) {
+    const boost::shared_ptr<Weights>& global_gradient,
+    bool sentences_only) {
   for (int word_id: global_words.getSentenceWords()) {
     P.col(word_id).array() += global_gradient->P.col(word_id).array().square();
   }
 
-  for (int word_id: global_words.getContextWords()) {
-    Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square();
-  }
+  if (!sentences_only) {
+    for (int word_id: global_words.getContextWords()) {
+      Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square();
+    }
 
-  for (int word_id: global_words.getOutputWords()) {
-    R.col(word_id).array() += global_gradient->R.col(word_id).array().square();
-  }
+    for (int word_id: global_words.getOutputWords()) {
+      R.col(word_id).array() += global_gradient->R.col(word_id).array().square();
+    }
 
-  Block block = getBlock(P.size() + Q.size() + R.size(), W.size() - (P.size() + Q.size() + R.size()));
-  W.segment(block.first, block.second).array() +=
-      global_gradient->W.segment(block.first, block.second).array().square();
+    Block block = getBlock(P.size() + Q.size() + R.size(), W.size() - (P.size() + Q.size() + R.size()));
+    W.segment(block.first, block.second).array() +=
+        global_gradient->W.segment(block.first, block.second).array().square();
+  }
 }
 
 void Weights::updateAdaGrad(
     const MinibatchWords& global_words,
     const boost::shared_ptr<Weights>& global_gradient,
-    const boost::shared_ptr<Weights>& adagrad) {
+    const boost::shared_ptr<Weights>& adagrad,
+    bool sentences_only) {
   for (int word_id: global_words.getSentenceWords()) {
     P.col(word_id) -= global_gradient->P.col(word_id).binaryExpr(
         adagrad->P.col(word_id), CwiseAdagradUpdateOp<Real>(config->step_size));
   }
 
-  for (int word_id: global_words.getContextWords()) {
-    Q.col(word_id) -= global_gradient->Q.col(word_id).binaryExpr(
-        adagrad->Q.col(word_id), CwiseAdagradUpdateOp<Real>(config->step_size));
-  }
+  if (!sentences_only) {
+    for (int word_id: global_words.getContextWords()) {
+      Q.col(word_id) -= global_gradient->Q.col(word_id).binaryExpr(
+          adagrad->Q.col(word_id), CwiseAdagradUpdateOp<Real>(config->step_size));
+    }
 
-  for (int word_id: global_words.getOutputWords()) {
-    R.col(word_id) -= global_gradient->R.col(word_id).binaryExpr(
-        adagrad->R.col(word_id), CwiseAdagradUpdateOp<Real>(config->step_size));
-  }
+    for (int word_id: global_words.getOutputWords()) {
+      R.col(word_id) -= global_gradient->R.col(word_id).binaryExpr(
+          adagrad->R.col(word_id), CwiseAdagradUpdateOp<Real>(config->step_size));
+    }
 
-  Block block = getBlock(P.size() + Q.size() + R.size(), W.size() - (P.size() + Q.size() + R.size()));
-  W.segment(block.first, block.second) -=
-      global_gradient->W.segment(block.first, block.second).binaryExpr(
-          adagrad->W.segment(block.first, block.second),
-          CwiseAdagradUpdateOp<Real>(config->step_size));
+    Block block = getBlock(P.size() + Q.size() + R.size(), W.size() - (P.size() + Q.size() + R.size()));
+    W.segment(block.first, block.second) -=
+        global_gradient->W.segment(block.first, block.second).binaryExpr(
+            adagrad->W.segment(block.first, block.second),
+            CwiseAdagradUpdateOp<Real>(config->step_size));
+    }
 }
 
 Real Weights::regularizerUpdate(
     const boost::shared_ptr<Weights>& global_gradient,
-    Real minibatch_factor) {
-  Real sigma = minibatch_factor * config->step_size * config->l2_lbl;
-  Block block = getBlock(0, W.size());
+    Real minibatch_factor,
+    bool sentences_only) {
+  Real sigma = minibatch_factor * config->step_size * config->l2_lbl_sv;
+  Block block = getBlock(0, P.size());
   W.segment(block.first, block.second) -=
       W.segment(block.first, block.second) * sigma;
-
   Real sum = W.segment(block.first, block.second).array().square().sum();
-  return 0.5 * minibatch_factor * config->l2_lbl * sum;
+  Real total = 0.5 * minibatch_factor * config->l2_lbl_sv * sum; 
+  
+  if (sentences_only)
+    return total;
+  else {
+    sigma = minibatch_factor * config->step_size * config->l2_lbl;
+    block = getBlock(P.size(), W.size() - P.size());
+    W.segment(block.first, block.second) -=
+        W.segment(block.first, block.second) * sigma;
+
+    sum = W.segment(block.first, block.second).array().square().sum();
+    return total + 0.5 * minibatch_factor * config->l2_lbl * sum;
+  }
 }
 
 void Weights::resetSentenceVector() {

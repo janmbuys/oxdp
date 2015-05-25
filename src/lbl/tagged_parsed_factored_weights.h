@@ -35,7 +35,8 @@ class TaggedParsedFactoredWeights : public ParsedFactoredWeights {
       const boost::shared_ptr<ParseDataSet>& examples,
       const boost::shared_ptr<TaggedParsedFactoredWeights>& gradient,
       Real& objective,
-      MinibatchWords& words) const;
+      MinibatchWords& words,
+      bool sentences_only = false) const;
 
   virtual Real getObjective(
       const boost::shared_ptr<ParseDataSet>& examples) const;
@@ -67,20 +68,24 @@ class TaggedParsedFactoredWeights : public ParsedFactoredWeights {
 
   void syncUpdate(
       const MinibatchWords& words,
-      const boost::shared_ptr<TaggedParsedFactoredWeights>& gradient);
+      const boost::shared_ptr<TaggedParsedFactoredWeights>& gradient,
+      bool sentences_only = false);
 
   void updateSquared(
       const MinibatchWords& global_words,
-      const boost::shared_ptr<TaggedParsedFactoredWeights>& global_gradient);
+      const boost::shared_ptr<TaggedParsedFactoredWeights>& global_gradient,
+      bool sentences_only = false);
 
   void updateAdaGrad(
       const MinibatchWords& global_words,
       const boost::shared_ptr<TaggedParsedFactoredWeights>& global_gradient,
-      const boost::shared_ptr<TaggedParsedFactoredWeights>& adagrad);
+      const boost::shared_ptr<TaggedParsedFactoredWeights>& adagrad,
+      bool sentences_only = false);
 
   Real regularizerUpdate(
       const boost::shared_ptr<TaggedParsedFactoredWeights>& global_gradient,
-      Real minibatch_factor);
+      Real minibatch_factor,
+      bool sentences_only = false);
 
   void clear(const MinibatchWords& words, bool parallel_update);
 
@@ -150,7 +155,8 @@ class TaggedParsedFactoredWeights : public ParsedFactoredWeights {
       MatrixReal& action_probs,
       MatrixReal& tag_probs,
       const boost::shared_ptr<TaggedParsedFactoredWeights>& gradient,
-      MinibatchWords& words) const;
+      MinibatchWords& words,
+      bool sentences_only = false) const;
 
  private:
   void allocate();

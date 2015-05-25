@@ -177,7 +177,8 @@ void ParsedFactoredWeights::getGradient(
     const boost::shared_ptr<ParseDataSet>& examples,
     const boost::shared_ptr<ParsedFactoredWeights>& gradient,
     Real& objective,
-    MinibatchWords& words) const {
+    MinibatchWords& words,
+    bool sentences_only) const {
   vector<WordsList> word_contexts;
   vector<WordsList> action_contexts;
   vector<MatrixReal> word_context_vectors;
@@ -204,7 +205,8 @@ void ParsedFactoredWeights::getGradient(
       examples, word_contexts, action_contexts, 
       word_context_vectors, action_context_vectors,
       word_prediction_vectors, action_prediction_vectors, word_weighted_representations,
-      action_weighted_representations, class_probs, word_probs, action_probs, gradient, words);
+      action_weighted_representations, class_probs, word_probs, action_probs, gradient, words,
+      sentences_only);
 }
 
 bool ParsedFactoredWeights::checkGradient(
@@ -356,7 +358,8 @@ void ParsedFactoredWeights::getFullGradient(
     vector<VectorReal>& word_probs,
     MatrixReal& action_probs,
     const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-    MinibatchWords& words) const {
+    MinibatchWords& words,
+      bool sentences_only) const {
   for (size_t i = 0; i < examples->word_example_size(); ++i) {
     int word_id = examples->word_at(i); 
     int class_id = index->getClass(word_id);
@@ -370,30 +373,32 @@ void ParsedFactoredWeights::getFullGradient(
     action_probs(action_id, i) -= 1;
   }
 
-  gradient->S += word_prediction_vectors * class_probs.transpose();
-  gradient->T += class_probs.rowwise().sum();
-  for (size_t i = 0; i < examples->word_example_size(); ++i) {
-    int word_id = examples->word_at(i); 
-    int class_id = index->getClass(word_id);
-    int class_start = index->getClassMarker(class_id);
-    int class_size = index->getClassSize(class_id);
+  if (!sentences_only) {
+    gradient->S += word_prediction_vectors * class_probs.transpose();
+    gradient->T += class_probs.rowwise().sum();
+    for (size_t i = 0; i < examples->word_example_size(); ++i) {
+      int word_id = examples->word_at(i); 
+      int class_id = index->getClass(word_id);
+      int class_start = index->getClassMarker(class_id);
+      int class_size = index->getClassSize(class_id);
 
-    for (int j = 0; j < class_size; ++j) {
-      words.addOutputWord(class_start + j);
+      for (int j = 0; j < class_size; ++j) {
+        words.addOutputWord(class_start + j);
+      }
+
+      gradient->B.segment(class_start, class_size) += word_probs[i];
+      gradient->R.block(0, class_start, gradient->R.rows(), class_size) +=
+          word_prediction_vectors.col(i) * word_probs[i].transpose();
     }
 
-    gradient->B.segment(class_start, class_size) += word_probs[i];
-    gradient->R.block(0, class_start, gradient->R.rows(), class_size) +=
-        word_prediction_vectors.col(i) * word_probs[i].transpose();
+    gradient->K += action_prediction_vectors * action_probs.transpose();
+    gradient->L += action_probs.rowwise().sum();
   }
 
-  gradient->K += action_prediction_vectors * action_probs.transpose();
-  gradient->L += action_probs.rowwise().sum();
-
   getContextGradient(
-      examples->word_example_size(), word_contexts, word_context_vectors, word_weighted_representations, gradient);
+      examples->word_example_size(), word_contexts, word_context_vectors, word_weighted_representations, gradient, sentences_only);
   getContextGradient(
-      examples->action_example_size(), action_contexts, action_context_vectors, action_weighted_representations, gradient);
+      examples->action_example_size(), action_contexts, action_context_vectors, action_weighted_representations, gradient, sentences_only);
 }
 
 std::vector<Words> ParsedFactoredWeights::getNoiseWords(
@@ -414,8 +419,9 @@ void ParsedFactoredWeights::estimateProjectionGradient(
 
 void ParsedFactoredWeights::syncUpdate(
     const MinibatchWords& words,
-    const boost::shared_ptr<ParsedFactoredWeights>& gradient) {
-  FactoredWeights::syncUpdate(words, gradient);
+    const boost::shared_ptr<ParsedFactoredWeights>& gradient,
+    bool sentences_only) {
+  FactoredWeights::syncUpdate(words, gradient, sentences_only);
 
   size_t block_size = PW.size() / mutexes.size() + 1;
   size_t block_start = 0;
@@ -438,8 +444,9 @@ Block ParsedFactoredWeights::getBlock() const {
 
 void ParsedFactoredWeights::updateSquared(
     const MinibatchWords& global_words,
-    const boost::shared_ptr<ParsedFactoredWeights>& global_gradient) {
-  FactoredWeights::updateSquared(global_words, global_gradient);
+    const boost::shared_ptr<ParsedFactoredWeights>& global_gradient,
+    bool sentences_only) {
+  FactoredWeights::updateSquared(global_words, global_gradient, sentences_only);
 
   Block block = getBlock();
   PW.segment(block.first, block.second).array() +=
@@ -449,8 +456,10 @@ void ParsedFactoredWeights::updateSquared(
 void ParsedFactoredWeights::updateAdaGrad(
     const MinibatchWords& global_words,
     const boost::shared_ptr<ParsedFactoredWeights>& global_gradient,
-    const boost::shared_ptr<ParsedFactoredWeights>& adagrad) {
-  FactoredWeights::updateAdaGrad(global_words, global_gradient, adagrad);
+    const boost::shared_ptr<ParsedFactoredWeights>& adagrad,
+    bool sentences_only) {
+  FactoredWeights::updateAdaGrad(global_words, global_gradient, adagrad,
+    sentences_only);
 
   Block block = getBlock();
   PW.segment(block.first, block.second) -=
@@ -461,8 +470,9 @@ void ParsedFactoredWeights::updateAdaGrad(
 
 Real ParsedFactoredWeights::regularizerUpdate(
     const boost::shared_ptr<ParsedFactoredWeights>& global_gradient,
-    Real minibatch_factor) {
-  Real ret = FactoredWeights::regularizerUpdate(global_gradient, minibatch_factor);
+    Real minibatch_factor,
+    bool sentences_only) {
+  Real ret = FactoredWeights::regularizerUpdate(global_gradient, minibatch_factor, sentences_only);
 
   Block block = getBlock();
   Real sigma = minibatch_factor * config->step_size * config->l2_lbl;

@@ -43,7 +43,8 @@ class DiscriminativeWeights {
       const boost::shared_ptr<ParseDataSet>& examples,
       const boost::shared_ptr<DiscriminativeWeights>& gradient,
       Real& objective,
-      MinibatchWords& words) const;
+      MinibatchWords& words,
+      bool sentences_only = false) const;
 
   virtual Real getObjective(
       const boost::shared_ptr<ParseDataSet>& examples) const;
@@ -86,22 +87,26 @@ class DiscriminativeWeights {
 
   void syncUpdate(
       const MinibatchWords& words,
-      const boost::shared_ptr<DiscriminativeWeights>& gradient);
+      const boost::shared_ptr<DiscriminativeWeights>& gradient,
+      bool sentences_only = false);
 
   void updateSentenceVectorGradient(const VectorReal& sentence_vector_gradient);
 
   void updateSquared(
       const MinibatchWords& global_words,
-      const boost::shared_ptr<DiscriminativeWeights>& global_gradient);
+      const boost::shared_ptr<DiscriminativeWeights>& global_gradient,
+      bool sentences_only = false);
 
   void updateAdaGrad(
       const MinibatchWords& global_words,
       const boost::shared_ptr<DiscriminativeWeights>& global_gradient,
-      const boost::shared_ptr<DiscriminativeWeights>& adagrad);
+      const boost::shared_ptr<DiscriminativeWeights>& adagrad,
+      bool sentences_only = false);
 
   Real regularizerUpdate(
       const boost::shared_ptr<DiscriminativeWeights>& global_gradient,
-      Real minibatch_factor);
+      Real minibatch_factor,
+      bool sentences_only = false);
 
   void clear(const MinibatchWords& words, bool parallel_update);
 

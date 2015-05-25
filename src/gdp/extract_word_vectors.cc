@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
     case 2:
       extract_word_vectors<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(model_file, vocab_file, vectors_file);
     case 3:
-      extract_word_vectors<ArcStandardLabelledParseModel<TagegdParsedFactoredWeights>, TaggedParsedFactoredWeights, TaggedParsedFactoredMetadata>(model_file, vocab_file, vectors_file);
+      extract_word_vectors<ArcStandardLabelledParseModel<TaggedParsedFactoredWeights>, TaggedParsedFactoredWeights, TaggedParsedFactoredMetadata>(model_file, vocab_file, vectors_file);
       return 0;
     default:
       cout << "Unknown model type" << endl;

@@ -26,6 +26,7 @@ struct ModelConfig {
   std::string test_output_file;
   std::string test_output_file2;
   int         iterations;
+  int         iterations_sv;
   int         iterations_unsup;
   int         iterations_test;
   int         minibatch_size;
@@ -34,6 +35,7 @@ struct ModelConfig {
   std::string model_input_file;
   std::string model_output_file;
   float       l2_lbl;
+  float       l2_lbl_sv;
   int         representation_size;   
   int         threads;
   float       step_size;
@@ -107,6 +109,7 @@ struct ModelConfig {
     ar & test_output_file;
     ar & test_output_file2;
     ar & iterations;
+    ar & iterations_sv;
     ar & iterations_test;
     ar & iterations_unsup;
     ar & minibatch_size;
@@ -115,6 +118,7 @@ struct ModelConfig {
     ar & model_input_file;
     ar & model_output_file;
     ar & l2_lbl;
+    ar & l2_lbl_sv;
     ar & representation_size;
     ar & step_size;
     ar & factored;

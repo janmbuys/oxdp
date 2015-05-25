@@ -52,11 +52,13 @@ class LblDpModel {
   void update(
       const MinibatchWords& global_words,
       const boost::shared_ptr<ParsedWeights>& global_gradient,
-      const boost::shared_ptr<ParsedWeights>& adagrad);
+      const boost::shared_ptr<ParsedWeights>& adagrad,
+      bool sentences_only);
 
   Real regularize(
       const boost::shared_ptr<ParsedWeights>& global_gradient,
-      Real minibatch_factor);
+      Real minibatch_factor,
+      bool sentences_only);
 
   void evaluate() const;
 

@@ -150,7 +150,8 @@ void ParsedWeights::getGradient(
     const boost::shared_ptr<ParseDataSet>& examples,
     const boost::shared_ptr<ParsedWeights>& gradient,
     Real& objective,
-    MinibatchWords& words) const {
+    MinibatchWords& words,
+    bool sentences_only) const {
   vector<WordsList> word_contexts;
   vector<WordsList> action_contexts;
   vector<MatrixReal> word_context_vectors;
@@ -369,7 +370,8 @@ void ParsedWeights::estimateProjectionGradient(
 
 void ParsedWeights::syncUpdate(
     const MinibatchWords& words,
-    const boost::shared_ptr<ParsedWeights>& gradient) {
+    const boost::shared_ptr<ParsedWeights>& gradient,
+    bool sentences_only) {
   Weights::syncUpdate(words, gradient);
 
   size_t block_size = PW.size() / mutexes.size() + 1;
@@ -393,7 +395,8 @@ Block ParsedWeights::getBlock() const {
 
 void ParsedWeights::updateSquared(
     const MinibatchWords& global_words,
-    const boost::shared_ptr<ParsedWeights>& global_gradient) {
+    const boost::shared_ptr<ParsedWeights>& global_gradient,
+    bool sentences_only) {
   Weights::updateSquared(global_words, global_gradient);
 
   Block block = getBlock();
@@ -404,7 +407,8 @@ void ParsedWeights::updateSquared(
 void ParsedWeights::updateAdaGrad(
     const MinibatchWords& global_words,
     const boost::shared_ptr<ParsedWeights>& global_gradient,
-    const boost::shared_ptr<ParsedWeights>& adagrad) {
+    const boost::shared_ptr<ParsedWeights>& adagrad,
+    bool sentences_only) {
   Weights::updateAdaGrad(global_words, global_gradient, adagrad);
 
   Block block = getBlock();
@@ -416,7 +420,8 @@ void ParsedWeights::updateAdaGrad(
 
 Real ParsedWeights::regularizerUpdate(
     const boost::shared_ptr<ParsedWeights>& global_gradient,
-    Real minibatch_factor) {
+    Real minibatch_factor,
+    bool sentences_only) {
   Real ret = Weights::regularizerUpdate(global_gradient, minibatch_factor);
 
   Block block = getBlock();
