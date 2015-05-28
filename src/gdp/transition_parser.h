@@ -41,10 +41,13 @@ class TransitionParser: public Parser {
     actions_.push_back(a);
   }
 
+  void push_tag(WordId tag) {
+    TaggedSentence::push_tag(tag, config_->tag_to_feature[tag]);
+  }
+
   void update_tag(WordIndex i, WordId tag) {
     //std::cout << tag << " " << config_->tag_to_feature[tag] << std::endl;
-    set_tag_at(i, tag);
-    set_tag_feature_at(i, config_->tag_to_feature[tag]);
+    set_tag_at(i, tag, config_->tag_to_feature[tag]);
   }
 
   void append_action_label(WordId l) {
@@ -186,7 +189,7 @@ class TransitionParser: public Parser {
     return weight();
   }
 
-   Real importance_weight() const {
+  Real importance_weight() const {
     return importance_weight_;
   }
 
@@ -217,6 +220,10 @@ class TransitionParser: public Parser {
 
   bool lexicalised() const {
     return config_->lexicalised;
+  }
+
+  WordId get_word_feature(WordId w) const {
+   return config_->getWordFeatures(w)[0];
   }
 
   std::string context_type() const {

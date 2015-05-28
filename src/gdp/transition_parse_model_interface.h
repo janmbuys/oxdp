@@ -29,7 +29,7 @@ class TransitionParseModelInterface {
 
   virtual TParser staticGoldParseSentence(const ParsedSentence& sent) = 0;
 
-  virtual TParser generateSentence(const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng) = 0;
+  virtual TParser generateSentence(const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, int sentence_id = 0) = 0;
 
   virtual ~TransitionParseModelInterface() {}
 

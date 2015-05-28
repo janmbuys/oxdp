@@ -20,16 +20,18 @@ class TaggedSentence: public Sentence {
     std::cout << std::endl;
   }
   
-  void push_tag(WordId t) {
-   tags_.push_back(t);
+  void push_tag(WordId tag, WordId feat) {
+   tags_.push_back(tag);
+   features_.push_back(Words(1, feat));
   }
 
-  void set_tag_at(WordIndex i, WordId t) {
-    tags_.at(i) = t;
+  void set_tag_at(WordIndex i, WordId tag, WordId feat) {
+    tags_.at(i) = tag;
+    features_.at(i)[0] = feat;
   }
 
-  void set_tag_feature_at(WordIndex i, WordId t) {
-    features_.at(i)[0] = t;
+  void add_feature_at(WordIndex i, WordId feat) {
+    features_.at(i).push_back(feat);
   }
 
   size_t size() const override {

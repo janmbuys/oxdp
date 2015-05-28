@@ -128,11 +128,12 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
 
       //word word-to-feature mapping
       for (unsigned i = 0; i < sent.size(); ++i) {
-        dict->setWordFeatures(sent[i], features[i]);
+        dict->setWordFeatures(sent[i], Words(1, features[i][1]));
       }
 
 
-      int index = sentences_.size() + 1;
+      int index = config_->num_train_sentences + sentences_.size() + 1;
+      //TODO remove when testing inference is fixed
       if (frozen)
         index = 0;
 

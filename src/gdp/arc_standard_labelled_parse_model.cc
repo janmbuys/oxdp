@@ -1628,9 +1628,11 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::staticGo
 
 template<class ParsedWeights>
 ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::generateSentence(const boost::shared_ptr<ParsedWeights>& weights, 
-        MT19937& eng) {
+        MT19937& eng, WordIndex sentence_id) {
   unsigned sent_limit = 100;
   ArcStandardLabelledParser parser(config_);
+  if (config_->sentence_vector)
+    parser.set_id(sentence_id);
   bool terminate_shift = false;
   //if (config_->root_first) {
   parser.push_tag(1);

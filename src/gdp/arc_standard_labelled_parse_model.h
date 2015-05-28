@@ -67,7 +67,7 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
 
   ArcStandardLabelledParser staticGoldParseSentence(const ParsedSentence& sent) override;
 
-  ArcStandardLabelledParser generateSentence(const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng) override;
+  ArcStandardLabelledParser generateSentence(const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, WordIndex sentence_id = 0) override;
 
   void extractSentence(const ParsedSentence& sent, 
           const boost::shared_ptr<ParseDataSet>& examples);

@@ -17,7 +17,8 @@ ModelConfig::ModelConfig()
       distance_features(false), char_lexicalised(false), adapt_word_context(false),
       semi_supervised(false), direction_deterministic(false), sum_over_beam(false), resample(false), 
       root_first(true), complete_parse(true), bootstrap(false), bootstrap_iter(0), max_beam_increment(1), 
-      num_particles(1), generate_samples(0), num_tags(1), num_features(1), num_labels(1), beam_sizes(1, 1) {}
+      num_particles(1), generate_samples(0), num_tags(1), num_features(1), num_labels(1), 
+      num_train_sentences(0), beam_sizes(1, 1) {}
 
 int ModelConfig::numActions() const {
   if (parser_type == ParserType::arcstandard)

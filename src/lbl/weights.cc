@@ -721,6 +721,15 @@ MatrixReal Weights::getWordVectors() const {
   return R; 
 }
 
+MatrixReal Weights::getFeatureVectors() const {
+  return Q; 
+}
+
+MatrixReal Weights::getSentenceVectors() const {
+  std::cout << P.cols() << std::endl;
+  return P; 
+}
+
 bool Weights::operator==(const Weights& other) const {
   return *config == *other.config
       && *metadata == *other.metadata

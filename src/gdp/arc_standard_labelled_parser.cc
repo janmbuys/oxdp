@@ -29,7 +29,8 @@ bool ArcStandardLabelledParser::shift() {
 bool ArcStandardLabelledParser::shift(WordId w) {
   //assume the tag has been generated already
   WordIndex i = size() - 1;
-  push_word(w);
+  push_word(w); 
+  add_feature_at(i, get_word_feature(w));  
   push_arc();
   if (!buffer_empty()) 
     pop_buffer();

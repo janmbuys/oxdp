@@ -54,6 +54,16 @@ MatrixReal LblDpModel<ParseModel, ParsedWeights, Metadata>::getWordVectors() con
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
+MatrixReal LblDpModel<ParseModel, ParsedWeights, Metadata>::getFeatureVectors() const {
+  return weights->getFeatureVectors();
+}
+
+template<class ParseModel, class ParsedWeights, class Metadata>
+MatrixReal LblDpModel<ParseModel, ParsedWeights, Metadata>::getSentenceVectors() const {
+  return weights->getSentenceVectors();
+}
+
+template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   MT19937 eng;
   boost::shared_ptr<ParsedCorpus> training_corpus = boost::make_shared<ParsedCorpus>(config);
@@ -106,7 +116,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
   //update vocab sizes
   config->num_features = dict->feature_size();
-  config->num_train_sentences = training_corpus->size();
+  config->num_train_sentences = training_corpus->size(); //only for supervised sentences, for now
 
   //copy word feature map
   for (unsigned i = 0; i < dict->size(); ++i) {
@@ -207,9 +217,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
     for (int iter = 0; (iter < config->iterations) && !stop_training; ++iter) {
       Real best_iter_objective = numeric_limits<Real>::infinity();
+      auto iteration_start = get_time();
 
       for (int sv_iter = 0; (sv_iter < config->iterations_sv + 1) && !stop_sv_training; ++sv_iter) {
-        auto iteration_start = get_time();
+        iteration_start = get_time();
         bool sentences_only = (sv_iter > 0);
 
         #pragma omp master
@@ -281,7 +292,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
               } else {
                 //std::cout << " " << task_start;
                 weights->getGradient(
-                    task_examples, gradient, objective, words);
+                    task_examples, gradient, objective, words, sentences_only);
                 
              /* if (!weights->checkGradient(task_examples, global_gradient, EPS))  
                  std::cout << "gradient check failed" << std::endl;
@@ -371,16 +382,25 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             objective_improved = false;
           }
 
-          //if (iter%5 == 0)
-          evaluate(test_corpus, iteration_start, minibatch_counter,
-                 test_objective, best_perplexity);
-          if (config->semi_supervised)
-            evaluate(test_corpus_unsup, iteration_start, minibatch_counter,
-                 test_objective_unsup, best_perplexity_unsup);
-          else if (config->test_file2.size()) 
-            evaluate(test_corpus2, iteration_start, minibatch_counter,
-                 test_objective2, best_perplexity2);
+          ofstream svout("sentence-vectors.out");
+          MatrixReal sentence_vectors = getSentenceVectors();
+
+          for (unsigned i = 0; i < training_corpus->size(); ++i) 
+            svout << sentence_vectors.col(i).transpose() << endl;
         }
+      }
+
+      #pragma omp master
+      {
+        //if (iter%5 == 0)
+        evaluate(test_corpus, iteration_start, minibatch_counter,
+               test_objective, best_perplexity);
+        if (config->semi_supervised)
+          evaluate(test_corpus_unsup, iteration_start, minibatch_counter,
+               test_objective_unsup, best_perplexity_unsup);
+        else if (config->test_file2.size()) 
+          evaluate(test_corpus2, iteration_start, minibatch_counter,
+               test_objective2, best_perplexity2);
       }
     }
 
@@ -572,7 +592,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
   //generate from model
   for (int i = 0; i < config->generate_samples; ++i) {
-    Parser parse = parse_model->generateSentence(weights, eng);
+    Parser parse = parse_model->generateSentence(weights, eng, i);
     //std::cout << parse.weight() << "  ";
     parse.print_sentence(dict);
     parse.print_arcs();
@@ -598,7 +618,7 @@ Real LblDpModel<ParseModel, ParsedWeights, Metadata>::regularize(
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
-void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate() const {
+void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate() {
   #pragma omp master
   {
   //read test data 
@@ -615,16 +635,163 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate() const {
   }
 }
 
+//evaluate method -- specifically for sentence vector model
+template<class ParseModel, class ParsedWeights, class Metadata>
+void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate_sentence_vector(
+    const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) {
+  vector<int> indices(test_corpus->size());
+  iota(indices.begin(), indices.end(), 0);
+  
+  boost::shared_ptr<ParsedWeights> global_gradient =
+      boost::make_shared<ParsedWeights>(config, metadata, false);
+  boost::shared_ptr<ParsedWeights> adagrad =
+      boost::make_shared<ParsedWeights>(config, metadata, false);
+  MinibatchWords global_words; //== all sentences
+  boost::shared_ptr<ParsedWeights> gradient =
+      boost::make_shared<ParsedWeights>(config, metadata, false);
+
+  int shared_index = 0;
+  int task_size = sqrt(test_corpus->size()) / 4; 
+  Real best_global_objective = numeric_limits<Real>::infinity();
+  Real global_objective = 0;
+
+  #pragma omp parallel
+  {  //no early stopping for now
+    for (int i_test = 0; i_test < config->iterations_test; ++i_test) {
+      unsigned beam_size = config->beam_sizes[0];
+      auto iteration_start = get_time();
+      bool sentences_only = true;
+      std::ofstream outs;
+      
+      #pragma omp master
+      {
+        outs.open(config->test_output_file);
+        std::cerr << "parsing with beam size " << beam_size << ", iter " << i_test << ":\n";
+        accumulator = 0;
+        global_objective = 0;
+      }
+
+      #pragma omp barrier
+        
+      Real objective = 0;
+      int num_examples = 0;
+      MinibatchWords words;
+      boost::shared_ptr<AccuracyCounts> acc_counts = boost::make_shared<AccuracyCounts>(dict);
+      size_t task_start;
+
+      // Reset the set of minibatch words shared across all threads.
+      #pragma omp master
+      {
+        global_words = MinibatchWords();
+        shared_index = 0;
+      }
+
+      while (true) {
+        #pragma omp critical
+        {
+          task_start = shared_index;
+         shared_index += task_size;
+        } 
+
+        if (task_start < test_corpus->size()) {
+          size_t task_end = min(task_start + task_size, indices.size());
+          vector<int> task(
+                indices.begin() + task_start, indices.begin() + task_end);
+           //collect the training examples for the minibatch
+           boost::shared_ptr<ParseDataSet> task_examples = boost::make_shared<ParseDataSet>();
+
+          for (int j: task) {
+            Parser parse;
+            parse = parse_model->evaluateSentence(test_corpus->sentence_at(j), weights, acc_counts, true, beam_size);
+
+            if (i_test < config->iterations_test - 1) 
+              parse_model->extractSentence(parse, weights, task_examples);
+          }
+        
+          num_examples += task_examples->word_example_size() + task_examples->action_example_size();
+
+          if (config->predict_pos)
+            num_examples += task_examples->tag_example_size();
+
+          if (config->noise_samples > 0) {
+            weights->estimateGradient(task_examples, gradient, objective, words);
+          } else {
+            weights->getGradient(task_examples, gradient, objective, words, sentences_only);
+          }
+        } else {
+          break;
+        }
+      }
+      
+      global_gradient->syncUpdate(words, gradient, sentences_only);
+      #pragma omp critical
+      {
+        global_objective += objective;
+        global_words.merge(words);
+      }
+
+      // Wait until the global gradient is fully updated by all threads and
+      // the global words are fully merged.
+      #pragma omp barrier
+
+      // Prepare minibatch words for parallel processing.
+      #pragma omp master
+      global_words.transform();
+
+      // Wait until the minibatch words are fully prepared for parallel
+      // processing.
+      #pragma omp barrier
+      update(global_words, global_gradient, adagrad, sentences_only);
+
+      // Wait for all threads to finish making the model gradient update.
+      #pragma omp barrier
+      Real minibatch_factor =
+          static_cast<Real>(num_examples) / (3*test_corpus->numTokens());
+      if (config->predict_pos)
+        minibatch_factor =
+          static_cast<Real>(num_examples) / (4*test_corpus->numTokens());
+      //approx total number of predictions
+      
+      objective = regularize(global_gradient, minibatch_factor, sentences_only);
+      #pragma omp critical
+      global_objective += objective;
+
+      // Clear gradients.
+      gradient->clear(words, false);
+      global_gradient->clear(global_words, true);
+
+      #pragma omp master
+      {
+        outs.close();
+        Real beam_time = get_duration(iteration_start, get_time());
+        Real sents_per_sec = static_cast<int>(test_corpus->size())/beam_time;
+        Real tokens_per_sec = static_cast<int>(test_corpus->numTokens())/beam_time;
+        std::cerr << "(" << beam_time << "s, " <<
+                   static_cast<int>(sents_per_sec) << " sentences per second, " <<
+                   static_cast<int>(tokens_per_sec) << " tokens per second)\n";
+        acc_counts->printAccuracy();
+      }
+      
+      #pragma omp barrier
+      weights->clearCache();
+    }
+  }
+}
+
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
-    const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) const {
+    const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) {
+  //if (config->sentence_vector)
+  //  evaluate_sentence_vector(test_corpus, accumulator);
   if (test_corpus != nullptr) {
   #pragma omp master
   {
     vector<int> indices(test_corpus->size());
     iota(indices.begin(), indices.end(), 0);
-    
-    for (int i_test = 1; i_test <= config->iterations_test; ++i_test) {
+   
+   //TODO temporary 
+    //for (int i_test = 1; i_test <= config->iterations_test; ++i_test) {
+    for (int i_test = config->iterations_test; i_test <= config->iterations_test; ++i_test) {
     //for (unsigned beam_size: config->beam_sizes) {
       unsigned beam_size = config->beam_sizes[0];
       std::ofstream outs;
@@ -734,7 +901,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     const boost::shared_ptr<ParsedCorpus>& test_corpus, const Time& iteration_start,
-    int minibatch_counter, Real& log_likelihood, Real& best_perplexity) const {
+    int minibatch_counter, Real& log_likelihood, Real& best_perplexity) {
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);
 

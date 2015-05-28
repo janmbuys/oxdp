@@ -655,6 +655,14 @@ MatrixReal DiscriminativeWeights::getWordVectors() const {
   return R; //why not Q?
 }
 
+MatrixReal DiscriminativeWeights::getFeatureVectors() const {
+  return Q; 
+}
+
+MatrixReal DiscriminativeWeights::getSentenceVectors() const {
+  return MatrixReal(); 
+}
+
 bool DiscriminativeWeights::operator==(const DiscriminativeWeights& other) const {
   return *config == *other.config
       && *metadata == *other.metadata

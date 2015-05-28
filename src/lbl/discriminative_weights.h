@@ -122,6 +122,10 @@ class DiscriminativeWeights {
 
   MatrixReal getWordVectors() const;
 
+  MatrixReal getFeatureVectors() const;
+
+  MatrixReal getSentenceVectors() const;
+
   bool operator==(const DiscriminativeWeights& other) const;
 
   virtual ~DiscriminativeWeights();

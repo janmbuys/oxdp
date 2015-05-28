@@ -60,14 +60,21 @@ class LblDpModel {
       Real minibatch_factor,
       bool sentences_only);
 
-  void evaluate() const;
+  void evaluate();
 
   void evaluate(
-      const boost::shared_ptr<ParsedCorpus>& corpus, Real& accumulator) const;
+      const boost::shared_ptr<ParsedCorpus>& corpus, Real& accumulator);
+
+  void evaluate_sentence_vector(
+      const boost::shared_ptr<ParsedCorpus>& corpus, Real& accumulator);
 
   Real predict(int word_id, const vector<int>& context) const;
 
   MatrixReal getWordVectors() const;
+
+  MatrixReal getFeatureVectors() const;
+  
+  MatrixReal getSentenceVectors() const;
 
   void save() const;
 
@@ -80,7 +87,7 @@ class LblDpModel {
 
   void evaluate(
       const boost::shared_ptr<ParsedCorpus>& corpus, const Time& iteration_start,
-      int minibatch_counter, Real& objective, Real& best_perplexity) const;
+      int minibatch_counter, Real& objective, Real& best_perplexity);
 
  private:
   boost::shared_ptr<ModelConfig> config;

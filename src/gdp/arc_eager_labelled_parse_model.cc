@@ -566,8 +566,10 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::staticGoldPars
 
 template<class ParsedWeights>
 ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::generateSentence(const boost::shared_ptr<ParsedWeights>& weights, 
-        MT19937& eng) {
+        MT19937& eng, WordIndex sentence_id) {
   ArcEagerLabelledParser parser(config_);
+  if (config_->sentence_vector)
+    parser.set_id(sentence_id);
 /*  unsigned sent_limit = 100;
   bool terminate_shift = false;
   //bool need_shift = false;
