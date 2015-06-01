@@ -119,7 +119,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   config->num_train_sentences = training_corpus->size(); //only for supervised sentences, for now
 
   //copy word feature map
-  for (unsigned i = 0; i < dict->size(); ++i) {
+  for (unsigned i = 0; i < dict->size(); ++i) { 
     config->addWordFeatures(dict->getWordFeatures(i));
   }
 
@@ -275,7 +275,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
               for (int j: task) {
                 if ((!config->bootstrap && (config->bootstrap_iter == 0)) || 
                        (iter < config->bootstrap_iter))
-                  parse_model->extractSentence(training_corpus->sentence_at(j), task_examples);
+                  parse_model->extractSentence(training_corpus->sentence_at(j), task_examples); 
                 else if (config->bootstrap)
                   parse_model->extractSentence(training_corpus->sentence_at(j), weights, task_examples);
                 else 
@@ -382,16 +382,18 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             objective_improved = false;
           }
 
-          ofstream svout("sentence-vectors.out");
-          MatrixReal sentence_vectors = getSentenceVectors();
+          if (config->sentence_vector) {
+            ofstream svout("sentence-vectors.out");
+            MatrixReal sentence_vectors = getSentenceVectors();
 
-          for (unsigned i = 0; i < training_corpus->size(); ++i) 
-            svout << sentence_vectors.col(i).transpose() << endl;
+            for (unsigned i = 0; i < training_corpus->size(); ++i) 
+              svout << sentence_vectors.col(i).transpose() << endl;
+          }
         }
       }
 
-      #pragma omp master
-      {
+      //#pragma omp master
+     // {
         //if (iter%5 == 0)
         evaluate(test_corpus, iteration_start, minibatch_counter,
                test_objective, best_perplexity);
@@ -401,7 +403,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         else if (config->test_file2.size()) 
           evaluate(test_corpus2, iteration_start, minibatch_counter,
                test_objective2, best_perplexity2);
-      }
+      //}
     }
 
     if (config->semi_supervised) {
@@ -578,13 +580,13 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         } /*else {
           improve_objective = false;
         } */
-
+      }
         //if (iter%5 == 0)
         evaluate(test_corpus, iteration_start, minibatch_counter,
                test_objective, best_perplexity);
         evaluate(test_corpus_unsup, iteration_start, minibatch_counter,
              test_objective_unsup, best_perplexity_unsup);
-      }
+      
     }
   }
 
@@ -655,8 +657,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate_sentence_vector(
   Real best_global_objective = numeric_limits<Real>::infinity();
   Real global_objective = 0;
 
-  #pragma omp parallel
-  {  //no early stopping for now
+  //#pragma omp parallel
+  //{  //no early stopping for now
     for (int i_test = 0; i_test < config->iterations_test; ++i_test) {
       unsigned beam_size = config->beam_sizes[0];
       auto iteration_start = get_time();
@@ -775,14 +777,14 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate_sentence_vector(
       #pragma omp barrier
       weights->clearCache();
     }
-  }
+  //}
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) {
-  //if (config->sentence_vector)
-  //  evaluate_sentence_vector(test_corpus, accumulator);
+  if (config->sentence_vector)
+    evaluate_sentence_vector(test_corpus, accumulator);
   if (test_corpus != nullptr) {
   #pragma omp master
   {

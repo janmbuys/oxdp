@@ -43,6 +43,8 @@ find_package(Cdec QUIET)
 # Git
 find_package(Git REQUIRED)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 #############################################
 # Hackery courtesy of Karl Moritz
 #############################################

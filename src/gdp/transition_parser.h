@@ -359,6 +359,26 @@ class TransitionParser: public Parser {
     return Context(Words(), features);
   }
 
+  Words action_only_context() const {
+    int ctx_size = 6;
+    Words features(ctx_size, 0);
+
+    int sh_pos = buffer_next_ - 1;
+    for (int i = 0; i < ctx_size; ++i) {
+      int pos = static_cast<int>(actions_.size()) - ctx_size + i;
+      if (pos >= 0) {
+        if (actions_[i] == kAction::sh) {
+          features[i] = config_->numActions() + 1 + tag_at(sh_pos); 
+          --sh_pos;
+        }
+        else
+          features[i] = convert_action(actions_[pos], action_label_at(pos)) + 1;
+      }
+    } 
+    
+    return features;
+  }
+
   Words word_next_children_context() const {
     Words ctx(5, 0);
     
