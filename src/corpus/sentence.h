@@ -11,6 +11,8 @@ class Sentence {
   Sentence();
 
   Sentence(Words sent);
+  
+  Sentence(Words sent, int id);
 
   void push_word(WordId w) {
    sentence_.push_back(w);
@@ -20,6 +22,14 @@ class Sentence {
     for (auto word: sentence_)
       std::cout << dict->lookup(word) << " ";
     std::cout << std::endl;
+  }
+
+  void set_id(int id) {
+    id_ = id;
+  }
+
+  int id() const {
+    return id_;
   }
 
   virtual size_t size() const {
@@ -32,7 +42,7 @@ class Sentence {
 
   private:
   Words sentence_;
-
+  int id_;
 };
 
 

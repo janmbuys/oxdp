@@ -160,10 +160,10 @@ VectorReal TaggedParsedFactoredWeights::getSentenceVectorGradient(const boost::s
   MatrixReal tag_weighted_representations = getTagWeightedRepresentations(
       examples, tag_prediction_vectors, tag_probs);
 
-  int context_width = config->ngram_order;
-  MatrixReal word_context_gradients = getContextProduct(context_width - 1, word_weighted_representations, true);
-  MatrixReal action_context_gradients = getContextProduct(context_width - 1, action_weighted_representations, true);
-  MatrixReal tag_context_gradients = getContextProduct(context_width - 1, tag_weighted_representations, true);
+  int context_width = config->ngram_order - 1;
+  MatrixReal word_context_gradients = getContextProduct(context_width, word_weighted_representations, true);
+  MatrixReal action_context_gradients = getContextProduct(context_width, action_weighted_representations, true);
+  MatrixReal tag_context_gradients = getContextProduct(context_width, tag_weighted_representations, true);
   for (size_t i = 0; i < examples->word_example_size(); ++i) 
     sentence_gradient += word_context_gradients.col(i); 
   for (size_t i = 0; i < examples->action_example_size(); ++i) 
@@ -455,6 +455,8 @@ void TaggedParsedFactoredWeights::syncUpdate(
     const boost::shared_ptr<TaggedParsedFactoredWeights>& gradient,
       bool sentences_only) {
   ParsedFactoredWeights::syncUpdate(words, gradient, sentences_only);
+  if (sentences_only)
+    return;
 
   size_t block_size = TW.size() / mutexes.size() + 1;
   size_t block_start = 0;
@@ -480,6 +482,8 @@ void TaggedParsedFactoredWeights::updateSquared(
     const boost::shared_ptr<TaggedParsedFactoredWeights>& global_gradient,
       bool sentences_only) {
   ParsedFactoredWeights::updateSquared(global_words, global_gradient, sentences_only);
+  if (sentences_only)
+    return;
 
   Block block = getBlock();
   TW.segment(block.first, block.second).array() +=
@@ -492,6 +496,8 @@ void TaggedParsedFactoredWeights::updateAdaGrad(
     const boost::shared_ptr<TaggedParsedFactoredWeights>& adagrad,
       bool sentences_only) {
   ParsedFactoredWeights::updateAdaGrad(global_words, global_gradient, adagrad, sentences_only);
+  if (sentences_only)
+    return;
 
   Block block = getBlock();
   TW.segment(block.first, block.second) -=
@@ -505,6 +511,8 @@ Real TaggedParsedFactoredWeights::regularizerUpdate(
     Real minibatch_factor,
       bool sentences_only) {
   Real ret = ParsedFactoredWeights::regularizerUpdate(global_gradient, minibatch_factor, sentences_only);
+  if (sentences_only)
+    return ret;
 
   Block block = getBlock();
   Real sigma = minibatch_factor * config->step_size * config->l2_lbl;

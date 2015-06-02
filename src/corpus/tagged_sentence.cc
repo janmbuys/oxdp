@@ -23,5 +23,13 @@ TaggedSentence::TaggedSentence(Words sent, Words tags, WordsList features):
   {
   }
 
+TaggedSentence::TaggedSentence(Words sent, Words tags, WordsList features, int id):
+  Sentence(sent, id), 
+  tags_(tags),
+  features_(features)
+  {
+  }
+
+
 }
 

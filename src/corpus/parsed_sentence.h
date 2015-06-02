@@ -53,14 +53,6 @@ class ParsedSentence: public TaggedSentence {
     labels_.push_back(-1);
   }
 
-  void set_id(int id) {
-    id_ = id;
-  }
-
-  int id() const {
-    return id_;
-  }
-
   WordIndex arc_at(WordIndex i) const {
     if (i < 0)
       return -1;
@@ -119,7 +111,6 @@ class ParsedSentence: public TaggedSentence {
   private:
   Indices arcs_;
   Words labels_;
-  int id_;
 };
 
 

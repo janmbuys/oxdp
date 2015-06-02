@@ -380,6 +380,8 @@ void FactoredWeights::syncUpdate(
     const boost::shared_ptr<FactoredWeights>& gradient,
     bool sentences_only) {
   Weights::syncUpdate(words, gradient, sentences_only);
+  if (sentences_only)
+    return;
 
   size_t block_size = FW.size() / mutexes.size() + 1;
   size_t block_start = 0;
@@ -405,6 +407,8 @@ void FactoredWeights::updateSquared(
     const boost::shared_ptr<FactoredWeights>& global_gradient,
     bool sentences_only) {
   Weights::updateSquared(global_words, global_gradient, sentences_only);
+  if (sentences_only)
+    return;
 
   Block block = getBlock();
   FW.segment(block.first, block.second).array() +=
@@ -417,6 +421,8 @@ void FactoredWeights::updateAdaGrad(
     const boost::shared_ptr<FactoredWeights>& adagrad,
     bool sentences_only) {
   Weights::updateAdaGrad(global_words, global_gradient, adagrad, sentences_only);
+  if (sentences_only)
+    return;
 
   Block block = getBlock();
   FW.segment(block.first, block.second) -=
@@ -430,6 +436,8 @@ Real FactoredWeights::regularizerUpdate(
     Real minibatch_factor,
     bool sentences_only) {
   Real ret = Weights::regularizerUpdate(global_gradient, minibatch_factor, sentences_only);
+  if (sentences_only)
+    return ret;
 
   Block block = getBlock();
   Real sigma = minibatch_factor * config->step_size * config->l2_lbl;

@@ -53,14 +53,13 @@ void Weights::allocate() {
   int num_sentence_vectors = 1;
   if (config->sentence_vector)
     num_sentence_vectors += config->num_train_sentences;
+    
   int num_context_words = config->num_features;
   int num_output_words = config->vocab_size;
   //if (config->output_compositional)
   //  num_output_words = config->num_features;
   int word_width = config->representation_size;
   int context_width = config->ngram_order - 1;
-  if (config->sentence_vector)
-    ++context_width;
 
   int P_size = word_width * num_sentence_vectors;
   int Q_size = word_width * num_context_words;
@@ -98,8 +97,6 @@ void Weights::setModelParameters() {
   //  num_output_words = config->num_features;
   int word_width = config->representation_size;
   int context_width = config->ngram_order - 1;
-  if (config->sentence_vector)
-    ++context_width;
 
   int P_size = word_width * num_sentence_vectors;
   int Q_size = word_width * num_context_words;
@@ -158,8 +155,6 @@ void Weights::getContextVectors(
     vector<WordsList>& contexts,
     vector<MatrixReal>& context_vectors) const {
   int context_width = config->ngram_order - 1;
-  if (config->sentence_vector)
-    ++context_width;
   int word_width = config->representation_size;
 
   contexts.resize(examples->size());
@@ -169,16 +164,16 @@ void Weights::getContextVectors(
     contexts[i] = examples->contextAt(i).features;
     //for (int j = 0; j < context_width - 1; ++j) 
     //  contexts[i].push_back(examples->contextAt(i).features[j]);
-    if (config->sentence_vector)
-      contexts[i].push_back(Words(1, examples->sentenceIdAt(i)));
+    //if (config->sentence_vector)
+    //  contexts[i].push_back(Words(1, examples->sentenceIdAt(i)));
     //else
     //  contexts[i].push_back(examples->contextAt(i).features[context_width-1]);
 
     for (int j = 0; j < context_width; ++j) {
-      //std::cout << context_width << ":" << contexts[i].size() << std::endl;
+      //std::cout << context_width << ": " << contexts[i].size() << std::endl;
       if (config->sentence_vector && (j == context_width - 1)) {
         //std::cout << examples->sentenceIdAt(i) << std::endl;
-        //std::cout << contexts[i][j][0] << std::endl;
+        //std::cout << contexts[i][j].size() << std::endl;
         context_vectors[j].col(i) += P.col(contexts[i][j][0]); 
       } else {   
         for (auto feat: contexts[i][j]) {
@@ -211,8 +206,6 @@ MatrixReal Weights::getPredictionVectors(
     size_t prediction_size,
     const vector<MatrixReal>& context_vectors) const {
   int context_width = config->ngram_order - 1;
-  if (config->sentence_vector)
-    ++context_width;
   int word_width = config->representation_size;
   MatrixReal prediction_vectors = MatrixReal::Zero(word_width, prediction_size);
 
@@ -279,11 +272,11 @@ void Weights::getFullGradient(
     word_probs(examples->wordAt(i), i) -= 1;
   }
 
-  for (size_t word_id = 0; word_id < config->vocab_size; ++word_id) {
-    words.addOutputWord(word_id);
-  }
-
   if (!sentences_only) {
+    for (size_t word_id = 0; word_id < config->vocab_size; ++word_id) {
+      words.addOutputWord(word_id);
+    }
+
     gradient->R += prediction_vectors * word_probs.transpose();
     gradient->B += word_probs.rowwise().sum();
   }
@@ -300,8 +293,6 @@ void Weights::getContextGradient(
     const boost::shared_ptr<Weights>& gradient,
     bool sentences_only) const {
   int context_width = config->ngram_order - 1;
-  if (config->sentence_vector)
-    ++context_width;
 
   int word_width = config->representation_size;
   MatrixReal context_gradients = MatrixReal::Zero(word_width, prediction_size);
@@ -651,16 +642,18 @@ void Weights::clear(const MinibatchWords& words, bool parallel_update) {
 //At test time
 VectorReal Weights::getPredictionVector(const Context& context) const {
   int context_width = config->ngram_order - 1;
-  if (config->sentence_vector)
-    ++context_width;
   int word_width = config->representation_size;
+//  if (config->sentence_vector)
+//     contexts[i].push_back(Words(1, examples->sentenceIdAt(i)));
 
   VectorReal prediction_vector = VectorReal::Zero(word_width);
   for (int i = 0; i < context_width; ++i) {
     VectorReal in_vector = VectorReal::Zero(word_width);
-    if (config->sentence_vector && i == (context_width - 1))
-      in_vector += P.col(0); 
-    else {
+    if (config->sentence_vector && i == (context_width - 1)) {
+      //std::cout << context.features[i].size() << std::endl;
+      //std::cout << context.features[i][0] << std::endl;
+      in_vector += P.col(context.features[i][0]); //0 
+    } else {
       for (auto feat: context.features[i]) 
         in_vector += Q.col(feat);
     }

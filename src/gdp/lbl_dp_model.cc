@@ -132,6 +132,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
     test_corpus->readFile(config->test_file, dict, true);
 
     std::cerr << "Done reading test corpus..." << endl;
+    config->num_train_sentences += test_corpus->size(); //
   }
 
   std::cerr << "Reading test corpus 2...\n";
@@ -392,8 +393,6 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         }
       }
 
-      //#pragma omp master
-     // {
         //if (iter%5 == 0)
         evaluate(test_corpus, iteration_start, minibatch_counter,
                test_objective, best_perplexity);
@@ -403,7 +402,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         else if (config->test_file2.size()) 
           evaluate(test_corpus2, iteration_start, minibatch_counter,
                test_objective2, best_perplexity2);
-      //}
+      #pragma omp master
+      {
+        std::cout << "Done with train iteration " << iter << std::endl;
+      }
     }
 
     if (config->semi_supervised) {
@@ -706,8 +708,8 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate_sentence_vector(
             Parser parse;
             parse = parse_model->evaluateSentence(test_corpus->sentence_at(j), weights, acc_counts, true, beam_size);
 
-            if (i_test < config->iterations_test - 1) 
-              parse_model->extractSentence(parse, weights, task_examples);
+            //if (i_test < config->iterations_test - 1) 
+            parse_model->extractSentence(parse, weights, task_examples);
           }
         
           num_examples += task_examples->word_example_size() + task_examples->action_example_size();
@@ -715,11 +717,11 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate_sentence_vector(
           if (config->predict_pos)
             num_examples += task_examples->tag_example_size();
 
-          if (config->noise_samples > 0) {
-            weights->estimateGradient(task_examples, gradient, objective, words);
-          } else {
-            weights->getGradient(task_examples, gradient, objective, words, sentences_only);
-          }
+          //if (config->noise_samples > 0) {
+          //  weights->estimateGradient(task_examples, gradient, objective, words);
+          //} else 
+          weights->getGradient(task_examples, gradient, objective, words, sentences_only);
+          
         } else {
           break;
         }
@@ -785,16 +787,15 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) {
   if (config->sentence_vector)
     evaluate_sentence_vector(test_corpus, accumulator);
-  if (test_corpus != nullptr) {
-  #pragma omp master
-  {
-    vector<int> indices(test_corpus->size());
-    iota(indices.begin(), indices.end(), 0);
+  else if (test_corpus != nullptr) {
+    #pragma omp master
+    {
+      vector<int> indices(test_corpus->size());
+      iota(indices.begin(), indices.end(), 0);
    
-   //TODO temporary 
-    //for (int i_test = 1; i_test <= config->iterations_test; ++i_test) {
-    for (int i_test = config->iterations_test; i_test <= config->iterations_test; ++i_test) {
-    //for (unsigned beam_size: config->beam_sizes) {
+      //for (int i_test = 1; i_test <= config->iterations_test; ++i_test) {
+      int i_test = config->iterations_test;
+      //for (unsigned beam_size: config->beam_sizes) {
       unsigned beam_size = config->beam_sizes[0];
       std::ofstream outs;
       outs.open(config->test_output_file);
@@ -892,11 +893,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
                  static_cast<int>(tokens_per_sec) << " tokens per second)\n";
       acc_counts->printAccuracy();
       //}
-    }
     
-    //#pragma omp barrier
-    weights->clearCache();
-  }
+      //#pragma omp barrier
+      weights->clearCache();
+    }
   }
 }
 

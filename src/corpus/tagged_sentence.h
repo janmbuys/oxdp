@@ -14,6 +14,8 @@ class TaggedSentence: public Sentence {
 
   TaggedSentence(Words sent, Words tags, WordsList features);
 
+  TaggedSentence(Words sent, Words tags, WordsList features, int id);
+
   void print_tags(const boost::shared_ptr<Dict>& dict) const {
     for (auto tag: tags_)
       std::cout << dict->lookupTag(tag) << " ";

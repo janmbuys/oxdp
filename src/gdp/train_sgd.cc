@@ -269,8 +269,6 @@ int main(int argc, char** argv) {
   //config->pos_annotated = vm["pos-annotated"].as<bool>();
   config->tag_pos = vm["tag-pos"].as<bool>();
   config->predict_pos = vm["predict-pos"].as<bool>();
-  if (config->predict_pos)
-    config->ngram_order += 1;
 
   std::string activation_str = vm["activation"].as<std::string>();
   if (activation_str == "linear") 
@@ -303,6 +301,11 @@ int main(int argc, char** argv) {
   config->num_particles = vm["num-particles"].as<int>();
   config->max_beam_increment = vm["max-beam-increment"].as<int>();
   config->generate_samples = vm["generate-samples"].as<int>();
+
+  if (config->predict_pos)
+    config->ngram_order += 1;
+  if (config->sentence_vector)
+    config->ngram_order += 1;
 
   config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
   //for (int i = 2; i <= vm["max-beam-size"].as<int>(); i *= 2)
