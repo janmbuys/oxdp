@@ -78,6 +78,7 @@ class ParsedWeights : public Weights {
       bool sentences_only = false);
 
   Real regularizerUpdate(
+      const MinibatchWords& global_words,
       const boost::shared_ptr<ParsedWeights>& global_gradient,
       Real minibatch_factor,
       bool sentences_only = false);

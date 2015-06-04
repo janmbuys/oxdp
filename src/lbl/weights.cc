@@ -309,13 +309,14 @@ void Weights::getContextGradient(
       }
     }
     
-    if (!sentences_only) {
+    //TODO maybe change back?
+    //if (!sentences_only) {
       if (config->diagonal_contexts) {
         gradient->C[j] += context_vectors[j].cwiseProduct(weighted_representations).rowwise().sum();
       } else {
         gradient->C[j] += weighted_representations * context_vectors[j].transpose();
       }
-    }
+    //}
   }
 }
 
@@ -488,14 +489,14 @@ void Weights::syncUpdate(
       Q.col(word_id) += gradient->Q.col(word_id);
     }
 
-    for (int word_id: words.getOutputWordsSet()) {
-      lock_guard<mutex> lock(*mutexesR[word_id]);
-      R.col(word_id) += gradient->R.col(word_id);
-    }
-
     for (int i = 0; i < C.size(); ++i) {
       lock_guard<mutex> lock(*mutexesC[i]);
       C[i] += gradient->C[i];
+    }
+
+    for (int word_id: words.getOutputWordsSet()) {
+      lock_guard<mutex> lock(*mutexesR[word_id]);
+      R.col(word_id) += gradient->R.col(word_id);
     }
 
     lock_guard<mutex> lock(*mutexB);
@@ -529,6 +530,14 @@ void Weights::updateSquared(
     P.col(word_id).array() += global_gradient->P.col(word_id).array().square();
   }
 
+  /* if (sentences_only) {
+    int C_size = config->diagonal_contexts ? config->representation_size : config->representation_size * config->representation_size; 
+  
+    Block block = getBlock(P.size() + Q.size() + R.size(), (config->ngram_order - 1)*C_size);
+    W.segment(block.first, block.second).array() +=
+        global_gradient->W.segment(block.first, block.second).array().square(); 
+    
+  } else { */
   if (!sentences_only) {
     for (int word_id: global_words.getContextWords()) {
       Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square();
@@ -554,6 +563,15 @@ void Weights::updateAdaGrad(
         adagrad->P.col(word_id), CwiseAdagradUpdateOp<Real>(config->step_size));
   }
 
+  /*if (sentences_only) {
+    int C_size = config->diagonal_contexts ? config->representation_size : config->representation_size * config->representation_size; 
+  
+    Block block = getBlock(P.size() + Q.size() + R.size(), (config->ngram_order - 1)*C_size);
+    W.segment(block.first, block.second) -=
+        global_gradient->W.segment(block.first, block.second).binaryExpr(
+            adagrad->W.segment(block.first, block.second),
+            CwiseAdagradUpdateOp<Real>(config->step_size));
+  } else {  */
   if (!sentences_only) {
     for (int word_id: global_words.getContextWords()) {
       Q.col(word_id) -= global_gradient->Q.col(word_id).binaryExpr(
@@ -574,21 +592,35 @@ void Weights::updateAdaGrad(
 }
 
 Real Weights::regularizerUpdate(
+    const MinibatchWords& global_words,
     const boost::shared_ptr<Weights>& global_gradient,
     Real minibatch_factor,
     bool sentences_only) {
   Real sigma = minibatch_factor * config->step_size * config->l2_lbl_sv;
-  Block block = getBlock(0, P.size());
-  W.segment(block.first, block.second) -=
-      W.segment(block.first, block.second) * sigma;
-  Real sum = W.segment(block.first, block.second).array().square().sum();
+  Real sum = 0;
+  for (int word_id: global_words.getSentenceWords()) {
+    P.col(word_id) -= P.col(word_id) * sigma;
+    sum += P.col(word_id).array().square().sum();
+  }
+  
+  //Block block = getBlock(0, P.size());
+  //W.segment(block.first, block.second) -=
+  //    W.segment(block.first, block.second) * sigma;
+  //Real sum = W.segment(block.first, block.second).array().square().sum();
   Real total = 0.5 * minibatch_factor * config->l2_lbl_sv * sum; 
   
-  if (sentences_only)
+  sigma = minibatch_factor * config->step_size * config->l2_lbl;
+  if (sentences_only) {
+    /*int C_size = config->diagonal_contexts ? config->representation_size : config->representation_size * config->representation_size; 
+    block = getBlock(P.size() + Q.size() + R.size(), (config->ngram_order - 1)*C_size);
+    W.segment(block.first, block.second) -=
+        W.segment(block.first, block.second) * sigma;
+
+    sum = W.segment(block.first, block.second).array().square().sum();
+    return total + 0.5 * minibatch_factor * config->l2_lbl * sum; */
     return total;
-  else {
-    sigma = minibatch_factor * config->step_size * config->l2_lbl;
-    block = getBlock(P.size(), W.size() - P.size());
+  } else {
+    Block block = getBlock(P.size(), W.size() - P.size());
     W.segment(block.first, block.second) -=
         W.segment(block.first, block.second) * sigma;
 

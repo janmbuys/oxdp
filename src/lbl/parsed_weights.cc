@@ -419,10 +419,11 @@ void ParsedWeights::updateAdaGrad(
 }
 
 Real ParsedWeights::regularizerUpdate(
+    const MinibatchWords& global_words,
     const boost::shared_ptr<ParsedWeights>& global_gradient,
     Real minibatch_factor,
     bool sentences_only) {
-  Real ret = Weights::regularizerUpdate(global_gradient, minibatch_factor);
+  Real ret = Weights::regularizerUpdate(global_words, global_gradient, minibatch_factor);
 
   Block block = getBlock();
   Real sigma = minibatch_factor * config->step_size * config->l2_lbl;

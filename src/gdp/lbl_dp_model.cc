@@ -335,7 +335,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
               static_cast<Real>(num_examples) / (4*training_corpus->numTokens());
           //approx total number of predictions
           
-          objective = regularize(global_gradient, minibatch_factor, sentences_only);
+          objective = regularize(global_words, global_gradient, minibatch_factor, sentences_only);
           #pragma omp critical
           global_objective += objective;
 
@@ -405,6 +405,15 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
       #pragma omp master
       {
         std::cout << "Done with train iteration " << iter << std::endl;
+      }
+
+      //generate from model
+      ofstream gout("generate" + std::to_string(iter) + ".out");
+      for (int i = 0; i < config->generate_samples; ++i) {
+        Parser parse = parse_model->generateSentence(weights, eng, i);
+        gout << parse.sentence_string(dict) << std::endl;
+        gout <<  parse.arcs_string() << std::endl;
+        //parse.print_labels();
       }
     }
 
@@ -546,7 +555,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
 
         //approx total number of predictions
         
-        objective = regularize(global_gradient, minibatch_factor, false);
+        objective = regularize(global_words, global_gradient, minibatch_factor, false);
         #pragma omp critical
         global_objective += objective;
 
@@ -616,9 +625,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::update(
 
 template<class ParseModel, class ParsedWeights, class Metadata>
 Real LblDpModel<ParseModel, ParsedWeights, Metadata>::regularize(
+    const MinibatchWords& global_words,
     const boost::shared_ptr<ParsedWeights>& global_gradient,
     Real minibatch_factor, bool sentences_only) {
-  return weights->regularizerUpdate(global_gradient, minibatch_factor, sentences_only);
+  return weights->regularizerUpdate(global_words, global_gradient, minibatch_factor, sentences_only);
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
@@ -673,6 +683,12 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate_sentence_vector(
         std::cerr << "parsing with beam size " << beam_size << ", iter " << i_test << ":\n";
         accumulator = 0;
         global_objective = 0;
+
+        ofstream svout("sentence-vectors-test" + std::to_string(i_test) + ".out");
+        MatrixReal sentence_vectors = getSentenceVectors();
+
+        for (unsigned i = config->num_train_sentences -  test_corpus->size(); i < config->num_train_sentences; ++i) 
+          svout << sentence_vectors.col(i).transpose() << endl;
       }
 
       #pragma omp barrier
@@ -756,7 +772,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate_sentence_vector(
           static_cast<Real>(num_examples) / (4*test_corpus->numTokens());
       //approx total number of predictions
       
-      objective = regularize(global_gradient, minibatch_factor, sentences_only);
+      objective = regularize(global_words, global_gradient, minibatch_factor, sentences_only);
       #pragma omp critical
       global_objective += objective;
 

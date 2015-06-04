@@ -432,10 +432,11 @@ void FactoredWeights::updateAdaGrad(
 }
 
 Real FactoredWeights::regularizerUpdate(
+    const MinibatchWords& global_words,
     const boost::shared_ptr<FactoredWeights>& global_gradient,
     Real minibatch_factor,
     bool sentences_only) {
-  Real ret = Weights::regularizerUpdate(global_gradient, minibatch_factor, sentences_only);
+  Real ret = Weights::regularizerUpdate(global_words, global_gradient, minibatch_factor, sentences_only);
   if (sentences_only)
     return ret;
 

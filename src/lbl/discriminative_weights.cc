@@ -548,6 +548,7 @@ void DiscriminativeWeights::updateAdaGrad(
 }
 
 Real DiscriminativeWeights::regularizerUpdate(
+    const MinibatchWords& global_words,
     const boost::shared_ptr<DiscriminativeWeights>& global_gradient,
     Real minibatch_factor,
     bool sentences_only) {

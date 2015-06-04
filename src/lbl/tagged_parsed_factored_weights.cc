@@ -507,10 +507,11 @@ void TaggedParsedFactoredWeights::updateAdaGrad(
 }
 
 Real TaggedParsedFactoredWeights::regularizerUpdate(
+    const MinibatchWords& global_words,
     const boost::shared_ptr<TaggedParsedFactoredWeights>& global_gradient,
     Real minibatch_factor,
       bool sentences_only) {
-  Real ret = ParsedFactoredWeights::regularizerUpdate(global_gradient, minibatch_factor, sentences_only);
+  Real ret = ParsedFactoredWeights::regularizerUpdate(global_words, global_gradient, minibatch_factor, sentences_only);
   if (sentences_only)
     return ret;
 

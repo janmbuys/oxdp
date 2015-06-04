@@ -24,6 +24,13 @@ class Sentence {
     std::cout << std::endl;
   }
 
+  std::string sentence_string(const boost::shared_ptr<Dict>& dict) const {
+    std::string sent = "";
+    for (auto word: sentence_)
+      sent += dict->lookup(word) + " ";
+    return sent;   
+  }
+
   void set_id(int id) {
     id_ = id;
   }

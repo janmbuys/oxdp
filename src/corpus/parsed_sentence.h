@@ -27,6 +27,13 @@ class ParsedSentence: public TaggedSentence {
     std::cout << std::endl;   
   }
 
+  std::string arcs_string() const {
+    std::string arcs = "";
+    for (auto ind: arcs_)
+      arcs += ind + " ";
+    return arcs;   
+  }
+
   void print_labels() const {
     for (auto lab: labels_)
       std::cout << lab << " ";

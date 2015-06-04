@@ -56,6 +56,7 @@ class LblDpModel {
       bool sentences_only);
 
   Real regularize(
+      const MinibatchWords& global_words,
       const boost::shared_ptr<ParsedWeights>& global_gradient,
       Real minibatch_factor,
       bool sentences_only);
