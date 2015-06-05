@@ -133,8 +133,9 @@ void ParsedCorpus::readFile(const std::string& filename, const boost::shared_ptr
 
 
       int index = config_->num_train_sentences + sentences_.size() + 1;
-      //if (frozen)
-      //  index = 0;
+      //TODO temp
+      if (frozen)
+        index = 0;
 
       sentences_.push_back(ParsedSentence(sent, tags, features, arcs, labels, index)); 
       state = 1;

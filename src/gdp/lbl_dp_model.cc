@@ -132,7 +132,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
     test_corpus->readFile(config->test_file, dict, true);
 
     std::cerr << "Done reading test corpus..." << endl;
-    config->num_train_sentences += test_corpus->size(); //
+    //config->num_train_sentences += test_corpus->size(); //
   }
 
   std::cerr << "Reading test corpus 2...\n";
@@ -408,13 +408,13 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
       }
 
       //generate from model
-      ofstream gout("generate" + std::to_string(iter) + ".out");
+      /*ofstream gout("generate" + std::to_string(iter) + ".out");
       for (int i = 0; i < config->generate_samples; ++i) {
         Parser parse = parse_model->generateSentence(weights, eng, i);
         gout << parse.sentence_string(dict) << std::endl;
         gout <<  parse.arcs_string() << std::endl;
         //parse.print_labels();
-      }
+      } */
     }
 
     if (config->semi_supervised) {
@@ -801,9 +801,10 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate_sentence_vector(
 template<class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) {
-  if (config->sentence_vector)
-    evaluate_sentence_vector(test_corpus, accumulator);
-  else if (test_corpus != nullptr) {
+  //if (config->sentence_vector)
+  //  evaluate_sentence_vector(test_corpus, accumulator);
+  //else 
+  if (test_corpus != nullptr) {
     #pragma omp master
     {
       vector<int> indices(test_corpus->size());

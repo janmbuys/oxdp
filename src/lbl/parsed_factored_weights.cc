@@ -163,8 +163,8 @@ VectorReal ParsedFactoredWeights::getSentenceVectorGradient(const boost::shared_
       examples, action_prediction_vectors, action_probs);
 
   int context_width = config->ngram_order - 1;
-  MatrixReal word_context_gradients = getContextProduct(context_width, word_weighted_representations, true);
-  MatrixReal action_context_gradients = getContextProduct(context_width, action_weighted_representations, true);
+  MatrixReal word_context_gradients = getContextProduct(context_width - 1, word_weighted_representations, true);
+  MatrixReal action_context_gradients = getContextProduct(context_width - 1, action_weighted_representations, true);
   for (size_t i = 0; i < examples->word_example_size(); ++i) 
     sentence_gradient += word_context_gradients.col(i); 
   for (size_t i = 0; i < examples->action_example_size(); ++i) 
