@@ -12,7 +12,9 @@ Dict::Dict():
 {
   words_.reserve(1000);
   convert(sos_, false);
+  convertFeature(sos_, false);
   convert(eos_, false);
+  convertFeature(eos_, false);
 }
 
 //used eg for char lm

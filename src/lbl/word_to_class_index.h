@@ -25,6 +25,8 @@ class WordToClassIndex {
 
   int getWordIndexInClass(int word_id) const;
 
+  int getWordIndex(int class_id, int word_class_id) const;
+
   bool operator==(const WordToClassIndex& index) const;
 
  private:

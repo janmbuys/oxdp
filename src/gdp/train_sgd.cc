@@ -11,6 +11,7 @@
 
 #include "gdp/lbl_model.h"
 #include "gdp/lbl_dp_model.h"
+#include "gdp/lbl_gec_model.h"
 
 using namespace boost::program_options;
 using namespace oxlm;
@@ -33,11 +34,20 @@ using namespace oxlm;
 
 template<class ParseModel, class ParsedWeights, class LblMetadata>
 void train_dp(const boost::shared_ptr<ModelConfig>& config) {
-  LblDpModel<ParseModel, ParsedWeights, LblMetadata> model(config);
+  if (config->model_input_file.size() == 0) {
+    LblDpModel<ParseModel, ParsedWeights, LblMetadata> model(config);
 
-  model.learn();
-  if (config->iterations > 1)
-    model.evaluate();
+    model.learn();
+    //if (config->iterations > 1)
+    //  model.evaluate();
+  } else {
+    LblDpModel<ParseModel, ParsedWeights, LblMetadata> model;
+    model.load(config->model_input_file);
+    boost::shared_ptr<ModelConfig> model_config = model.getConfig();
+    model_config->model_input_file = config->model_input_file;
+    assert(*config == *model_config);
+    model.learn();
+  }
 }
 
 int main(int argc, char** argv) {
@@ -49,8 +59,7 @@ int main(int argc, char** argv) {
 
   options_description generic("Allowed options");
   generic.add_options()
-    ("training-set,i", 
-        value<std::string>()->default_value("english-wsj-stanford-unk/english_wsj_train.conll"),
+    ("training-set,i", value<std::string>(),
         "corpus of parsed sentences for training, conll format")
     ("training-set-unsup,u", value<std::string>(),
         "corpus of unparsed sentences for semi-supervised training, conll format")
@@ -132,6 +141,10 @@ int main(int argc, char** argv) {
         "Action history elements context size.")
     ("child-context-level", value<int>()->default_value(0),
         "Stack elements context size.")
+    ("output-context-size", value<int>()->default_value(1),
+        "Output sentence context size.")
+    ("input-window-size", value<int>()->default_value(1),
+        "Input sentence context window size.")
     ("complete-parse", value<bool>()->default_value(true),
         "Enforce complete tree-structured parse.")
     ("bootstrap", value<bool>()->default_value(false),
@@ -188,6 +201,9 @@ int main(int argc, char** argv) {
   config->training_file = vm["training-set"].as<std::string>();
   if (vm.count("training-set-unsup")) {
     config->training_file_unsup = vm["training-set-unsup"].as<std::string>();
+  }
+  if (vm.count("test-out-file")) {
+    config->test_output_file = vm["test-out-file"].as<string>();
   }
   if (vm.count("test-set")) {
     config->test_file = vm["test-set"].as<string>();
@@ -262,7 +278,13 @@ int main(int argc, char** argv) {
   } else if (parser_type_str == "eisner") {
     config->parser_type = ParserType::eisner; 
     config->ngram_order = lblOrderE;
-  } else {
+  } else if (parser_type_str == "aligned-ngram") {
+    config->parser_type = ParserType::aligned_ngram; 
+    config->out_ctx_size = vm["output-context-size"].as<int>();
+    config->in_window_size = vm["input-window-size"].as<int>();
+    config->ngram_order = config->out_ctx_size + 2*config->in_window_size + 2;
+  } 
+  else {
     config->parser_type = ParserType::ngram; 
   }
   
@@ -393,7 +415,27 @@ int main(int argc, char** argv) {
       LblModel<Weights, Weights, Metadata> model(config);
       model.learn();
     }
-  } else if (config->discriminative) { 
+  } else if (config->parser_type == ParserType::aligned_ngram) {
+    if (config->factored) {
+      if (config->model_input_file.size() == 0) {
+        LblGecModel<FactoredWeights, FactoredWeights, FactoredMetadata> model(config);
+        model.learn();
+      } else {
+        LblGecModel<FactoredWeights, FactoredWeights, FactoredMetadata> model;
+        model.load(config->model_input_file);
+        boost::shared_ptr<ModelConfig> model_config = model.getConfig();
+        model_config->model_input_file = config->model_input_file;
+        assert(*config == *model_config);
+        model.learn();
+      }
+    } else {
+      LblGecModel<Weights, Weights, Metadata> model(config);
+      model.learn();
+    }
+  }  
+  
+  
+  else if (config->discriminative) { 
       train_dp<ArcStandardLabelledParseModel<DiscriminativeWeights>, DiscriminativeWeights, DiscriminativeMetadata>(config);
   } else if (config->lexicalised) {
     if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) {

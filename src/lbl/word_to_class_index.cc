@@ -33,6 +33,10 @@ int WordToClassIndex::getWordIndexInClass(int word_id) const {
   return word_id - classMarkers[wordToClass[word_id]];
 }
 
+int WordToClassIndex::getWordIndex(int class_id, int word_class_id) const {
+  return classMarkers[class_id] + word_class_id; 
+}
+
 bool WordToClassIndex::operator==(const WordToClassIndex& index) const {
   return classMarkers == index.classMarkers && wordToClass == index.wordToClass;
 }

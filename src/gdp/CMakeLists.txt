@@ -11,10 +11,12 @@ add_libraries(gdp
   arc_standard_labelled_parse_model.cc
   arc_eager_labelled_parse_model.cc
   ngram_model.cc
+  aligned_ngram_model.cc
   pyp_model.cc
   pyp_dp_model.cc
   lbl_model.cc
   lbl_dp_model.cc
+  lbl_gec_model.cc
 )
 
   #eisner_parser.cc

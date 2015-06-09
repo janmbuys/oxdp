@@ -11,7 +11,7 @@
 
 namespace oxlm {
 
-enum class ParserType {ngram, eisner, arcstandard, arceager, arcstandard2};
+enum class ParserType {ngram, eisner, arcstandard, arceager, arcstandard2, aligned_ngram};
 enum class Activation {linear, sigmoid, tanh, rectifier};
 
 struct ModelConfig {
@@ -87,6 +87,8 @@ struct ModelConfig {
   int         stack_ctx_size;
   int         action_ctx_size;
   int         child_ctx_level;
+  int         out_ctx_size;
+  int         in_window_size;
   std::vector<unsigned> beam_sizes;
   std::vector<std::vector<int>> word_to_features;
   std::vector<int> tag_to_feature;
@@ -110,8 +112,8 @@ struct ModelConfig {
     ar & test_output_file2;
     ar & iterations;
     ar & iterations_sv;
-    ar & iterations_test;
     ar & iterations_unsup;
+    ar & iterations_test;
     ar & minibatch_size;
     ar & minibatch_size_unsup;
     ar & ngram_order;
@@ -120,6 +122,7 @@ struct ModelConfig {
     ar & l2_lbl;
     ar & l2_lbl_sv;
     ar & representation_size;
+    ar & threads;
     ar & step_size;
     ar & factored;
     ar & classes;
@@ -160,7 +163,19 @@ struct ModelConfig {
     ar & num_tags;
     ar & num_features;
     ar & num_labels;
+    ar & num_train_sentences;
+    ar & action_feature_index;
+    ar & label_feature_index;
+    ar & distance_feature_index;
+    ar & distance_range;
+    ar & stack_ctx_size;
+    ar & action_ctx_size;
+    ar & child_ctx_level;
+    ar & out_ctx_size;
+    ar & in_window_size;
+    ar & beam_sizes;
     ar & word_to_features;
+    ar & tag_to_feature;
   }
 };
 

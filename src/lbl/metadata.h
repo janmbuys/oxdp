@@ -35,6 +35,7 @@ class Metadata {
   void serialize(Archive& ar, const unsigned int version) {
     ar & config;
     ar & unigram;
+    ar & smoothed_unigram;
   }
 
  protected:

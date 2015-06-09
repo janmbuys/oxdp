@@ -734,6 +734,19 @@ Reals Weights::predict(Context context) const {
   return probs;
 }
 
+Reals Weights::predictViterbi(Context context) const {
+  VectorReal prediction_vector = getPredictionVector(context);
+  Reals probs(vocabSize(), std::numeric_limits<Real>::max());
+
+  //Real normalizer = 0;
+  VectorReal word_probs = R.transpose() * prediction_vector + B; //logSoftMax()
+  //normalizerCache.set(context.words, normalizer);
+  int word_id = word_probs.maxCoeff();
+  probs[word_id] = -log(word_probs(word_id));
+  
+  return probs;
+}
+
 int Weights::vocabSize() const {
   return config->vocab_size;
 }

@@ -91,6 +91,8 @@ class Weights {
   Real predict(int word, Context context) const;
 
   Reals predict(Context context) const;
+  
+  Reals predictViterbi(Context context) const;
 
   int vocabSize() const;
 

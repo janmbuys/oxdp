@@ -111,6 +111,7 @@ public:
     ar & null_;
     ar & sos_;
     ar & eos_;
+    ar & root_first_;
     ar & bad0_id_;
     ar & words_;
     ar & d_;

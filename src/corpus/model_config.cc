@@ -18,7 +18,8 @@ ModelConfig::ModelConfig()
       semi_supervised(false), direction_deterministic(false), sum_over_beam(false), resample(false), 
       root_first(true), complete_parse(true), bootstrap(false), bootstrap_iter(0), max_beam_increment(1), 
       num_particles(1), generate_samples(0), num_tags(1), num_features(1), num_labels(1), 
-      num_train_sentences(0), beam_sizes(1, 1) {}
+      num_train_sentences(0), distance_range(0), stack_ctx_size(0), child_ctx_level(0),
+      out_ctx_size(0), in_window_size(0), beam_sizes(1, 1) {}
 
 int ModelConfig::numActions() const {
   if (parser_type == ParserType::arcstandard)
@@ -51,20 +52,22 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
   return (training_file == other.training_file
       && training_file_unsup == other.training_file_unsup
       && training_file_ques == other.training_file_ques
-      && ngram_order == other.ngram_order
+      && ngram_order == other.ngram_order  
       && representation_size == other.representation_size
       && factored == other.factored
       && classes == other.classes
       && class_file == other.class_file
       && lower_class_file == other.lower_class_file
       && diagonal_contexts == other.diagonal_contexts
-      && vocab_size == other.vocab_size
+      //&& vocab_size == other.vocab_size
       && noise_samples == other.noise_samples
       && parser_type == other.parser_type
       && activation == other.activation
       && pyp_model == other.pyp_model
+      && context_type == other.context_type
       && labelled_parser == other.labelled_parser
       && discriminative == other.discriminative
+      && predict_pos == other.predict_pos
       && lexicalised == other.lexicalised
       && sentence_vector == other.sentence_vector
      // && compositional == other.compositional
@@ -78,9 +81,11 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
       && semi_supervised == other.semi_supervised
       && root_first == other.root_first
       && complete_parse == other.complete_parse
-      && num_tags == other.num_tags
-      && num_features == other.num_features
-      && num_labels == other.num_labels);
+      && distance_range == other.distance_range
+      && stack_ctx_size == other.stack_ctx_size
+      && child_ctx_level == other.child_ctx_level
+      && out_ctx_size == other.out_ctx_size
+      && in_window_size == other.in_window_size);
 }
 
 } //namespace oxlm

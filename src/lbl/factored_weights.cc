@@ -462,6 +462,39 @@ void FactoredWeights::clear(const MinibatchWords& words, bool parallel_update) {
   }
 }
 
+Reals FactoredWeights::predictViterbi(Context context) const { //give probs only for highest scoring words
+  Reals probs(vocabSize(), std::numeric_limits<Real>::max());
+  Real normalizer = 0;
+  int num_classes = config->max_beam_increment;;
+  int num_words = config->max_beam_increment;
+
+  VectorReal prediction_vector = getPredictionVector(context);
+  //don't really need to normalize if just used to max, but proper prob is nice
+  VectorReal class_probs = logSoftMax(
+      S.transpose() * prediction_vector + T, normalizer);  
+ 
+   for (int c = 0; c < num_classes; ++c) {
+     int class_ind;
+     class_probs.maxCoeff(&class_ind); 
+     Real class_prob = class_probs(class_ind);
+     class_probs(class_ind) = std::numeric_limits<Real>::min();
+     
+     VectorReal word_probs = logSoftMax(
+        classR(class_ind).transpose() * prediction_vector + classB(class_ind),
+        normalizer);
+     for (int cw = 0; cw < num_words; ++cw) {
+       int word_class_ind;
+       word_probs.maxCoeff(&word_class_ind);
+       Real word_prob = word_probs(word_class_ind);
+       word_probs(word_class_ind) = std::numeric_limits<Real>::min();
+     
+       probs[index->getWordIndex(class_ind, word_class_ind)] = -(class_prob + word_prob);
+     }
+   }
+
+   return probs;
+}
+
 Real FactoredWeights::predict(int word, Context context) const {
   Words context_words = context.words;
   int class_id = index->getClass(word);
