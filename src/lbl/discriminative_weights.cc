@@ -513,15 +513,25 @@ void DiscriminativeWeights::updateSquared(
     bool sentences_only) {
 
   for (int word_id: global_words.getContextWords()) {
-    Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square();
+    if (config->rms_prop)
+      Q.col(word_id).array() = Q.col(word_id).array()*0.9 + global_gradient->Q.col(word_id).array().square()*0.1;
+    else
+      Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square();
   }
 
   for (int word_id: global_words.getOutputWords()) {
-    R.col(word_id).array() += global_gradient->R.col(word_id).array().square();
+    if (config->rms_prop)
+      R.col(word_id).array() = R.col(word_id).array()*0.9 + global_gradient->R.col(word_id).array().square()*0.1;
+    else 
+      R.col(word_id).array() += global_gradient->R.col(word_id).array().square();
   }
 
   Block block = getBlock(P.size() + Q.size() + R.size(), W.size() - (P.size() + Q.size() + R.size()));
-  W.segment(block.first, block.second).array() +=
+  if (config->rms_prop)
+    W.segment(block.first, block.second).array() = W.segment(block.first, block.second).array()*0.9
+      + global_gradient->W.segment(block.first, block.second).array().square()*0.1;
+  else
+    W.segment(block.first, block.second).array() +=
       global_gradient->W.segment(block.first, block.second).array().square();
 }
 

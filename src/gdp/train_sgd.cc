@@ -45,6 +45,7 @@ void train_dp(const boost::shared_ptr<ModelConfig>& config) {
     model.load(config->model_input_file);
     boost::shared_ptr<ModelConfig> model_config = model.getConfig();
     model_config->model_input_file = config->model_input_file;
+    model_config->context_type = config->context_type; //temp hack
     assert(*config == *model_config);
     model.learn();
   }
@@ -93,8 +94,14 @@ int main(int argc, char** argv) {
         "base filename of model output files")
     ("lambda-lbl,r", value<float>()->default_value(7.0),
         "regularisation strength parameter")
-    ("lambda-lbl-sv,r", value<float>()->default_value(7.0),
+    ("lambda-lbl-sv", value<float>()->default_value(7.0),
         "regularisation strength parameter for sentence vectors")
+    ("whole-feature-dropout", value<float>()->default_value(0.0),
+        "whole feature dropout probability")
+    ("feature-dropout", value<float>()->default_value(0.0),
+        "input feature dropout probability")
+    ("rms-prop", value<bool>()->default_value(false),
+        "Use RMS prop modification of Adagrad.")
     ("representation-size", value<int>()->default_value(100),
         "Width of representation vectors.")
     ("threads", value<int>()->default_value(1),
@@ -335,6 +342,9 @@ int main(int argc, char** argv) {
 
   config->l2_lbl = vm["lambda-lbl"].as<float>();
   config->l2_lbl_sv = vm["lambda-lbl-sv"].as<float>();
+  config->whole_feature_dropout = vm["whole-feature-dropout"].as<float>();
+  config->feature_dropout = vm["feature-dropout"].as<float>();
+  config->rms_prop = vm["rms-prop"].as<bool>();
   config->representation_size = vm["representation-size"].as<int>();
   config->threads = vm["threads"].as<int>();
   config->step_size = vm["step-size"].as<float>();

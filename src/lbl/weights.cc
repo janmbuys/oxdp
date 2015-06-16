@@ -157,30 +157,52 @@ void Weights::getContextVectors(
   int context_width = config->ngram_order - 1;
   int word_width = config->representation_size;
 
+  MT19937 eng;
   contexts.resize(examples->size());
   context_vectors.resize(
       context_width, MatrixReal::Zero(word_width, examples->size()));
   for (size_t i = 0; i < examples->size(); ++i) {
     contexts[i] = examples->contextAt(i).features;
-    //for (int j = 0; j < context_width - 1; ++j) 
-    //  contexts[i].push_back(examples->contextAt(i).features[j]);
-    //if (config->sentence_vector)
-    //  contexts[i].push_back(Words(1, examples->sentenceIdAt(i)));
-    //else
-    //  contexts[i].push_back(examples->contextAt(i).features[context_width-1]);
+    
+    if (config->whole_feature_dropout > 0) {
+      for (int j = 0; (j < context_width - 1) || (!config->sentence_vector && (j == context_width - 1)); ++j) {
+       for (int k = 0; k < contexts[i][j].size(); ++k) {
+         if (sample_uniform01<Real, MT19937> (eng) < config->whole_feature_dropout) {
+           contexts[i][j].erase(contexts[i][j].begin() + k);
+           --k;
+         }
+       }
+      }
+    }
 
-    for (int j = 0; j < context_width; ++j) {
-      //std::cout << context_width << ": " << contexts[i].size() << std::endl;
-      if (config->sentence_vector && (j == context_width - 1)) {
-        //std::cout << examples->sentenceIdAt(i) << std::endl;
-        //std::cout << contexts[i][j].size() << std::endl;
-        context_vectors[j].col(i) += P.col(contexts[i][j][0]); 
-      } else {   
-        for (auto feat: contexts[i][j]) {
-          //std::cout << feat << "--" << std::endl;
-          context_vectors[j].col(i) += Q.col(feat);
+    MatrixReal dropout_mask = MatrixReal::Zero(word_width, word_width);
+    if (config->feature_dropout > 0) {
+      for (int k = 0; k < word_width; ++k) {
+        if (sample_uniform01<Real, MT19937> (eng) >= config->feature_dropout) {
+          dropout_mask(k, k) = 1.0;
         }
       }
+    }
+
+    //contexts[i].push_back(examples->contextAt(i).features[j]);
+
+    for (int j = 0; j < context_width; ++j) {
+      VectorReal feature_vector = VectorReal::Zero(word_width);
+
+      if (config->sentence_vector && (j == context_width - 1)) {
+        //context_vectors[j].col(i) += P.col(contexts[i][j][0]); 
+        feature_vector += P.col(contexts[i][j][0]); 
+      } else {   
+        for (auto feat: contexts[i][j]) {
+          //context_vectors[j].col(i) += Q.col(feat);
+          feature_vector += Q.col(feat);
+        }
+      }
+
+      if (config->feature_dropout > 0) 
+        feature_vector = dropout_mask * feature_vector;
+
+      context_vectors[j].col(i) += feature_vector;
     }
   }
 }
@@ -527,7 +549,13 @@ void Weights::updateSquared(
     const boost::shared_ptr<Weights>& global_gradient,
     bool sentences_only) {
   for (int word_id: global_words.getSentenceWords()) {
-    P.col(word_id).array() += global_gradient->P.col(word_id).array().square();
+    if (config->rms_prop) {
+      //P.col(word_id).array() = P.col(word_id).array()*0.9 + global_gradient->P.col(word_id).array().square()*0.1;
+      P.col(word_id).array() *= 0.9;
+      P.col(word_id).array() += global_gradient->P.col(word_id).array().square()*0.1;
+    } else
+      P.col(word_id).array() += global_gradient->P.col(word_id).array().square();
+
   }
 
   /* if (sentences_only) {
@@ -540,15 +568,31 @@ void Weights::updateSquared(
   } else { */
   if (!sentences_only) {
     for (int word_id: global_words.getContextWords()) {
-      Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square();
+      if (config->rms_prop) {
+        //Q.col(word_id).array() = Q.col(word_id).array()*0.9 + global_gradient->Q.col(word_id).array().square()*0.1;
+        Q.col(word_id).array() *= 0.9;
+        Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square()*0.1;
+      } else
+        Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square();
     }
 
     for (int word_id: global_words.getOutputWords()) {
-      R.col(word_id).array() += global_gradient->R.col(word_id).array().square();
+      if (config->rms_prop) {
+        //R.col(word_id).array() = R.col(word_id).array()*0.9 + global_gradient->R.col(word_id).array().square()*0.1;
+        R.col(word_id).array() *= 0.9;
+        R.col(word_id).array() += global_gradient->R.col(word_id).array().square()*0.1;
+      } else 
+        R.col(word_id).array() += global_gradient->R.col(word_id).array().square();
     }
 
     Block block = getBlock(P.size() + Q.size() + R.size(), W.size() - (P.size() + Q.size() + R.size()));
-    W.segment(block.first, block.second).array() +=
+    if (config->rms_prop) {
+      //W.segment(block.first, block.second).array() = W.segment(block.first, block.second).array()*0.9
+      //  + global_gradient->W.segment(block.first, block.second).array().square()*0.1;
+      W.segment(block.first, block.second).array() *= 0.9;
+      W.segment(block.first, block.second).array() += global_gradient->W.segment(block.first, block.second).array().square()*0.1;
+    } else
+      W.segment(block.first, block.second).array() +=
         global_gradient->W.segment(block.first, block.second).array().square();
   }
 }
@@ -684,10 +728,17 @@ VectorReal Weights::getPredictionVector(const Context& context) const {
     if (config->sentence_vector && i == (context_width - 1)) {
       //std::cout << context.features[i].size() << std::endl;
       //std::cout << context.features[i][0] << std::endl;
-      in_vector += P.col(context.features[i][0]); //0 
+      if (config->feature_dropout > 0) 
+        in_vector += P.col(context.features[i][0])*(1.0/(1 - config->feature_dropout)); 
+      else
+        in_vector += P.col(context.features[i][0]); //0 
     } else {
-      for (auto feat: context.features[i]) 
-        in_vector += Q.col(feat);
+      for (auto feat: context.features[i]) {
+        if ((config->feature_dropout > 0) || (config->whole_feature_dropout > 0))
+          in_vector += Q.col(context.features[i][0])*(1.0/(1 - ((1 - config->whole_feature_dropout)*config->feature_dropout + config->whole_feature_dropout))); 
+        else
+          in_vector += Q.col(feat);
+      }
     }
 
     if (config->diagonal_contexts) {

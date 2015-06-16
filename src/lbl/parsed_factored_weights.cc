@@ -453,7 +453,13 @@ void ParsedFactoredWeights::updateSquared(
     return;
 
   Block block = getBlock();
-  PW.segment(block.first, block.second).array() +=
+  if (config->rms_prop) {
+    //PW.segment(block.first, block.second).array() = PW.segment(block.first, block.second).array()*0.9
+    //    + global_gradient->PW.segment(block.first, block.second).array().square()*0.1;
+    PW.segment(block.first, block.second).array() *= 0.9;
+    PW.segment(block.first, block.second).array() += global_gradient->PW.segment(block.first, block.second).array().square()*0.1;
+  } else 
+    PW.segment(block.first, block.second).array() +=
       global_gradient->PW.segment(block.first, block.second).array().square();
 }
 

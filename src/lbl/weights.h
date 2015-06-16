@@ -9,6 +9,7 @@
 #include <boost/thread/tss.hpp>
 
 #include "corpus/data_set.h"
+#include "utils/random.h"
 
 #include "lbl/context_cache.h"
 #include "lbl/metadata.h"
@@ -209,6 +210,7 @@ class Weights {
   BOOST_SERIALIZATION_SPLIT_MEMBER();
 
  protected:
+  //MT19937 eng;
   boost::shared_ptr<ModelConfig> config;
   boost::shared_ptr<Metadata> metadata;
 

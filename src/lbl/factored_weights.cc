@@ -411,7 +411,13 @@ void FactoredWeights::updateSquared(
     return;
 
   Block block = getBlock();
-  FW.segment(block.first, block.second).array() +=
+  if (config->rms_prop) {
+    //FW.segment(block.first, block.second).array() = FW.segment(block.first, block.second).array()*0.9
+    //    + global_gradient->FW.segment(block.first, block.second).array().square()*0.1;
+    FW.segment(block.first, block.second).array() *= 0.9;
+    FW.segment(block.first, block.second).array() += global_gradient->FW.segment(block.first, block.second).array().square()*0.1;
+  } else 
+    FW.segment(block.first, block.second).array() +=
       global_gradient->FW.segment(block.first, block.second).array().square();
 }
 

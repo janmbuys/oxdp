@@ -39,6 +39,9 @@ struct ModelConfig {
   int         representation_size;   
   int         threads;
   float       step_size;
+  float       whole_feature_dropout;
+  float       feature_dropout;
+  bool        rms_prop;
   bool        factored;
   int         classes;
   std::string class_file;
@@ -110,10 +113,10 @@ struct ModelConfig {
     ar & test_file_unsup;
     ar & test_output_file;
     ar & test_output_file2;
-    ar & iterations;
-    ar & iterations_sv;
-    ar & iterations_unsup;
-    ar & iterations_test;
+    //ar & iterations;
+    //ar & iterations_sv;
+    //ar & iterations_unsup;
+    //ar & iterations_test;
     ar & minibatch_size;
     ar & minibatch_size_unsup;
     ar & ngram_order;
@@ -124,6 +127,9 @@ struct ModelConfig {
     ar & representation_size;
     ar & threads;
     ar & step_size;
+    ar & whole_feature_dropout;
+    ar & feature_dropout;
+    ar & rms_prop;
     ar & factored;
     ar & classes;
     ar & class_file;
