@@ -47,7 +47,10 @@ class TransitionParser: public Parser {
 
   void update_tag(WordIndex i, WordId tag) {
     //std::cout << tag << " " << config_->tag_to_feature[tag] << std::endl;
-    set_tag_at(i, tag, config_->tag_to_feature[tag]);
+    if (config_->pyp_model)
+      set_tag_at(i, tag, tag);
+    else
+      set_tag_at(i, tag, config_->tag_to_feature[tag]);
   }
 
   void append_action_label(WordId l) {

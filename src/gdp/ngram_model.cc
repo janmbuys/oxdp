@@ -11,21 +11,46 @@ NGramModel<Weights>::NGramModel(unsigned order, WordId sos, WordId eos):
     }
 
 template<class Weights>
-Context NGramModel<Weights>::extractContext(const boost::shared_ptr<Corpus> corpus, int position) {
+Context NGramModel<Weights>::extractContext(const Sentence& sent, int position) {
   Words context;
+  WordsList features;
 
   // The context is constructed starting from the most recent word:
   // context = [w_{n-1}, w_{n-2}, ...]
   int context_start = position - order_ + 1;
-  bool sentence_start = (position == 0); 
-  for (int i = order_ - 2; i >= 0; --i) {
+  //bool sentence_start = (position == 0); 
+  //for (int i = order_ - 2; i >= 0; --i) {
+  for (int i = 0; i < order_ - 1; ++i) {
     int index = context_start + i;
-    sentence_start |= (index < 0 || corpus->at(index) == eos_);
-    int word_id = sentence_start ? sos_: corpus->at(index);
+    //sentence_start |= (index < 0 || sent.word_at(index) == eos_);
+    bool sentence_start = (index < 0); //|| corpus->at(index) == eos_);
+    int word_id = sentence_start ? sos_: sent.word_at(index);
     context.push_back(word_id);
+    features.push_back(Words(1, word_id));
   }
 
-  return Context(context);
+  return Context(context, features);
+}
+
+template<class Weights>
+Context NGramModel<Weights>::extractContext(const boost::shared_ptr<Corpus> corpus, int position) {
+  Words context;
+  WordsList features;
+
+  // The context is constructed starting from the most recent word:
+  // context = [w_{n-1}, w_{n-2}, ...]
+  int context_start = position - order_ + 1;
+  //bool sentence_start = (position == 0); 
+  //for (int i = order_ - 2; i >= 0; --i) {
+  for (int i = 0; i < order_ - 1; ++i) {
+    int index = context_start + i;
+    bool sentence_start = (index < 0); //|| corpus->at(index) == eos_);
+    int word_id = sentence_start ? sos_: corpus->at(index);
+    context.push_back(word_id);
+    features.push_back(Words(1, word_id));
+  }
+
+  return Context(context, features);
 }
 
 template<class Weights>
@@ -47,14 +72,16 @@ Real NGramModel<Weights>::evaluate(const boost::shared_ptr<Corpus> corpus, int p
 template<class Weights>
 void NGramModel<Weights>::extractSentence(const Sentence& sent, 
           const boost::shared_ptr<DataSet>& examples) {
-  Words context(order_ - 1, sos_);
+  //Words context(order_ - 1, sos_);
+
   //eos is already at end of sentence
   for (int i = 0; i < sent.size(); ++i) {    
     WordId word = sent.word_at(i);
-    Context ctx = Context(Words(context.begin() + i, context.begin() + i + order_ - 1));
+    //Context ctx = Context(Words(context.begin() + i, context.begin() + i + order_ - 1));
+    Context ctx = extractContext(sent, i);
     DataPoint example(word, ctx); 
     examples->addExample(example);
-    context.push_back(word);
+    //context.push_back(word);
   }    
 }
 
@@ -66,7 +93,8 @@ Real NGramModel<Weights>::evaluateSentence(const Sentence& sent,
   //eos is already at end of sentence
   for (int i = 0; i < static_cast<int>(sent.size()); ++i) {    
     WordId word = sent.word_at(i);
-    Context ctx = Context(Words(context.begin() + i, context.begin() + i + order_ - 1));
+    //Context ctx = Context(Words(context.begin() + i, context.begin() + i + order_ - 1));
+    Context ctx = extractContext(sent, i);
     Real predict_weight = weights->predict(word, ctx); 
 
     weight += predict_weight;

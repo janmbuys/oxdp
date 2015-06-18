@@ -161,8 +161,10 @@ void Weights::getContextVectors(
   contexts.resize(examples->size());
   context_vectors.resize(
       context_width, MatrixReal::Zero(word_width, examples->size()));
+  //std::cout << examples->size() << std::endl;
   for (size_t i = 0; i < examples->size(); ++i) {
     contexts[i] = examples->contextAt(i).features;
+    //std::cout << "i " << contexts[i].size() << std::endl;
     
     if (config->whole_feature_dropout > 0) {
       for (int j = 0; (j < context_width - 1) || (!config->sentence_vector && (j == context_width - 1)); ++j) {
