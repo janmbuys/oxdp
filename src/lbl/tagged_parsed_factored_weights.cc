@@ -21,7 +21,7 @@ TaggedParsedFactoredWeights::TaggedParsedFactoredWeights(
 
   if (init) {
    // Initialize model weights randomly.
-    mt19937 gen(1);
+    mt19937 gen; //(1);
     normal_distribution<Real> gaussian(0, 0.1);
     for (int i = 0; i < size; ++i) {
       TW(i) = gaussian(gen);

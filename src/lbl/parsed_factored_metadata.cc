@@ -23,10 +23,11 @@ void ParsedFactoredMetadata::initialize(const boost::shared_ptr<ParsedCorpus>& c
   FactoredMetadata::initialize(corpus);  
   vector<int> action_counts = corpus->actionCounts();
 
-  VectorReal counts = VectorReal::Zero(action_counts.size());
-  for (size_t i = 0; i < action_counts.size(); ++i) 
-    counts(i) = action_counts[i];
-  actionBias = counts.array() / counts.sum();
+  //VectorReal counts = VectorReal::Zero(action_counts.size());
+  //for (size_t i = 0; i < action_counts.size(); ++i) 
+  //  counts(i) = action_counts[i];
+  //actionBias = counts.array() / counts.sum();
+  actionBias = VectorReal::Ones(action_counts.size())*0.2;
 }
 
 VectorReal ParsedFactoredMetadata::getActionBias() const {

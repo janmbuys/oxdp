@@ -252,7 +252,9 @@ int main(int argc, char** argv) {
       config->stack_ctx_size = vm["stack-context-size"].as<int>();
       config->action_ctx_size = vm["action-context-size"].as<int>();
       config->child_ctx_level = vm["child-context-level"].as<int>();
-      config->ngram_order = config->stack_ctx_size + config->action_ctx_size + 4*config->child_ctx_level + 1;
+      //config->ngram_order = config->stack_ctx_size + config->action_ctx_size + 4*config->child_ctx_level + 1;
+      
+      config->ngram_order = 2*config->stack_ctx_size + config->action_ctx_size + 8*config->child_ctx_level + 1; //assume seperate words and tags, no labels
     }
     else if (config->context_type == "extended")
       config->ngram_order = lblOrderASx;

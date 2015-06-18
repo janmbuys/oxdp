@@ -21,7 +21,7 @@ ParsedFactoredWeights::ParsedFactoredWeights(
 
   if (init) {
    // Initialize model weights randomly.
-    mt19937 gen(1);
+    mt19937 gen; //(1);
     normal_distribution<Real> gaussian(0, 0.1);
     for (int i = 0; i < size; ++i) {
       PW(i) = gaussian(gen);
@@ -241,8 +241,36 @@ void ParsedFactoredWeights::estimateGradient(
     const boost::shared_ptr<ParsedFactoredWeights>& gradient,
     Real& objective,
     MinibatchWords& words) const {
-  FactoredWeights::estimateGradient(examples->word_examples(), gradient, objective, words);
+  //FactoredWeights::estimateGradient(examples->word_examples(), gradient, objective, words);
   //TODO estimate action gradient
+  vector<WordsList> word_contexts;
+  vector<WordsList> action_contexts;
+  vector<MatrixReal> word_context_vectors;
+  vector<MatrixReal> action_context_vectors;
+
+  getContextVectors(examples->word_examples(), word_contexts, word_context_vectors);
+  getContextVectors(examples->action_examples(), action_contexts, action_context_vectors);
+
+  setContextWords(word_contexts, words); 
+  setContextWords(action_contexts, words); 
+
+  MatrixReal word_prediction_vectors = getPredictionVectors(examples->word_example_size(), word_context_vectors); 
+  MatrixReal action_prediction_vectors = getPredictionVectors(examples->action_example_size(), 
+                                                   action_context_vectors); 
+
+  MatrixReal word_weighted_representations;
+  MatrixReal action_weighted_representations;
+  estimateProjectionGradient(
+      examples, word_prediction_vectors, action_prediction_vectors, gradient,
+      word_weighted_representations, action_weighted_representations, objective, words);
+
+  word_weighted_representations.array() *= activationDerivative(config->activation, word_prediction_vectors);
+  action_weighted_representations.array() *= activationDerivative(config->activation, action_prediction_vectors);
+
+  getContextGradient(
+      examples->word_example_size(), word_contexts, word_context_vectors, word_weighted_representations, gradient);
+  getContextGradient(
+      examples->action_example_size(), action_contexts, action_context_vectors, action_weighted_representations, gradient);
 } 
 
 Real ParsedFactoredWeights::getObjective(
@@ -408,13 +436,31 @@ std::vector<Words> ParsedFactoredWeights::getNoiseWords(
 
 void ParsedFactoredWeights::estimateProjectionGradient(
     const boost::shared_ptr<ParseDataSet>& examples,
-    const MatrixReal& prediction_vectors,
+    const MatrixReal& word_prediction_vectors,
+    const MatrixReal& action_prediction_vectors,
     const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-    MatrixReal& weighted_representations,
+    MatrixReal& word_weighted_representations,
+    MatrixReal& action_weighted_representations,
     Real& objective,
     MinibatchWords& words) const {
-  FactoredWeights::estimateProjectionGradient(examples->word_examples(), prediction_vectors, gradient, weighted_representations, objective, words);
-  //TODO estimate for actions
+  FactoredWeights::estimateProjectionGradient(examples->word_examples(), word_prediction_vectors, gradient, word_weighted_representations, objective, words);
+
+   //forward pass
+   MatrixReal action_probs = K.transpose() * action_prediction_vectors 
+                + L * MatrixReal::Ones(1, examples->action_example_size());
+   for (size_t i = 0; i < examples->action_example_size(); ++i) 
+     action_probs.col(i) = logSoftMax(action_probs.col(i));
+  
+  for (size_t i = 0; i < examples->action_example_size(); ++i) 
+    objective -= action_probs(examples->action_at(i), i);
+  //convert out of log-space to probabilities
+  for (size_t i = 0; i < examples->action_example_size(); ++i) 
+    action_probs.col(i).array() = action_probs.col(i).array().exp();      
+
+  //backward pass
+  action_weighted_representations = K * action_probs;
+  for (size_t i = 0; i < examples->action_example_size(); ++i) 
+    action_weighted_representations.col(i) -= K.col(examples->action_at(i));
 } 
 
 void ParsedFactoredWeights::syncUpdate(

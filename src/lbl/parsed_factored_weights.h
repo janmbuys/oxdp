@@ -150,13 +150,15 @@ class ParsedFactoredWeights : public FactoredWeights {
       const boost::shared_ptr<ParseDataSet>& examples) const; 
 
   void estimateProjectionGradient(
-      const boost::shared_ptr<ParseDataSet>& examples,
-      const MatrixReal& prediction_vectors,
-      const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-      MatrixReal& weighted_representations,
-      Real& objective,
-      MinibatchWords& words) const; 
-
+    const boost::shared_ptr<ParseDataSet>& examples,
+    const MatrixReal& word_prediction_vectors,
+    const MatrixReal& action_prediction_vectors,
+    const boost::shared_ptr<ParsedFactoredWeights>& gradient,
+    MatrixReal& word_weighted_representations,
+    MatrixReal& action_weighted_representations,
+    Real& objective,
+    MinibatchWords& words) const; 
+   
  private:
   void allocate();
 

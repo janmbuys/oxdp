@@ -22,7 +22,7 @@ Weights::Weights(
   
   if (init) {
   // Initialize model weights randomly.
-  mt19937 gen(1);
+  mt19937 gen; //(1)
   normal_distribution<Real> gaussian(0, 0.1);
   for (int i = 0; i < size; ++i) {
     W(i) = gaussian(gen);
@@ -735,7 +735,7 @@ VectorReal Weights::getPredictionVector(const Context& context) const {
     } else {
       for (auto feat: context.features[i]) {
         if ((config->feature_dropout > 0) || (config->whole_feature_dropout > 0))
-          in_vector += Q.col(context.features[i][0])*(1.0/(1 - ((1 - config->whole_feature_dropout)*config->feature_dropout + config->whole_feature_dropout))); 
+          in_vector += Q.col(feat)*(1.0/(1 - ((1 - config->whole_feature_dropout)*config->feature_dropout + config->whole_feature_dropout))); 
         else
           in_vector += Q.col(feat);
       }

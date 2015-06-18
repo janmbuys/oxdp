@@ -330,15 +330,24 @@ class TransitionParser: public Parser {
 
         for (WordIndex ctx_pos: ctx) {
           if (ctx_pos >= 0) {
-            //std::cout << ctx_pos << std::endl;
-            Words feats(features_at(ctx_pos));
+            /* Words feats(features_at(ctx_pos));
             if (config_->label_features) 
               feats.push_back(config_->label_feature_index + label_at(ctx_pos));
-            features.push_back(feats);
+            features.push_back(feats); */
+            
+            //seperate words and tags
+            //std::cout << features_at(ctx_pos).size() << std::endl;
+            features.push_back(Words(1, features_at(ctx_pos)[0]));
+            features.push_back(Words(1, features_at(ctx_pos)[1]));
+            //if (config->label_features)
+            //  features.push_back(Words(1, config_->label_feature_index + label_at(ctx_pos)));
+              
+
           } else {
             //if (config_->lexicalised && config_->predict_pos)
             //  features.push_back(Words(2, 0)); //word + pos
             //else
+              features.push_back(Words(1, 0));
               features.push_back(Words(1, 0));
           }
         }

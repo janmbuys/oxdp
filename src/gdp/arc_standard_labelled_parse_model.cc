@@ -564,9 +564,6 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
             }
           }  
 
-          WordIndex left_reduce_pred = arg_min(action_probs, 1, config_->num_labels + 1);
-          WordIndex right_reduce_pred = arg_min(action_probs, config_->num_labels + 1, 
-                                                              2*config_->num_labels + 1);
           Real left_reducep = L_MAX;
           for (unsigned l = 1; l < config_->num_labels + 1; ++l) 
             left_reducep = neg_log_sum_exp(left_reducep, action_probs[l]);
@@ -574,28 +571,69 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::beamPart
           for (unsigned l = config_->num_labels + 1; l < 2*config_->num_labels + 1; ++l) 
             right_reducep = neg_log_sum_exp(right_reducep, action_probs[l]);
 
+          WordIndex left_reduce_pred = arg_min(action_probs, 1, config_->num_labels + 1);
+          Real left_reduce_pred_prob = action_probs[left_reduce_pred];
+
+          WordIndex right_reduce_pred = arg_min(action_probs, config_->num_labels + 1, 
+                                                              2*config_->num_labels + 1);
+          Real right_reduce_pred_prob = action_probs[right_reduce_pred];
+
+          //second best labels
+          action_probs[left_reduce_pred] = std::numeric_limits<Real>::max(); 
+          WordIndex left_reduce_pred2 = arg_min(action_probs, 1, config_->num_labels + 1);
+          Real left_reduce_pred_prob2 = action_probs[left_reduce_pred];
+
+          action_probs[right_reduce_pred] = std::numeric_limits<Real>::max(); 
+          WordIndex right_reduce_pred2 = arg_min(action_probs, config_->num_labels + 1, 
+                                                              2*config_->num_labels + 1);
+          Real right_reduce_pred_prob2 = action_probs[right_reduce_pred];
+
           int left_reduce_count = std::round(std::exp(-left_reducep)*num_samples); 
           if (!beam_stack[j]->left_arc_valid()) 
             left_reduce_count = 0;
-          int right_reduce_count = reduce_count - left_reduce_count;
+          double left_pred_sum = neg_log_sum_exp(left_reduce_pred_prob, left_reduce_pred_prob2);
+          int left_reduce_count2 = std::floor(std::exp(-left_reduce_pred_prob2 + left_pred_sum)*left_reduce_count);
           
+          int right_reduce_count = reduce_count - left_reduce_count;
+	  left_reduce_count -= left_reduce_count2;
+          double right_pred_sum = neg_log_sum_exp(right_reduce_pred_prob, right_reduce_pred_prob2);
+          int right_reduce_count2 = std::floor(std::exp(-right_reduce_pred_prob2 + right_pred_sum)*right_reduce_count);
+	  right_reduce_count -= right_reduce_count2;
+
           if (left_reduce_count > 0) {
             WordId re_label = beam_stack[j]->lookup_label(left_reduce_pred);
 
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-              beam_stack.back()->leftArc(re_label);
-            beam_stack.back()->add_particle_weight(action_probs[left_reduce_pred]);
+            beam_stack.back()->leftArc(re_label);
+            beam_stack.back()->add_particle_weight(left_reduce_pred_prob);
             beam_stack.back()->set_num_particles(left_reduce_count); 
+          }
+
+	  if (left_reduce_count2 > 0) {
+            WordId re_label = beam_stack[j]->lookup_label(left_reduce_pred2);
+
+            beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
+            beam_stack.back()->leftArc(re_label);
+            beam_stack.back()->add_particle_weight(left_reduce_pred_prob2);
+            beam_stack.back()->set_num_particles(left_reduce_count2); 
           }
 
           if (right_reduce_count > 0) {
             WordId re_label = beam_stack[j]->lookup_label(right_reduce_pred);
 
             beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
-            //std::cout << beam_stack.back()->stack_depth() << std::endl;
             beam_stack.back()->rightArc(re_label);
-            beam_stack.back()->add_particle_weight(action_probs[right_reduce_pred]);
+            beam_stack.back()->add_particle_weight(right_reduce_pred_prob);
             beam_stack.back()->set_num_particles(right_reduce_count); 
+          }
+
+          if (right_reduce_count2 > 0) {
+            WordId re_label = beam_stack[j]->lookup_label(right_reduce_pred2);
+
+            beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(*beam_stack[j]));
+            beam_stack.back()->rightArc(re_label);
+            beam_stack.back()->add_particle_weight(right_reduce_pred_prob2);
+            beam_stack.back()->set_num_particles(right_reduce_count2); 
           }
         }
       } 
