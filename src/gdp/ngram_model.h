@@ -20,6 +20,8 @@ class NGramModel {
 
   Context extractContext(const boost::shared_ptr<Corpus> corpus, int position);
 
+  Context extractContext(const Sentence& sent, int position);
+
   void extract(const boost::shared_ptr<Corpus> corpus, int position,     
           const boost::shared_ptr<DataSet>& examples);
 

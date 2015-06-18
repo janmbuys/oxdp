@@ -56,6 +56,7 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   boost::shared_ptr<SentenceCorpus> training_corpus = boost::make_shared<SentenceCorpus>();
   training_corpus->readFile(config->training_file, dict, immutable_dict);
   config->vocab_size = dict->size();
+  config->num_features = dict->size();
   std::cout << "Done reading training corpus..." << endl;
 
   boost::shared_ptr<SentenceCorpus> test_corpus; 

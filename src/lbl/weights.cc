@@ -161,8 +161,10 @@ void Weights::getContextVectors(
   contexts.resize(examples->size());
   context_vectors.resize(
       context_width, MatrixReal::Zero(word_width, examples->size()));
+  //std::cout << examples->size() << std::endl;
   for (size_t i = 0; i < examples->size(); ++i) {
     contexts[i] = examples->contextAt(i).features;
+    //std::cout << "i " << contexts[i].size() << std::endl;
     
     if (config->whole_feature_dropout > 0) {
       for (int j = 0; (j < context_width - 1) || (!config->sentence_vector && (j == context_width - 1)); ++j) {
@@ -735,7 +737,7 @@ VectorReal Weights::getPredictionVector(const Context& context) const {
     } else {
       for (auto feat: context.features[i]) {
         if ((config->feature_dropout > 0) || (config->whole_feature_dropout > 0))
-          in_vector += Q.col(context.features[i][0])*(1.0/(1 - ((1 - config->whole_feature_dropout)*config->feature_dropout + config->whole_feature_dropout))); 
+          in_vector += Q.col(feat)*(1.0/(1 - ((1 - config->whole_feature_dropout)*config->feature_dropout + config->whole_feature_dropout))); 
         else
           in_vector += Q.col(feat);
       }

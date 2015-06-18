@@ -277,8 +277,8 @@ Context ArcStandardLabelledParser::wordContext() const {
 Context ArcStandardLabelledParser::tagContext() const {
   if (pyp_model()) {
     if (lexicalised())
-      //return Context(word_tag_children_context());  //order 9
-      return Context(tag_children_context());  //order 7
+      return Context(word_tag_children_context());  //order 9
+      //return Context(tag_children_context());  //order 7
     else 
       return Context(tag_children_context());  //order 7
     //return Context(tag_children_third_context());  //order 11
@@ -292,8 +292,8 @@ Context ArcStandardLabelledParser::actionContext() const {
   if (pyp_model()) {
     if (lexicalised())
       //return Context(word_tag_children_context(), word_tag_children_local_context()); //order 10
-      //return Context(word_tag_children_context()); //order 9
-      return Context(action_only_context()); //order 7
+      return Context(word_tag_children_context()); //order 9
+      //return Context(action_only_context()); //order 7
     else
       return Context(tag_children_context()); //order 7
       //return Context(tag_children_third_context());  //order 11
