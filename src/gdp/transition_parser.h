@@ -340,10 +340,10 @@ class TransitionParser: public Parser {
             
             //seperate words and tags
             //std::cout << features_at(ctx_pos).size() << std::endl;
-            features.push_back(Words(1, features_at(ctx_pos)[0]));
-            features.push_back(Words(1, features_at(ctx_pos)[1]));
-            //if (config->label_features)
-            //  features.push_back(Words(1, config_->label_feature_index + label_at(ctx_pos)));
+            features.push_back(Words(1, features_at(ctx_pos)[1])); //word
+            features.push_back(Words(1, features_at(ctx_pos)[0])); //tag
+            if (config_->label_features)
+              features.back().push_back(config_->label_feature_index + label_at(ctx_pos));
               
 
           } else {
