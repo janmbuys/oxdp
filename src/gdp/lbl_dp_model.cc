@@ -497,6 +497,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
             for (int j: task) {
               //unsup_training_corpus->sentence_at(j).print_arcs();
               parse_model->extractSentence(unsup_training_corpus->sentence_at(j), task_examples);
+              //parse_model->extractSentenceUnsupervised(unsup_training_corpus->sentence_at(j), weights, task_examples);
               //std::cout << std::endl;
               //for (unsigned i = 0; i < task_examples->action_example_size(); ++i) 
               //  std::cout << task_examples->action_at(i) << " ";
@@ -566,7 +567,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
         // Wait the regularization update to finish and make sure the global
         // words are reset only after the global gradient is fully cleared.
         #pragma omp barrier
-        if ((iter == 0) && (minibatch_counter % 10000 == 0)) {
+        if ((iter == 0) && (minibatch_counter % 100000 == 0)) {
           evaluate(test_corpus_unsup, iteration_start, minibatch_counter,
              test_objective_unsup, best_perplexity_unsup);
         } 
@@ -611,6 +612,20 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
     parse.print_arcs();
     //parse.print_labels();
   }  
+
+//generate from model
+  std::vector<boost::shared_ptr<Parser>> generated_list; 
+  for (int i = 0; i < config->generate_samples; ++i) {
+    generated_list.push_back(boost::make_shared<Parser>(parse_model->generateSentence(weights, eng)));
+  } 
+  
+  std::sort(generated_list.begin(), generated_list.end(), Parser::cmp_weights); 
+  for (int i = 0; i < config->generate_samples; ++i) {
+    generated_list[i]->print_sentence(dict);
+    //parse.print_arcs();
+    //parse.print_labels();
+  }
+
 }
 
 template<class ParseModel, class ParsedWeights, class Metadata>
