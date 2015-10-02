@@ -50,6 +50,7 @@ MatrixReal LblModel<GlobalWeights, MinibatchWeights, Metadata>::getWordVectors()
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
 void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
+  MT19937 eng;
   // Initialize the dictionary now, if it hasn't been initialized when the
   // vocabulary was partitioned in classes.
   bool immutable_dict = config->classes > 0 || config->class_file.size();
@@ -246,6 +247,16 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   }
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << endl;
+
+  std::vector<boost::shared_ptr<Parser>> generated_list; 
+  for (int i = 0; i < config->generate_samples; ++i) {
+    generated_list.push_back(boost::make_shared<Parser>(ngram_model->generateSentence(weights, eng)));
+  } 
+  
+  std::sort(generated_list.begin(), generated_list.end(), Parser::cmp_weights); 
+  for (int i = 0; i < config->generate_samples; ++i) 
+    generated_list[i]->print_sentence(dict);
+
 }
 
 template<class GlobalWeights, class MinibatchWeights, class Metadata>

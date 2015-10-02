@@ -79,7 +79,7 @@ Real ParsedFactoredWeights::predictWord(int word, Context context) const {
 }
 
 Reals ParsedFactoredWeights::predictWord(Context context) const {
-  return FactoredWeights::predict(context);
+  return FactoredWeights::predictViterbi(context);
 }
 
 Reals ParsedFactoredWeights::predictWordOverTags(int word, Context context) const {

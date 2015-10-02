@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
         "conll output file for system parsing the test set")
     ("iterations", value<int>()->default_value(1),
         "number of passes through the data")
-    ("iterations-sv", value<int>()->default_value(1),
+    ("iterations-sv", value<int>()->default_value(0),
         "number of training iterations for sentence vector for each iteration")
     ("iterations-unsup", value<int>()->default_value(1),
         "number of passes through the unlabelled data")

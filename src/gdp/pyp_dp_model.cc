@@ -731,7 +731,7 @@ void PypDpModel<ParseModel, ParsedWeights>::learn() {
       ++minibatch_counter;
       start = end;
 
-      if ((iter == 0) && (minibatch_counter % 20000 == 0)) {
+      if ((iter == 0) && (minibatch_counter % 100000 == 0)) {
         evaluate(test_corpus, minibatch_counter, test_objective, best_perplexity);
       } 
     }
