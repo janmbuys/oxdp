@@ -236,6 +236,8 @@ Indices ArcStandardLabelledParser::contextIndices() const {
     return children_ngram_context(); //order 13
   else if (context_type() == "extended-with-ngram")
     return extended_children_ngram_context(); //order 16
+  else if (context_type() == "more-extended-with-ngram")
+    return more_extended_children_ngram_context(); //order 21
   else if (context_type() == "lookahead")
     return children_lookahead_context(); //order 10
   else if (context_type() == "extended-lookahead")

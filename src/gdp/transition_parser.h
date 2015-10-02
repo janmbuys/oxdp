@@ -708,6 +708,46 @@ class TransitionParser: public Parser {
     return ctx;
   }
 
+  Indices more_extended_children_ngram_context() const {
+    Indices ctx(20, -1);
+    if (stack_.size() >= 1) { 
+      ctx[0] = stack_.at(stack_.size()-1);
+      ctx[1] = rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[2] = leftmost_child_at(stack_.at(stack_.size()-1));
+      ctx[3] = second_rightmost_child_at(stack_.at(stack_.size()-1));
+      ctx[4] = second_leftmost_child_at(stack_.at(stack_.size()-1));
+      ctx[5] = rightmost_grandchild_at(stack_.at(stack_.size()-1));
+      ctx[6] = leftmost_grandchild_at(stack_.at(stack_.size()-1));
+    }
+    if (stack_.size() >= 2) {
+      ctx[7] = stack_.at(stack_.size()-2);
+      ctx[8] = rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[9] = leftmost_child_at(stack_.at(stack_.size()-2));
+      ctx[10] = second_rightmost_child_at(stack_.at(stack_.size()-2));
+      ctx[11] = second_leftmost_child_at(stack_.at(stack_.size()-2));
+      ctx[12] = rightmost_grandchild_at(stack_.at(stack_.size()-2));
+      ctx[13] = leftmost_grandchild_at(stack_.at(stack_.size()-2));
+    }
+
+    if (stack_.size() >= 3) {
+      ctx[14] = stack_.at(stack_.size()-3);
+    }
+    if (stack_.size() >= 4) {
+      ctx[15] = stack_.at(stack_.size()-4);
+    } 
+
+    if (buffer_next_ == static_cast<int>(size())+1)
+      ctx[16] = 0;
+    else if (buffer_next_ >= 1)
+      ctx[17] = buffer_next_ - 1;
+    if (buffer_next_ >= 2)
+      ctx[18] = buffer_next_ - 2;
+    if (buffer_next_ >= 3)
+      ctx[19] = buffer_next_ - 3;
+
+    return ctx;
+  }
+
   Indices more_extended_children_context() const {
     Indices ctx(16, -1);
     if (stack_.size() >= 1) { 

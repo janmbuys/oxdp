@@ -22,6 +22,7 @@ using namespace oxlm;
 #define lblOrderASl 10
 #define lblOrderASn 13
 #define lblOrderASxn 16
+#define lblOrderASxxn 21
 #define lblOrderASxl 16
 #define lblOrderASx 13
 #define lblOrderASx3 18
@@ -267,7 +268,9 @@ int main(int argc, char** argv) {
     else if (config->context_type == "with-ngram")
       config->ngram_order = lblOrderASn;
     else if (config->context_type == "extended-with-ngram")
-      config->ngram_order = lblOrderASxn;
+     config->ngram_order = lblOrderASxn;
+    else if (config->context_type == "more-extended-with-ngram")
+     config->ngram_order = lblOrderASxxn;
     else if (config->context_type == "lookahead")
       config->ngram_order = lblOrderASl;
     else if (config->context_type == "extended-lookahead")
