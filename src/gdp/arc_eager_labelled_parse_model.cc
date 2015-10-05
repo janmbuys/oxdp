@@ -1107,7 +1107,6 @@ ArcEagerLabelledParser ArcEagerLabelledParseModel<ParsedWeights>::particleGoldPa
 */
 
 template class ArcEagerLabelledParseModel<ParsedLexPypWeights<wordLMOrderAE, tagLMOrderAE, actionLMOrderAE>>;
-template class ArcEagerLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>;
 template class ArcEagerLabelledParseModel<ParsedPypWeights<tagLMOrderAE, actionLMOrderAE>>;
 template class ArcEagerLabelledParseModel<ParsedFactoredWeights>;
 template class ArcEagerLabelledParseModel<ParsedWeights>;

@@ -166,10 +166,6 @@ class TransitionParser: public Parser {
     return config_->sentence_vector;
   }
 
-  bool adapt_word_context() const {
-    return config_->adapt_word_context;
-  }
-
   bool non_projective() const {
     return (config_->parser_type == ParserType::arcstandard2);
   } 

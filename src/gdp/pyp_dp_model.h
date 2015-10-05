@@ -15,8 +15,6 @@
 #include "pyp/constants.h"
 #include "pyp/parsed_pyp_weights.h"
 #include "pyp/parsed_lex_pyp_weights.h"
-#include "pyp/parsed_calex_pyp_weights.h"
-#include "pyp/parsed_chlex_pyp_weights.h"
 
 #include "gdp/transition_parser.h"
 //#include "gdp/arc_standard_parse_model.h"
@@ -51,7 +49,6 @@ class PypDpModel {
  private:
   boost::shared_ptr<ModelConfig> config_;
   boost::shared_ptr<Dict> dict_;
-  boost::shared_ptr<Dict> ch_dict_;
   boost::shared_ptr<ParsedWeights> weights_;
   boost::shared_ptr<ParseModel> parse_model_;
 };

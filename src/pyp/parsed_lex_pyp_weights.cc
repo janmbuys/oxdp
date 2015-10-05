@@ -4,8 +4,8 @@ namespace oxlm {
 
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 ParsedLexPypWeights<wOrder, tOrder, aOrder>::ParsedLexPypWeights(
-        boost::shared_ptr<Dict> dict, boost::shared_ptr<Dict> ch_dict, size_t num_actions):
-  ParsedPypWeights<tOrder, aOrder>(dict, ch_dict, num_actions),    
+        boost::shared_ptr<Dict> dict, size_t num_actions):
+  ParsedPypWeights<tOrder, aOrder>(dict, num_actions),    
   lex_lm_(dict->size(), 1, 1, 1, 1),
   lex_vocab_size_(dict->size()) {}
 

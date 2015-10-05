@@ -9,8 +9,7 @@ namespace oxlm {
 template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
 class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
  public:
-  ParsedLexPypWeights(boost::shared_ptr<Dict> dict, boost::shared_ptr<Dict> ch_dict,
-                      size_t num_actions);
+  ParsedLexPypWeights(boost::shared_ptr<Dict> dict, size_t num_actions);
 
   Real predict(WordId word, Context context) const override;
 

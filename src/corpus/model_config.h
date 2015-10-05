@@ -66,8 +66,6 @@ struct ModelConfig {
   bool        label_features;
   bool        morph_features;
   bool        distance_features;
-  bool        char_lexicalised;
-  bool        adapt_word_context;
   bool        semi_supervised;
   bool        direction_deterministic;
   bool        sum_over_beam;
@@ -153,8 +151,6 @@ struct ModelConfig {
     ar & label_features;
     ar & morph_features;
     ar & distance_features;
-    ar & char_lexicalised;
-    ar & adapt_word_context;
     ar & semi_supervised;
     ar & direction_deterministic;
     ar & sum_over_beam;

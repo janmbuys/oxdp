@@ -78,10 +78,6 @@ int main(int argc, char** argv) {
         "Number of supervised iterations before unsupervised training.")
     ("complete-parse", value<bool>()->default_value(true),
         "Enforce complete tree-structured parse.")
-    ("char-lexicalised", value<bool>()->default_value(false),
-        "Predict words with character-based LM.")
-    ("adapt-word-context", value<bool>()->default_value(false),
-        "Adapt word context between lex and unlex models")
     ("semi-supervised", value<bool>()->default_value(false),
         "Use additional, unlabelled training data.")
     ("max-beam-size", value<int>()->default_value(8),
@@ -172,8 +168,6 @@ int main(int argc, char** argv) {
   config->predict_pos = vm["predict-pos"].as<bool>();
   config->tag_pos = vm["tag-pos"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
-  config->char_lexicalised = vm["char-lexicalised"].as<bool>();
-  config->adapt_word_context = vm["adapt-word-context"].as<bool>();
   config->semi_supervised = vm["semi-supervised"].as<bool>();
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
@@ -208,8 +202,6 @@ int main(int argc, char** argv) {
   std::cerr << "# unsupervised training data = " << config->training_file_unsup << std::endl;
   std::cerr << "# question training data = " << config->training_file_ques << std::endl;
   std::cerr << "# semi-supervised = " << config->semi_supervised << std::endl;
-  std::cerr << "# character LM = " << config->char_lexicalised << std::endl;
-  std::cerr << "# adapt word context = " << config->adapt_word_context << std::endl;
   std::cerr << "# minibatch size = " << config->minibatch_size << std::endl;
   std::cerr << "# particle resample = " << config->resample << std::endl;
   std::cerr << "# number of particles = " << config->num_particles << std::endl;
@@ -223,22 +215,9 @@ int main(int argc, char** argv) {
     PypModel model(config); 
     model.learn();
   } else {
-   if (config->char_lexicalised) {
-      if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2)
-        train_dp<ArcStandardLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>(config);
-      //else if (config->parser_type == ParserType::arcstandard)
-      //  train_dp<ArcStandardParseModel<ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>, ParsedChLexPypWeights<wordLMOrderAS, charLMOrder, tagLMOrderAS, actionLMOrderAS>>(config);
-      else if (config->parser_type == ParserType::arceager)
-        train_dp<ArcEagerLabelledParseModel<ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>, ParsedChLexPypWeights<wordLMOrderAE, charLMOrder, tagLMOrderAE, actionLMOrderAE>>(config);
-      //else
-      //  train_dp<EisnerParseModel<ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>, ParsedChLexPypWeights<wordLMOrderE, charLMOrder, tagLMOrderE, 1>>(config);
-    } 
-   else if (config->lexicalised) {
+    if (config->lexicalised) {
       if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) // && config->labelled_parser) {
-        if (config->adapt_word_context)
-          train_dp<ArcStandardLabelledParseModel<ParsedCALexPypWeights<wordLMOrderAS, wordTagLMOrderAS,  tagLMOrderAS, actionLMOrderAS>>, ParsedCALexPypWeights<wordLMOrderAS, wordTagLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
-        else
-          train_dp<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
+        train_dp<ArcStandardLabelledParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);
    
       //else if (config->parser_type == ParserType::arcstandard)
       //  train_dp<ArcStandardParseModel<ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>, ParsedLexPypWeights<wordLMOrderAS, tagLMOrderAS, actionLMOrderAS>>(config);

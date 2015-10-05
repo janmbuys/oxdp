@@ -3,8 +3,7 @@
 namespace oxlm {
 
 template<unsigned tOrder, unsigned aOrder>
-ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(boost::shared_ptr<Dict> dict, 
-        boost::shared_ptr<Dict> ch_dict, size_t num_actions):
+ParsedPypWeights<tOrder, aOrder>::ParsedPypWeights(boost::shared_ptr<Dict> dict, size_t num_actions):
   PypWeights<tOrder>(dict->tag_size()),    
   shre_lm_(2, 1, 1, 1, 1),
   action_lm_(num_actions, 1, 1, 1, 1), //-1

@@ -14,8 +14,7 @@ template<unsigned tOrder, unsigned aOrder>
 class ParsedPypWeights: public PypWeights<tOrder> {
 
   public:
-  ParsedPypWeights(boost::shared_ptr<Dict> dict, boost::shared_ptr<Dict> ch_dict, 
-                  size_t num_actions);
+  ParsedPypWeights(boost::shared_ptr<Dict> dict, size_t num_actions);
 
   virtual Real predictWord(WordId word, Context context) const;
   

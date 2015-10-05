@@ -14,7 +14,7 @@ ModelConfig::ModelConfig()
       discriminative(false), tag_pos(false), predict_pos(false), lexicalised(false), sentence_vector(false),
       //compositional(false), output_compositional(false), pos_annotated(false), 
       label_features(false), morph_features(false), 
-      distance_features(false), char_lexicalised(false), adapt_word_context(false),
+      distance_features(false), 
       semi_supervised(false), direction_deterministic(false), sum_over_beam(false), resample(false), 
       root_first(true), complete_parse(true), bootstrap(false), bootstrap_iter(0), max_beam_increment(1), 
       num_particles(1), generate_samples(0), num_tags(1), num_features(1), num_labels(1), 
@@ -76,8 +76,6 @@ bool ModelConfig::operator==(const ModelConfig& other) const {
       && label_features == other.label_features
       && morph_features == other.morph_features
       && distance_features == other.distance_features
-      && char_lexicalised == other.char_lexicalised
-      && adapt_word_context == other.adapt_word_context 
       && semi_supervised == other.semi_supervised
       && root_first == other.root_first
       && complete_parse == other.complete_parse
