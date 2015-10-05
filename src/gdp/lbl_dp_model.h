@@ -12,8 +12,6 @@
 #include "lbl/minibatch_words.h"
 #include "lbl/model_utils.h"
 #include "lbl/parsed_factored_weights.h"
-#include "lbl/parsed_weights.h"
-#include "lbl/discriminative_weights.h"
 #include "lbl/utils.h"
 #include "lbl/weights.h"
 
@@ -93,22 +91,5 @@ class LblDpModel {
   boost::shared_ptr<ParsedWeights> weights;
   boost::shared_ptr<ParseModel> parse_model;
 };
-
-/*
-class ASParsedFactoredLblLM: public LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata> {
- public:
-  ASParsedFactoredLblLM() : LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>() {}
-
-  ASParsedFactoredLblLM(const boost::shared_ptr<ModelConfig>& config)
-     : LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config) {}
-};
-
-class ASParsedLblLM: public LblDpModel<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata> {
- public:
-  ASParsedLblLM() : LblDpModel<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>() {}
-
-  ASParsedLblLM(const boost::shared_ptr<ModelConfig>& config)
-     : LblDpModel<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config) {}
-}; */ 
 
 } // namespace oxlm

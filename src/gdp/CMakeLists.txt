@@ -23,9 +23,6 @@ target_link_libs(gdp utils corpus pyp lbl)
 
 set(EXECUTABLES
   extract_word_vectors
-  evaluate_lbl
-  predict_lbl
-  score_lbl
   train_sgd
   train_gibbs
 )

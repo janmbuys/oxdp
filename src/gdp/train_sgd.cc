@@ -4,7 +4,6 @@
 #include "lbl/weights.h"
 #include "lbl/factored_metadata.h"
 #include "lbl/factored_weights.h"
-#include "lbl/discriminative_weights.h"
 #include "lbl/parsed_factored_weights.h"
 #include "lbl/tagged_parsed_factored_weights.h"
 #include "utils/git_revision.h"
@@ -116,8 +115,6 @@ int main(int argc, char** argv) {
         "Predict POS in model.")
     ("tag-pos", value<bool>()->default_value(false),
         "Tag POS during decoding.")
-    ("discriminative", value<bool>()->default_value(false),
-        "Discriminative rather than generative model.")
     ("lexicalised", value<bool>()->default_value(true),
         "Predict words in addition to POS tags.")
     ("sentence-vector", value<bool>()->default_value(false),
@@ -295,7 +292,6 @@ int main(int argc, char** argv) {
     config->activation = Activation::linear;
 
   config->labelled_parser = vm["labelled-parser"].as<bool>();
-  config->discriminative = vm["discriminative"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
   config->sentence_vector = vm["sentence-vector"].as<bool>();
   //config->compositional = vm["compositional"].as<bool>();
@@ -408,10 +404,6 @@ int main(int argc, char** argv) {
       LblModel<Weights, Weights, Metadata> model(config);
       model.learn();
     }
-  }   
-  
-  else if (config->discriminative) { 
-      train_dp<ArcStandardLabelledParseModel<DiscriminativeWeights>, DiscriminativeWeights, DiscriminativeMetadata>(config);
   } else if (config->lexicalised) {
     if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) {
       if (config->predict_pos)
@@ -421,7 +413,8 @@ int main(int argc, char** argv) {
 
     }     
   } else if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) {
-    train_dp<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
+    //TODO For unlexicalised parsing, implicitly factor weights (1 class).
+    train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
   }
 
   return 0;

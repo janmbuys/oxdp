@@ -1008,8 +1008,5 @@ bool LblDpModel<ParseModel, ParsedWeights, Metadata>::operator==(
 template class LblDpModel<ArcStandardLabelledParseModel<TaggedParsedFactoredWeights>, TaggedParsedFactoredWeights, TaggedParsedFactoredMetadata>;
 template class LblDpModel<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 
-template class LblDpModel<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
-
-template class LblDpModel<ArcStandardLabelledParseModel<DiscriminativeWeights>, DiscriminativeWeights, DiscriminativeMetadata>;
 } // namespace oxlm
 

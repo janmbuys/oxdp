@@ -9,8 +9,6 @@
 #include "pyp/parsed_lex_pyp_weights.h"
 #include "lbl/parsed_factored_weights.h"
 #include "lbl/tagged_parsed_factored_weights.h"
-#include "lbl/parsed_weights.h"
-#include "lbl/discriminative_weights.h"
 
 namespace oxlm {
 
@@ -30,9 +28,6 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
 
   ArcStandardLabelledParser greedyParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights) override;
 
-  ArcStandardLabelledParser beamDiscriminativeParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
-                unsigned beam_size);
-
   ArcStandardLabelledParser beamParseSentence(const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
                 unsigned beam_size) override;
 
@@ -50,15 +45,6 @@ class ArcStandardLabelledParseModel: public TransitionParseModelInterface<ArcSta
   ArcStandardLabelledParser particleParseSentence(const ParsedSentence& sent, 
         const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
           const boost::shared_ptr<ParseDataSet>& examples);
-
-  /*
-  ArcStandardLabelledParser particlePosteriorParseSentence(const ParsedSentence& sent, 
-        const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles,
-        bool resample);
-
-  ArcStandardLabelledParser particleMaxParseSentence(const ParsedSentence& sent, 
-        const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng, unsigned num_particles);
- */
 
   ArcStandardLabelledParser staticGoldParseSentence(const ParsedSentence& sent, 
                                              const boost::shared_ptr<ParsedWeights>& weights) override;
