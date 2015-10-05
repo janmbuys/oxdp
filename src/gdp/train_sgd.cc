@@ -11,7 +11,6 @@
 
 #include "gdp/lbl_model.h"
 #include "gdp/lbl_dp_model.h"
-#include "gdp/lbl_gec_model.h"
 
 using namespace boost::program_options;
 using namespace oxlm;
@@ -275,13 +274,7 @@ int main(int argc, char** argv) {
       config->ngram_order = lblOrderAS3;
     else
       config->ngram_order = lblOrderAS;
-  } else if (parser_type_str == "aligned-ngram") {
-    config->parser_type = ParserType::aligned_ngram; 
-    config->out_ctx_size = vm["output-context-size"].as<int>();
-    config->in_window_size = vm["input-window-size"].as<int>();
-    config->ngram_order = config->out_ctx_size + 2*config->in_window_size + 2;
-  } 
-  else {
+  } else {
     config->parser_type = ParserType::ngram; 
   }
   
@@ -415,25 +408,7 @@ int main(int argc, char** argv) {
       LblModel<Weights, Weights, Metadata> model(config);
       model.learn();
     }
-  } else if (config->parser_type == ParserType::aligned_ngram) {
-    if (config->factored) {
-      if (config->model_input_file.size() == 0) {
-        LblGecModel<FactoredWeights, FactoredWeights, FactoredMetadata> model(config);
-        model.learn();
-      } else {
-        LblGecModel<FactoredWeights, FactoredWeights, FactoredMetadata> model;
-        model.load(config->model_input_file);
-        boost::shared_ptr<ModelConfig> model_config = model.getConfig();
-        model_config->model_input_file = config->model_input_file;
-        assert(*config == *model_config);
-        model.learn();
-      }
-    } else {
-      LblGecModel<Weights, Weights, Metadata> model(config);
-      model.learn();
-    }
-  }  
-  
+  }   
   
   else if (config->discriminative) { 
       train_dp<ArcStandardLabelledParseModel<DiscriminativeWeights>, DiscriminativeWeights, DiscriminativeMetadata>(config);

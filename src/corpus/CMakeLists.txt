@@ -8,10 +8,8 @@ add_libraries(corpus
   context.cc
   tagged_sentence.cc
   parsed_sentence.cc
-  parallel_sentence.cc
   corpus.cc
   sentence_corpus.cc
-  parallel_sentence_corpus.cc
   parsed_corpus.cc
   data_point.cc
   data_set.cc
