@@ -115,42 +115,6 @@ void AccuracyCounts::transitionCountAccuracy(const TransitionParser& prop_parse,
   add_num_actions(prop_parse.num_actions());
 }
 
-void AccuracyCounts::countAccuracy(const EisnerParser& prop_parse, 
-                                   const ParsedSentence& gold_parse) {
-  //just call parent method
-  parseCountAccuracy(prop_parse, gold_parse); 
-}
-
-/*
-void AccuracyCounts::countAccuracy(const ArcStandardParser& prop_parse, 
-                                   const ParsedSentence& gold_parse) {
-  //parent method
-  transitionCountAccuracy(prop_parse, gold_parse); 
-  
-  //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcStandardParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.config()); 
-
-  for (auto& a: prop_parse.actions()) {
-    kAction next = simul.oracleNext(gold_parse);
-
-    //count when shifted/reduced when it should have shifted/reduced
-    if (next==kAction::sh) {
-      inc_shift_gold();
-      if (a==kAction::sh)
-        inc_shift_count();
-    } else if (next==kAction::la || next==kAction::ra) {
-      inc_reduce_gold();
-      if (a==kAction::la || a==kAction::ra) 
-        inc_reduce_count();
-    } 
-  
-    if (simul.buffer_empty() && next==kAction::re)
-      inc_final_reduce_error_count();
-    
-    simul.executeAction(a);
-  }
-} */
-
 void AccuracyCounts::countAccuracy(const ArcStandardLabelledParser& prop_parse, 
                                    const ParsedSentence& gold_parse) {
   //parent method
@@ -179,62 +143,6 @@ void AccuracyCounts::countAccuracy(const ArcStandardLabelledParser& prop_parse,
   
     if (simul.buffer_empty() && next==kAction::re)
       inc_final_reduce_error_count();
-    
-    simul.executeAction(a, alab);
-  }
-}
-
-/* void AccuracyCounts::countAccuracy(const ArcEagerParser& prop_parse, const ParsedSentence& gold_parse) {
-  //parent method
-  transitionCountAccuracy(prop_parse, gold_parse); 
-  
-  //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcEagerParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.config());
-  
-  for (auto& a: prop_parse.actions()) {
-    kAction next = simul.oracleNext(gold_parse);
-    
-    //include more sophisticated statistics later
-    //count when shifted/reduced when it should have shifted/reduced
-    if (next==kAction::sh || next==kAction::ra) {
-      inc_shift_gold();
-      if (a==kAction::sh || a==kAction::ra)
-        inc_shift_count();
-    } else if (next==kAction::la || next==kAction::re) {
-      inc_reduce_gold();
-      if (a==kAction::la || a==kAction::re) 
-        inc_reduce_count();
-    } 
-    
-    simul.executeAction(a);
-  }
-}  */
-
-void AccuracyCounts::countAccuracy(const ArcEagerLabelledParser& prop_parse, 
-                                   const ParsedSentence& gold_parse) {
-  //parent method
-  transitionCountAccuracy(prop_parse, gold_parse); 
-  
-  //resimulate the computation of the proposed action sequence to compute accuracy  
-  ArcEagerLabelledParser simul(static_cast<TaggedSentence>(prop_parse), prop_parse.config()); 
-
-  for (unsigned i = 0; i < prop_parse.actions().size(); ++i) {
-    kAction a = prop_parse.actions().at(i);
-    WordId alab = prop_parse.action_label_at(i);
-
-    kAction next = simul.oracleNext(gold_parse);
-    WordId nextLabel = simul.oracleNextLabel(gold_parse);
-
-    //count when shifted/reduced when it should have shifted/reduced
-    if (next==kAction::sh) { // || next==kAction::ra) {
-      inc_shift_gold();
-      if (a==kAction::sh || a==kAction::ra)
-        inc_shift_count();
-    } else if (next==kAction::la || next==kAction::re) {
-      inc_reduce_gold();
-      if (a==kAction::la || a==kAction::re) 
-        inc_reduce_count();
-    } 
     
     simul.executeAction(a, alab);
   }

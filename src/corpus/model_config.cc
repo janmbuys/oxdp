@@ -26,8 +26,6 @@ int ModelConfig::numActions() const {
     return 2*num_labels + 1;
   else if (parser_type == ParserType::arcstandard2)
     return 4*num_labels + 1;
-  else if (parser_type == ParserType::arceager)
-    return 2*num_labels + 2;
   else
     return 1;
 }

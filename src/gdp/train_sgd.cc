@@ -28,10 +28,6 @@ using namespace oxlm;
 #define lblOrderASx3 18
 #define lblOrderASxx 17
 #define lblOrderASxx3 24
-#define lblOrderAE 8
-#define lblOrderAEl 12
-#define lblOrderAEx 14
-#define lblOrderE 6
 
 template<class ParseModel, class ParsedWeights, class LblMetadata>
 void train_dp(const boost::shared_ptr<ModelConfig>& config) {
@@ -279,17 +275,6 @@ int main(int argc, char** argv) {
       config->ngram_order = lblOrderAS3;
     else
       config->ngram_order = lblOrderAS;
-  } else if (parser_type_str == "arceager") {
-    config->parser_type = ParserType::arceager;
-    if (config->context_type == "extended")
-      config->ngram_order = lblOrderAEx;
-    else if (config->context_type == "lookahead")
-      config->ngram_order = lblOrderAEl;
-    else
-      config->ngram_order = lblOrderAE;
-  } else if (parser_type_str == "eisner") {
-    config->parser_type = ParserType::eisner; 
-    config->ngram_order = lblOrderE;
   } else if (parser_type_str == "aligned-ngram") {
     config->parser_type = ParserType::aligned_ngram; 
     config->out_ctx_size = vm["output-context-size"].as<int>();
@@ -459,19 +444,9 @@ int main(int argc, char** argv) {
       else 
         train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
 
-    } else if (config->parser_type == ParserType::arceager) {
-      train_dp<ArcEagerLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
-    } else {
-      //train_dp<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(config);
-    }
-  } else {
-  if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) {
-      train_dp<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
-    } else if (config->parser_type == ParserType::arceager) {
-      train_dp<ArcEagerLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
-    } else {
-      //train_dp<EisnerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
-    }
+    }     
+  } else if (config->parser_type == ParserType::arcstandard || config->parser_type == ParserType::arcstandard2) {
+    train_dp<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>(config);
   }
 
   return 0;

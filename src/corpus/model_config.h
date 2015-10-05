@@ -11,7 +11,7 @@
 
 namespace oxlm {
 
-enum class ParserType {ngram, eisner, arcstandard, arceager, arcstandard2, aligned_ngram};
+enum class ParserType {ngram, arcstandard, arcstandard2, aligned_ngram};
 enum class Activation {linear, sigmoid, tanh, rectifier};
 
 struct ModelConfig {

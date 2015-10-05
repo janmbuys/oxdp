@@ -300,10 +300,7 @@ std::vector<int> ParsedCorpus::actionCounts() const {
       }
     }
  
-    if (config_->parser_type == ParserType::arceager) {
-      counts[0] += sent.size() - 1 - ra_count; //shift
-      counts[counts.size() - 1] += sent.size() - 1 - la_count; //reduce
-    } else if (config_->parser_type == ParserType::arcstandard || config_->parser_type == ParserType::arcstandard2) {
+    if (config_->parser_type == ParserType::arcstandard || config_->parser_type == ParserType::arcstandard2) {
       counts[0] += sent.size() - 1;
     }
   }

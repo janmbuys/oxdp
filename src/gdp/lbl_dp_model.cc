@@ -29,10 +29,6 @@ LblDpModel<ParseModel, ParsedWeights, Metadata>::LblDpModel(
   dict = boost::make_shared<Dict>(true);
   parse_model = boost::make_shared<ParseModel>(config);
   
-  if (config->parser_type == ParserType::eisner) {
-    dict->convert("<stop>", false); //add terminating symbol
-  }
-
   metadata = boost::make_shared<Metadata>(config, dict);
   srand(1);
 }
@@ -1010,17 +1006,9 @@ bool LblDpModel<ParseModel, ParsedWeights, Metadata>::operator==(
 }
 
 template class LblDpModel<ArcStandardLabelledParseModel<TaggedParsedFactoredWeights>, TaggedParsedFactoredWeights, TaggedParsedFactoredMetadata>;
-//template class LblDpModel<ArcStandardParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 template class LblDpModel<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
-//template class LblDpModel<ArcEagerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
-template class LblDpModel<ArcEagerLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
-//template class LblDpModel<EisnerParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>;
 
-//template class LblDpModel<ArcStandardParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 template class LblDpModel<ArcStandardLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
-//template class LblDpModel<ArcEagerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
-template class LblDpModel<ArcEagerLabelledParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
-//template class LblDpModel<EisnerParseModel<ParsedWeights>, ParsedWeights, ParsedMetadata>;
 
 template class LblDpModel<ArcStandardLabelledParseModel<DiscriminativeWeights>, DiscriminativeWeights, DiscriminativeMetadata>;
 } // namespace oxlm
