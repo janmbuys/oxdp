@@ -152,26 +152,6 @@ void Weights::getContextVectors(
     contexts[i] = examples->contextAt(i).features;
     //std::cout << "i " << contexts[i].size() << std::endl;
     
-    if (config->whole_feature_dropout > 0) {
-      for (int j = 0; (j < context_width); ++j) {
-       for (int k = 0; k < contexts[i][j].size(); ++k) {
-         if (sample_uniform01<Real, MT19937> (eng) < config->whole_feature_dropout) {
-           contexts[i][j].erase(contexts[i][j].begin() + k);
-           --k;
-         }
-       }
-      }
-    }
-
-    MatrixReal dropout_mask = MatrixReal::Zero(word_width, word_width);
-    if (config->feature_dropout > 0) {
-      for (int k = 0; k < word_width; ++k) {
-        if (sample_uniform01<Real, MT19937> (eng) >= config->feature_dropout) {
-          dropout_mask(k, k) = 1.0;
-        }
-      }
-    }
-
     //contexts[i].push_back(examples->contextAt(i).features[j]);
 
     for (int j = 0; j < context_width; ++j) {
@@ -181,9 +161,6 @@ void Weights::getContextVectors(
         //context_vectors[j].col(i) += Q.col(feat);
         feature_vector += Q.col(feat);
       }
-
-      if (config->feature_dropout > 0) 
-        feature_vector = dropout_mask * feature_vector;
 
       context_vectors[j].col(i) += feature_vector;
     }
@@ -501,32 +478,16 @@ void Weights::updateSquared(
   const boost::shared_ptr<Weights>& global_gradient) {
 
   for (int word_id: global_words.getContextWords()) {
-    if (config->rms_prop) {
-      //Q.col(word_id).array() = Q.col(word_id).array()*0.9 + global_gradient->Q.col(word_id).array().square()*0.1;
-      Q.col(word_id).array() *= 0.9;
-      Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square()*0.1;
-    } else
-      Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square();
+    Q.col(word_id).array() += global_gradient->Q.col(word_id).array().square();
   }
 
   for (int word_id: global_words.getOutputWords()) {
-    if (config->rms_prop) {
-      //R.col(word_id).array() = R.col(word_id).array()*0.9 + global_gradient->R.col(word_id).array().square()*0.1;
-      R.col(word_id).array() *= 0.9;
-      R.col(word_id).array() += global_gradient->R.col(word_id).array().square()*0.1;
-    } else 
-      R.col(word_id).array() += global_gradient->R.col(word_id).array().square();
+    R.col(word_id).array() += global_gradient->R.col(word_id).array().square();
   }
 
   Block block = getBlock(Q.size() + R.size(), W.size() - (Q.size() + R.size()));
-  if (config->rms_prop) {
-    //W.segment(block.first, block.second).array() = W.segment(block.first, block.second).array()*0.9
-    //  + global_gradient->W.segment(block.first, block.second).array().square()*0.1;
-    W.segment(block.first, block.second).array() *= 0.9;
-    W.segment(block.first, block.second).array() += global_gradient->W.segment(block.first, block.second).array().square()*0.1;
-  } else
-    W.segment(block.first, block.second).array() +=
-      global_gradient->W.segment(block.first, block.second).array().square();
+  W.segment(block.first, block.second).array() +=
+    global_gradient->W.segment(block.first, block.second).array().square();
 }
 
 void Weights::updateAdaGrad(
@@ -599,9 +560,6 @@ VectorReal Weights::getPredictionVector(const Context& context) const {
   for (int i = 0; i < context_width; ++i) {
     VectorReal in_vector = VectorReal::Zero(word_width);
     for (auto feat: context.features[i]) {
-      if ((config->feature_dropout > 0) || (config->whole_feature_dropout > 0))
-        in_vector += Q.col(feat)*(1.0/(1 - ((1 - config->whole_feature_dropout)*config->feature_dropout + config->whole_feature_dropout))); 
-      else
         in_vector += Q.col(feat);
     }
 

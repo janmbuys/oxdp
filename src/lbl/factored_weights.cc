@@ -401,14 +401,8 @@ void FactoredWeights::updateSquared(
   Weights::updateSquared(global_words, global_gradient);
 
   Block block = getBlock();
-  if (config->rms_prop) {
-    //FW.segment(block.first, block.second).array() = FW.segment(block.first, block.second).array()*0.9
-    //    + global_gradient->FW.segment(block.first, block.second).array().square()*0.1;
-    FW.segment(block.first, block.second).array() *= 0.9;
-    FW.segment(block.first, block.second).array() += global_gradient->FW.segment(block.first, block.second).array().square()*0.1;
-  } else 
-    FW.segment(block.first, block.second).array() +=
-      global_gradient->FW.segment(block.first, block.second).array().square();
+  FW.segment(block.first, block.second).array() +=
+    global_gradient->FW.segment(block.first, block.second).array().square();
 }
 
 void FactoredWeights::updateAdaGrad(

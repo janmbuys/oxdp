@@ -432,14 +432,8 @@ void TaggedParsedFactoredWeights::updateSquared(
   ParsedFactoredWeights::updateSquared(global_words, global_gradient);
 
   Block block = getBlock();
-  if (config->rms_prop) {
-    //TW.segment(block.first, block.second).array() = TW.segment(block.first, block.second).array()*0.9
-    //    + global_gradient->TW.segment(block.first, block.second).array().square()*0.1;
-    TW.segment(block.first, block.second).array() *= 0.9;
-    TW.segment(block.first, block.second).array() += global_gradient->TW.segment(block.first, block.second).array().square()*0.1;
-  } else 
-    TW.segment(block.first, block.second).array() +=
-      global_gradient->TW.segment(block.first, block.second).array().square();
+  TW.segment(block.first, block.second).array() +=
+    global_gradient->TW.segment(block.first, block.second).array().square();
 }
 
 void TaggedParsedFactoredWeights::updateAdaGrad(

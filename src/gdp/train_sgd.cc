@@ -69,12 +69,8 @@ int main(int argc, char** argv) {
         "conll output file for system parsing the test set")
     ("iterations", value<int>()->default_value(1),
         "number of passes through the data")
-    ("iterations-sv", value<int>()->default_value(0),
-        "number of training iterations for sentence vector for each iteration")
     ("iterations-unsup", value<int>()->default_value(1),
         "number of passes through the unlabelled data")
-    ("iterations-test", value<int>()->default_value(1),
-        "number of iterations for test inference")
     ("minibatch-size", value<int>()->default_value(10000),
         "number of sentences per minibatch")
     ("minibatch-size-unsup", value<int>()->default_value(1),
@@ -89,14 +85,6 @@ int main(int argc, char** argv) {
         "base filename of model output files")
     ("lambda-lbl,r", value<float>()->default_value(7.0),
         "regularisation strength parameter")
-    ("lambda-lbl-sv", value<float>()->default_value(7.0),
-        "regularisation strength parameter for sentence vectors")
-    ("whole-feature-dropout", value<float>()->default_value(0.0),
-        "whole feature dropout probability")
-    ("feature-dropout", value<float>()->default_value(0.0),
-        "input feature dropout probability")
-    ("rms-prop", value<bool>()->default_value(false),
-        "Use RMS prop modification of Adagrad.")
     ("representation-size", value<int>()->default_value(100),
         "Width of representation vectors.")
     ("threads", value<int>()->default_value(1),
@@ -218,9 +206,7 @@ int main(int argc, char** argv) {
   config->pyp_model = false;
   config->distance_range = 5;
   config->iterations = vm["iterations"].as<int>();
-  config->iterations_sv = vm["iterations-sv"].as<int>();
   config->iterations_unsup = vm["iterations-unsup"].as<int>();
-  config->iterations_test = vm["iterations-test"].as<int>();
   config->minibatch_size = vm["minibatch-size"].as<int>();
   config->ngram_order = vm["order"].as<int>();
 
@@ -317,10 +303,6 @@ int main(int argc, char** argv) {
   //  config->beam_sizes.push_back(i);
 
   config->l2_lbl = vm["lambda-lbl"].as<float>();
-  config->l2_lbl_sv = vm["lambda-lbl-sv"].as<float>();
-  config->whole_feature_dropout = vm["whole-feature-dropout"].as<float>();
-  config->feature_dropout = vm["feature-dropout"].as<float>();
-  config->rms_prop = vm["rms-prop"].as<bool>();
   config->representation_size = vm["representation-size"].as<int>();
   config->threads = vm["threads"].as<int>();
   config->step_size = vm["step-size"].as<float>();
@@ -375,8 +357,6 @@ int main(int argc, char** argv) {
   std::cerr << "# lambda = " << config->l2_lbl << std::endl;
   std::cerr << "# step size = " << config->step_size << std::endl;
   std::cerr << "# iterations = " << config->iterations << std::endl;
-  std::cerr << "# iterations sentence vector = " << config->iterations_sv << std::endl;
-  std::cerr << "# test iterations = " << config->iterations_test << std::endl;
   std::cerr << "# threads = " << config->threads << std::endl;
   std::cerr << "# randomise = " << config->randomise << std::endl;
   std::cerr << "# diagonal contexts = " << config->diagonal_contexts << std::endl;
