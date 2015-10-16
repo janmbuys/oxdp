@@ -8,7 +8,6 @@
 
 #include "third_party/eigen/Eigen/Dense"
 #include "third_party/eigen/Eigen/Sparse"
-#include "third_party/smhasher/MurmurHash3.h"
 
 #include "corpus/utils.h"
 #include "corpus/model_config.h"

@@ -1,1 +1,0 @@
-lbl_add_test(serialization_helpers_test)

@@ -22,4 +22,3 @@ add_libraries(lbl
 
 target_link_libs(lbl corpus rt ${Boost_LIBRARIES})
 
-#add_subdirectory(tests)
