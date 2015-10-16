@@ -147,10 +147,8 @@ void Weights::getContextVectors(
   contexts.resize(examples->size());
   context_vectors.resize(
       context_width, MatrixReal::Zero(word_width, examples->size()));
-  //std::cout << examples->size() << std::endl;
   for (size_t i = 0; i < examples->size(); ++i) {
     contexts[i] = examples->contextAt(i).features;
-    //std::cout << "i " << contexts[i].size() << std::endl;
     
     //contexts[i].push_back(examples->contextAt(i).features[j]);
 
@@ -197,14 +195,11 @@ MatrixReal Weights::getPredictionVectors(
 MatrixReal Weights::getContextProduct(
     int index, const MatrixReal& representations, bool transpose) const {
   if (config->diagonal_contexts) {
-    //std::cout << C[index].size() << " " << representations.col(0).size() << std::endl;
     return C[index].asDiagonal() * representations;
   } else {
     if (transpose) {
-      //std::cout << C[index].col(0).size() << " " << representations.col(0).size() << std::endl;
       return C[index].transpose() * representations;
     } else {
-      //std::cout << C[index].row(0).size() << " " << representations.col(0).size() << std::endl;
       return C[index] * representations;
     }
   }
@@ -272,7 +267,6 @@ void Weights::getContextGradient(
   int word_width = config->representation_size;
   MatrixReal context_gradients = MatrixReal::Zero(word_width, prediction_size);
   for (int j = 0; j < context_width; ++j) {
-    //std::cout << j << ": " << prediction_size << std::endl;
     context_gradients = getContextProduct(j, weighted_representations, true);
     for (size_t i = 0; i < prediction_size; ++i) {
       for (auto feat: contexts[i][j]) {
