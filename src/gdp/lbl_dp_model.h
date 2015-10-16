@@ -46,21 +46,16 @@ class LblDpModel {
   void update(
       const MinibatchWords& global_words,
       const boost::shared_ptr<ParsedWeights>& global_gradient,
-      const boost::shared_ptr<ParsedWeights>& adagrad,
-      bool sentences_only);
+      const boost::shared_ptr<ParsedWeights>& adagrad);
 
   Real regularize(
       const MinibatchWords& global_words,
       const boost::shared_ptr<ParsedWeights>& global_gradient,
-      Real minibatch_factor,
-      bool sentences_only);
+      Real minibatch_factor);
 
   void evaluate();
 
   void evaluate(
-      const boost::shared_ptr<ParsedCorpus>& corpus, Real& accumulator);
-
-  void evaluate_sentence_vector(
       const boost::shared_ptr<ParsedCorpus>& corpus, Real& accumulator);
 
   Real predict(int word_id, const vector<int>& context) const;
@@ -69,8 +64,6 @@ class LblDpModel {
 
   MatrixReal getFeatureVectors() const;
   
-  MatrixReal getSentenceVectors() const;
-
   void save() const;
 
   void load(const string& filename);

@@ -1550,8 +1550,6 @@ ArcStandardLabelledParser ArcStandardLabelledParseModel<ParsedWeights>::generate
         MT19937& eng, WordIndex sentence_id) {
   unsigned sent_limit = 100;
   ArcStandardLabelledParser parser(config_);
-  if (config_->sentence_vector)
-    parser.set_id(sentence_id);
   bool terminate_shift = false;
   //if (config_->root_first) {
   parser.push_tag(1);

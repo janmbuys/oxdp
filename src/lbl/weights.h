@@ -5,7 +5,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/serialization/serialization.hpp>
-#include <boost/serialization/shared_ptr.hpp>
+//#include <boost/serialization/shared_ptr.hpp>
 #include <boost/thread/tss.hpp>
 
 #include "corpus/data_set.h"
@@ -44,8 +44,7 @@ class Weights {
       const boost::shared_ptr<DataSet>& examples,
       const boost::shared_ptr<Weights>& gradient,
       Real& objective,
-      MinibatchWords& words,
-      bool sentences_only = false) const;
+      MinibatchWords& words) const;
 
   virtual Real getObjective(
       const boost::shared_ptr<DataSet>& examples) const;
@@ -61,31 +60,23 @@ class Weights {
       Real& objective,
       MinibatchWords& words) const;
 
-  void updateSentenceVectorGradient(const VectorReal& sentence_vector_gradient);
-
   void syncUpdate(
       const MinibatchWords& words,
-      const boost::shared_ptr<Weights>& gradient,
-      bool sentences_only = false);
+      const boost::shared_ptr<Weights>& gradient);
 
   void updateSquared(
       const MinibatchWords& global_words,
-      const boost::shared_ptr<Weights>& global_gradient,
-      bool sentences_only = false);
+      const boost::shared_ptr<Weights>& global_gradient);
 
   void updateAdaGrad(
       const MinibatchWords& global_words,
       const boost::shared_ptr<Weights>& global_gradient,
-      const boost::shared_ptr<Weights>& adagrad,
-      bool sentences_only = false);
+      const boost::shared_ptr<Weights>& adagrad);
 
   Real regularizerUpdate(
       const MinibatchWords& global_words,
       const boost::shared_ptr<Weights>& global_gradient,
-      Real minibatch_factor,
-      bool sentences_only = false);
-
-  void resetSentenceVector();
+      Real minibatch_factor);
 
   void clear(const MinibatchWords& words, bool parallel_update);
 
@@ -102,8 +93,6 @@ class Weights {
   MatrixReal getWordVectors() const;
 
   MatrixReal getFeatureVectors() const;
-
-  MatrixReal getSentenceVectors() const;
 
   bool operator==(const Weights& other) const;
 
@@ -152,16 +141,14 @@ class Weights {
       const MatrixReal& weighted_representations,
       MatrixReal& word_probs,
       const boost::shared_ptr<Weights>& gradient,
-      MinibatchWords& words,
-      bool sentences_only = false) const;
+      MinibatchWords& words) const;
 
   void getContextGradient(
       size_t prediction_size,
       const vector<WordsList>& contexts,
       const vector<MatrixReal>& context_vectors,
       const MatrixReal& weighted_representations,
-      const boost::shared_ptr<Weights>& gradient,
-      bool sentences_only = false) const;
+      const boost::shared_ptr<Weights>& gradient) const;
 
   virtual vector<vector<int>> getNoiseWords(
       const boost::shared_ptr<DataSet>& examples) const;
@@ -215,7 +202,6 @@ class Weights {
   boost::shared_ptr<Metadata> metadata;
 
   ContextTransformsType C;
-  WordVectorsType       P;
   WordVectorsType       Q;
   WordVectorsType       R;
   WeightsType           B;
@@ -227,7 +213,6 @@ class Weights {
   int size;
   Real* data;
   vector<Mutex> mutexesC;
-  vector<Mutex> mutexesP;
   vector<Mutex> mutexesQ;
   vector<Mutex> mutexesR;
   Mutex mutexB;

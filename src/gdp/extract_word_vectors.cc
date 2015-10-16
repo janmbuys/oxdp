@@ -14,14 +14,12 @@ template<class Model, class Weights, class Metadata>
 void extract_word_vectors(
     const string& model_file,
     const string& vocab_file,
-    const string& vectors_file,
-    const string& sentence_vectors_file) {
+    const string& vectors_file) {
   LblDpModel<Model, Weights, Metadata> model; //TODO LblModel
   model.load(model_file);
 
   boost::shared_ptr<Dict> dict = model.getDict();
   MatrixReal word_vectors = model.getWordVectors();
-  MatrixReal sentence_vectors = model.getSentenceVectors();
 
   ofstream fout(vocab_file);
   for (size_t i = 0; i < word_vectors.cols(); ++i) {
@@ -32,11 +30,6 @@ void extract_word_vectors(
   for (size_t i = 0; i < word_vectors.cols(); ++i) {
     vout << word_vectors.col(i).transpose() << endl;
   }
-  
-  ofstream svout(sentence_vectors_file);
-  for (size_t i = 0; i < sentence_vectors.cols(); ++i) {
-    svout << sentence_vectors.col(i).transpose() << endl;
-  }
 }
 
 int main(int argc, char** argv) {
@@ -46,8 +39,7 @@ int main(int argc, char** argv) {
       ("model,m", value<string>()->required(), "File containing the model")
       ("type,t", value<int>()->required(), "Model type")
       ("vocab", value<string>()->required(), "Output file for model vocabulary")
-      ("vectors", value<string>()->required(), "Output file for word vectors")
-      ("sentence-vectors", value<string>()->required(), "Output file for sentence vectors");
+      ("vectors", value<string>()->required(), "Output file for word vectors");
 
   variables_map vm;
   store(parse_command_line(argc, argv, desc), vm);
@@ -61,7 +53,6 @@ int main(int argc, char** argv) {
   int model_type = vm["type"].as<int>();
   string vocab_file = vm["vocab"].as<string>();
   string vectors_file = vm["vectors"].as<string>();
-  string sentence_vectors_file = vm["sentence-vectors"].as<string>();
 
   switch (model_type) {
     /*case NLM:
@@ -72,9 +63,9 @@ int main(int argc, char** argv) {
       extract_word_vectors<FactoredLblLM>(model_file, vocab_file, vectors_file);
       return 0; */
     case 2:
-      extract_word_vectors<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(model_file, vocab_file, vectors_file, sentence_vectors_file);
+      extract_word_vectors<ArcStandardLabelledParseModel<ParsedFactoredWeights>, ParsedFactoredWeights, ParsedFactoredMetadata>(model_file, vocab_file, vectors_file);
     case 3:
-      extract_word_vectors<ArcStandardLabelledParseModel<TaggedParsedFactoredWeights>, TaggedParsedFactoredWeights, TaggedParsedFactoredMetadata>(model_file, vocab_file, vectors_file, sentence_vectors_file);
+      extract_word_vectors<ArcStandardLabelledParseModel<TaggedParsedFactoredWeights>, TaggedParsedFactoredWeights, TaggedParsedFactoredMetadata>(model_file, vocab_file, vectors_file);
       return 0;
     default:
       cout << "Unknown model type" << endl;

@@ -27,16 +27,11 @@ class TaggedParsedFactoredWeights : public ParsedFactoredWeights {
 
   size_t numParameters() const override;
 
-  VectorReal getSentenceVectorGradient(
-      const boost::shared_ptr<ParseDataSet>& examples,
-      Real& objective) const;
-
   void getGradient(
       const boost::shared_ptr<ParseDataSet>& examples,
       const boost::shared_ptr<TaggedParsedFactoredWeights>& gradient,
       Real& objective,
-      MinibatchWords& words,
-      bool sentences_only = false) const;
+      MinibatchWords& words) const;
 
   virtual Real getObjective(
       const boost::shared_ptr<ParseDataSet>& examples) const;
@@ -68,25 +63,21 @@ class TaggedParsedFactoredWeights : public ParsedFactoredWeights {
 
   void syncUpdate(
       const MinibatchWords& words,
-      const boost::shared_ptr<TaggedParsedFactoredWeights>& gradient,
-      bool sentences_only = false);
+      const boost::shared_ptr<TaggedParsedFactoredWeights>& gradient);
 
   void updateSquared(
       const MinibatchWords& global_words,
-      const boost::shared_ptr<TaggedParsedFactoredWeights>& global_gradient,
-      bool sentences_only = false);
+      const boost::shared_ptr<TaggedParsedFactoredWeights>& global_gradient);
 
   void updateAdaGrad(
       const MinibatchWords& global_words,
       const boost::shared_ptr<TaggedParsedFactoredWeights>& global_gradient,
-      const boost::shared_ptr<TaggedParsedFactoredWeights>& adagrad,
-      bool sentences_only = false);
+      const boost::shared_ptr<TaggedParsedFactoredWeights>& adagrad);
 
   Real regularizerUpdate(
       const MinibatchWords& global_words,
       const boost::shared_ptr<TaggedParsedFactoredWeights>& global_gradient,
-      Real minibatch_factor,
-      bool sentences_only = false);
+      Real minibatch_factor);
 
   void clear(const MinibatchWords& words, bool parallel_update);
 
@@ -156,8 +147,7 @@ class TaggedParsedFactoredWeights : public ParsedFactoredWeights {
       MatrixReal& action_probs,
       MatrixReal& tag_probs,
       const boost::shared_ptr<TaggedParsedFactoredWeights>& gradient,
-      MinibatchWords& words,
-      bool sentences_only = false) const;
+      MinibatchWords& words) const;
 
  private:
   void allocate();

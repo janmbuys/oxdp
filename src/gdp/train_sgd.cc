@@ -293,7 +293,6 @@ int main(int argc, char** argv) {
 
   config->labelled_parser = vm["labelled-parser"].as<bool>();
   config->lexicalised = vm["lexicalised"].as<bool>();
-  config->sentence_vector = vm["sentence-vector"].as<bool>();
   //config->compositional = vm["compositional"].as<bool>();
   //config->output_compositional = vm["output-compositional"].as<bool>();
   config->label_features = vm["label-features"].as<bool>();
@@ -311,8 +310,6 @@ int main(int argc, char** argv) {
   config->generate_samples = vm["generate-samples"].as<int>();
 
   if (config->predict_pos)
-    config->ngram_order += 1;
-  if (config->sentence_vector)
     config->ngram_order += 1;
 
   config->beam_sizes = {static_cast<unsigned>(vm["max-beam-size"].as<int>())};
@@ -351,7 +348,6 @@ int main(int argc, char** argv) {
   std::cerr << "# class factored = " << config->factored << std::endl;
   //std::cerr << "# compositional = " << config->compositional << std::endl;
   //std::cerr << "# output compositional = " << config->output_compositional << std::endl;
-  std::cerr << "# sentence vector = " << config->sentence_vector << std::endl;
   std::cerr << "# predict pos = " << config->predict_pos << std::endl;
   std::cerr << "# label features = " << config->label_features << std::endl;
   std::cerr << "# morph features = " << config->morph_features << std::endl;

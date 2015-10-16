@@ -162,10 +162,6 @@ class TransitionParser: public Parser {
     return config_->predict_pos;
   }
 
-  bool sentence_vector() const {
-    return config_->sentence_vector;
-  }
-
   bool non_projective() const {
     return (config_->parser_type == ParserType::arcstandard2);
   } 
@@ -293,9 +289,6 @@ class TransitionParser: public Parser {
     if (config_->predict_pos)
       features.push_back(Words());
    
-    if (config_->sentence_vector)
-      features.push_back(Words(1, id()));
-
     return Context(words, features);
   }
 
@@ -369,9 +362,6 @@ class TransitionParser: public Parser {
     
     if (config_->predict_pos)
       features.push_back(Words());
-
-    if (config_->sentence_vector)
-      features.push_back(Words(1, id()));
 
     //std::cout << features.size() << std::endl;
     return Context(Words(), features);

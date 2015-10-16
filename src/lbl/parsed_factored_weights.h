@@ -26,16 +26,11 @@ class ParsedFactoredWeights : public FactoredWeights {
 
   size_t numParameters() const override;
 
-  VectorReal getSentenceVectorGradient(
-      const boost::shared_ptr<ParseDataSet>& examples,
-      Real& objective) const;
-
   void getGradient(
       const boost::shared_ptr<ParseDataSet>& examples,
       const boost::shared_ptr<ParsedFactoredWeights>& gradient,
       Real& objective,
-      MinibatchWords& words,
-      bool sentences_only = false) const;
+      MinibatchWords& words) const;
 
   virtual Real getObjective(
       const boost::shared_ptr<ParseDataSet>& examples) const;
@@ -67,25 +62,21 @@ class ParsedFactoredWeights : public FactoredWeights {
 
   void syncUpdate(
       const MinibatchWords& words,
-      const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-      bool sentences_only = false);
+      const boost::shared_ptr<ParsedFactoredWeights>& gradient);
 
   void updateSquared(
       const MinibatchWords& global_words,
-      const boost::shared_ptr<ParsedFactoredWeights>& global_gradient,
-      bool sentences_only = false);
+      const boost::shared_ptr<ParsedFactoredWeights>& global_gradient);
 
   void updateAdaGrad(
       const MinibatchWords& global_words,
       const boost::shared_ptr<ParsedFactoredWeights>& global_gradient,
-      const boost::shared_ptr<ParsedFactoredWeights>& adagrad,
-      bool sentences_only = false);
+      const boost::shared_ptr<ParsedFactoredWeights>& adagrad);
 
   Real regularizerUpdate(
       const MinibatchWords& global_words,
       const boost::shared_ptr<ParsedFactoredWeights>& global_gradient,
-      Real minibatch_factor,
-      bool sentences_only = false);
+      Real minibatch_factor);
 
   void clear(const MinibatchWords& words, bool parallel_update);
 
@@ -143,8 +134,7 @@ class ParsedFactoredWeights : public FactoredWeights {
       vector<VectorReal>& word_probs,
       MatrixReal& action_probs,
       const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-      MinibatchWords& words,
-      bool sentences_only = false) const;
+      MinibatchWords& words) const;
 
   std::vector<Words> getNoiseWords(
       const boost::shared_ptr<ParseDataSet>& examples) const; 
