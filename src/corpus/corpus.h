@@ -17,37 +17,37 @@
 
 namespace oxlm {
 
-class Corpus: public CorpusInterface {
-  public:
+// This class represents a corpus consisting only of words.
+class Corpus : public CorpusInterface {
+ public:
   Corpus();
 
   Corpus(Words corpus);
 
-  void readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) override;
+  // Reads sentences from a textfile.
+  void readFile(const std::string& filename,
+                const boost::shared_ptr<Dict>& dict, bool frozen) override;
 
-  WordId at(unsigned i) const {
-    return corpus_.at(i);
-  }
+  WordId at(unsigned i) const { return corpus_.at(i); }
 
   size_t size() const override;
 
   size_t numTokens() const override;
- 
+
   std::vector<int> unigramCounts() const override;
 
   friend class boost::serialization::access;
 
-  template<class Archive>
-  void serialize(Archive & ar, const unsigned int version) {
-    ar & corpus_;
+  template <class Archive>
+  void serialize(Archive& ar, const unsigned int version) {
+    ar& corpus_;
   }
 
-  private:
+ private:
   Words corpus_;
   int vocab_size_;
-
 };
 
-}
+}  // namespace oxlm
 
 #endif

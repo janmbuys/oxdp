@@ -3,30 +3,24 @@
 namespace oxlm {
 
 WordDistributions::WordDistributions(
-    const VectorReal& unigram,
-    const boost::shared_ptr<WordToClassIndex>& index)
+    const VectorReal& unigram, const boost::shared_ptr<WordToClassIndex>& index)
     : index(index), gen(0) {
   for (size_t i = 0; i < index->getNumClasses(); ++i) {
     int class_start = index->getClassMarker(i);
     int class_size = index->getClassSize(i);
-    dists.push_back(discrete_distribution<int>(
-        unigram.data() + class_start,
-        unigram.data() + class_start + class_size));
+    dists.push_back(
+        discrete_distribution<int>(unigram.data() + class_start,
+                                   unigram.data() + class_start + class_size));
   }
 }
 
-WordDistributions::WordDistributions(
-    const VectorReal& unigram): 
-      gen(0),
-      dist(unigram.data(), unigram.data() + unigram.size()) {} 
+WordDistributions::WordDistributions(const VectorReal& unigram)
+    : gen(0), dist(unigram.data(), unigram.data() + unigram.size()) {}
 
 int WordDistributions::sample(int class_id) {
   return index->getClassMarker(class_id) + dists[class_id](gen);
 }
 
+int WordDistributions::sample() { return dist(gen); }
 
-int WordDistributions::sample() {
-  return dist(gen);
-}
-
-} // namespace oxlm
+}  // namespace oxlm

@@ -19,12 +19,7 @@
 
 namespace oxlm {
 
-enum ModelType {
-  NLM = 1,
-  FACTORED_NLM = 2,
-  AS_PARSE_NLM = 3,
-};
-
+// Trains and evaluates a neural language model.  
 template<class GlobalWeights, class MinibatchWeights, class Metadata>
 class LblModel {
  public:
@@ -74,22 +69,6 @@ class LblModel {
   boost::shared_ptr<Metadata> metadata;
   boost::shared_ptr<GlobalWeights> weights;
   boost::shared_ptr<NGramModel<GlobalWeights>> ngram_model;
-};
-
-class LblLM: public LblModel<Weights, Weights, Metadata> {
- public:
-  LblLM() : LblModel<Weights, Weights, Metadata>() {}
-
-  LblLM(const boost::shared_ptr<ModelConfig>& config)
-      : LblModel<Weights, Weights, Metadata>(config) {}
-};
-
-class FactoredLblLM: public LblModel<FactoredWeights, FactoredWeights, FactoredMetadata> {
- public:
-  FactoredLblLM() : LblModel<FactoredWeights, FactoredWeights, FactoredMetadata>() {}
-
-  FactoredLblLM(const boost::shared_ptr<ModelConfig>& config)
-      : LblModel<FactoredWeights, FactoredWeights, FactoredMetadata>(config) {}
 };
 
 } // namespace oxlm

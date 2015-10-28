@@ -6,9 +6,9 @@
 
 namespace oxlm {
 
-enum class kAction: WordId {sh, la, ra, re, la2, ra2};
+enum class kAction : WordId { sh, la, ra, re, la2, ra2 };
 typedef std::vector<kAction> ActList;
 
-}
+}  // namespace oxlm
 
 #endif

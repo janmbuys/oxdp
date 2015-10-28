@@ -16,28 +16,32 @@
 
 namespace oxlm {
 
-class ParsedCorpus: public CorpusInterface {
+// A corpus of parsed sentences, read in from CoNLL formatted files.  
+class ParsedCorpus : public CorpusInterface {
  public:
   ParsedCorpus(const boost::shared_ptr<ModelConfig>& config);
 
-  void convertWhitespaceDelimitedConllLine(const std::string& line, 
-      const boost::shared_ptr<Dict>& dict, Words* sent_out, Words* tags_out, WordsList* features_out, Indices* arcs_out, Words* labels_out, bool frozen);
+  void convertWhitespaceDelimitedConllLine(const std::string& line,
+                                           const boost::shared_ptr<Dict>& dict,
+                                           Words* sent_out, Words* tags_out,
+                                           WordsList* features_out,
+                                           Indices* arcs_out, Words* labels_out,
+                                           bool frozen);
 
-  void convertWhitespaceDelimitedTxtLine(const std::string& line, 
-      const boost::shared_ptr<Dict>& dict, Words* sent_out, WordsList* features_out, bool frozen);
+  void convertWhitespaceDelimitedTxtLine(const std::string& line,
+                                         const boost::shared_ptr<Dict>& dict,
+                                         Words* sent_out,
+                                         WordsList* features_out, bool frozen);
 
-  void readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) override;
+  void readFile(const std::string& filename,
+                const boost::shared_ptr<Dict>& dict, bool frozen) override;
 
-  void readTxtFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen);
+  void readTxtFile(const std::string& filename,
+                   const boost::shared_ptr<Dict>& dict, bool frozen);
 
-  ParsedSentence sentence_at(unsigned i) const {
-    //std::cout << i << " " << sentences_.at(i).word_at(1) << std::endl;
-    return sentences_.at(i);
-  }
+  ParsedSentence sentence_at(unsigned i) const { return sentences_.at(i); }
 
-  void add_sentence(ParsedSentence sent) {
-    sentences_.push_back(sent);
-  }
+  void add_sentence(ParsedSentence sent) { sentences_.push_back(sent); }
 
   void set_arcs_at(unsigned j, const ParsedSentence& parse) {
     for (unsigned i = 0; i < parse.size(); ++i) {
@@ -50,7 +54,6 @@ class ParsedCorpus: public CorpusInterface {
       sentences_.at(j).set_label(i, parse.label_at(i));
     }
   }
-
 
   size_t size() const override;
 
@@ -67,6 +70,6 @@ class ParsedCorpus: public CorpusInterface {
   boost::shared_ptr<ModelConfig> config_;
 };
 
-}
+}  // namespace oxlm
 
 #endif

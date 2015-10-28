@@ -1,6 +1,5 @@
 #pragma once
 
-//#include <boost/serialization/shared_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "lbl/metadata.h"
@@ -10,15 +9,17 @@
 
 namespace oxlm {
 
+// Metadata for FactoredWeights.  
 class FactoredMetadata : public Metadata {
  public:
   FactoredMetadata();
 
-  FactoredMetadata(const boost::shared_ptr<ModelConfig>& config, boost::shared_ptr<Dict>& dict);
+  FactoredMetadata(const boost::shared_ptr<ModelConfig>& config,
+                   boost::shared_ptr<Dict>& dict);
 
-  FactoredMetadata(
-      const boost::shared_ptr<ModelConfig>& config, boost::shared_ptr<Dict>& dict,
-      const boost::shared_ptr<WordToClassIndex>& index);
+  FactoredMetadata(const boost::shared_ptr<ModelConfig>& config,
+                   boost::shared_ptr<Dict>& dict,
+                   const boost::shared_ptr<WordToClassIndex>& index);
 
   void initialize(const boost::shared_ptr<CorpusInterface>& corpus);
 
@@ -31,12 +32,12 @@ class FactoredMetadata : public Metadata {
  private:
   friend class boost::serialization::access;
 
-  template<class Archive>
+  template <class Archive>
   void serialize(Archive& ar, const unsigned int version) {
-    ar & boost::serialization::base_object<Metadata>(*this);
+    ar& boost::serialization::base_object<Metadata>(*this);
 
-    ar & classBias;
-    ar & index;
+    ar& classBias;
+    ar& index;
   }
 
  protected:
@@ -44,4 +45,4 @@ class FactoredMetadata : public Metadata {
   boost::shared_ptr<WordToClassIndex> index;
 };
 
-} // namespace oxlm
+}  // namespace oxlm

@@ -21,4 +21,4 @@ class ContextProcessor {
   int contextSize, startId, endId;
 };
 
-} // namespace oxlm
+}  // namespace oxlm

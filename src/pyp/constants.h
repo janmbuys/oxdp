@@ -3,21 +3,15 @@
 
 namespace oxlm {
 
+// Constants that define the order of PYP models. This has to be fixed at
+// compile-time due to the template implementation of CRPs.
 #define wordLMOrderAS 6
 #define wordTagLMOrderAS 6
-#define tagLMOrderAS 9 //7 unlex, 9 lex
-#define actionLMOrderAS 9 //7 unlex, 9 lex
-
-#define wordLMOrderAE 9
-#define tagLMOrderAE 7
-#define actionLMOrderAE 8 //lex
-
-#define wordLMOrderE 6 
-#define tagLMOrderE 7 
-
+#define tagLMOrderAS 9
+#define actionLMOrderAS 9
 #define wordLMOrder 5
 #define charLMOrder 10
 
-}
+}  // namespace oxlm
 
 #endif

@@ -6,10 +6,10 @@
 
 namespace oxlm {
 
-class TaggedSentence: public Sentence {
+class TaggedSentence : public Sentence {
  public:
   TaggedSentence();
-  
+
   TaggedSentence(WordsList features);
 
   TaggedSentence(Words sent, Words tags, WordsList features);
@@ -17,14 +17,15 @@ class TaggedSentence: public Sentence {
   TaggedSentence(Words sent, Words tags, WordsList features, int id);
 
   void print_tags(const boost::shared_ptr<Dict>& dict) const {
-    for (auto tag: tags_)
+    for (auto tag : tags_) { 
       std::cout << dict->lookupTag(tag) << " ";
+    }
     std::cout << std::endl;
   }
-  
+
   void push_tag(WordId tag, WordId feat) {
-   tags_.push_back(tag);
-   features_.push_back(Words(1, feat));
+    tags_.push_back(tag);
+    features_.push_back(Words(1, feat));
   }
 
   void set_tag_at(WordIndex i, WordId tag, WordId feat) {
@@ -36,32 +37,21 @@ class TaggedSentence: public Sentence {
     features_.at(i).push_back(feat);
   }
 
-  size_t size() const override {
-    return features_.size();
-  }
- 
-  size_t tags_length() const {
-    return tags_.size();
-  }
+  size_t size() const override { return features_.size(); }
 
-  size_t features_length() const {
-    return features_.size();
-  }
+  size_t tags_length() const { return tags_.size(); }
 
-  WordId tag_at(WordIndex i) const {
-    return tags_.at(i);
-  }
+  size_t features_length() const { return features_.size(); }
 
-  Words features_at(WordIndex i) const {
-    return features_.at(i);
-  }
+  WordId tag_at(WordIndex i) const { return tags_.at(i); }
+
+  Words features_at(WordIndex i) const { return features_.at(i); }
 
  private:
   Words tags_;
   WordsList features_;
-
 };
 
-}
+}  // namespace oxlm
 
 #endif

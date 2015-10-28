@@ -13,37 +13,39 @@
 
 namespace oxlm {
 
-template<class Weights>
+// Class for n-gram language models, interfacing to the underlying
+// implementation in the Weights class.
+template <class Weights>
 class NGramModel {
-  public:
+ public:
   NGramModel(unsigned order, WordId sos, WordId eos);
 
   Context extractContext(const boost::shared_ptr<Corpus> corpus, int position);
 
   Context extractContext(const Sentence& sent, int position);
 
-  void extract(const boost::shared_ptr<Corpus> corpus, int position,     
-          const boost::shared_ptr<DataSet>& examples);
+  void extract(const boost::shared_ptr<Corpus> corpus, int position,
+               const boost::shared_ptr<DataSet>& examples);
 
-  Real evaluate(const boost::shared_ptr<Corpus> corpus, int position, 
-          const boost::shared_ptr<Weights>& weights); 
+  Real evaluate(const boost::shared_ptr<Corpus> corpus, int position,
+                const boost::shared_ptr<Weights>& weights);
 
-  void extractSentence(const Sentence& sent, 
-          const boost::shared_ptr<DataSet>& examples);
+  void extractSentence(const Sentence& sent,
+                       const boost::shared_ptr<DataSet>& examples);
 
-  //return likelihood
-  Real evaluateSentence(const Sentence& sent, 
-          const boost::shared_ptr<Weights>& weights);
+  // Returns likelihood.
+  Real evaluateSentence(const Sentence& sent,
+                        const boost::shared_ptr<Weights>& weights);
 
-  Parser generateSentence(const boost::shared_ptr<Weights>& weights, MT19937& eng);
+  Parser generateSentence(const boost::shared_ptr<Weights>& weights,
+                          MT19937& eng);
 
-  private:
+ private:
   unsigned order_;
   WordId sos_;
   WordId eos_;
-          
 };
 
-}
+}  // namespace oxlm
 
 #endif

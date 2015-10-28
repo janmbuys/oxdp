@@ -31,4 +31,4 @@ class ContextCache {
   boost::thread_specific_ptr<ContextMap> cache;
 };
 
-} // namespace oxlm
+}  // namespace oxlm

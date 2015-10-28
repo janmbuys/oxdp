@@ -15,35 +15,38 @@
 
 namespace oxlm {
 
-class SentenceCorpus: public CorpusInterface {
-  public:
+// A corpus of Sentences. 
+class SentenceCorpus : public CorpusInterface {
+ public:
   SentenceCorpus();
-  
+
   SentenceCorpus(Words sent, int vocab_size);
 
-  Words convertWhitespaceDelimitedLine(const std::string& line, const boost::shared_ptr<Dict>& dict, 
-                                             bool frozen);
+  // Parses one line as a sentence. 
+  Words convertWhitespaceDelimitedLine(const std::string& line,
+                                       const boost::shared_ptr<Dict>& dict,
+                                       bool frozen);
 
-  void readFile(const std::string& filename, const boost::shared_ptr<Dict>& dict, bool frozen) override;
+  // Reads in sentences from a text file.
+  void readFile(const std::string& filename,
+                const boost::shared_ptr<Dict>& dict, bool frozen) override;
 
-  Sentence sentence_at(unsigned i) const {
-    return sentences_.at(i);
-  }
+  Sentence sentence_at(unsigned i) const { return sentences_.at(i); }
 
   size_t size() const override;
 
   size_t numTokens() const override;
-  
+
+  // Number of tokens, excluding the EOS token.
   size_t numTokensS() const;
-  
+
   std::vector<int> unigramCounts() const override;
- 
-  private:
+
+ private:
   std::vector<Sentence> sentences_;
   int vocab_size_;
-
 };
 
-}
+}  // namespace oxlm
 
 #endif

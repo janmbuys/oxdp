@@ -36,4 +36,4 @@ class MinibatchWords {
   vector<int> outputWords;
 };
 
-} // namespace oxlm
+}  // namespace oxlm

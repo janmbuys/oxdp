@@ -8,15 +8,15 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
-    
+
 namespace oxlm {
 
 typedef std::string Word;
 typedef int WordId;
 typedef int WordIndex;
 typedef std::vector<WordId> Words;
-typedef std::vector<WordIndex> Indices; 
-typedef std::vector<Words> WordsList; 
+typedef std::vector<WordIndex> Indices;
+typedef std::vector<Words> WordsList;
 typedef std::vector<Indices> IndicesList;
 
 typedef float Real;
@@ -25,12 +25,12 @@ typedef std::vector<Real> Reals;
 typedef std::chrono::high_resolution_clock Clock;
 typedef Clock::time_point Time;
 
-inline Time get_time() {
-  return Clock::now();
-}
+inline Time get_time() { return Clock::now(); }
 
 inline Real get_duration(const Time& start_time, const Time& stop_time) {
-  return std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time).count() / 1000.0;
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             stop_time - start_time).count() /
+         1000.0;
 }
 
 inline Real perplexity(Real log_likelihood, size_t corpus_size) {
@@ -76,7 +76,6 @@ inline WordIndex arg_min(Reals distr, WordIndex start) {
   return min_i;
 }
 
-
 inline WordIndex arg_min(Reals distr, WordIndex start, WordIndex end) {
   WordIndex min_i = start;
   Real min = distr[start];
@@ -90,6 +89,6 @@ inline WordIndex arg_min(Reals distr, WordIndex start, WordIndex end) {
   return min_i;
 }
 
-}
+}  // namespace oxlm
 
 #endif

@@ -13,9 +13,7 @@ WordToClassIndex::WordToClassIndex(const vector<int>& class_markers)
   }
 }
 
-int WordToClassIndex::getNumClasses() const {
-  return classMarkers.size() - 1;
-}
+int WordToClassIndex::getNumClasses() const { return classMarkers.size() - 1; }
 
 int WordToClassIndex::getClass(int word_id) const {
   return wordToClass[word_id];
@@ -34,11 +32,11 @@ int WordToClassIndex::getWordIndexInClass(int word_id) const {
 }
 
 int WordToClassIndex::getWordIndex(int class_id, int word_class_id) const {
-  return classMarkers[class_id] + word_class_id; 
+  return classMarkers[class_id] + word_class_id;
 }
 
 bool WordToClassIndex::operator==(const WordToClassIndex& index) const {
   return classMarkers == index.classMarkers && wordToClass == index.wordToClass;
 }
 
-} // namespace oxlm
+}  // namespace oxlm

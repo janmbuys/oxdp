@@ -5,9 +5,10 @@
 
 namespace oxlm {
 
-//Lexicalized model, predicting tags and words
-template<unsigned wOrder, unsigned tOrder, unsigned aOrder>
-class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
+// Implements a lexicalised PYP generative parsing model. Predicts words, tags
+// and actions.
+template <unsigned wOrder, unsigned tOrder, unsigned aOrder>
+class ParsedLexPypWeights : public ParsedPypWeights<tOrder, aOrder> {
  public:
   ParsedLexPypWeights(boost::shared_ptr<Dict> dict, size_t num_actions);
 
@@ -16,21 +17,23 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
   Reals predict(Context context) const override;
 
   Real predictWord(WordId word, Context context) const override;
-  
+
   Reals predictWordOverTags(WordId word, Context context) const override;
 
   Reals predictWord(Context context) const override;
-  
+
   Real likelihood() const override;
 
   Real wordLikelihood() const override;
 
   void resampleHyperparameters(MT19937& eng) override;
 
-  void updateInsert(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) override;
+  void updateInsert(const boost::shared_ptr<ParseDataSet>& examples,
+                    MT19937& eng) override;
 
-  void updateRemove(const boost::shared_ptr<ParseDataSet>& examples, MT19937& eng) override;
-  
+  void updateRemove(const boost::shared_ptr<ParseDataSet>& examples,
+                    MT19937& eng) override;
+
   int numWords() const override;
 
   int vocabSize() const override;
@@ -40,6 +43,6 @@ class ParsedLexPypWeights: public ParsedPypWeights<tOrder, aOrder> {
   int lex_vocab_size_;
 };
 
-}
+}  // namespace oxlm
 
 #endif

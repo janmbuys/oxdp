@@ -1,6 +1,5 @@
 #pragma once
 
-//#include <boost/serialization/shared_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "corpus/parsed_corpus.h"
@@ -12,15 +11,17 @@
 
 namespace oxlm {
 
+// Metadata for ParsedFactoredWeights.
 class ParsedFactoredMetadata : public FactoredMetadata {
  public:
   ParsedFactoredMetadata();
 
-  ParsedFactoredMetadata(const boost::shared_ptr<ModelConfig>& config, boost::shared_ptr<Dict>& dict);
+  ParsedFactoredMetadata(const boost::shared_ptr<ModelConfig>& config,
+                         boost::shared_ptr<Dict>& dict);
 
-  ParsedFactoredMetadata(
-      const boost::shared_ptr<ModelConfig>& config, boost::shared_ptr<Dict>& dict,
-      const boost::shared_ptr<WordToClassIndex>& index);
+  ParsedFactoredMetadata(const boost::shared_ptr<ModelConfig>& config,
+                         boost::shared_ptr<Dict>& dict,
+                         const boost::shared_ptr<WordToClassIndex>& index);
 
   void initialize(const boost::shared_ptr<ParsedCorpus>& corpus);
 
@@ -31,15 +32,15 @@ class ParsedFactoredMetadata : public FactoredMetadata {
  private:
   friend class boost::serialization::access;
 
-  template<class Archive>
+  template <class Archive>
   void serialize(Archive& ar, const unsigned int version) {
-    ar & boost::serialization::base_object<Metadata>(*this);
+    ar& boost::serialization::base_object<Metadata>(*this);
 
-    ar & actionBias;
+    ar& actionBias;
   }
 
  protected:
   VectorReal actionBias;
 };
 
-} // namespace oxlm
+}  // namespace oxlm

@@ -22,25 +22,26 @@
 
 namespace oxlm {
 
-template<class ParseModel, class ParsedWeights>
+// Train and evaluate a PYP generative dependency parsing model.  
+template <class ParseModel, class ParsedWeights>
 class PypDpModel {
  public:
   PypDpModel();
 
   PypDpModel(const boost::shared_ptr<ModelConfig>& config);
 
-  void learn_semisup1();
-  
-  void learn_semisup2();
-  
+  void learn_semisup();
+
   void learn();
 
   void evaluate() const;
 
-  void evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, int minibatch_counter, 
-                   Real& log_likelihood, Real& best_perplexity) const;
+  void evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus,
+                int minibatch_counter, Real& log_likelihood,
+                Real& best_perplexity) const;
 
-  void evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) const;
+  void evaluate(const boost::shared_ptr<ParsedCorpus>& test_corpus,
+                Real& accumulator) const;
 
  private:
   boost::shared_ptr<ModelConfig> config_;
@@ -49,7 +50,7 @@ class PypDpModel {
   boost::shared_ptr<ParseModel> parse_model_;
 };
 
-}
+}  // namespace oxlm
 
 #endif
 

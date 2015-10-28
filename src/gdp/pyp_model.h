@@ -19,9 +19,9 @@
 
 namespace oxlm {
 
-//identity more abstractions later
+// Train and evaluate a PYP n-gram language model.  
 class PypModel {
-  public:
+ public:
   PypModel();
 
   PypModel(const boost::shared_ptr<ModelConfig>& config);
@@ -30,19 +30,21 @@ class PypModel {
 
   void evaluate() const;
 
-  void evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, int minibatch_counter, 
-                   Real& log_likelihood, Real& best_perplexity) const;
+  void evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus,
+                int minibatch_counter, Real& log_likelihood,
+                Real& best_perplexity) const;
 
-  void evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus, Real& accumulator) const;
+  void evaluate(const boost::shared_ptr<SentenceCorpus>& test_corpus,
+                Real& accumulator) const;
 
-  private:
+ private:
   boost::shared_ptr<ModelConfig> config_;
   boost::shared_ptr<Dict> dict_;
   boost::shared_ptr<PypWeights<wordLMOrder>> weights_;
   boost::shared_ptr<NGramModel<PypWeights<wordLMOrder>>> model_;
 };
 
-}
+}  // naemspace oxlm
 
 #endif
 

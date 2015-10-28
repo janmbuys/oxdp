@@ -17,50 +17,54 @@
 
 namespace oxlm {
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 LblModel<GlobalWeights, MinibatchWeights, Metadata>::LblModel() {
   dict = boost::make_shared<Dict>();
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 LblModel<GlobalWeights, MinibatchWeights, Metadata>::LblModel(
     const boost::shared_ptr<ModelConfig>& config)
     : config(config) {
   dict = boost::make_shared<Dict>();
   metadata = boost::make_shared<Metadata>(config, dict);
-  ngram_model = boost::make_shared<NGramModel<GlobalWeights>>(config->ngram_order, dict->sos(), dict->eos());
+  ngram_model = boost::make_shared<NGramModel<GlobalWeights>>(
+      config->ngram_order, dict->sos(), dict->eos());
   srand(1);
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
-boost::shared_ptr<Dict> LblModel<GlobalWeights, MinibatchWeights, Metadata>::getDict() const {
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
+boost::shared_ptr<Dict>
+LblModel<GlobalWeights, MinibatchWeights, Metadata>::getDict() const {
   return dict;
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
-boost::shared_ptr<ModelConfig> LblModel<GlobalWeights, MinibatchWeights, Metadata>::getConfig() const {
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
+boost::shared_ptr<ModelConfig>
+LblModel<GlobalWeights, MinibatchWeights, Metadata>::getConfig() const {
   return config;
 }
 
-
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
-MatrixReal LblModel<GlobalWeights, MinibatchWeights, Metadata>::getWordVectors() const {
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
+MatrixReal LblModel<GlobalWeights, MinibatchWeights, Metadata>::getWordVectors()
+    const {
   return weights->getWordVectors();
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   MT19937 eng;
   // Initialize the dictionary now, if it hasn't been initialized when the
   // vocabulary was partitioned in classes.
   bool immutable_dict = config->classes > 0 || config->class_file.size();
-  boost::shared_ptr<SentenceCorpus> training_corpus = boost::make_shared<SentenceCorpus>();
+  boost::shared_ptr<SentenceCorpus> training_corpus =
+      boost::make_shared<SentenceCorpus>();
   training_corpus->readFile(config->training_file, dict, immutable_dict);
   config->vocab_size = dict->size();
   config->num_features = dict->size();
   std::cout << "Done reading training corpus..." << endl;
 
-  boost::shared_ptr<SentenceCorpus> test_corpus; 
+  boost::shared_ptr<SentenceCorpus> test_corpus;
   if (config->test_file.size()) {
     test_corpus = boost::make_shared<SentenceCorpus>();
     test_corpus->readFile(config->test_file, dict, true);
@@ -70,12 +74,11 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
   if (config->model_input_file.size() == 0) {
     metadata->initialize(training_corpus);
     weights = boost::make_shared<GlobalWeights>(config, metadata, true);
-    //std::cout << "initialized weights" << std::endl;
   } else {
     Real log_likelihood = 0;
     evaluate(test_corpus, log_likelihood);
     std::cerr << "Initial perplexity: "
-         << perplexity(log_likelihood, test_corpus->numTokens()) << endl;
+              << perplexity(log_likelihood, test_corpus->numTokens()) << endl;
   }
 
   vector<int> indices(training_corpus->size());
@@ -91,9 +94,8 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 
   int shared_index = 0;
   // For no particular reason. It just looks like this works best.
-  int task_size = sqrt(config->minibatch_size) / 4; //to imitate word-level behaviour
-  //std::cout << "initialized gradients" << std::endl;
-    
+  int task_size = sqrt(config->minibatch_size) / 4;
+
   omp_set_num_threads(config->threads);
   #pragma omp parallel
   {
@@ -104,7 +106,6 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 
     for (int iter = 0; iter < config->iterations; ++iter) {
       auto iteration_start = get_time();
-      //std::cout << "training size: " << training_corpus->size() << std::endl;
 
       #pragma omp master
       {
@@ -113,27 +114,21 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         }
         global_objective = 0;
       }
-      // Wait until the master thread finishes shuffling the indices.
-      #pragma omp barrier
 
+      #pragma omp barrier
       size_t start = 0;
       while (start < training_corpus->size()) {
         size_t end = min(training_corpus->size(), start + minibatch_size);
 
-        vector<int> minibatch(
-            indices.begin() + start,
-            min(indices.begin() + end, indices.end()));
-       //std::cout << "minibatch: " << minibatch.size() << " sentences\n";
+        vector<int> minibatch(indices.begin() + start,
+                              min(indices.begin() + end, indices.end()));
 
-        //global_gradient->init(training_corpus, minibatch);
         // Reset the set of minibatch words shared across all threads.
         #pragma omp master
         {
           global_words = MinibatchWords();
           shared_index = 0;
         }
-
-        //gradient->init(training_corpus, minibatch);
 
         // Wait until the global gradient is initialized. Otherwise, some
         // gradient updates may be ignored.
@@ -144,6 +139,7 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         MinibatchWords words;
         size_t task_start;
         while (true) {
+
           #pragma omp critical
           {
             task_start = shared_index;
@@ -152,24 +148,22 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 
           if (task_start < minibatch.size()) {
             size_t task_end = min(task_start + task_size, minibatch.size());
-            vector<int> task(
-                minibatch.begin() + task_start, minibatch.begin() + task_end);
-            //collect the training examples for the minibatch
-            //std::cout << "  task " << task.size();
-            boost::shared_ptr<DataSet> task_examples = boost::make_shared<DataSet>();
-            
-            // #pragma omp critical
-            for (int j: task) 
-              ngram_model->extractSentence(training_corpus->sentence_at(j), task_examples);
-            //std::cout << " (" << task_examples->size() << ") ";
+            vector<int> task(minibatch.begin() + task_start,
+                             minibatch.begin() + task_end);
+            boost::shared_ptr<DataSet> task_examples =
+                boost::make_shared<DataSet>();
+
+            for (int j : task) {
+              ngram_model->extractSentence(training_corpus->sentence_at(j),
+                                           task_examples);
+            }
             num_examples += task_examples->size();
 
             if (config->noise_samples > 0) {
-              weights->estimateGradient(
-                  task_examples, gradient, objective, words);
+              weights->estimateGradient(task_examples, gradient, objective,
+                                        words);
             } else {
-              weights->getGradient(
-                  task_examples, gradient, objective, words);
+              weights->getGradient(task_examples, gradient, objective, words);
             }
           } else {
             break;
@@ -199,13 +193,10 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         // Wait for all threads to finish making the model gradient update.
         #pragma omp barrier
 
-        //TODO check when changing to sentence level
         Real minibatch_factor =
             static_cast<Real>(num_examples) / training_corpus->numTokens();
-            //static_cast<Real>(end - start) / training_corpus->size();
-        //std::cout << "\n" << num_examples << " examples " 
-        //    << minibatch_factor << " minibatch factor" << std::endl;
         objective = regularize(global_words, global_gradient, minibatch_factor);
+        
         #pragma omp critical
         global_objective += objective;
 
@@ -217,30 +208,31 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
         // words are reset only after the global gradient is fully cleared.
         #pragma omp barrier
 
-        //don't evaluate before end of iteration
-        /* if ((minibatch_counter % 100 == 0 && minibatch_counter <= 1000) ||
-            minibatch_counter % 1000 == 0) {
+        // don't evaluate before end of iteration
+        if ((minibatch_counter % 100000 == 0) && (iter == 0)) {
           evaluate(test_corpus, iteration_start, minibatch_counter,
                    test_objective, best_perplexity);
-        } */
+        } 
 
         ++minibatch_counter;
         start = end;
       }
 
-      evaluate(test_corpus, iteration_start, minibatch_counter,
-               test_objective, best_perplexity);
+      evaluate(test_corpus, iteration_start, minibatch_counter, test_objective,
+               best_perplexity);
       #pragma omp master
       {
         Real iteration_time = get_duration(iteration_start, get_time());
         std::cerr << "Iteration: " << iter << ", "
-             << "Time: " << iteration_time << " seconds, "
-             << "  Likelihood: " << global_objective 
-             << "  Size: " << training_corpus->numTokens()
-             << "  Perplexity with EOS: " << perplexity(global_objective, training_corpus->numTokensS())
-             << "  Perplexity without EOS: " << perplexity(global_objective, training_corpus->numTokens())
-             << "  Objective: " << global_objective / training_corpus->numTokens()
-             << endl;
+                  << "Time: " << iteration_time << " seconds, "
+                  << "  Likelihood: " << global_objective
+                  << "  Size: " << training_corpus->numTokens()
+                  << "  Perplexity with EOS: "
+                  << perplexity(global_objective, training_corpus->numTokensS())
+                  << "  Perplexity without EOS: "
+                  << perplexity(global_objective, training_corpus->numTokens())
+                  << "  Objective: "
+                  << global_objective / training_corpus->numTokens() << endl;
         std::cerr << endl;
       }
     }
@@ -248,18 +240,19 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::learn() {
 
   std::cerr << "Overall minimum perplexity: " << best_perplexity << endl;
 
-  std::vector<boost::shared_ptr<Parser>> generated_list; 
+  std::vector<boost::shared_ptr<Parser>> generated_list;
   for (int i = 0; i < config->generate_samples; ++i) {
-    generated_list.push_back(boost::make_shared<Parser>(ngram_model->generateSentence(weights, eng)));
-  } 
-  
-  std::sort(generated_list.begin(), generated_list.end(), Parser::cmp_weights); 
-  for (int i = 0; i < config->generate_samples; ++i) 
-    generated_list[i]->print_sentence(dict);
+    generated_list.push_back(boost::make_shared<Parser>(
+        ngram_model->generateSentence(weights, eng)));
+  }
 
+  std::sort(generated_list.begin(), generated_list.end(), Parser::cmp_weights);
+  for (int i = 0; i < config->generate_samples; ++i) {
+    generated_list[i]->print_sentence(dict);
+  }
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 void LblModel<GlobalWeights, MinibatchWeights, Metadata>::update(
     const MinibatchWords& global_words,
     const boost::shared_ptr<MinibatchWeights>& global_gradient,
@@ -268,22 +261,24 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::update(
   weights->updateAdaGrad(global_words, global_gradient, adagrad);
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 Real LblModel<GlobalWeights, MinibatchWeights, Metadata>::regularize(
     const MinibatchWords& global_words,
     const boost::shared_ptr<MinibatchWeights>& global_gradient,
     Real minibatch_factor) {
-  return weights->regularizerUpdate(global_words, global_gradient, minibatch_factor);
+  return weights->regularizerUpdate(global_words, global_gradient,
+                                    minibatch_factor);
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 void LblModel<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
-    const boost::shared_ptr<SentenceCorpus>& test_corpus, Real& accumulator) const {
+    const boost::shared_ptr<SentenceCorpus>& test_corpus,
+    Real& accumulator) const {
   if (test_corpus != nullptr) {
     #pragma omp master
     {
-        std::cerr << "Calculating perplexity for " << test_corpus->numTokens()
-           << " tokens..." << endl;
+      std::cerr << "Calculating perplexity for " << test_corpus->numTokens()
+                << " tokens..." << endl;
       accumulator = 0;
     }
 
@@ -296,28 +291,20 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
     size_t start = 0;
     while (start < test_corpus->size()) {
       size_t end = min(start + config->minibatch_size, test_corpus->size());
-      vector<int> minibatch(
-          indices.begin() + start, min(indices.begin() + end, indices.end()));
-      
-      minibatch = scatterMinibatch(minibatch);
+      vector<int> minibatch(indices.begin() + start,
+                            min(indices.begin() + end, indices.end()));
 
-      //option 1: computationally slightly more efficient
-      
-      /* boost::shared_ptr<DataSet> minibatch_examples = boost::make_shared<DataSet>();
-      for (int j: minibatch) 
-        ngram_model->extract(test_corpus,  j, minibatch_examples);
-      Real objective = weights->getObjective(minibatch_examples); */
-      
-      //option 2: more extendable
+      minibatch = scatterMinibatch(minibatch);
       Real objective = 0;
 
-      for (int j: minibatch) {
-        Real likelihood = ngram_model->evaluateSentence(test_corpus->sentence_at(j), weights);
+      for (int j : minibatch) {
+        Real likelihood =
+            ngram_model->evaluateSentence(test_corpus->sentence_at(j), weights);
         objective += likelihood;
-      } 
-       
+      }
+
       #pragma omp critical
-      accumulator += objective;  
+      accumulator += objective;
 
       start = end;
     }
@@ -330,25 +317,29 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
   }
 }
 
-
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 void LblModel<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
-    const boost::shared_ptr<SentenceCorpus>& test_corpus, const Time& iteration_start,
-    int minibatch_counter, Real& log_likelihood, Real& best_perplexity) const {
+    const boost::shared_ptr<SentenceCorpus>& test_corpus,
+    const Time& iteration_start, int minibatch_counter, Real& log_likelihood,
+    Real& best_perplexity) const {
   if (test_corpus != nullptr) {
     evaluate(test_corpus, log_likelihood);
 
     #pragma omp master
     {
-      Real test_perplexity = perplexity(log_likelihood, test_corpus->numTokens());
-      Real test_perplexity_s = perplexity(log_likelihood, test_corpus->numTokensS());
+      Real test_perplexity =
+          perplexity(log_likelihood, test_corpus->numTokens());
+      Real test_perplexity_s =
+          perplexity(log_likelihood, test_corpus->numTokensS());
       Real iteration_time = get_duration(iteration_start, get_time());
       std::cerr << "\tMinibatch " << minibatch_counter << ", "
-           << "Time: " << get_duration(iteration_start, get_time()) << " seconds, "
-           << "  Test Likelihood: " << log_likelihood 
-           << "  Test Size: " << test_corpus->numTokens() 
-           << "  Test Perplexity with EOS: " << test_perplexity_s << std::endl
-           << "  Test Perplexity no EOS: " << test_perplexity << std::endl;
+                << "Time: " << get_duration(iteration_start, get_time())
+                << " seconds, "
+                << "  Test Likelihood: " << log_likelihood
+                << "  Test Size: " << test_corpus->numTokens()
+                << "  Test Perplexity with EOS: " << test_perplexity_s
+                << std::endl << "  Test Perplexity no EOS: " << test_perplexity
+                << std::endl;
 
       if (test_perplexity < best_perplexity) {
         best_perplexity = test_perplexity;
@@ -361,13 +352,13 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::evaluate(
   }
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 Real LblModel<GlobalWeights, MinibatchWeights, Metadata>::predict(
     int word_id, const vector<int>& context) const {
   return weights->predict(word_id, context);
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 void LblModel<GlobalWeights, MinibatchWeights, Metadata>::save() const {
   if (config->model_output_file.size()) {
     cout << "Writing model to " << config->model_output_file << "..." << endl;
@@ -381,8 +372,9 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::save() const {
   }
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
-void LblModel<GlobalWeights, MinibatchWeights, Metadata>::load(const string& filename) {
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
+void LblModel<GlobalWeights, MinibatchWeights, Metadata>::load(
+    const string& filename) {
   if (filename.size() > 0) {
     auto start_time = get_time();
     cerr << "Loading model from " << filename << "..." << endl;
@@ -397,21 +389,20 @@ void LblModel<GlobalWeights, MinibatchWeights, Metadata>::load(const string& fil
   }
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 void LblModel<GlobalWeights, MinibatchWeights, Metadata>::clearCache() {
   weights->clearCache();
 }
 
-template<class GlobalWeights, class MinibatchWeights, class Metadata>
+template <class GlobalWeights, class MinibatchWeights, class Metadata>
 bool LblModel<GlobalWeights, MinibatchWeights, Metadata>::operator==(
     const LblModel<GlobalWeights, MinibatchWeights, Metadata>& other) const {
-  return *config == *other.config
-      && *metadata == *other.metadata
-      && *weights == *other.weights;
+  return *config == *other.config && *metadata == *other.metadata &&
+         *weights == *other.weights;
 }
 
 template class LblModel<Weights, Weights, Metadata>;
 template class LblModel<FactoredWeights, FactoredWeights, FactoredMetadata>;
 
-} // namespace oxlm
+}  // namespace oxlm
 

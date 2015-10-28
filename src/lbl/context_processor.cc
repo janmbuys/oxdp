@@ -2,11 +2,12 @@
 
 namespace oxlm {
 
-ContextProcessor::ContextProcessor(
-    const boost::shared_ptr<Corpus>& corpus, int context_size,
-    int start_id, int end_id)
-    : corpus(corpus), contextSize(context_size),
-      startId(start_id), endId(end_id) {}
+ContextProcessor::ContextProcessor(const boost::shared_ptr<Corpus>& corpus,
+                                   int context_size, int start_id, int end_id)
+    : corpus(corpus),
+      contextSize(context_size),
+      startId(start_id),
+      endId(end_id) {}
 
 vector<WordId> ContextProcessor::extract(int position) const {
   vector<WordId> context;
@@ -25,4 +26,4 @@ vector<WordId> ContextProcessor::extract(int position) const {
   return context;
 }
 
-} // namespace oxlm
+}  // namespace oxlm

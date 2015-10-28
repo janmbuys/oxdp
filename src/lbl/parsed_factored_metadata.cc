@@ -19,24 +19,26 @@ ParsedFactoredMetadata::ParsedFactoredMetadata(
     : FactoredMetadata(config, dict, index),
       actionBias(VectorReal::Zero(config->numActions())) {}
 
-void ParsedFactoredMetadata::initialize(const boost::shared_ptr<ParsedCorpus>& corpus) {
-  FactoredMetadata::initialize(corpus);  
+void ParsedFactoredMetadata::initialize(
+    const boost::shared_ptr<ParsedCorpus>& corpus) {
+  FactoredMetadata::initialize(corpus);
   vector<int> action_counts = corpus->actionCounts();
 
-  //VectorReal counts = VectorReal::Zero(action_counts.size());
-  //for (size_t i = 0; i < action_counts.size(); ++i) 
-  //  counts(i) = action_counts[i];
-  //actionBias = counts.array() / counts.sum();
-  actionBias = VectorReal::Ones(action_counts.size())*0.2;
+  // Initialize action biases with unigram distribution. Alternatively,
+  // could initialize uniformly.
+  // actionBias = VectorReal::Ones(action_counts.size()) * 0.2;
+  VectorReal counts = VectorReal::Zero(action_counts.size());
+  for (size_t i = 0; i < action_counts.size(); ++i) {
+    counts(i) = action_counts[i];
+  }
+  actionBias = counts.array() / counts.sum();
 }
 
-VectorReal ParsedFactoredMetadata::getActionBias() const {
-  return actionBias;
+VectorReal ParsedFactoredMetadata::getActionBias() const { return actionBias; }
+
+bool ParsedFactoredMetadata::operator==(
+    const ParsedFactoredMetadata& other) const {
+  return Metadata::operator==(other) && actionBias == other.actionBias;
 }
 
-bool ParsedFactoredMetadata::operator==(const ParsedFactoredMetadata& other) const {
-  return Metadata::operator==(other)
-      && actionBias == other.actionBias;
-}
-
-} // namespace oxlm
+}  // namespace oxlm

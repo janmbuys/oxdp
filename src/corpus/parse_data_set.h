@@ -7,9 +7,9 @@
 
 namespace oxlm {
 
+// A set of training examples for the generative parser.  
 class ParseDataSet {
-  public:
-
+ public:
   ParseDataSet();
 
   void add_word_example(DataPoint example) {
@@ -25,12 +25,15 @@ class ParseDataSet {
   }
 
   void extend(const boost::shared_ptr<ParseDataSet>& examples) {
-    for (unsigned i = 0; i < examples->word_example_size(); ++i) 
+    for (unsigned i = 0; i < examples->word_example_size(); ++i) {
       add_word_example(examples->word_example_at(i));
-    for (unsigned i = 0; i < examples->tag_example_size(); ++i) 
+    }
+    for (unsigned i = 0; i < examples->tag_example_size(); ++i) {
       add_tag_example(examples->tag_example_at(i));
-    for (unsigned i = 0; i < examples->action_example_size(); ++i) 
+    }
+    for (unsigned i = 0; i < examples->action_example_size(); ++i) {
       add_action_example(examples->action_example_at(i));
+    }
   }
 
   void clear() {
@@ -39,17 +42,11 @@ class ParseDataSet {
     action_examples_->clear();
   }
 
-  void clear_word_examples() {
-    word_examples_->clear();
-  }
+  void clear_word_examples() { word_examples_->clear(); }
 
-  void clear_tag_examples() {
-    tag_examples_->clear();
-  }
+  void clear_tag_examples() { tag_examples_->clear(); }
 
-  void clear_action_examples() {
-    action_examples_->clear();
-  }
+  void clear_action_examples() { action_examples_->clear(); }
 
   DataPoint word_example_at(unsigned i) const {
     return word_examples_->exampleAt(i);
@@ -63,17 +60,11 @@ class ParseDataSet {
     return action_examples_->exampleAt(i);
   }
 
-  WordId word_at(unsigned i) const {
-    return word_examples_->wordAt(i);
-  }
+  WordId word_at(unsigned i) const { return word_examples_->wordAt(i); }
 
-  WordId tag_at(unsigned i) const {
-    return tag_examples_->wordAt(i);
-  }
+  WordId tag_at(unsigned i) const { return tag_examples_->wordAt(i); }
 
-  WordId action_at(unsigned i) const {
-    return action_examples_->wordAt(i);
-  }
+  WordId action_at(unsigned i) const { return action_examples_->wordAt(i); }
 
   Context word_context_at(unsigned i) const {
     return word_examples_->contextAt(i);
@@ -87,37 +78,26 @@ class ParseDataSet {
     return action_examples_->contextAt(i);
   }
 
-  boost::shared_ptr<DataSet> word_examples() const {
-    return word_examples_;
-  }
+  boost::shared_ptr<DataSet> word_examples() const { return word_examples_; }
 
-  boost::shared_ptr<DataSet> tag_examples() const {
-    return tag_examples_;
-  }
+  boost::shared_ptr<DataSet> tag_examples() const { return tag_examples_; }
 
   boost::shared_ptr<DataSet> action_examples() const {
     return action_examples_;
   }
 
-  size_t word_example_size() const {
-     return word_examples_->size();
-  }
+  size_t word_example_size() const { return word_examples_->size(); }
 
-  size_t tag_example_size() const {
-     return tag_examples_->size();
-  }
+  size_t tag_example_size() const { return tag_examples_->size(); }
 
-  size_t action_example_size() const {
-     return action_examples_->size();
-  }
+  size_t action_example_size() const { return action_examples_->size(); }
 
-  private:
+ private:
   boost::shared_ptr<DataSet> word_examples_;
   boost::shared_ptr<DataSet> tag_examples_;
   boost::shared_ptr<DataSet> action_examples_;
 };
 
-
-}
+}  // namespace oxlm
 
 #endif

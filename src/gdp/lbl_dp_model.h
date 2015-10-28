@@ -30,7 +30,8 @@
 
 namespace oxlm {
 
-template<class ParseModel, class ParsedWeights, class Metadata>
+// Train and evaluate a neural generative depenendecy parsing model.  
+template <class ParseModel, class ParsedWeights, class Metadata>
 class LblDpModel {
  public:
   LblDpModel();
@@ -43,27 +44,25 @@ class LblDpModel {
 
   void learn();
 
-  void update(
-      const MinibatchWords& global_words,
-      const boost::shared_ptr<ParsedWeights>& global_gradient,
-      const boost::shared_ptr<ParsedWeights>& adagrad);
+  void update(const MinibatchWords& global_words,
+              const boost::shared_ptr<ParsedWeights>& global_gradient,
+              const boost::shared_ptr<ParsedWeights>& adagrad);
 
-  Real regularize(
-      const MinibatchWords& global_words,
-      const boost::shared_ptr<ParsedWeights>& global_gradient,
-      Real minibatch_factor);
+  Real regularize(const MinibatchWords& global_words,
+                  const boost::shared_ptr<ParsedWeights>& global_gradient,
+                  Real minibatch_factor);
 
   void evaluate();
 
-  void evaluate(
-      const boost::shared_ptr<ParsedCorpus>& corpus, Real& accumulator);
+  void evaluate(const boost::shared_ptr<ParsedCorpus>& corpus,
+                Real& accumulator);
 
   Real predict(int word_id, const vector<int>& context) const;
 
   MatrixReal getWordVectors() const;
 
   MatrixReal getFeatureVectors() const;
-  
+
   void save() const;
 
   void load(const string& filename);
@@ -73,9 +72,9 @@ class LblDpModel {
   bool operator==(
       const LblDpModel<ParseModel, ParsedWeights, Metadata>& other) const;
 
-  void evaluate(
-      const boost::shared_ptr<ParsedCorpus>& corpus, const Time& iteration_start,
-      int minibatch_counter, Real& objective, Real& best_perplexity);
+  void evaluate(const boost::shared_ptr<ParsedCorpus>& corpus,
+                const Time& iteration_start, int minibatch_counter,
+                Real& objective, Real& best_perplexity);
 
  private:
   boost::shared_ptr<ModelConfig> config;
@@ -85,4 +84,4 @@ class LblDpModel {
   boost::shared_ptr<ParseModel> parse_model;
 };
 
-} // namespace oxlm
+}  // namespace oxlm

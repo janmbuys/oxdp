@@ -13,16 +13,19 @@ FactoredWeights::FactoredWeights()
 
 FactoredWeights::FactoredWeights(
     const boost::shared_ptr<ModelConfig>& config,
-    const boost::shared_ptr<FactoredMetadata>& metadata,
-    bool init)
-    : Weights(config, metadata, init), metadata(metadata),
+    const boost::shared_ptr<FactoredMetadata>& metadata, bool init)
+    : Weights(config, metadata, init),
+      metadata(metadata),
       index(metadata->getIndex()),
-      data(NULL), S(0, 0, 0), T(0, 0), FW(0, 0) {
+      data(NULL),
+      S(0, 0, 0),
+      T(0, 0),
+      FW(0, 0) {
   allocate();
 
   if (init) {
-    // Initialize model weights randomly.
-    mt19937 gen; // (1);
+    // Initialize model the weights randomly.
+    mt19937 gen; 
     normal_distribution<Real> gaussian(0, 0.1);
     for (int i = 0; i < size; ++i) {
       FW(i) = gaussian(gen);
@@ -35,9 +38,13 @@ FactoredWeights::FactoredWeights(
 }
 
 FactoredWeights::FactoredWeights(const FactoredWeights& other)
-    : Weights(other), metadata(other.metadata),
+    : Weights(other),
+      metadata(other.metadata),
       index(other.index),
-      data(NULL), S(0, 0, 0), T(0, 0), FW(0, 0) {
+      data(NULL),
+      S(0, 0, 0),
+      T(0, 0),
+      FW(0, 0) {
   allocate();
   memcpy(data, other.data, size * sizeof(Real));
 }
@@ -83,22 +90,20 @@ Real FactoredWeights::getObjective(
   MatrixReal prediction_vectors;
   MatrixReal class_probs;
   vector<VectorReal> word_probs;
-  return getObjective(
-      examples, contexts, context_vectors, prediction_vectors,
-      class_probs, word_probs);
+  return getObjective(examples, contexts, context_vectors, prediction_vectors,
+                      class_probs, word_probs);
 }
 
-Real FactoredWeights::getObjective(
-    const boost::shared_ptr<DataSet>& examples,
-    vector<WordsList>& contexts,
-    vector<MatrixReal>& context_vectors,
-    MatrixReal& prediction_vectors,
-    MatrixReal& class_probs,
-    vector<VectorReal>& word_probs) const {
+Real FactoredWeights::getObjective(const boost::shared_ptr<DataSet>& examples,
+                                   vector<WordsList>& contexts,
+                                   vector<MatrixReal>& context_vectors,
+                                   MatrixReal& prediction_vectors,
+                                   MatrixReal& class_probs,
+                                   vector<VectorReal>& word_probs) const {
   getContextVectors(examples, contexts, context_vectors);
   prediction_vectors = getPredictionVectors(examples->size(), context_vectors);
-  getProbabilities(
-      examples, contexts, prediction_vectors, class_probs, word_probs);
+  getProbabilities(examples, contexts, prediction_vectors, class_probs,
+                   word_probs);
 
   Real objective = 0;
   for (size_t i = 0; i < examples->size(); ++i) {
@@ -111,7 +116,7 @@ Real FactoredWeights::getObjective(
   }
 
   for (size_t i = 0; i < examples->size(); ++i) {
-    class_probs.col(i).array() = class_probs.col(i).array().exp();      
+    class_probs.col(i).array() = class_probs.col(i).array().exp();
     word_probs[i].array() = word_probs[i].array().exp();
   }
 
@@ -120,25 +125,23 @@ Real FactoredWeights::getObjective(
 
 void FactoredWeights::getGradient(
     const boost::shared_ptr<DataSet>& examples,
-    const boost::shared_ptr<FactoredWeights>& gradient,
-    Real& objective,
+    const boost::shared_ptr<FactoredWeights>& gradient, Real& objective,
     MinibatchWords& words) const {
   vector<WordsList> contexts;
   vector<MatrixReal> context_vectors;
   MatrixReal prediction_vectors, class_probs;
   vector<VectorReal> word_probs;
-  objective += getObjective(
-      examples, contexts, context_vectors, prediction_vectors,
-      class_probs, word_probs);
+  objective += getObjective(examples, contexts, context_vectors,
+                            prediction_vectors, class_probs, word_probs);
 
   setContextWords(contexts, words);
 
   MatrixReal weighted_representations = getWeightedRepresentations(
       examples, prediction_vectors, class_probs, word_probs);
 
-  getFullGradient(
-      examples, contexts, context_vectors, prediction_vectors,
-      weighted_representations, class_probs, word_probs, gradient, words);
+  getFullGradient(examples, contexts, context_vectors, prediction_vectors,
+                  weighted_representations, class_probs, word_probs, gradient,
+                  words);
 }
 
 MatrixReal FactoredWeights::classR(int class_id) const {
@@ -155,12 +158,10 @@ VectorReal FactoredWeights::classB(int class_id) const {
 
 void FactoredWeights::getProbabilities(
     const boost::shared_ptr<DataSet>& examples,
-    const vector<WordsList>& contexts,
-    const MatrixReal& prediction_vectors,
-    MatrixReal& class_probs,
-    vector<VectorReal>& word_probs) const {
-  class_probs = S.transpose() * prediction_vectors 
-                + T * MatrixReal::Ones(1, examples->size());
+    const vector<WordsList>& contexts, const MatrixReal& prediction_vectors,
+    MatrixReal& class_probs, vector<VectorReal>& word_probs) const {
+  class_probs = S.transpose() * prediction_vectors +
+                T * MatrixReal::Ones(1, examples->size());
   for (size_t i = 0; i < examples->size(); ++i) {
     class_probs.col(i) = logSoftMax(class_probs.col(i));
   }
@@ -170,15 +171,15 @@ void FactoredWeights::getProbabilities(
     int class_id = index->getClass(word_id);
 
     VectorReal prediction_vector = prediction_vectors.col(i);
-    VectorReal word_scores = classR(class_id).transpose() * prediction_vector + classB(class_id);
+    VectorReal word_scores =
+        classR(class_id).transpose() * prediction_vector + classB(class_id);
     word_probs.push_back(logSoftMax(word_scores));
   }
 }
 
 MatrixReal FactoredWeights::getWeightedRepresentations(
     const boost::shared_ptr<DataSet>& examples,
-    const MatrixReal& prediction_vectors,
-    const MatrixReal& class_probs,
+    const MatrixReal& prediction_vectors, const MatrixReal& class_probs,
     const vector<VectorReal>& word_probs) const {
   MatrixReal weighted_representations = S * class_probs;
 
@@ -190,7 +191,8 @@ MatrixReal FactoredWeights::getWeightedRepresentations(
     weighted_representations.col(i) -= S.col(class_id) + R.col(word_id);
   }
 
-  weighted_representations.array() *= activationDerivative(config->activation, prediction_vectors);
+  weighted_representations.array() *=
+      activationDerivative(config->activation, prediction_vectors);
 
   return weighted_representations;
 }
@@ -200,13 +202,12 @@ void FactoredWeights::getFullGradient(
     const vector<WordsList>& contexts,
     const vector<MatrixReal>& context_vectors,
     const MatrixReal& prediction_vectors,
-    const MatrixReal& weighted_representations,
-    MatrixReal& class_probs,
+    const MatrixReal& weighted_representations, MatrixReal& class_probs,
     vector<VectorReal>& word_probs,
     const boost::shared_ptr<FactoredWeights>& gradient,
     MinibatchWords& words) const {
   for (size_t i = 0; i < examples->size(); ++i) {
-    int word_id = examples->wordAt(i); 
+    int word_id = examples->wordAt(i);
     int class_id = index->getClass(word_id);
     int word_class_id = index->getWordIndexInClass(word_id);
     class_probs(class_id, i) -= 1;
@@ -216,7 +217,7 @@ void FactoredWeights::getFullGradient(
   gradient->S += prediction_vectors * class_probs.transpose();
   gradient->T += class_probs.rowwise().sum();
   for (size_t i = 0; i < examples->size(); ++i) {
-    int word_id = examples->wordAt(i); 
+    int word_id = examples->wordAt(i);
     int class_id = index->getClass(word_id);
     int class_start = index->getClassMarker(class_id);
     int class_size = index->getClassSize(class_id);
@@ -230,14 +231,13 @@ void FactoredWeights::getFullGradient(
         prediction_vectors.col(i) * word_probs[i].transpose();
   }
 
-  getContextGradient(
-      examples->size(), contexts, context_vectors, weighted_representations, gradient);
+  getContextGradient(examples->size(), contexts, context_vectors,
+                     weighted_representations, gradient);
 }
 
 bool FactoredWeights::checkGradient(
     const boost::shared_ptr<DataSet>& examples,
-    const boost::shared_ptr<FactoredWeights>& gradient,
-    double eps) {
+    const boost::shared_ptr<FactoredWeights>& gradient, double eps) {
   if (!Weights::checkGradient(examples, gradient, eps)) {
     return false;
   }
@@ -304,12 +304,11 @@ void FactoredWeights::estimateProjectionGradient(
     const boost::shared_ptr<DataSet>& examples,
     const MatrixReal& prediction_vectors,
     const boost::shared_ptr<FactoredWeights>& gradient,
-    MatrixReal& weighted_representations,
-    Real& objective,
+    MatrixReal& weighted_representations, Real& objective,
     MinibatchWords& words) const {
-  Weights::estimateProjectionGradient(
-      examples, prediction_vectors, gradient,
-      weighted_representations, objective, words);
+  Weights::estimateProjectionGradient(examples, prediction_vectors, gradient,
+                                      weighted_representations, objective,
+                                      words);
 
   int noise_samples = config->noise_samples;
   VectorReal class_unigram = metadata->getClassBias().array().exp();
@@ -317,11 +316,13 @@ void FactoredWeights::estimateProjectionGradient(
   for (size_t i = 0; i < examples->size(); ++i) {
     int word_id = examples->wordAt(i);
     int class_id = index->getClass(word_id);
-    Real log_pos_prob = S.col(class_id).dot(prediction_vectors.col(i)) + T(class_id);
+    Real log_pos_prob =
+        S.col(class_id).dot(prediction_vectors.col(i)) + T(class_id);
     Real pos_prob = exp(log_pos_prob);
     assert(pos_prob <= numeric_limits<Real>::max());
 
-    Real pos_weight = (noise_samples * class_unigram(class_id)) / (pos_prob + noise_samples * class_unigram(class_id));
+    Real pos_weight = (noise_samples * class_unigram(class_id)) /
+                      (pos_prob + noise_samples * class_unigram(class_id));
     weighted_representations.col(i) -= pos_weight * S.col(class_id);
 
     objective -= log(1 - pos_weight);
@@ -331,11 +332,13 @@ void FactoredWeights::estimateProjectionGradient(
 
     for (int j = 0; j < noise_samples; ++j) {
       int noise_class_id = noise_classes[i][j];
-      Real log_neg_prob = S.col(noise_class_id).dot(prediction_vectors.col(i)) + T(noise_class_id);
+      Real log_neg_prob = S.col(noise_class_id).dot(prediction_vectors.col(i)) +
+                          T(noise_class_id);
       Real neg_prob = exp(log_neg_prob);
       assert(neg_prob <= numeric_limits<Real>::max());
 
-      Real neg_weight = neg_prob / (neg_prob + noise_samples * class_unigram(noise_class_id));
+      Real neg_weight =
+          neg_prob / (neg_prob + noise_samples * class_unigram(noise_class_id));
       weighted_representations.col(i) += neg_weight * S.col(noise_class_id);
 
       objective -= log(1 - neg_weight);
@@ -348,8 +351,7 @@ void FactoredWeights::estimateProjectionGradient(
 
 void FactoredWeights::estimateGradient(
     const boost::shared_ptr<DataSet>& examples,
-    const boost::shared_ptr<FactoredWeights>& gradient,
-    Real& objective,
+    const boost::shared_ptr<FactoredWeights>& gradient, Real& objective,
     MinibatchWords& words) const {
   vector<WordsList> contexts;
   vector<MatrixReal> context_vectors;
@@ -361,14 +363,14 @@ void FactoredWeights::estimateGradient(
       getPredictionVectors(examples->size(), context_vectors);
 
   MatrixReal weighted_representations;
-  estimateProjectionGradient(
-      examples, prediction_vectors, gradient,
-      weighted_representations, objective, words);
+  estimateProjectionGradient(examples, prediction_vectors, gradient,
+                             weighted_representations, objective, words);
 
-  weighted_representations.array() *= activationDerivative(config->activation, prediction_vectors);
+  weighted_representations.array() *=
+      activationDerivative(config->activation, prediction_vectors);
 
-  getContextGradient(
-      examples->size(), contexts, context_vectors, weighted_representations, gradient);
+  getContextGradient(examples->size(), contexts, context_vectors,
+                     weighted_representations, gradient);
 }
 
 void FactoredWeights::syncUpdate(
@@ -402,7 +404,7 @@ void FactoredWeights::updateSquared(
 
   Block block = getBlock();
   FW.segment(block.first, block.second).array() +=
-    global_gradient->FW.segment(block.first, block.second).array().square();
+      global_gradient->FW.segment(block.first, block.second).array().square();
 }
 
 void FactoredWeights::updateAdaGrad(
@@ -413,16 +415,17 @@ void FactoredWeights::updateAdaGrad(
 
   Block block = getBlock();
   FW.segment(block.first, block.second) -=
-      global_gradient->FW.segment(block.first, block.second).binaryExpr(
-          adagrad->FW.segment(block.first, block.second),
-          CwiseAdagradUpdateOp<Real>(config->step_size));
+      global_gradient->FW.segment(block.first, block.second)
+          .binaryExpr(adagrad->FW.segment(block.first, block.second),
+                      CwiseAdagradUpdateOp<Real>(config->step_size));
 }
 
 Real FactoredWeights::regularizerUpdate(
     const MinibatchWords& global_words,
     const boost::shared_ptr<FactoredWeights>& global_gradient,
     Real minibatch_factor) {
-  Real ret = Weights::regularizerUpdate(global_words, global_gradient, minibatch_factor);
+  Real ret = Weights::regularizerUpdate(global_words, global_gradient,
+                                        minibatch_factor);
 
   Block block = getBlock();
   Real sigma = minibatch_factor * config->step_size * config->l2_lbl;
@@ -446,37 +449,38 @@ void FactoredWeights::clear(const MinibatchWords& words, bool parallel_update) {
   }
 }
 
-Reals FactoredWeights::predictViterbi(Context context) const { //give probs only for highest scoring words
+Reals FactoredWeights::predictViterbi(
+    Context context) const {
   Reals probs(vocabSize(), std::numeric_limits<Real>::max());
   Real normalizer = 0;
-  int num_classes = config->max_beam_increment;;
+  int num_classes = config->max_beam_increment;
   int num_words = config->max_beam_increment;
 
   VectorReal prediction_vector = getPredictionVector(context);
-  //don't really need to normalize if just used to max, but proper prob is nice
-  VectorReal class_probs = logSoftMax(
-      S.transpose() * prediction_vector + T, normalizer);  
- 
-   for (int c = 0; c < num_classes; ++c) {
-     int class_ind;
-     class_probs.maxCoeff(&class_ind); 
-     Real class_prob = class_probs(class_ind);
-     class_probs(class_ind) = std::numeric_limits<Real>::min();
-     
-     VectorReal word_probs = logSoftMax(
+  VectorReal class_probs =
+      logSoftMax(S.transpose() * prediction_vector + T, normalizer);
+
+  for (int c = 0; c < num_classes; ++c) {
+    int class_ind;
+    class_probs.maxCoeff(&class_ind);
+    Real class_prob = class_probs(class_ind);
+    class_probs(class_ind) = std::numeric_limits<Real>::min();
+
+    VectorReal word_probs = logSoftMax(
         classR(class_ind).transpose() * prediction_vector + classB(class_ind),
         normalizer);
-     for (int cw = 0; cw < num_words; ++cw) {
-       int word_class_ind;
-       word_probs.maxCoeff(&word_class_ind);
-       Real word_prob = word_probs(word_class_ind);
-       word_probs(word_class_ind) = std::numeric_limits<Real>::min();
-     
-       probs[index->getWordIndex(class_ind, word_class_ind)] = -(class_prob + word_prob);
-     }
-   }
+    for (int cw = 0; cw < num_words; ++cw) {
+      int word_class_ind;
+      word_probs.maxCoeff(&word_class_ind);
+      Real word_prob = word_probs(word_class_ind);
+      word_probs(word_class_ind) = std::numeric_limits<Real>::min();
 
-   return probs;
+      probs[index->getWordIndex(class_ind, word_class_ind)] =
+          -(class_prob + word_prob);
+    }
+  }
+
+  return probs;
 }
 
 Real FactoredWeights::predict(int word, Context context) const {
@@ -486,40 +490,40 @@ Real FactoredWeights::predict(int word, Context context) const {
   VectorReal prediction_vector = getPredictionVector(context);
 
   Real class_prob;
-  //auto ret = normalizerCache.get(context_words);
-  //if (ret.second) {
-  //  class_prob = (S.col(class_id).dot(prediction_vector) + T(class_id) - ret.first);
-  //} else { 
-    Real normalizer = 0;
-    VectorReal class_probs = logSoftMax(
-        S.transpose() * prediction_vector + T, normalizer);
-    //normalizerCache.set(context_words, normalizer);
-    class_prob = class_probs(class_id);
+  // auto ret = normalizerCache.get(context_words);
+  // if (ret.second) {
+  //  class_prob = (S.col(class_id).dot(prediction_vector) + T(class_id) -
+  //  ret.first);
+  //} else {
+  Real normalizer = 0;
+  VectorReal class_probs =
+      logSoftMax(S.transpose() * prediction_vector + T, normalizer);
+  // normalizerCache.set(context_words, normalizer);
+  class_prob = class_probs(class_id);
   //}
 
   context_words.insert(context_words.begin(), class_id);
   Real word_prob;
-  //ret = classNormalizerCache.get(context_words);
-  //if (ret.second) {
+  // ret = classNormalizerCache.get(context_words);
+  // if (ret.second) {
   //  word_prob = (R.col(word).dot(prediction_vector) + B(word) - ret.first);
-  //} else { 
-    //Real normalizer = 0;
-    VectorReal word_probs = logSoftMax(
-        classR(class_id).transpose() * prediction_vector + classB(class_id),
-        normalizer);
-    //classNormalizerCache.set(context_words, normalizer);
-    word_prob = word_probs(word_class_id);
+  //} else {
+  // Real normalizer = 0;
+  VectorReal word_probs = logSoftMax(
+      classR(class_id).transpose() * prediction_vector + classB(class_id),
+      normalizer);
+  // classNormalizerCache.set(context_words, normalizer);
+  word_prob = word_probs(word_class_id);
   //}
 
   return -(class_prob + word_prob);
 }
 
-
 Reals FactoredWeights::predict(Context context) const {
-  //this is inefficient, but not used in practice
   Reals probs(vocabSize(), 0);
-  for (int i = 0; i < vocabSize(); ++i)
+  for (int i = 0; i < vocabSize(); ++i) {
     probs[i] = predict(i, context);
+  }
 
   return probs;
 }
@@ -530,16 +534,10 @@ void FactoredWeights::clearCache() {
 }
 
 bool FactoredWeights::operator==(const FactoredWeights& other) const {
-  return Weights::operator==(other)
-      && *metadata == *other.metadata
-      && *index == *other.index
-      && size == other.size
-      && FW == other.FW;
+  return Weights::operator==(other) && *metadata == *other.metadata &&
+         *index == *other.index && size == other.size && FW == other.FW;
 }
 
-FactoredWeights::~FactoredWeights() {
-  delete data;
-}
+FactoredWeights::~FactoredWeights() { delete data; }
 
-
-} // namespace oxlm
+}  // namespace oxlm

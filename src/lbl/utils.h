@@ -50,17 +50,16 @@ inline VectorReal logSoftMax(const VectorReal& v, Real& log_z) {
   return v.array() - log_z;
 }
 
-template<class Matrix>
+template <class Matrix>
 inline Matrix sigmoid(const Matrix& v) {
   return (1.0 + (-v).array().exp()).inverse();
 }
 
-//input is sigmoid(x)
 inline Array2DReal sigmoidDerivative(const MatrixReal& v) {
   return v.array() * (1 - v.array());
 }
 
-template<class Matrix>
+template <class Matrix>
 inline Matrix rectifier(const Matrix& v) {
   return v.unaryExpr(CwiseRectifierOp<Real>());
 }
@@ -69,19 +68,18 @@ inline Array2DReal rectifierDerivative(const MatrixReal& v) {
   return v.unaryExpr(CwiseRectifierDerivativeOp<Real>());
 }
 
-template<class Matrix>
+template <class Matrix>
 inline Matrix tanh(const Matrix& v) {
-  Matrix w = (-2.0*v).array().exp();
-  return (1.0 - w.array())*(1.0 + w.array()).inverse();
+  Matrix w = (-2.0 * v).array().exp();
+  return (1.0 - w.array()) * (1.0 + w.array()).inverse();
 }
 
 inline Array2DReal tanhDerivative(const MatrixReal& v) {
-  return 1 - v.array()*v.array(); 
+  return 1 - v.array() * v.array();
 }
 
-template<class Matrix>
-inline Matrix applyActivation(
-    Activation activation, const Matrix& v) {
+template <class Matrix>
+inline Matrix applyActivation(Activation activation, const Matrix& v) {
   switch (activation) {
     case Activation::linear:
       return v;
@@ -96,10 +94,10 @@ inline Matrix applyActivation(
   }
 }
 
-// Note: v here is the hidden layer after the activation has been applied.
-// Be careful how you define future activations.
-inline Array2DReal activationDerivative(
-    Activation activation, const MatrixReal& v) {
+// Note: The input (v) here is the hidden layer after the activation has been 
+// applied. Be careful how you define future activations.
+inline Array2DReal activationDerivative(Activation activation,
+                                        const MatrixReal& v) {
   switch (activation) {
     case Activation::linear:
       return Array2DReal::Ones(v.rows(), v.cols());

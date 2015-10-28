@@ -13,39 +13,36 @@
 
 namespace oxlm {
 
+// Generative parsing model, predicting words with class-factorization and
+// actions.
 class ParsedFactoredWeights : public FactoredWeights {
  public:
   ParsedFactoredWeights();
 
   ParsedFactoredWeights(
       const boost::shared_ptr<ModelConfig>& config,
-      const boost::shared_ptr<ParsedFactoredMetadata>& metadata,
-      bool init);
+      const boost::shared_ptr<ParsedFactoredMetadata>& metadata, bool init);
 
   ParsedFactoredWeights(const ParsedFactoredWeights& other);
 
   size_t numParameters() const override;
 
-  void getGradient(
-      const boost::shared_ptr<ParseDataSet>& examples,
-      const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-      Real& objective,
-      MinibatchWords& words) const;
+  void getGradient(const boost::shared_ptr<ParseDataSet>& examples,
+                   const boost::shared_ptr<ParsedFactoredWeights>& gradient,
+                   Real& objective, MinibatchWords& words) const;
 
   virtual Real getObjective(
       const boost::shared_ptr<ParseDataSet>& examples) const;
 
-  bool checkGradient(
-      const boost::shared_ptr<ParseDataSet>& examples,
-      const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-      double eps);
+  bool checkGradient(const boost::shared_ptr<ParseDataSet>& examples,
+                     const boost::shared_ptr<ParsedFactoredWeights>& gradient,
+                     double eps);
 
   void estimateGradient(
       const boost::shared_ptr<ParseDataSet>& examples,
-      const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-      Real& objective,
-      MinibatchWords& words) const; 
-  
+      const boost::shared_ptr<ParsedFactoredWeights>& gradient, Real& objective,
+      MinibatchWords& words) const;
+
   Real predictWord(int word, Context context) const;
 
   Reals predictWord(Context context) const;
@@ -53,16 +50,15 @@ class ParsedFactoredWeights : public FactoredWeights {
   Reals predictWordOverTags(int word, Context context) const;
 
   Real predictTag(int tag, Context context) const;
-  
+
   Reals predictTag(Context context) const;
 
   Real predictAction(int action, Context context) const;
-  
+
   Reals predictAction(Context context) const;
 
-  void syncUpdate(
-      const MinibatchWords& words,
-      const boost::shared_ptr<ParsedFactoredWeights>& gradient);
+  void syncUpdate(const MinibatchWords& words,
+                  const boost::shared_ptr<ParsedFactoredWeights>& gradient);
 
   void updateSquared(
       const MinibatchWords& global_words,
@@ -81,11 +77,11 @@ class ParsedFactoredWeights : public FactoredWeights {
   void clear(const MinibatchWords& words, bool parallel_update);
 
   int numWords() const;
-  
+
   int numTags() const;
 
   int numActions() const;
- 
+
   void clearCache();
 
   bool operator==(const ParsedFactoredWeights& other) const;
@@ -93,62 +89,55 @@ class ParsedFactoredWeights : public FactoredWeights {
   virtual ~ParsedFactoredWeights();
 
  protected:
-   Real getObjective(
-      const boost::shared_ptr<ParseDataSet>& examples,
-      vector<WordsList>& word_contexts,
-      vector<WordsList>& action_contexts,
-      vector<MatrixReal>& word_context_vectors,
-      vector<MatrixReal>& action_context_vectors,
-      MatrixReal& word_prediction_vectors,
-      MatrixReal& action_prediction_vectors,
-      MatrixReal& class_probs,
-      vector<VectorReal>& word_probs,
-      MatrixReal& action_probs) const;
+  Real getObjective(const boost::shared_ptr<ParseDataSet>& examples,
+                    vector<WordsList>& word_contexts,
+                    vector<WordsList>& action_contexts,
+                    vector<MatrixReal>& word_context_vectors,
+                    vector<MatrixReal>& action_context_vectors,
+                    MatrixReal& word_prediction_vectors,
+                    MatrixReal& action_prediction_vectors,
+                    MatrixReal& class_probs, vector<VectorReal>& word_probs,
+                    MatrixReal& action_probs) const;
 
-  void getProbabilities(
-      const boost::shared_ptr<ParseDataSet>& examples,
-      const vector<WordsList>& word_contexts,
-      const vector<WordsList>& action_contexts,
-      const MatrixReal& word_prediction_vectors,
-      const MatrixReal& action_prediction_vectors,
-      MatrixReal& class_probs,
-      vector<VectorReal>& word_probs,
-      MatrixReal& action_probs) const;
+  void getProbabilities(const boost::shared_ptr<ParseDataSet>& examples,
+                        const vector<WordsList>& word_contexts,
+                        const vector<WordsList>& action_contexts,
+                        const MatrixReal& word_prediction_vectors,
+                        const MatrixReal& action_prediction_vectors,
+                        MatrixReal& class_probs, vector<VectorReal>& word_probs,
+                        MatrixReal& action_probs) const;
 
   MatrixReal getActionWeightedRepresentations(
       const boost::shared_ptr<ParseDataSet>& examples,
       const MatrixReal& action_prediction_vectors,
       const MatrixReal& action_probs) const;
 
-  void getFullGradient(
-      const boost::shared_ptr<ParseDataSet>& examples,
-      const vector<WordsList>& word_contexts,
-      const vector<WordsList>& action_contexts,
-      const vector<MatrixReal>& word_context_vectors,
-      const vector<MatrixReal>& action_context_vectors,
-      const MatrixReal& word_prediction_vectors,
-      const MatrixReal& action_prediction_vectors,
-      const MatrixReal& word_weighted_representations,
-      const MatrixReal& action_weighted_representations,
-      MatrixReal& class_probs,
-      vector<VectorReal>& word_probs,
-      MatrixReal& action_probs,
-      const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-      MinibatchWords& words) const;
+  void getFullGradient(const boost::shared_ptr<ParseDataSet>& examples,
+                       const vector<WordsList>& word_contexts,
+                       const vector<WordsList>& action_contexts,
+                       const vector<MatrixReal>& word_context_vectors,
+                       const vector<MatrixReal>& action_context_vectors,
+                       const MatrixReal& word_prediction_vectors,
+                       const MatrixReal& action_prediction_vectors,
+                       const MatrixReal& word_weighted_representations,
+                       const MatrixReal& action_weighted_representations,
+                       MatrixReal& class_probs, vector<VectorReal>& word_probs,
+                       MatrixReal& action_probs,
+                       const boost::shared_ptr<ParsedFactoredWeights>& gradient,
+                       MinibatchWords& words) const;
 
   std::vector<Words> getNoiseWords(
-      const boost::shared_ptr<ParseDataSet>& examples) const; 
+      const boost::shared_ptr<ParseDataSet>& examples) const;
 
   void estimateProjectionGradient(
-    const boost::shared_ptr<ParseDataSet>& examples,
-    const MatrixReal& word_prediction_vectors,
-    const MatrixReal& action_prediction_vectors,
-    const boost::shared_ptr<ParsedFactoredWeights>& gradient,
-    MatrixReal& word_weighted_representations,
-    MatrixReal& action_weighted_representations,
-    Real& objective,
-    MinibatchWords& words) const; 
-   
+      const boost::shared_ptr<ParseDataSet>& examples,
+      const MatrixReal& word_prediction_vectors,
+      const MatrixReal& action_prediction_vectors,
+      const boost::shared_ptr<ParsedFactoredWeights>& gradient,
+      MatrixReal& word_weighted_representations,
+      MatrixReal& action_weighted_representations, Real& objective,
+      MinibatchWords& words) const;
+
  private:
   void allocate();
 
@@ -158,7 +147,7 @@ class ParsedFactoredWeights : public FactoredWeights {
 
   friend class boost::serialization::access;
 
-  template<class Archive>
+  template <class Archive>
   void save(Archive& ar, const unsigned int version) const {
     ar << metadata;
 
@@ -168,7 +157,7 @@ class ParsedFactoredWeights : public FactoredWeights {
     ar << boost::serialization::make_array(data, size);
   }
 
-  template<class Archive>
+  template <class Archive>
   void load(Archive& ar, const unsigned int version) {
     ar >> metadata;
 
@@ -187,9 +176,9 @@ class ParsedFactoredWeights : public FactoredWeights {
   boost::shared_ptr<ParsedFactoredMetadata> metadata;
 
   WordVectorsType K;
-  WeightsType     L;
-  WeightsType     PW;
- 
+  WeightsType L;
+  WeightsType PW;
+
   mutable ContextCache actionNormalizerCache;
 
  private:
@@ -198,4 +187,4 @@ class ParsedFactoredWeights : public FactoredWeights {
   vector<Mutex> mutexes;
 };
 
-} //namespace oxlm
+}  // namespace oxlm

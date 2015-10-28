@@ -32,14 +32,14 @@ class WordToClassIndex {
  private:
   friend class boost::serialization::access;
 
-  template<class Archive>
+  template <class Archive>
   void serialize(Archive& ar, const unsigned int version) {
-    ar & classMarkers;
-    ar & wordToClass;
+    ar& classMarkers;
+    ar& wordToClass;
   }
 
   vector<int> classMarkers;
   vector<int> wordToClass;
 };
 
-} // namespace oxlm
+}  // namespace oxlm

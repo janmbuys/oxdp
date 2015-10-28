@@ -8,5 +8,5 @@ ParseDataSet::ParseDataSet() {
   action_examples_ = boost::make_shared<DataSet>();
 }
 
-} //namespace oxlm
+}  //namespace oxlm
 

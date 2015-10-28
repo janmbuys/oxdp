@@ -23,9 +23,9 @@ vector<int> scatterMinibatch(const vector<int>& minibatch) {
   return result;
 }
 
-void loadClassesFromFile(
-    const string& class_file, const string& training_file,
-    vector<int>& classes, boost::shared_ptr<Dict>& dict, VectorReal& class_bias) {
+void loadClassesFromFile(const string& class_file, const string& training_file,
+                         vector<int>& classes, boost::shared_ptr<Dict>& dict,
+                         VectorReal& class_bias) {
   ifstream tin(training_file);
   string line;
   int num_eos_tokens = 0;
@@ -65,16 +65,16 @@ void loadClassesFromFile(
     class_bias(i) = log(class_freqs.at(i)) - log(total_mass);
   }
 
-  cout << "Read " << dict->size() << " types in "
-       << classes.size() - 1 << " classes with an average of "
+  cout << "Read " << dict->size() << " types in " << classes.size() - 1
+       << " classes with an average of "
        << dict->size() / float(classes.size() - 1) << " types per bin." << endl;
 
   in.close();
 }
 
-void frequencyBinning(
-    const string& training_file, int num_classes,
-    vector<int>& classes, boost::shared_ptr<Dict>& dict, VectorReal& class_bias) {
+void frequencyBinning(const string& training_file, int num_classes,
+                      vector<int>& classes, boost::shared_ptr<Dict>& dict,
+                      VectorReal& class_bias) {
   ifstream in(training_file);
   string line, token;
 
@@ -87,8 +87,9 @@ void frequencyBinning(
     stringstream line_stream(line);
     while (line_stream >> token) {
       if (token == eos) continue;
-      int w_id = tmp_dict.insert(make_pair(token, tmp_dict.size())).first->second;
-      assert (w_id <= int(counts.size()));
+      int w_id =
+          tmp_dict.insert(make_pair(token, tmp_dict.size())).first->second;
+      assert(w_id <= int(counts.size()));
       if (w_id == int(counts.size())) {
         counts.push_back(make_pair(token, 1));
       } else {
@@ -100,9 +101,8 @@ void frequencyBinning(
   }
 
   sort(counts.begin(), counts.end(),
-       [](const pair<string, int>& a, const pair<string, int>& b) -> bool {
-           return a.second > b.second;
-       });
+       [](const pair<string, int>& a, const pair<string, int>& b)
+           -> bool { return a.second > b.second; });
 
   classes.clear();
   classes.push_back(0);
@@ -123,7 +123,7 @@ void frequencyBinning(
       bin_size = remaining_tokens / (num_classes - classes.size());
       class_bias(classes.size() - 1) = log(mass);
       classes.push_back(id + 1);
-      mass=0;
+      mass = 0;
     }
   }
 
@@ -134,10 +134,10 @@ void frequencyBinning(
   assert(classes.size() == num_classes + 1);
   class_bias.array() -= log(num_eos_tokens + num_tokens);
 
-  cout << "Binned " << dict->size() << " types in "
-       << classes.size() - 1 << " classes with an average of "
+  cout << "Binned " << dict->size() << " types in " << classes.size() - 1
+       << " classes with an average of "
        << dict->size() / float(classes.size() - 1) << " types per bin." << endl;
   in.close();
 }
 
-} // namespace oxlm
+}  // namespace oxlm

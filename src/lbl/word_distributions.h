@@ -10,15 +10,13 @@ namespace oxlm {
 
 class WordDistributions {
  public:
-  WordDistributions(
-      const VectorReal& unigram,
-      const boost::shared_ptr<WordToClassIndex>& index);
+  WordDistributions(const VectorReal& unigram,
+                    const boost::shared_ptr<WordToClassIndex>& index);
 
-  WordDistributions(
-      const VectorReal& unigram);
+  WordDistributions(const VectorReal& unigram);
 
   int sample(int class_id);
-  
+
   int sample();
 
  private:
@@ -29,4 +27,4 @@ class WordDistributions {
   discrete_distribution<int> dist;
 };
 
-} // namespace oxlm
+}  // namespace oxlm

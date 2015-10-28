@@ -19,4 +19,4 @@ class ClassDistribution {
   discrete_distribution<int> dist;
 };
 
-} // namespace oxlm
+}  // namespace oxlm

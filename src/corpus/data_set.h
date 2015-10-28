@@ -6,6 +6,7 @@
 
 namespace oxlm {
 
+// Class for a set of training examples.
 class DataSet {
   public:
 
@@ -29,8 +30,7 @@ class DataSet {
   std::vector<DataPoint> examples_;
 };
 
-
-} // namespace oxlm
+}  // namespace oxlm
 
 #endif
 

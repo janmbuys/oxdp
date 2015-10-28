@@ -5,21 +5,21 @@
 namespace oxlm {
 
 void MinibatchWords::transform() {
-  for (int word_id: contextWordsSet) {
+  for (int word_id : contextWordsSet) {
     contextWords.push_back(word_id);
   }
-  
-  for (int word_id: outputWordsSet) {
+
+  for (int word_id : outputWordsSet) {
     outputWords.push_back(word_id);
   }
 }
 
 void MinibatchWords::merge(const MinibatchWords& words) {
-  for (int word_id: words.contextWordsSet) {
+  for (int word_id : words.contextWordsSet) {
     contextWordsSet.insert(word_id);
   }
 
-  for (int word_id: words.outputWordsSet) {
+  for (int word_id : words.outputWordsSet) {
     outputWordsSet.insert(word_id);
   }
 }
@@ -59,4 +59,4 @@ unordered_set<int> MinibatchWords::getOutputWordsSet() const {
   return outputWordsSet;
 }
 
-} // namespace oxlm
+}  // namespace oxlm
