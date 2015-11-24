@@ -365,7 +365,7 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
       }
 
       #pragma omp master
-      std::cout << "Done with training iteration " << iter << std::endl;
+      std::cerr << "Done with training iteration " << iter << std::endl;
     }
 
     if (config->semi_supervised) {

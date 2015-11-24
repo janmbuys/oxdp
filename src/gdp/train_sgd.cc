@@ -53,34 +53,34 @@ int main(int argc, char** argv) {
   //TODO Check default values.
   options_description generic("Allowed options");
   generic.add_options()
-     ("training-set,i", value<std::string>(),
+     ("training-set,i", value<std::string>()->default_value(""),
         "corpus of parsed sentences for training, conll format")
-     ("training-set-unsup,u", value<std::string>(),
+     ("training-set-unsup,u", value<std::string>()->default_value(""),
         "corpus of unparsed sentences for semi-supervised training, conll "
         "format")
-     ("test-set,t", value<string>(), "corpus of test sentences")
-     ("test-set2,t", value<string>(), "corpus of test sentences")
-     ("test-set-unsup,t", value<std::string>(),
+     ("test-set,t", value<string>()->default_value(""), "corpus of test sentences")
+     ("test-set2", value<string>()->default_value(""), "corpus of test sentences")
+     ("test-set-unsup", value<std::string>()->default_value(""),
         "corpus of test sentences to be evaluated at each iteration")
-     ("test-out-file,o",
+     ("test-out-file",
         value<std::string>()->default_value("system.out.conll"),
         "conll output file for system parsing the test set")
-     ("iterations", value<int>()->default_value(1),
+     ("iterations", value<int>()->default_value(10),
       "number of passes through the data")
      ("iterations-unsup", value<int>()->default_value(1),
       "number of passes through the unlabelled data")
-     ("minibatch-size", value<int>()->default_value(10000),
+     ("minibatch-size", value<int>()->default_value(128),
       "number of sentences per minibatch")
-     ("minibatch-size-unsup", value<int>()->default_value(1),
+     ("minibatch-size-unsup", value<int>()->default_value(128),
       "number of sentences per minibatch, unsupervised training")
-     ("order,n", value<int>()->default_value(4), "ngram order")
+     ("order,n", value<int>()->default_value(5), "ngram order")
      ("class-factored,f", value<bool>()->default_value(true),
         "Class-factored vocabulary model.")
-     ("model-in", value<string>(), "Load initial model from this file")
-     ("model-out,o", value<string>(), "base filename of model output files")
-     ("lambda-lbl,r", value<float>()->default_value(7.0),
+     ("model-in", value<string>()->default_value(""), "Load initial model from this file")
+     ("model-out", value<string>()->default_value(""), "base filename of model output files")
+     ("lambda-lbl,r", value<float>()->default_value(10.0),
         "regularisation strength parameter")
-     ("representation-size", value<int>()->default_value(100),
+     ("representation-size", value<int>()->default_value(256),
                                            "Width of representation vectors.")
      ("threads", value<int>()->default_value(1), "number of worker threads.")
      ("step-size", value<float>()->default_value(0.05),
@@ -89,19 +89,17 @@ int main(int argc, char** argv) {
         "Visit the training tokens in random order.")
      ("parser-type", value<std::string>()->default_value("arcstandard"),
         "Parsing strategy.")
-     ("context-type", value<std::string>()->default_value(""),
+     ("context-type", value<std::string>()->default_value("more-extended"),
                            "Conditioning context used.")
-     ("labelled-parser", value<bool>()->default_value(false),
+     ("labelled-parser", value<bool>()->default_value(true),
         "Predict arc labels.")
-     ("predict-pos", value<bool>()->default_value(false),
+     ("predict-pos", value<bool>()->default_value(true),
                              "Predict POS in model.")
      ("tag-pos", value<bool>()->default_value(false),
         "Tag POS during decoding.")
      ("lexicalised", value<bool>()->default_value(true),
                                   "Predict words in addition to POS tags.")
-     ("sentence-vector", value<bool>()->default_value(false),
-        "Learn sentence vectors.")
-     ("label-features", value<bool>()->default_value(false),
+     ("label-features", value<bool>()->default_value(true),
         "Include arc labels as input feature.")
      ("morph-features", value<bool>()->default_value(false),
         "Include conll morphological features.")
@@ -129,7 +127,7 @@ int main(int argc, char** argv) {
         "Extract training data with beam search.")
      ("bootstrap-iter", value<int>()->default_value(0),
         "Number of supervised iterations before unsupervised training.")
-     ("num-particles", value<int>()->default_value(100),
+     ("num-particles", value<int>()->default_value(1000),
         "Number of particles in training.")
      ("max-beam-size", value<int>()->default_value(8),
         "Maximum beam size for decoding (in powers of 2).")
@@ -141,19 +139,19 @@ int main(int argc, char** argv) {
         "Arc direction always deterministic in beam search.")
      ("sum-over-beam", value<bool>()->default_value(false),
         "Sum over likelihoods of identical parses in final beam.")
-     ("diagonal-contexts", value<bool>()->default_value(true),
+     ("diagonal-contexts", value<bool>()->default_value(false),
         "Use diagonal context matrices (usually faster).")
-     ("activation", value<std::string>()->default_value("linear"),
+     ("activation", value<std::string>()->default_value("sigmoid"),
         "Activation function for to the projection (hidden) layer.")
      ("noise-samples", value<int>()->default_value(0),
         "Number of noise samples for noise contrastive estimation. "
         "If zero, minibatch gradient descent is used instead.")
      ("classes", value<int>()->default_value(100),
         "Number of classes for factored output using frequency binning.")
-     ("class-file", value<string>(),
+     ("class-file", value<string>()->default_value(""),
         "File containing word to class mappings in the format "
         "<class> <word> <frequence>.")
-     ("lower-class-file", value<string>(),
+     ("lower-class-file", value<string>()->default_value(""),
         "File containing lower word to class mappings in the format "
         "<class> <word> <frequence>.");
   options_description config_options, cmdline_options;
@@ -279,7 +277,7 @@ int main(int argc, char** argv) {
   config->direction_deterministic = vm["direction-det"].as<bool>();
   config->sum_over_beam = vm["sum-over-beam"].as<bool>();
   config->semi_supervised = vm["semi-supervised"].as<bool>();
-  config->restricted_semi_supervised = vm["restricted_semi-supervised"].as<bool>();
+  config->restricted_semi_supervised = vm["restricted-semi-supervised"].as<bool>();
   config->root_first = vm["root-first"].as<bool>();
   config->complete_parse = vm["complete-parse"].as<bool>();
   config->bootstrap = vm["bootstrap"].as<bool>();
@@ -392,7 +390,7 @@ int main(int argc, char** argv) {
     // TODO For unlexicalised parsing, implicitly factor weights (1 class).
     train_dp<ArcStandardLabelledParseModel<ParsedFactoredWeights>,
              ParsedFactoredWeights, ParsedFactoredMetadata>(config);
-  }
-
+  }    
+  
   return 0;
 }
