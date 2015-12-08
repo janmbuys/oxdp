@@ -22,6 +22,8 @@ class ArcStandardLabelledParseModel
  public:
   ArcStandardLabelledParseModel(boost::shared_ptr<ModelConfig> config);
 
+  Reals normalizedParticleWeights(AslParserList* beam_stack);
+
   void resampleParticles(AslParserList* beam_stack, MT19937& eng,
                          unsigned num_particles);
 
@@ -93,6 +95,13 @@ class ArcStandardLabelledParseModel
       const ParsedSentence& sent,
       const boost::shared_ptr<ParsedWeights>& weights,
       const boost::shared_ptr<ParseDataSet>& examples);
+
+  Parser particleEvaluateSentence(const ParsedSentence& sent,
+                          const boost::shared_ptr<ParsedWeights>& weights,
+                          MT19937& eng,
+                          const boost::shared_ptr<AccuracyCounts>& acc_counts,
+                          bool acc, size_t num_particles);
+
 
   Parser evaluateSentence(const ParsedSentence& sent,
                           const boost::shared_ptr<ParsedWeights>& weights,

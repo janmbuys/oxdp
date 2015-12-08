@@ -95,6 +95,8 @@ int main(int argc, char** argv) {
         "Predict arc labels.")
      ("predict-pos", value<bool>()->default_value(true),
                              "Predict POS in model.")
+     ("sample-decoding", value<bool>()->default_value(false),
+                             "Particle filter sampling during decoding.")
      ("tag-pos", value<bool>()->default_value(false),
         "Tag POS during decoding.")
      ("lexicalised", value<bool>()->default_value(true),
@@ -255,6 +257,7 @@ int main(int argc, char** argv) {
 
   config->tag_pos = vm["tag-pos"].as<bool>();
   config->predict_pos = vm["predict-pos"].as<bool>();
+  config->sample_decoding = vm["sample-decoding"].as<bool>();
 
   std::string activation_str = vm["activation"].as<std::string>();
   if (activation_str == "linear") {

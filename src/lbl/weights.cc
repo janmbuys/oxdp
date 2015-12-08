@@ -34,12 +34,12 @@ Weights::Weights(const boost::shared_ptr<ModelConfig>& config,
     // Initialize bias weights with unigram probabilities.
     B = metadata->getSmoothedUnigram().array().log();
 
-    cout << "===============================" << endl;
-    cout << " Model parameters: " << endl;
-    cout << "  Context vocab size = " << config->num_features << endl;
-    cout << "  Output vocab size = " << config->vocab_size << endl;
-    cout << "  Total parameters = " << numParameters() << endl;
-    cout << "===============================" << endl;
+    cerr << "===============================" << endl;
+    cerr << " Model parameters: " << endl;
+    cerr << "  Context vocab size = " << config->num_features << endl;
+    cerr << "  Output vocab size = " << config->vocab_size << endl;
+    cerr << "  Total parameters = " << numParameters() << endl;
+    cerr << "===============================" << endl;
   } else {
     W.setZero();
   }

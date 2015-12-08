@@ -16,6 +16,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(
   int col_num = 0;
 
   WordId word_id = -1;
+  std::string word_str;
   Words features;
   if (config_->pyp_model || config_->predict_pos) {
     features.push_back(-1);  // placeholder for POS tag
@@ -24,37 +25,41 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(
   while (cur < line.size()) {
     if (Dict::is_ws(line[cur++])) {
       if (state == 0) continue;
-      if (col_num == 1) {  // annotated word
+      if (col_num == 1) {  // word
         if (config_->lexicalised || config_->pyp_model) {
-          std::string word_str = line.substr(last, cur - last - 1);
+          word_str = line.substr(last, cur - last - 1);
           word_id = dict->convert(word_str, frozen);
           sent_out->push_back(word_id);
+          // Include word as a feature. 
+          features.push_back(dict->convertFeature(word_str, frozen));
         }
-      } else if (col_num == 2) {  //  unannotated word
-        std::string word_str = line.substr(last, cur - last - 1);
+      } else if (col_num == 2) {  // word and/or lemma
+        std::string lemma_str = line.substr(last, cur - last - 1);
         if (!config_->lexicalised && !config_->pyp_model) {
-          word_id = dict->convert(word_str, frozen);
+          word_id = dict->convert(lemma_str, frozen);
           sent_out->push_back(word_id);
         }
         if (!config_->pyp_model && config_->lexicalised) {
           // Split off stem as a feature if present.
-          std::stringstream feature_stream(word_str);
+          std::stringstream feature_stream(lemma_str);
           std::string feat;
           while (std::getline(feature_stream, feat, '|')) {
-            if (!feat.empty()) {
+            if (!feat.empty() && !(feat == "_") && !(feat == word_str)) {
               features.push_back(dict->convertFeature(feat, frozen));
             }
           }
         }
       } else if (col_num == 3) {  // coarse POS tag
-        if (config_->morph_features)
+        if (config_->morph_features) //TODO && config_->predict_pos)
           features.push_back(
               dict->convertFeature(line.substr(last, cur - last - 1), frozen));
       } else if (col_num == 4) {  // POS tag
         std::string tag_str = line.substr(last, cur - last - 1);
-        tags_out->push_back(dict->convertTag(tag_str, frozen));
         if (config_->pyp_model || config_->predict_pos) {
+          tags_out->push_back(dict->convertTag(tag_str, frozen));
           features[0] = dict->convertFeature(tag_str, frozen);
+        } else {
+          tags_out->push_back(dict->convertTag("<null>", frozen));
         }
       } else if (col_num == 5) {  // morphological features (| seperated)
         std::string feature_str = line.substr(last, cur - last - 1);
@@ -62,7 +67,7 @@ void ParsedCorpus::convertWhitespaceDelimitedConllLine(
           std::stringstream feature_stream(feature_str);
           std::string feat;
           while (std::getline(feature_stream, feat, '|')) {
-            if (!feat.empty()) {
+            if (!feat.empty() && !(feat == "_")) {
               features.push_back(dict->convertFeature(feat, frozen));
             }
           }

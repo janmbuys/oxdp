@@ -13,10 +13,10 @@ FactoredMetadata::FactoredMetadata(const boost::shared_ptr<ModelConfig>& config,
     : Metadata(config, dict) {
   vector<int> classes;
   if (config->class_file.size()) {
-    cout << "--class-file set, ignoring --classes." << endl;
     loadClassesFromFile(config->class_file, config->training_file, classes,
                         dict, classBias);
   } else {
+    cerr << "No class-file set." << endl;
     frequencyBinning(config->training_file, config->classes, classes, dict,
                      classBias);
   }

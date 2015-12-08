@@ -65,7 +65,7 @@ void loadClassesFromFile(const string& class_file, const string& training_file,
     class_bias(i) = log(class_freqs.at(i)) - log(total_mass);
   }
 
-  cout << "Read " << dict->size() << " types in " << classes.size() - 1
+  cerr << "Read " << dict->size() << " types in " << classes.size() - 1
        << " classes with an average of "
        << dict->size() / float(classes.size() - 1) << " types per bin." << endl;
 
@@ -134,7 +134,7 @@ void frequencyBinning(const string& training_file, int num_classes,
   assert(classes.size() == num_classes + 1);
   class_bias.array() -= log(num_eos_tokens + num_tokens);
 
-  cout << "Binned " << dict->size() << " types in " << classes.size() - 1
+  cerr << "Binned " << dict->size() << " types in " << classes.size() - 1
        << " classes with an average of "
        << dict->size() / float(classes.size() - 1) << " types per bin." << endl;
   in.close();

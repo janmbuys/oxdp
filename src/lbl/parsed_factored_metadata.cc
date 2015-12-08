@@ -25,13 +25,13 @@ void ParsedFactoredMetadata::initialize(
   vector<int> action_counts = corpus->actionCounts();
 
   // Initialize action biases with unigram distribution. Alternatively,
-  // could initialize uniformly.
-  // actionBias = VectorReal::Ones(action_counts.size()) * 0.2;
-  VectorReal counts = VectorReal::Zero(action_counts.size());
+  // could initialize uniformly. TODO confirm which works best.
+   actionBias = VectorReal::Ones(action_counts.size()) * 0.2;
+  /*VectorReal counts = VectorReal::Zero(action_counts.size());
   for (size_t i = 0; i < action_counts.size(); ++i) {
     counts(i) = action_counts[i];
   }
-  actionBias = counts.array() / counts.sum();
+  actionBias = counts.array() / counts.sum(); */
 }
 
 VectorReal ParsedFactoredMetadata::getActionBias() const { return actionBias; }
