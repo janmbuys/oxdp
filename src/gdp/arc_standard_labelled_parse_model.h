@@ -41,11 +41,10 @@ class ArcStandardLabelledParseModel
       const boost::shared_ptr<ParsedWeights>& weights,
       unsigned beam_size) override;
 
-  ArcStandardLabelledParser particleParseSentence(
+  AslParserList particleParseSentence(
       const ParsedSentence& sent,
       const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng,
-      unsigned num_particles,
-      const boost::shared_ptr<ParseDataSet>& examples) override;
+      unsigned num_particles);
 
   ArcStandardLabelledParser beamParticleParseSentence(
       const ParsedSentence& sent,
@@ -85,6 +84,11 @@ class ArcStandardLabelledParseModel
                        const boost::shared_ptr<ParsedWeights>& weights,
                        MT19937& eng,
                        const boost::shared_ptr<ParseDataSet>& examples);
+
+  void extractSentenceUnsupervisedAll(
+      const ParsedSentence& sent,
+      const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng,
+      std::vector<boost::shared_ptr<ParseDataSet>>* examples);
 
   void extractSentenceUnsupervised(
       const ParsedSentence& sent,

@@ -19,11 +19,11 @@ class TransitionParseModelInterface {
       const ParsedSentence& sent,
       const boost::shared_ptr<ParsedWeights>& weights, unsigned beam_size) = 0;
 
-  virtual TParser particleParseSentence(
+  /* virtual TParser particleParseSentence(
       const ParsedSentence& sent,
       const boost::shared_ptr<ParsedWeights>& weights, MT19937& eng,
       unsigned num_particles,
-      const boost::shared_ptr<ParseDataSet>& examples) = 0;
+      const boost::shared_ptr<ParseDataSet>& examples) = 0; */
 
   virtual TParser beamParticleParseSentence(
       const ParsedSentence& sent,

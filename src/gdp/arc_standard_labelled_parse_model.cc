@@ -780,11 +780,10 @@ ArcStandardLabelledParseModel<ParsedWeights>::beamParticleParseSentence(
 }
 
 template <class ParsedWeights>
-ArcStandardLabelledParser
+AslParserList
 ArcStandardLabelledParseModel<ParsedWeights>::particleParseSentence(
     const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
-    MT19937& eng, unsigned num_particles,
-    const boost::shared_ptr<ParseDataSet>& examples) {
+    MT19937& eng, unsigned num_particles) {
   AslParserList beam_stack;
   beam_stack.push_back(boost::make_shared<ArcStandardLabelledParser>(
       static_cast<TaggedSentence>(sent), static_cast<int>(num_particles),
@@ -995,7 +994,7 @@ ArcStandardLabelledParseModel<ParsedWeights>::particleParseSentence(
             beam_stack.back()->set_num_particles(-shift2_count);
 
             beam_stack.back()->add_particle_weight(tag_probs[tag2_pred]);
-            //beam_stack.back()->add_importance_weight(tag_probs[tag2_pred]);
+            beam_stack.back()->add_importance_weight(tag_probs[tag2_pred]);
             shift_count -= shift2_count;
           }
 
@@ -1009,24 +1008,24 @@ ArcStandardLabelledParseModel<ParsedWeights>::particleParseSentence(
             beam_stack.back()->set_num_particles(-shift3_count); 
 
             beam_stack.back()->add_particle_weight(tag_probs[tag3_pred]);
-            //beam_stack.back()->add_importance_weight(tag_probs[tag3_pred]);
+            beam_stack.back()->add_importance_weight(tag_probs[tag3_pred]);
             shift_count -= shift3_count;
           }
         }
 
         Real tagp = weights->predictTag(beam_stack[j]->next_tag(),
                                         beam_stack[j]->tagContext());
+        beam_stack[j]->add_particle_weight(tagp);
+        beam_stack[j]->add_importance_weight(tagp);
+
         //Real wordp = weights->predictWord(beam_stack[j]->next_word(),
         //                                  beam_stack[j]->wordContext());
+        //beam_stack[j]->add_particle_weight(wordp);
+        //beam_stack[j]->add_importance_weight(wordp);
 
-        //beam_stack[j]->shift();
         beam_stack[j]->add_particle_weight(shiftp);
         beam_stack[j]->set_num_particles(shift_count);
-
-        //beam_stack[j]->add_particle_weight(wordp);
-        beam_stack[j]->add_particle_weight(tagp);
-        //beam_stack[j]->add_importance_weight(wordp);
-        //beam_stack[j]->add_importance_weight(tagp);
+        //beam_stack[j]->shift();
       }
     }
 
@@ -1044,9 +1043,10 @@ ArcStandardLabelledParseModel<ParsedWeights>::particleParseSentence(
 
       beam_stack[j]->shift();
       beam_stack[j]->add_particle_weight(wordp);
-      //beam_stack[j]->add_importance_weight(wordp);
+      beam_stack[j]->add_importance_weight(wordp);
     }
-    
+    //std::cout << " " << word_marginal_weight;    
+
     marginal_weight += word_marginal_weight;
     resampleParticles(&beam_stack, eng, num_particles);
   }
@@ -1103,8 +1103,8 @@ ArcStandardLabelledParseModel<ParsedWeights>::particleParseSentence(
       beam_stack[j]->add_particle_weight(shiftp);
       beam_stack[j]->add_particle_weight(wordp);
       beam_stack[j]->add_particle_weight(tagp);
-      //beam_stack[j]->add_importance_weight(wordp);
-      //beam_stack[j]->add_importance_weight(tagp);
+      beam_stack[j]->add_importance_weight(wordp);
+      beam_stack[j]->add_importance_weight(tagp);
 
       Reals action_probs =
           weights->predictAction(beam_stack[j]->actionContext());
@@ -1143,16 +1143,19 @@ ArcStandardLabelledParseModel<ParsedWeights>::particleParseSentence(
     }
   }
   
-  // Set marginal weight as importance weight. 
-  beam_stack[0]->set_importance_weight(marginal_weight);
+  // Set marginal weight. 
+  beam_stack[0]->set_marginal_weight(marginal_weight);
+  //std::cout << "\nWeight " << marginal_weight << std::endl;
 
-  if (beam_stack.size() == 0) {
+  return beam_stack;
+
+ /* if (beam_stack.size() == 0) {
     std::cout << "no parse found" << std::endl;
     return ArcStandardLabelledParser(static_cast<TaggedSentence>(sent),
                                      config_);
   } else {
     return ArcStandardLabelledParser(*beam_stack[0]);
-  }
+  }  */
 }
 
 // Find highest-scoring parse consistent with gold-parse.
@@ -1575,21 +1578,39 @@ void ArcStandardLabelledParseModel<ParsedWeights>::extractSentence(
 }
 
 template <class ParsedWeights>
+void ArcStandardLabelledParseModel<ParsedWeights>::extractSentenceUnsupervisedAll(
+    const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
+    MT19937& eng, std::vector<boost::shared_ptr<ParseDataSet>>* examples) {
+  AslParserList beam = particleParseSentence(sent, weights, eng, 
+                                            config_->num_particles);
+
+  for (auto parse: beam) {
+    boost::shared_ptr<ParseDataSet> sample_examples = 
+      boost::make_shared<ParseDataSet>();
+    parse->set_id(sent.id());
+    parse->extractExamples(sample_examples); //TODO add weight
+    examples->push_back(sample_examples);
+  }
+}
+
+template <class ParsedWeights>
 void ArcStandardLabelledParseModel<ParsedWeights>::extractSentenceUnsupervised(
     const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
     MT19937& eng, const boost::shared_ptr<ParseDataSet>& examples) {
-  ArcStandardLabelledParser parse = particleParseSentence(
-      sent, weights, eng, config_->num_particles, examples);
-  parse.set_id(sent.id());
-  parse.extractExamples(examples);
+  AslParserList beam = particleParseSentence(sent, weights, eng, 
+                                            config_->num_particles);
+  if (beam.size() > 0) {
+    auto parse = beam[0];
+    parse->set_id(sent.id());
+    parse->extractExamples(examples);
+  }
 }
 
 template <class ParsedWeights>
 void ArcStandardLabelledParseModel<ParsedWeights>::extractSentenceUnsupervised(
     const ParsedSentence& sent, const boost::shared_ptr<ParsedWeights>& weights,
     const boost::shared_ptr<ParseDataSet>& examples) {
-  ArcStandardLabelledParser parse = beamParticleParseSentence(
-      sent, weights, config_->num_particles, examples);
+  ArcStandardLabelledParser parse = beamParticleParseSentence(sent, weights, config_->num_particles, examples);
   parse.set_id(sent.id());
   parse.extractExamples(examples);
 }
@@ -1602,7 +1623,12 @@ Parser ArcStandardLabelledParseModel<ParsedWeights>::particleEvaluateSentence(
   ArcStandardLabelledParser parse(config_);
   boost::shared_ptr<ParseDataSet> examples = boost::make_shared<ParseDataSet>();
 
-  parse = particleParseSentence(sent, weights, eng, num_particles, examples);
+  AslParserList beam = particleParseSentence(sent, weights, eng, 
+                                            num_particles);
+  if (beam.size() > 0) {
+    parse = ArcStandardLabelledParser(*beam[0]);
+    //std::cout << parse.beam_weight() << " :" << parse.marginal_weight() << std::endl;
+  }
 
   if (acc) {
     acc_counts->countAccuracy(parse, sent);

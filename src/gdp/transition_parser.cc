@@ -10,6 +10,7 @@ TransitionParser::TransitionParser(const boost::shared_ptr<ModelConfig>& config)
       action_labels_(),
       importance_weight_{0},
       beam_weight_{0},
+      marginal_weight_{0},
       num_particles_{1},
       config_(config) {
   if (!config->root_first) buffer_next_ = 1;
@@ -24,6 +25,7 @@ TransitionParser::TransitionParser(const TaggedSentence& parse,
       action_labels_(),
       importance_weight_{0},
       beam_weight_{0},
+      marginal_weight_{0},
       num_particles_{1},
       config_(config) {
   if (!config->root_first) buffer_next_ = 1;
@@ -39,6 +41,7 @@ TransitionParser::TransitionParser(const TaggedSentence& parse,
       action_labels_(),
       importance_weight_{0},
       beam_weight_{0},
+      marginal_weight_{0},
       num_particles_{num_particles},
       config_(config) {
   if (!config->root_first) buffer_next_ = 1;
