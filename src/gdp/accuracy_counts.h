@@ -62,6 +62,8 @@ class AccuracyCounts {
 
   void add_importance_likelihood(Real l) { importance_likelihood_ += l; }
 
+  void add_marginal_likelihood(Real l) { marginal_likelihood_ += l; }
+
   void add_beam_likelihood(Real l) { beam_likelihood_ += l; }
 
   void add_gold_likelihood(Real l) { gold_likelihood_ += l; }
@@ -180,6 +182,8 @@ class AccuracyCounts {
 
   Real importance_likelihood() const { return importance_likelihood_; }
 
+  Real marginal_likelihood() const { return marginal_likelihood_; }
+
   Real beam_likelihood() const { return beam_likelihood_; }
 
   Real gold_likelihood() const { return gold_likelihood_; }
@@ -208,11 +212,27 @@ class AccuracyCounts {
     return beam_likelihood_ / total_length_punc_;
   }
 
+  Real marginal_cross_entropy() const {
+    return marginal_likelihood_ / total_length_;
+  }
+
+  Real marginal_cross_entropy_noeos() const {
+    return marginal_likelihood_ / total_length_punc_;
+  }
+
   Real importance_cross_entropy() const {
     return importance_likelihood_ / total_length_;
   }
 
+  Real importance_cross_entropy_noeos() const {
+    return importance_likelihood_ / total_length_punc_;
+  }
+
   Real gold_cross_entropy() const { return gold_likelihood_ / total_length_; }
+
+  Real gold_cross_entropy_noeos() const { 
+    return gold_likelihood_ / total_length_punc_;
+  }
 
   Real perplexity_noeos() const { return std::exp(cross_entropy_noeos()); }
 
@@ -228,7 +248,23 @@ class AccuracyCounts {
     return std::exp(importance_cross_entropy());
   }
 
+  Real importance_perplexity_noeos() const {
+    return std::exp(importance_cross_entropy_noeos());
+  }
+
   Real gold_perplexity() const { return std::exp(gold_cross_entropy()); }
+
+  Real gold_perplexity_noeos() const { 
+    return std::exp(gold_cross_entropy_noeos()); 
+  }
+
+  Real marginal_perplexity() const {
+    return std::exp(marginal_cross_entropy());
+  }
+
+  Real marginal_perplexity_noeos() const {
+    return std::exp(marginal_cross_entropy_noeos());
+  }
 
   static double sentence_uas(const Parser& prop_parse,
                              const ParsedSentence& gold_parse) {
@@ -248,6 +284,7 @@ class AccuracyCounts {
   Real beam_likelihood_;
   Real importance_likelihood_;
   Real gold_likelihood_;
+  Real marginal_likelihood_;
   int reduce_count_;
   int reduce_gold_;
   int shift_count_;

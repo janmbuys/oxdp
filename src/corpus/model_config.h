@@ -61,6 +61,7 @@ struct ModelConfig {
   bool direction_deterministic;
   bool sum_over_beam;
   bool resample;
+  bool sample_decoding;
   bool root_first;
   bool complete_parse;
   bool bootstrap;
@@ -134,6 +135,7 @@ struct ModelConfig {
     ar& direction_deterministic;
     ar& sum_over_beam;
     ar& resample;
+    ar& sample_decoding;
     ar& root_first;
     ar& complete_parse;
     ar& bootstrap;

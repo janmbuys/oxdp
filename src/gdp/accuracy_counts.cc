@@ -8,6 +8,7 @@ AccuracyCounts::AccuracyCounts(boost::shared_ptr<Dict> dict)
       beam_likelihood_{0},
       importance_likelihood_{0},
       gold_likelihood_{0},
+      marginal_likelihood_{0},
       reduce_count_{0},
       reduce_gold_{0},
       shift_count_{0},
@@ -112,6 +113,7 @@ void AccuracyCounts::transitionCountAccuracy(const TransitionParser& prop_parse,
 
   // Counts for transition parsers.
   add_importance_likelihood(prop_parse.importance_weight());
+  add_marginal_likelihood(prop_parse.marginal_weight());
   add_beam_likelihood(prop_parse.beam_weight());
   add_num_actions(prop_parse.num_actions());
 }
@@ -181,13 +183,23 @@ void AccuracyCounts::printAccuracy() const {
             << std::endl;
   std::cerr << "Beam Cross entropy: " << beam_cross_entropy() << std::endl;
   std::cerr << "Beam Log likelihood: " << beam_likelihood() << std::endl;
-  std::cerr << "Importance Perplexity: " << importance_perplexity()
+  std::cerr << "Importance Perplexity: " << importance_perplexity() << std::endl;
+  std::cerr << "Importance Perplexity No EOS: " << importance_perplexity_noeos()
             << std::endl;
   std::cerr << "Importance Cross entropy: " << importance_cross_entropy()
             << std::endl;
   std::cerr << "Importance Log likelihood: " << importance_likelihood()
             << std::endl;
+  std::cerr << "Marginal Perplexity: " << marginal_perplexity() << std::endl;
+  std::cerr << "Marginal Perplexity No EOS: " << marginal_perplexity_noeos()
+            << std::endl;
+  std::cerr << "Marginal Cross entropy: " << marginal_cross_entropy()
+            << std::endl;
+  std::cerr << "Marginal Log likelihood: " << marginal_likelihood()
+            << std::endl;
+ 
   std::cerr << "Gold Perplexity: " << gold_perplexity() << std::endl;
+  std::cerr << "Gold Perplexity No EOS: " << gold_perplexity_noeos() << std::endl;
   std::cerr << "Gold Cross entropy: " << gold_cross_entropy() << std::endl;
   std::cerr << "Gold Log likelihood: " << gold_likelihood() << std::endl;
   std::cerr << "Gold more likely: " << gold_more_likely() << std::endl;

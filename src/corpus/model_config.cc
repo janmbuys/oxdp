@@ -35,6 +35,7 @@ ModelConfig::ModelConfig()
       direction_deterministic(false),
       sum_over_beam(false),
       resample(false),
+      sample_decoding(false),
       root_first(true),
       complete_parse(true),
       bootstrap(false),

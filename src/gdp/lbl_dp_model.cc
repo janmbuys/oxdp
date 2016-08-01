@@ -173,6 +173,17 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
   vector<int> unsup_indices(unsup_training_corpus->size());
   iota(unsup_indices.begin(), unsup_indices.end(), 0);
 
+  // Count projectivity.
+  int projective_count = 0;
+  for (int j = 0; j < training_corpus->size(); ++j) {
+    if (training_corpus->sentence_at(j).projective_dependency()) {
+      ++projective_count;
+    }
+  }
+  
+  float non_projectivity = 1 - (projective_count + 0.0)/training_corpus->size();
+  std::cerr << "Non-projectivity: " << non_projectivity << "\n";
+
   Real best_perplexity = numeric_limits<Real>::infinity();
   Real best_perplexity2 = numeric_limits<Real>::infinity();
   Real best_perplexity_unsup = numeric_limits<Real>::infinity();
@@ -265,9 +276,12 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::learn() {
               } else if (config->bootstrap) {
                 parse_model->extractSentence(training_corpus->sentence_at(j),
                                              weights, task_examples);
+              } else if (config->sample_decoding) {
+                parse_model->extractSentenceUnsupervised(
+                  training_corpus->sentence_at(j), weights, eng, task_examples);
               } else {
                 parse_model->extractSentenceUnsupervised(
-                    training_corpus->sentence_at(j), weights, task_examples);
+                  training_corpus->sentence_at(j), weights, task_examples);
               }
             }
 
@@ -593,6 +607,7 @@ template <class ParseModel, class ParsedWeights, class Metadata>
 void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
     const boost::shared_ptr<ParsedCorpus>& test_corpus, Real& accumulator) {
   if (test_corpus == nullptr) return;
+  MT19937 eng;
   
   // Evaluation is done in a single thread.
   #pragma omp master
@@ -615,8 +630,14 @@ void LblDpModel<ParseModel, ParsedWeights, Metadata>::evaluate(
         Real objective = 0;
         Parser parse;
 
-        parse = parse_model->evaluateSentence(
-            test_corpus->sentence_at(j), weights, acc_counts, true, beam_size);
+        if (config->sample_decoding) {
+          parse = parse_model->particleEvaluateSentence(
+              test_corpus->sentence_at(j), weights, eng, acc_counts, true, 
+              beam_size);
+        } else {
+          parse = parse_model->evaluateSentence(
+              test_corpus->sentence_at(j), weights, acc_counts, true, beam_size);
+        }
 
         objective += parse.weight();
 

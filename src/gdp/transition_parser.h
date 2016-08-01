@@ -40,10 +40,11 @@ class TransitionParser : public Parser {
   }
 
   void update_tag(WordIndex i, WordId tag) {
-    if (config_->pyp_model)
+    if (config_->pyp_model) {
       set_tag_at(i, tag, tag);
-    else
+    } else {
       set_tag_at(i, tag, config_->tag_to_feature[tag]);
+    }
   }
 
   void append_action_label(WordId l) { action_labels_.push_back(l); }
@@ -59,17 +60,23 @@ class TransitionParser : public Parser {
   void add_particle_weight(Real w) { add_weight(w); }
 
   void add_log_particle_weight(Real w) {
-    if (weight() == 0)
+    if (weight() == 0) {
       set_weight(w);
-    else
+    } else {
       set_weight(neg_log_sum_exp(weight(), w));  // add in log space
+    }
   }
 
   void add_beam_weight(Real w) {
-    if (beam_weight_ == 0)
+    if (beam_weight_ == 0) {
       beam_weight_ = w;
-    else
+    } else {
       beam_weight_ = neg_log_sum_exp(beam_weight_, w);  // add in log space
+    }
+  }
+
+  void set_marginal_weight(Real w) {
+    marginal_weight_ = w;
   }
 
   void set_num_particles(int n) { num_particles_ = n; }
@@ -85,18 +92,20 @@ class TransitionParser : public Parser {
   WordIndex stack_top_third() const { return stack_.rbegin()[2]; }
 
   WordIndex buffer_next() const {
-    if (!root_first() && (buffer_next_ == static_cast<int>(size())))
+    if (!root_first() && (buffer_next_ == static_cast<int>(size()))) {
       return 0;
-    else
+    } else {
       return buffer_next_;
+    }
   }
 
   bool buffer_empty() const {
     // For root-last, the root occurs after the end of sentence.
-    if (root_first())
+    if (root_first()) {
       return (buffer_next_ >= static_cast<int>(size()));
-    else
+    } else {
       return (buffer_next_ > static_cast<int>(size()));
+    }
   }
 
   WordId next_word() const { return word_at(buffer_next()); }
@@ -143,6 +152,8 @@ class TransitionParser : public Parser {
   Real importance_weight() const { return importance_weight_; }
 
   Real beam_weight() const { return beam_weight_; }
+
+  Real marginal_weight() const { return marginal_weight_; }
 
   int num_particles() const { return num_particles_; }
 
@@ -989,6 +1000,7 @@ class TransitionParser : public Parser {
   Words action_labels_;
   Real importance_weight_;
   Real beam_weight_;
+  Real marginal_weight_;
   int num_particles_;
   boost::shared_ptr<ModelConfig> config_;
 };
